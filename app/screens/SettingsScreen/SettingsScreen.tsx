@@ -22,7 +22,7 @@ export const SettingsScreen: React.FC = () => {
         androidIconName="article"
         iconBackgroundColor="#5856D6"
         // @ts-ignore
-        onPress={() => navigation.navigate('EmbeddingsScreen')}
+        onPress={() => navigation.navigate('ModelsScreen')}
       />
     </ScrollView>
   );
