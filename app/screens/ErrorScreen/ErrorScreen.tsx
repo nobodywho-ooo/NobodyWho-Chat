@@ -14,9 +14,7 @@ export const ErrorScreen: React.FC<ErrorScreenProps> = ({ onRetry }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <Text style={[styles.text, { color: colors.onSurface }]}>
-        Something went wrong
-      </Text>
+      <Text style={styles.text}>Something went wrong</Text>
       <Button title="Retry" onPress={onRetry} />
     </View>
   );

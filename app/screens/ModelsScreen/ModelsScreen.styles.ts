@@ -1,13 +1,12 @@
 import { StyleSheet } from 'react-native';
-import { Spacings } from 'style';
+import { Layout, Spacings } from 'style';
 
 export default StyleSheet.create({
   container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    ...Layout.container,
+    paddingTop: Spacings.lg
   },
   text: {
-    marginBottom: Spacings.lg,
+    marginTop: Spacings.lg,
   },
 });
