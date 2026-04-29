@@ -1,13 +1,12 @@
 import React from 'react';
-import { Pressable, PressableProps, View, Platform } from 'react-native';
+import { Pressable, PressableProps, View } from 'react-native';
 import {
-  SFSymbol,
-  MaterialSymbol,
   type SFSymbolProps,
   type MaterialSymbolProps,
 } from '@react-navigation/native';
 import { useStyled } from 'hooks';
 import { Text } from '../Text/Text';
+import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 
 import styles from './ListItem.styles';
 
@@ -39,11 +38,12 @@ export const ListItem: React.FC<ListItemProps> = ({
       <View
         style={[styles.iconContainer, { backgroundColor: iconBackgroundColor }]}
       >
-        {Platform.OS === 'ios' ? (
-          <SFSymbol name={iosIconName} size={20} color="#FFFFFF" />
-        ) : (
-          <MaterialSymbol name={androidIconName} size={20} color="#FFFFFF" />
-        )}
+        <PlatformIcon
+          iosIconName={iosIconName}
+          androidIconName={androidIconName}
+          size={20}
+          color="#FFFFFF"
+        />
       </View>
       <View style={styles.content}>
         <Text style={styles.title}>{title}</Text>
@@ -52,19 +52,12 @@ export const ListItem: React.FC<ListItemProps> = ({
         </Text>
       </View>
       <View style={styles.chevron}>
-        {Platform.OS === 'ios' ? (
-          <SFSymbol
-            name="chevron.right"
-            size={16}
-            color={colors.onSurfaceVariant}
-          />
-        ) : (
-          <MaterialSymbol
-            name="chevron_right"
-            size={16}
-            color={colors.onSurfaceVariant}
-          />
-        )}
+        <PlatformIcon
+          iosIconName="chevron.right"
+          androidIconName="chevron_right"
+          size={16}
+          color={colors.onSurfaceVariant}
+        />
       </View>
     </Pressable>
   );

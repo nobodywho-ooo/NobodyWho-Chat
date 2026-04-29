@@ -4,7 +4,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { isLiquidGlassSupported } from '@callstack/liquid-glass';
 import { useStyled } from 'hooks';
 import { AiModelState, useAiService } from 'services';
-import { ChatScreen, ErrorScreen, LoadingScreen } from 'screens';
+import {
+  ChatScreen,
+  ErrorScreen,
+  LoadingScreen,
+  NoModelDownloadedScreen,
+} from 'screens';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,18 +30,20 @@ export const ChatStackNavigator = () => {
     [initChat],
   );
 
-  let Screen = LoadingScreen;
+  let screen = LoadingScreen;
 
   switch (chatState) {
     case AiModelState.Ready:
-      Screen = ChatScreen;
+      screen = ChatScreen;
       break;
     case AiModelState.Error:
-      Screen = ErrorScreenWithRetry;
+      screen = ErrorScreenWithRetry;
       break;
     default:
-      Screen = LoadingScreen;
+      screen = LoadingScreen;
   }
+
+  screen = NoModelDownloadedScreen;
 
   return (
     <Stack.Navigator
@@ -48,7 +55,7 @@ export const ChatStackNavigator = () => {
     >
       <Stack.Screen
         name="ChatScreen"
-        component={Screen}
+        component={screen}
         options={{ title: 'Chat' }}
       />
     </Stack.Navigator>

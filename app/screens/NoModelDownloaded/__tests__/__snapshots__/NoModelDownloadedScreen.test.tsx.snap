@@ -1,0 +1,113 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly NoModelDownloadedScreen 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "flex": 1,
+        "justifyContent": "center",
+        "paddingHorizontal": 16,
+        "paddingTop": 16,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <PlatformIcon
+    androidIconName="memory"
+    color="#c1c1c1"
+    iosIconName="cpu"
+    size={50}
+  />
+  <Text
+    style={
+      [
+        {
+          "color": "#000000",
+        },
+        {
+          "fontSize": 24,
+          "fontWeight": "500",
+          "letterSpacing": 0,
+        },
+        undefined,
+        undefined,
+        {
+          "paddingBottom": 20,
+          "paddingTop": 30,
+        },
+      ]
+    }
+  >
+    No model available
+  </Text>
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 9999,
+          "justifyContent": "center",
+          "overflow": "hidden",
+          "paddingHorizontal": 24,
+          "paddingVertical": 12,
+        },
+        {
+          "backgroundColor": "#628395",
+        },
+        undefined,
+        false,
+      ]
+    }
+  >
+    <Text
+      style={
+        [
+          {
+            "fontSize": 16,
+            "fontWeight": "600",
+          },
+          {
+            "color": "#FFFFFF",
+          },
+        ]
+      }
+    >
+      Download a model
+    </Text>
+  </View>
+</View>
+`;

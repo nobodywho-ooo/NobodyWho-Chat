@@ -5,11 +5,12 @@ import { Layout, Spacings } from 'style';
 export default StyleSheet.create({
   container: {
     ...Layout.container,
+    paddingTop: Spacings.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  listContainer: {
-    flex: 1,
-  },
-  listContent: {
-    paddingBottom: Spacings.md,
-  },
+  text: {
+    paddingTop: Spacings.xxl,
+    paddingBottom: Spacings.xl
+  }
 });

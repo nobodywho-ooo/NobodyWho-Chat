@@ -1,7 +1,7 @@
 import React from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { useStyled } from 'hooks';
-import { Button } from 'components';
+import { Button, Text } from 'components';
 
 import styles from './ErrorScreen.styles';
 

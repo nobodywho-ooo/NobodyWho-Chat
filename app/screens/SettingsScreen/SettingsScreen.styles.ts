@@ -1,14 +1,14 @@
 import { StyleSheet } from 'react-native';
 
-import { Layout } from 'style';
+import { Layout, Spacings } from 'style';
 
 export default StyleSheet.create({
   container: {
     ...Layout.container,
-    paddingTop: 16,
+    paddingTop: Spacings.lg,
   },
   spinner: {
     alignSelf: 'center',
-    paddingVertical: 24,
+    paddingVertical: Spacings.xl,
   },
 });

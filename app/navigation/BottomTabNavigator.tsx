@@ -1,5 +1,5 @@
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { MoreStackNavigator } from './MoreStackNavigator';
+import { MoreStackNavigator } from './SettingsStackNavigator';
 import { ChatStackNavigator } from './ChatStackNavigator';
 import { Platform } from 'react-native';
 import { useStyled } from 'hooks';
@@ -40,17 +40,17 @@ const BottomTabNavigator = () => {
         component={ChatStackNavigator}
       />
       <Tab.Screen
-        name="More"
+        name="Settings"
         options={{
           headerShown: false,
           tabBarIcon: Platform.select({
             ios: {
               type: 'sfSymbol',
-              name: 'ellipsis.circle.fill',
+              name: 'gear',
             },
             android: {
               type: 'materialSymbol',
-              name: 'more_horiz',
+              name: 'settings',
             },
           }),
         }}

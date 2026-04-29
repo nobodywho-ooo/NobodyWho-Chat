@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { isLiquidGlassSupported } from '@callstack/liquid-glass';
-import { MoreScreen } from 'screens';
+import { SettingsScreen } from 'screens';
 import { useStyled } from 'hooks';
 
 const Stack = createNativeStackNavigator();
@@ -10,7 +10,7 @@ export const MoreStackNavigator = () => {
 
   return (
     <Stack.Navigator
-      initialRouteName="MoreScreen"
+      initialRouteName="SettingsScreen"
       screenOptions={{
         ...(!isLiquidGlassSupported && {
           headerStyle: { backgroundColor: colors.surface },
@@ -21,10 +21,10 @@ export const MoreStackNavigator = () => {
       }}
     >
       <Stack.Screen
-        name="MoreScreen"
-        component={MoreScreen}
+        name="SettingsScreen"
+        component={SettingsScreen}
         options={{
-          title: 'More',
+          title: 'Settings',
           headerLargeTitleEnabled: true,
         }}
       />
