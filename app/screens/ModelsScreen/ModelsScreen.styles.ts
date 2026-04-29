@@ -4,9 +4,15 @@ import { Layout, Spacings } from 'style';
 export default StyleSheet.create({
   container: {
     ...Layout.container,
-    paddingTop: Spacings.lg
+    paddingTop: Spacings.lg,
   },
-  text: {
+  firstHeader: {
+    marginBottom: Spacings.lg,
+  },
+  secondHeader: {
+    marginVertical: Spacings.lg,
+  },
+  loader: {
     marginTop: Spacings.lg,
   },
 });

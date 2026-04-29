@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useStyled } from 'hooks';
-import { Button, Text } from 'components';
+import { ErrorView } from 'components';
 
 import styles from './ErrorScreen.styles';
 
@@ -14,8 +14,7 @@ export const ErrorScreen: React.FC<ErrorScreenProps> = ({ onRetry }) => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <Text style={styles.text}>Something went wrong</Text>
-      <Button title="Retry" onPress={onRetry} />
+      <ErrorView message="Something went wrong" onRetry={onRetry} />
     </View>
   );
 };

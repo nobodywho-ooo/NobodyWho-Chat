@@ -17,6 +17,11 @@ export const variantStyles: Record<TextVariant, TextStyle> = {
     fontWeight: '500',
     letterSpacing: 0,
   },
+  h4: {
+    fontSize: 20,
+    fontWeight: '500',
+    letterSpacing: 0,
+  },
   body1: {
     fontSize: 16,
     fontWeight: '400',
