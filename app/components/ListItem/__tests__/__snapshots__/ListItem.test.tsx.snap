@@ -1,0 +1,235 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly ListItem 1`] = `
+<View
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": undefined,
+      "expanded": undefined,
+      "selected": undefined,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={true}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "alignItems": "center",
+        "flexDirection": "row",
+        "paddingVertical": 12,
+      },
+      undefined,
+    ]
+  }
+>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 20,
+          "height": 40,
+          "justifyContent": "center",
+          "width": 40,
+        },
+        {
+          "backgroundColor": "red",
+        },
+      ]
+    }
+  >
+    <PlatformIcon
+      androidIconName="chat_bubble"
+      color="#FFFFFF"
+      iosIconName="bubble.fill"
+      size={20}
+    />
+  </View>
+  <View
+    style={
+      {
+        "flex": 1,
+        "marginLeft": 12,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "fontSize": 16,
+          "fontWeight": "500",
+        }
+      }
+    >
+      Some title
+    </Text>
+    <Text
+      style={
+        [
+          {
+            "fontSize": 14,
+            "marginTop": 2,
+          },
+          {
+            "color": "#7c7c7c",
+          },
+        ]
+      }
+    >
+      Some subtitle
+    </Text>
+  </View>
+  <View
+    style={
+      {
+        "marginLeft": 8,
+      }
+    }
+  >
+    <PlatformIcon
+      androidIconName="chevron_right"
+      color="#7c7c7c"
+      iosIconName="chevron.right"
+      size={16}
+    />
+  </View>
+</View>
+`;
+
+exports[`renders correctly ListItem when disabled 1`] = `
+<View
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": true,
+      "expanded": undefined,
+      "selected": undefined,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={true}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "alignItems": "center",
+        "flexDirection": "row",
+        "paddingVertical": 12,
+      },
+      {
+        "opacity": 0.4,
+      },
+    ]
+  }
+>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 20,
+          "height": 40,
+          "justifyContent": "center",
+          "width": 40,
+        },
+        {
+          "backgroundColor": "red",
+        },
+      ]
+    }
+  >
+    <PlatformIcon
+      androidIconName="chat_bubble"
+      color="#FFFFFF"
+      iosIconName="bubble.fill"
+      size={20}
+    />
+  </View>
+  <View
+    style={
+      {
+        "flex": 1,
+        "marginLeft": 12,
+      }
+    }
+  >
+    <Text
+      style={
+        {
+          "fontSize": 16,
+          "fontWeight": "500",
+        }
+      }
+    >
+      Some title
+    </Text>
+    <Text
+      style={
+        [
+          {
+            "fontSize": 14,
+            "marginTop": 2,
+          },
+          {
+            "color": "#7c7c7c",
+          },
+        ]
+      }
+    >
+      Some subtitle
+    </Text>
+  </View>
+  <View
+    style={
+      {
+        "marginLeft": 8,
+      }
+    }
+  >
+    <PlatformIcon
+      androidIconName="chevron_right"
+      color="#7c7c7c"
+      iosIconName="chevron.right"
+      size={16}
+    />
+  </View>
+</View>
+`;

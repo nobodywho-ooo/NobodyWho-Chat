@@ -1,0 +1,32 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly MessageListItem 1`] = `
+<View
+  style={
+    [
+      {
+        "alignSelf": "flex-end",
+        "borderRadius": 16,
+        "marginVertical": 12,
+        "maxWidth": "90%",
+        "paddingHorizontal": 16,
+        "paddingVertical": 12,
+      },
+      {
+        "backgroundColor": "#ebebeb",
+      },
+    ]
+  }
+>
+  <Text
+    style={
+      {
+        "fontSize": 15,
+        "lineHeight": 22,
+      }
+    }
+  >
+    What is water?
+  </Text>
+</View>
+`;

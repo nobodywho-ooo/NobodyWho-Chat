@@ -1,0 +1,347 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly InputBar 1`] = `
+<View
+  style={
+    [
+      {
+        "left": 0,
+        "paddingHorizontal": 12,
+        "position": "absolute",
+        "right": 0,
+      },
+      undefined,
+    ]
+  }
+>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 24,
+          "flexDirection": "row",
+          "minHeight": 48,
+          "paddingHorizontal": 16,
+          "paddingVertical": 8,
+        },
+        {
+          "boxShadow": [
+            {
+              "blurRadius": "15px",
+              "color": "rgba(44, 44, 44, 0.24)",
+              "inset": false,
+              "offsetX": 0,
+              "offsetY": 0,
+              "spreadDistance": "4px",
+            },
+          ],
+        },
+        {
+          "backgroundColor": "#FFFFFF",
+        },
+      ]
+    }
+  >
+    <TextInput
+      multiline={true}
+      onChangeText={[Function]}
+      placeholder="Ask something..."
+      placeholderTextColor="#999"
+      style={
+        [
+          {
+            "flex": 1,
+            "fontSize": 16,
+            "maxHeight": 100,
+          },
+          {
+            "color": "#000000",
+          },
+        ]
+      }
+      value=""
+    />
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "justifyContent": "center",
+          "marginLeft": 8,
+          "paddingHorizontal": 12,
+          "paddingVertical": 6,
+        }
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontSize": 16,
+            },
+            {
+              "color": "#7c7c7c",
+              "fontWeight": "600",
+            },
+          ]
+        }
+      >
+        Send
+      </Text>
+    </View>
+  </View>
+</View>
+`;
+
+exports[`renders correctly InputBar when streaming 1`] = `
+<View
+  style={
+    [
+      {
+        "left": 0,
+        "paddingHorizontal": 12,
+        "position": "absolute",
+        "right": 0,
+      },
+      undefined,
+    ]
+  }
+>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 24,
+          "flexDirection": "row",
+          "minHeight": 48,
+          "paddingHorizontal": 16,
+          "paddingVertical": 8,
+        },
+        {
+          "boxShadow": [
+            {
+              "blurRadius": "15px",
+              "color": "rgba(44, 44, 44, 0.24)",
+              "inset": false,
+              "offsetX": 0,
+              "offsetY": 0,
+              "spreadDistance": "4px",
+            },
+          ],
+        },
+        {
+          "backgroundColor": "#FFFFFF",
+        },
+      ]
+    }
+  >
+    <TextInput
+      multiline={true}
+      onChangeText={[Function]}
+      placeholder="Ask something..."
+      placeholderTextColor="#999"
+      style={
+        [
+          {
+            "flex": 1,
+            "fontSize": 16,
+            "maxHeight": 100,
+          },
+          {
+            "color": "#000000",
+          },
+        ]
+      }
+      value=""
+    />
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+    >
+      <PlatformIcon
+        androidIconName="stop_circle"
+        color="#f9342a"
+        iosIconName="stop.circle"
+        size={28}
+      />
+    </View>
+  </View>
+</View>
+`;
+
+exports[`renders correctly InputBar with value 1`] = `
+<View
+  style={
+    [
+      {
+        "left": 0,
+        "paddingHorizontal": 12,
+        "position": "absolute",
+        "right": 0,
+      },
+      undefined,
+    ]
+  }
+>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 24,
+          "flexDirection": "row",
+          "minHeight": 48,
+          "paddingHorizontal": 16,
+          "paddingVertical": 8,
+        },
+        {
+          "boxShadow": [
+            {
+              "blurRadius": "15px",
+              "color": "rgba(44, 44, 44, 0.24)",
+              "inset": false,
+              "offsetX": 0,
+              "offsetY": 0,
+              "spreadDistance": "4px",
+            },
+          ],
+        },
+        {
+          "backgroundColor": "#FFFFFF",
+        },
+      ]
+    }
+  >
+    <TextInput
+      multiline={true}
+      onChangeText={[Function]}
+      placeholder="Ask something..."
+      placeholderTextColor="#999"
+      style={
+        [
+          {
+            "flex": 1,
+            "fontSize": 16,
+            "maxHeight": 100,
+          },
+          {
+            "color": "#000000",
+          },
+        ]
+      }
+      value="Type here"
+    />
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "justifyContent": "center",
+          "marginLeft": 8,
+          "paddingHorizontal": 12,
+          "paddingVertical": 6,
+        }
+      }
+    >
+      <Text
+        style={
+          [
+            {
+              "fontSize": 16,
+            },
+            {
+              "color": "#628395",
+              "fontWeight": "500",
+            },
+          ]
+        }
+      >
+        Send
+      </Text>
+    </View>
+  </View>
+</View>
+`;

@@ -25,89 +25,17 @@ exports[`renders correctly NoModelDownloadedScreen 1`] = `
   />
   <Text
     style={
-      [
-        {
-          "color": "#000000",
-        },
-        {
-          "fontSize": 24,
-          "fontWeight": "500",
-          "letterSpacing": 0,
-        },
-        undefined,
-        undefined,
-        {
-          "paddingBottom": 20,
-          "paddingTop": 30,
-        },
-      ]
+      {
+        "paddingBottom": 20,
+        "paddingTop": 32,
+      }
     }
+    variant="h3"
   >
     No model available
   </Text>
-  <View
-    accessibilityState={
-      {
-        "busy": undefined,
-        "checked": undefined,
-        "disabled": undefined,
-        "expanded": undefined,
-        "selected": undefined,
-      }
-    }
-    accessibilityValue={
-      {
-        "max": undefined,
-        "min": undefined,
-        "now": undefined,
-        "text": undefined,
-      }
-    }
-    accessible={true}
-    collapsable={false}
-    focusable={true}
-    onBlur={[Function]}
-    onClick={[Function]}
-    onFocus={[Function]}
-    onResponderGrant={[Function]}
-    onResponderMove={[Function]}
-    onResponderRelease={[Function]}
-    onResponderTerminate={[Function]}
-    onResponderTerminationRequest={[Function]}
-    onStartShouldSetResponder={[Function]}
-    style={
-      [
-        {
-          "alignItems": "center",
-          "borderRadius": 9999,
-          "justifyContent": "center",
-          "overflow": "hidden",
-          "paddingHorizontal": 24,
-          "paddingVertical": 12,
-        },
-        {
-          "backgroundColor": "#628395",
-        },
-        undefined,
-        false,
-      ]
-    }
-  >
-    <Text
-      style={
-        [
-          {
-            "fontSize": 16,
-            "fontWeight": "600",
-          },
-          {
-            "color": "#FFFFFF",
-          },
-        ]
-      }
-    >
-      Download a model
-    </Text>
-  </View>
+  <Button
+    title="Download a model"
+  />
 </View>
 `;

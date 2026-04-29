@@ -32,6 +32,12 @@ npm run iOS
 
 #### Miscellaneous
 
+Update tests
+
+```sh
+npm run test-update
+```
+
 iOS cleanup
 
 ```sh

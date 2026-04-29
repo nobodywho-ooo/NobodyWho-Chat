@@ -11,11 +11,10 @@ import {
   LiquidGlassView,
   isLiquidGlassSupported,
 } from '@callstack/liquid-glass';
-import { MaterialSymbol, SFSymbol } from '@react-navigation/native';
 import { useStyled } from 'hooks';
+import { PlatformIcon } from 'components';
 
 import { styles, getBoxShadow, INPUT_BAR_HEIGHT } from './InputBar.styles';
-import { isIOS } from 'helpers';
 
 const getInputWrapperProps = (isLiquidGlassSupported: boolean) =>
   isLiquidGlassSupported
@@ -95,11 +94,12 @@ const InputBarAction: React.FC<InputBarActionProps> = ({
   if (isStreaming) {
     return (
       <Pressable onPress={onStop}>
-        {isIOS ? (
-          <SFSymbol name="stop.circle" size={28} color={colors.danger} />
-        ) : (
-          <MaterialSymbol name="stop_circle" size={28} color={colors.danger} />
-        )}
+        <PlatformIcon
+          iosIconName="stop.circle"
+          androidIconName="stop_circle"
+          size={28}
+          color={colors.danger}
+        />
       </Pressable>
     );
   }

@@ -1,0 +1,9 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly PlatformIcon 1`] = `
+<SFSymbol
+  color="red"
+  name="bubble.fill"
+  size={48}
+/>
+`;

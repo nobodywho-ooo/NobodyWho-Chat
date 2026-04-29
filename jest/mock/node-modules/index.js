@@ -2,6 +2,8 @@ jest.mock("@react-navigation/native", () => {
   return {
     useNavigation: () => ({ goBack: jest.fn() }),
     useRoute: () => jest.fn(),
+    SFSymbol: 'SFSymbol',
+    MaterialSymbol: 'MaterialSymbol',
   };
 });
 
@@ -37,8 +39,8 @@ jest.mock('@dr.pogodin/react-native-fs', () => {
 
 jest.mock('@callstack/liquid-glass', () => {
   return {
-    LiquidGlassView: jest.fn(),
-    isLiquidGlassSupported: () => jest.fn(),
+    LiquidGlassView: 'LiquidGlassView',
+    isLiquidGlassSupported: false,
   };
 });
 
@@ -51,6 +53,17 @@ jest.mock('react-native-enriched-markdown', () => {
 jest.mock('react-native-nobodywho', () => {
   return {
     ChatMessage: jest.fn(),
-    Role: jest.fn(),
+    Role: {
+      User: 0,
+      Assistant: 1,
+      System: 2,
+      Tool: 3,
+    },
+  };
+});
+
+jest.mock("react-native-safe-area-context", () => {
+  return {
+    useSafeAreaInsets: () => jest.fn,
   };
 });
