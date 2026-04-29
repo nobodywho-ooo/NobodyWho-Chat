@@ -1,0 +1,21 @@
+{
+  "extends": "@react-native/typescript-config",
+  "compilerOptions": {
+    "types": ["jest"],
+    "customConditions": ["react-native", "react-native-strict-api"],
+    "paths": {
+      "components": ["./app/components"],
+      "navigation": ["./app/navigation"],
+      "style": ["./app/style"],
+      "utils": ["./app/utils"],
+      "types": ["./app/types"],
+      "hooks": ["./app/hooks"],
+      "context": ["./app/context"],
+      "services": ["./app/services"],
+      "screens": ["./app/screens"],
+      "helpers": ["./app/helpers"]
+    }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["**/node_modules", "**/Pods"]
+}
