@@ -1,21 +1,35 @@
 import * as React from 'react';
 import { StatusBar } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { useTheme, ThemeProvider } from 'context';
+import {
+  NavigationContainer,
+  DefaultTheme,
+  DarkTheme,
+} from '@react-navigation/native';
+import { ThemeProvider, isDarkModeEnabled } from 'context';
+import { useStyled } from 'hooks';
 import { BottomTabNavigator } from 'navigation';
 import { AiServiceProvider } from 'services';
 
 function AppContent() {
-  const theme = useTheme();
+  const { colors } = useStyled();
+  const isDarkMode = isDarkModeEnabled();
+
+  const navigationTheme = {
+    ...(isDarkMode ? DarkTheme : DefaultTheme),
+    colors: {
+      ...(isDarkMode ? DarkTheme.colors : DefaultTheme.colors),
+      background: colors.surface,
+    },
+  };
 
   return (
     <>
       <StatusBar
-        barStyle={theme === 'dark' ? 'light-content' : 'dark-content'}
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
         translucent
       />
-      <NavigationContainer>
+      <NavigationContainer theme={navigationTheme}>
         <BottomTabNavigator />
       </NavigationContainer>
     </>

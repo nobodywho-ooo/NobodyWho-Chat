@@ -40,3 +40,6 @@ export const useTheme = () => {
   const theme = useContext(ThemeContext);
   return theme;
 };
+
+export const isDarkModeEnabled = (): boolean =>
+  Appearance.getColorScheme() === 'dark';

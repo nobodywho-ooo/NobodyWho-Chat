@@ -1,3 +1,3 @@
-import { useTheme, ThemeProvider } from './ThemeContext';
+import { useTheme, ThemeProvider, isDarkModeEnabled } from './ThemeContext';
 
-export { useTheme, ThemeProvider };
+export { useTheme, ThemeProvider, isDarkModeEnabled };

@@ -13,9 +13,9 @@
   "dependencies": {
     "@callstack/liquid-glass": "^0.7.1",
     "@dr.pogodin/react-native-fs": "^2.38.2",
-    "@react-navigation/bottom-tabs": "^8.0.0-alpha.23",
-    "@react-navigation/native": "^8.0.0-alpha.18",
-    "@react-navigation/native-stack": "^8.0.0-alpha.24",
+    "@react-navigation/bottom-tabs": "^8.0.0-alpha.25",
+    "@react-navigation/native": "^8.0.0-alpha.20",
+    "@react-navigation/native-stack": "^8.0.0-alpha.26",
     "react": "19.2.3",
     "react-native": "0.85.2",
     "react-native-enriched-markdown": "^0.4.1",
