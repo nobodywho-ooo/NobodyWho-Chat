@@ -23,7 +23,7 @@ export const NoModelDownloadedScreen: React.FC = () => {
         iosIconName={'cpu'}
         androidIconName={'memory'}
         size={50}
-        color={colors.disable}
+        color={colors.onSurfaceDisabled}
       />
       <Text variant="h3" style={styles.text}>
         No model available
