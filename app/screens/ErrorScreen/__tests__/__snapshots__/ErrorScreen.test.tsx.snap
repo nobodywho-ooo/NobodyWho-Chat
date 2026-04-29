@@ -15,23 +15,27 @@ exports[`renders correctly ErrorScreen 1`] = `
     ]
   }
 >
-  <Text
+  <View
     style={
-      [
-        {
-          "marginBottom": 16,
-        },
-        {
-          "color": "#000000",
-        },
-      ]
+      {
+        "alignItems": "center",
+        "paddingVertical": 32,
+      }
     }
   >
-    Something went wrong
-  </Text>
-  <Button
-    onPress={[Function]}
-    title="Retry"
-  />
+    <Text
+      style={
+        {
+          "marginBottom": 16,
+        }
+      }
+    >
+      Something went wrong
+    </Text>
+    <Button
+      onPress={[Function]}
+      title="Retry"
+    />
+  </View>
 </View>
 `;

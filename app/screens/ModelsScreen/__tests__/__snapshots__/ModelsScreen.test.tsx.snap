@@ -1,0 +1,57 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly ModelsScreen 1`] = `
+<RCTScrollView
+  contentInsetAdjustmentBehavior="automatic"
+  style={
+    [
+      {
+        "flex": 1,
+        "paddingHorizontal": 16,
+        "paddingTop": 16,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <View>
+    <Text
+      style={
+        {
+          "marginBottom": 16,
+        }
+      }
+      variant="h4"
+    >
+      Ready to use
+    </Text>
+    <ListItem
+      androidIconName="download"
+      iconBackgroundColor="#2ec728"
+      iosIconName="arrow.down.circle"
+      subtitle="6 models"
+      title="Downloaded"
+    />
+    <Text
+      style={
+        {
+          "marginVertical": 16,
+        }
+      }
+      variant="h4"
+    >
+      Available to Download
+    </Text>
+    <ActivityIndicator
+      color="#7c7c7c"
+      style={
+        {
+          "marginTop": 16,
+        }
+      }
+    />
+  </View>
+</RCTScrollView>
+`;
