@@ -35,7 +35,7 @@ export const darkColors: NWColors = {
   surfaceSecondary: '#2d2d2d',
   onSurface: '#FFFFFF',
   onSurfaceVariant: '#d8d8d8',
-  onSurfaceDisabled: '#c7c7c7',
+  onSurfaceDisabled: '#8d8d8d',
   surfaceContainer: '#3c3c3c',
   primary: '#628395',
   danger: '#F32013',
