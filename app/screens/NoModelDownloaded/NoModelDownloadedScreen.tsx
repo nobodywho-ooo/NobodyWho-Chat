@@ -28,7 +28,16 @@ export const NoModelDownloadedScreen: React.FC = () => {
       <Text variant="h3" style={styles.text}>
         No model available
       </Text>
-      <Button title="Download a model" />
+      <Button
+        title="Download a model"
+        onPress={() =>
+          // @ts-ignore
+          navigation.navigate('Settings', {
+            screen: 'ModelsScreen',
+            initial: false,
+          })
+        }
+      />
     </View>
   );
 };
