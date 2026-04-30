@@ -1,5 +1,6 @@
 import { StyleSheet, ViewStyle, TextStyle } from 'react-native';
 import { ButtonVariant } from 'types';
+import { NWColors } from 'style';
 
 interface ButtonVariantStyle {
   button: ViewStyle;
@@ -8,32 +9,27 @@ interface ButtonVariantStyle {
 
 export const getVariantStyles = (
   variant: ButtonVariant,
-  colors: {
-    primary: string;
-    border: string;
-    surface: string;
-    onSurface: string;
-  },
+  colors: NWColors,
 ): ButtonVariantStyle => {
   switch (variant) {
     case 'primary':
       return {
         button: {
-          backgroundColor: colors.primary,
+          backgroundColor: colors.ctaSurfacePrimary,
         },
         text: {
-          color: '#FFFFFF',
+          color: colors.ctaContentPrimary,
         },
       };
     case 'outline':
       return {
         button: {
-          backgroundColor: colors.surface,
+          backgroundColor: colors.ctaSurfaceOutline,
           borderWidth: 1.5,
-          borderColor: colors.border,
+          borderColor: colors.ctaBorderOutline,
         },
         text: {
-          color: colors.onSurface,
+          color: colors.ctaContentOutline,
         },
       };
   }

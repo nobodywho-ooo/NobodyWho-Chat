@@ -1,5 +1,5 @@
 export interface Model {
-  modelId: number;
+  id: number;
   modelName: string;
   modelSizeGB: number;
   parameterCountBillions: number;

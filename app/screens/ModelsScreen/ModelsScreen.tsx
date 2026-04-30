@@ -15,6 +15,7 @@ export const ModelsScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
   const showModels = !isLoading && !hasError && models.length > 0;
+  const modelsIdNotAvailableToDownload = ['1'];
 
   const fetchModels = useCallback(async () => {
     setIsLoading(true);
@@ -34,6 +35,10 @@ export const ModelsScreen: React.FC = () => {
     fetchModels();
   }, [fetchModels]);
 
+  const handleModelPress = useCallback((model: Model) => {
+    console.log('Model pressed:', model);
+  }, []);
+
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
@@ -45,11 +50,14 @@ export const ModelsScreen: React.FC = () => {
       <ListItem
         title={'Downloaded'}
         subtitle={'6 models'}
-        iosIconName={'arrow.down.circle'}
-        androidIconName={'download'}
+        iosIconName={'document.fill'}
+        androidIconName={'article'}
         iconBackgroundColor="#2ec728"
       />
-      <Text variant="h4" style={styles.secondHeader}>
+      <Text variant="h4" style={styles.secondaryHeader}>
+        Downloading...
+      </Text>
+      <Text variant="h4" style={styles.secondaryHeader}>
         Available to Download
       </Text>
       {isLoading && (
@@ -65,7 +73,14 @@ export const ModelsScreen: React.FC = () => {
         />
       )}
       {showModels &&
-        models.map(model => <ModelCard key={model.modelId} model={model} />)}
+        models.map(model => (
+          <ModelCard
+            key={model.id}
+            model={model}
+            isDownloading={model.id == 1}
+            onPress={handleModelPress}
+          />
+        ))}
     </ScrollView>
   );
 };

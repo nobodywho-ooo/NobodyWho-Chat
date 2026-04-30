@@ -5,14 +5,19 @@ export default StyleSheet.create({
   container: {
     borderWidth: 1,
     borderRadius: 12,
-    padding: Spacings.lg,
+    padding: Spacings.md,
     marginBottom: Spacings.sm,
-  },
-  header: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  infoContainer: {
+    paddingLeft: Spacings.md,
+    flex: 1,
+  },
+  detailsContainer: {
+    flexDirection: 'row', 
     justifyContent: 'space-between',
-    marginBottom: Spacings.xs,
+    marginTop: Spacings.sm,
   },
   name: {
     flex: 1,
@@ -30,7 +35,7 @@ export default StyleSheet.create({
   tagText: {
     fontSize: 12,
   },
-  meta: {
+  metaData: {
     fontSize: 13,
   },
 });

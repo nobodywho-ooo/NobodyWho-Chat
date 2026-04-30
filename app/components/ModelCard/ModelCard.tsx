@@ -1,44 +1,68 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useStyled } from 'hooks';
 import { Model } from 'types';
 import { Text } from '../Text/Text';
+import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 
 import styles from './ModelCard.styles';
 
 interface ModelCardProps {
   model: Model;
+  isDownloading: boolean;
+  onPress?: (model: Model) => void;
 }
 
-export const ModelCard: React.FC<ModelCardProps> = ({ model }) => {
+export const ModelCard: React.FC<ModelCardProps> = ({
+  model,
+  isDownloading,
+  onPress,
+}) => {
   const { colors } = useStyled();
+  const { modelName, parameterCountBillions, modelSizeGB, tags } = model;
+
+  const iosIconName = isDownloading
+    ? 'arrow.down.circle.dotted'
+    : 'arrow.down.circle';
+  const androidIconName = isDownloading ? 'downloading' : 'download';
 
   return (
+    <Pressable onPress={() => onPress?.(model)}>
     <View style={[styles.container, { borderColor: colors.border }]}>
-      <View style={styles.header}>
+      <PlatformIcon
+        iosIconName={iosIconName}
+        androidIconName={androidIconName}
+        size={28}
+        color={colors.primary}
+      />
+      <View style={styles.infoContainer}>
         <Text style={styles.name} bold>
-          {model.modelName}
+          {modelName}
         </Text>
-      </View>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Text style={[styles.meta, { color: colors.onSurfaceVariant }]}>
-          {model.modelSizeGB} GB · {model.parameterCountBillions}B
-        </Text>
-        <View style={styles.tags}>
-          {model.tags.map(tag => (
-            <View
-              key={tag}
-              style={[styles.tag, { backgroundColor: colors.surfaceContainer }]}
-            >
-              <Text
-                style={[styles.tagText, { color: colors.onSurfaceVariant }]}
+        <View style={styles.detailsContainer}>
+          <Text style={[styles.metaData, { color: colors.onSurfaceVariant }]}>
+            {modelSizeGB} GB · {parameterCountBillions}B
+          </Text>
+          <View style={styles.tags}>
+            {tags.map(tag => (
+              <View
+                key={tag}
+                style={[
+                  styles.tag,
+                  { backgroundColor: colors.surfaceContainer },
+                ]}
               >
-                {tag}
-              </Text>
-            </View>
-          ))}
+                <Text
+                  style={[styles.tagText, { color: colors.onSurfaceVariant }]}
+                >
+                  {tag}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
       </View>
     </View>
+    </Pressable>
   );
 };

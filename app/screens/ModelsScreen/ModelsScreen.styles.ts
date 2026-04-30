@@ -9,7 +9,7 @@ export default StyleSheet.create({
   firstHeader: {
     marginBottom: Spacings.lg,
   },
-  secondHeader: {
+  secondaryHeader: {
     marginVertical: Spacings.lg,
   },
   loader: {
