@@ -16,10 +16,12 @@
     "@react-navigation/bottom-tabs": "^8.0.0-alpha.25",
     "@react-navigation/native": "^8.0.0-alpha.20",
     "@react-navigation/native-stack": "^8.0.0-alpha.26",
+    "@types/ramda": "^0.31.1",
+    "ramda": "^0.32.0",
     "react": "19.2.3",
     "react-native": "0.85.2",
     "react-native-enriched-markdown": "^0.4.1",
-    "react-native-nobodywho": "^1.0.1",
+    "react-native-nobodywho": "1.0.1",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-screens": "^4.24.0"
   },

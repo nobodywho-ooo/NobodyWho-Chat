@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView } from 'react-native';
 import { useStyled } from 'hooks';
+import { filter, includes } from 'ramda';
 import { ErrorView, ListItem, ModelCard, Text } from 'components';
 import { Model } from 'types';
 
@@ -12,10 +13,14 @@ const MODELS_URL =
 export const ModelsScreen: React.FC = () => {
   const { colors } = useStyled();
   const [models, setModels] = useState<Model[]>([]);
+  const [modelsDownloading, setModelsDownloading] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
-  const showModels = !isLoading && !hasError && models.length > 0;
-  const modelsIdNotAvailableToDownload = ['1'];
+  const [hasFetch, setHasFetch] = useState(false);
+  const showModelsToDownload = !isLoading && !hasError && models.length > 0;
+
+  const modelsIdDownloading = [1];
+  const modelsIdDownloaded = [2];
 
   const fetchModels = useCallback(async () => {
     setIsLoading(true);
@@ -23,11 +28,20 @@ export const ModelsScreen: React.FC = () => {
     try {
       const response = await fetch(MODELS_URL);
       const data: Model[] = await response.json();
-      setModels(data);
+      const isAvailableToDownload = (model: Model) =>
+        !includes(model.id, [...modelsIdDownloading, ...modelsIdDownloaded]);
+
+      setModels(filter(isAvailableToDownload, data));
+
+      const isDownloading = (model: Model) =>
+        includes(model.id, modelsIdDownloading);
+
+      setModelsDownloading(filter(isDownloading, data));
     } catch {
       setHasError(true);
     } finally {
       setIsLoading(false);
+      setHasFetch(true);
     }
   }, []);
 
@@ -37,6 +51,8 @@ export const ModelsScreen: React.FC = () => {
 
   const handleModelPress = useCallback((model: Model) => {
     console.log('Model pressed:', model);
+    // Start download
+    // Update progress
   }, []);
 
   return (
@@ -44,20 +60,33 @@ export const ModelsScreen: React.FC = () => {
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
-      <Text variant="h4" style={styles.firstHeader}>
-        Ready to use
-      </Text>
-      <ListItem
-        title={'Downloaded'}
-        subtitle={'6 models'}
-        iosIconName={'document.fill'}
-        androidIconName={'article'}
-        iconBackgroundColor="#2ec728"
-      />
-      <Text variant="h4" style={styles.secondaryHeader}>
+      {modelsIdDownloaded.length != 0 && (
+        <>
+          <Text variant="h4" style={styles.firstHeader}>
+            Ready to use
+          </Text>
+          <ListItem
+            title={'Downloaded'}
+            subtitle={`${modelsIdDownloaded.length} models`}
+            iosIconName={'document.fill'}
+            androidIconName={'article'}
+            iconBackgroundColor="#2ec728"
+          />
+        </>
+      )}
+
+      <Text variant="h4" style={styles.header}>
         Downloading...
       </Text>
-      <Text variant="h4" style={styles.secondaryHeader}>
+      {modelsDownloading.map(model => (
+        <ModelCard
+          key={model.id}
+          model={model}
+          isDownloading={model.id == 1}
+          onPress={handleModelPress}
+        />
+      ))}
+      <Text variant="h4" style={styles.header}>
         Available to Download
       </Text>
       {isLoading && (
@@ -72,7 +101,7 @@ export const ModelsScreen: React.FC = () => {
           onRetry={fetchModels}
         />
       )}
-      {showModels &&
+      {showModelsToDownload &&
         models.map(model => (
           <ModelCard
             key={model.id}
@@ -81,6 +110,9 @@ export const ModelsScreen: React.FC = () => {
             onPress={handleModelPress}
           />
         ))}
+      {hasFetch && models.length == 0 && (
+        <Text>You have downloaded all the models.</Text>
+      )}
     </ScrollView>
   );
 };
