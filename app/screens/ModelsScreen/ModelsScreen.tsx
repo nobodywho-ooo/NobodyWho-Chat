@@ -8,7 +8,7 @@ import { Model } from 'types';
 import styles from './ModelsScreen.styles';
 
 const MODELS_URL =
-  'https://raw.githubusercontent.com/pielouNW/visionos-backend/refs/heads/main/backend.json';
+  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/backend.json';
 
 export const ModelsScreen: React.FC = () => {
   const { colors } = useStyled();
@@ -82,7 +82,7 @@ export const ModelsScreen: React.FC = () => {
         <ModelCard
           key={model.id}
           model={model}
-          isDownloading={model.id == 1}
+          downloadProgress={0.4}
           onPress={handleModelPress}
         />
       ))}
@@ -106,7 +106,7 @@ export const ModelsScreen: React.FC = () => {
           <ModelCard
             key={model.id}
             model={model}
-            isDownloading={model.id == 1}
+            downloadProgress={model.id === 1 ? 0.4 : undefined}
             onPress={handleModelPress}
           />
         ))}
