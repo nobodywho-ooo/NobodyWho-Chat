@@ -68,8 +68,8 @@ export const ModelsScreen: React.FC = () => {
           <ListItem
             title={'Downloaded'}
             subtitle={`${modelsIdDownloaded.length} models`}
-            iosIconName={'document.fill'}
-            androidIconName={'article'}
+            iosIconName={'cpu'}
+            androidIconName={'memory'}
             iconBackgroundColor="#2ec728"
           />
         </>
