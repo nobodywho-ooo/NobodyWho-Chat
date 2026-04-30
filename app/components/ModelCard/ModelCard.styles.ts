@@ -17,7 +17,7 @@ export default StyleSheet.create({
   detailsContainer: {
     flexDirection: 'row', 
     justifyContent: 'space-between',
-    marginTop: Spacings.sm,
+    marginBottom: Spacings.sm,
   },
   name: {
     flex: 1,

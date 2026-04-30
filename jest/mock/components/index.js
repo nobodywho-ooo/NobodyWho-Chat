@@ -7,3 +7,5 @@ jest.mock("../../../app/components/PlatformIcon/PlatformIcon", () => ({ Platform
 jest.mock("../../../app/components/Text/Text", () => ({ Text: 'Text' }));
 jest.mock("../../../app/components/Button/Button", () => ({ Button: 'Button' }));
 jest.mock("../../../app/components/InputBar/InputBar", () => ({ InputBar: 'InputBar' }));
+jest.mock("../../../app/components/ModelCard/ModelCard", () => ({ ModelCard: 'ModelCard' }));
+jest.mock("../../../app/components/ProgressBar/ProgressBar", () => ({ ProgressBar: 'ProgressBar' }));

@@ -28,12 +28,22 @@ exports[`renders correctly ModelsScreen 1`] = `
       Ready to use
     </Text>
     <ListItem
-      androidIconName="download"
+      androidIconName="article"
       iconBackgroundColor="#2ec728"
-      iosIconName="arrow.down.circle"
-      subtitle="6 models"
+      iosIconName="document.fill"
+      subtitle="1 models"
       title="Downloaded"
     />
+    <Text
+      style={
+        {
+          "marginVertical": 16,
+        }
+      }
+      variant="h4"
+    >
+      Downloading...
+    </Text>
     <Text
       style={
         {

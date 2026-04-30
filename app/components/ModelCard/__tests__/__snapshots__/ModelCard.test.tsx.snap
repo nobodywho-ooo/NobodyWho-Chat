@@ -1,0 +1,240 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly ModelCard 1`] = `
+<View
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": undefined,
+      "expanded": undefined,
+      "selected": undefined,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={true}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 12,
+          "borderWidth": 1,
+          "flexDirection": "row",
+          "marginBottom": 8,
+          "padding": 12,
+        },
+        {
+          "borderColor": "#e1e1e1",
+        },
+      ]
+    }
+  >
+    <PlatformIcon
+      androidIconName="download"
+      color="#628395"
+      iosIconName="arrow.down.circle"
+      size={28}
+    />
+    <View
+      style={
+        {
+          "flex": 1,
+          "paddingLeft": 12,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "flexDirection": "row",
+            "justifyContent": "space-between",
+            "marginBottom": 8,
+          }
+        }
+      >
+        <Text
+          bold={true}
+          style={
+            {
+              "flex": 1,
+              "marginRight": 8,
+            }
+          }
+        >
+          Qwen3 4B Q4 K M
+        </Text>
+        <View
+          style={
+            {
+              "flexDirection": "row",
+              "gap": 4,
+            }
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 6,
+                  "paddingHorizontal": 8,
+                  "paddingVertical": 2,
+                },
+                {
+                  "backgroundColor": "#ebebeb",
+                },
+              ]
+            }
+          >
+            <Text
+              style={
+                [
+                  {
+                    "fontSize": 12,
+                  },
+                  {
+                    "color": "#7c7c7c",
+                  },
+                ]
+              }
+            >
+              Thinking
+            </Text>
+          </View>
+        </View>
+      </View>
+      <Text
+        style={
+          [
+            {
+              "fontSize": 13,
+            },
+            {
+              "color": "#7c7c7c",
+            },
+          ]
+        }
+      >
+        Text generation
+         · 
+        4
+        B ·
+         
+        2.5
+         GB
+      </Text>
+    </View>
+  </View>
+</View>
+`;
+
+exports[`renders correctly ModelCard when downloading 1`] = `
+<View
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": undefined,
+      "expanded": undefined,
+      "selected": undefined,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={true}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+>
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 12,
+          "borderWidth": 1,
+          "flexDirection": "row",
+          "marginBottom": 8,
+          "padding": 12,
+        },
+        {
+          "borderColor": "#e1e1e1",
+        },
+      ]
+    }
+  >
+    <PlatformIcon
+      androidIconName="downloading"
+      color="#628395"
+      iosIconName="arrow.down.circle.dotted"
+      size={28}
+    />
+    <View
+      style={
+        {
+          "flex": 1,
+          "paddingLeft": 12,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "flexDirection": "row",
+            "justifyContent": "space-between",
+            "marginBottom": 8,
+          }
+        }
+      >
+        <Text
+          bold={true}
+          style={
+            {
+              "flex": 1,
+              "marginRight": 8,
+            }
+          }
+        >
+          Qwen3 4B Q4 K M
+        </Text>
+      </View>
+      <ProgressBar
+        progress={0.4}
+      />
+    </View>
+  </View>
+</View>
+`;

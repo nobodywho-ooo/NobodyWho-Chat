@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useStyled } from 'hooks';
-import { Model } from 'types';
+import { Model, pipelineLabel } from 'types';
 import { Text } from '../Text/Text';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
@@ -20,13 +20,29 @@ export const ModelCard: React.FC<ModelCardProps> = ({
   onPress,
 }) => {
   const { colors } = useStyled();
-  const { modelName, parameterCountBillions, modelSizeGB, tags } = model;
+  const { modelName, parameterCountBillions, modelSizeGB, pipeline, tags } =
+    model;
   const isDownloading = downloadProgress !== undefined;
 
   const iosIconName = isDownloading
     ? 'arrow.down.circle.dotted'
     : 'arrow.down.circle';
   const androidIconName = isDownloading ? 'downloading' : 'download';
+
+  const tagView = (
+    <View style={styles.tags}>
+      {tags.map(tag => (
+        <View
+          key={tag}
+          style={[styles.tag, { backgroundColor: colors.surfaceContainer }]}
+        >
+          <Text style={[styles.tagText, { color: colors.onSurfaceVariant }]}>
+            {tag}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
 
   return (
     <Pressable onPress={() => onPress?.(model)}>
@@ -38,39 +54,19 @@ export const ModelCard: React.FC<ModelCardProps> = ({
           color={colors.primary}
         />
         <View style={styles.infoContainer}>
-          <Text style={styles.name} bold>
-            {modelName}
-          </Text>
+          <View style={styles.detailsContainer}>
+            <Text style={styles.name} bold>
+              {modelName}
+            </Text>
+            {!isDownloading && tagView}
+          </View>
           {isDownloading ? (
             <ProgressBar progress={downloadProgress} />
           ) : (
-            <View style={styles.detailsContainer}>
-              <Text
-                style={[styles.metaData, { color: colors.onSurfaceVariant }]}
-              >
-                {modelSizeGB} GB · {parameterCountBillions}B
-              </Text>
-              <View style={styles.tags}>
-                {tags.map(tag => (
-                  <View
-                    key={tag}
-                    style={[
-                      styles.tag,
-                      { backgroundColor: colors.surfaceContainer },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.tagText,
-                        { color: colors.onSurfaceVariant },
-                      ]}
-                    >
-                      {tag}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+            <Text style={[styles.metaData, { color: colors.onSurfaceVariant }]}>
+              {pipelineLabel[pipeline]} · {parameterCountBillions}B ·{' '}
+              {modelSizeGB} GB
+            </Text>
           )}
         </View>
       </View>
