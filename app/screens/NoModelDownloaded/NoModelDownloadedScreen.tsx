@@ -34,7 +34,6 @@ export const NoModelDownloadedScreen: React.FC = () => {
           // @ts-ignore
           navigation.navigate('Settings', {
             screen: 'ModelsScreen',
-            initial: false,
           })
         }
       />
