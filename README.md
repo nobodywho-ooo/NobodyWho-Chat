@@ -49,5 +49,3 @@ Watchman cleanup
 ```sh
 make clean
 ```
-
----
