@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { useStyled } from 'hooks';
 import { Model, pipelineLabel } from 'types';
@@ -19,6 +19,7 @@ interface ModelCardProps {
 }
 
 export const ModelCard: React.FC<ModelCardProps> = ({
+  style,
   isSelected,
   isDownloaded,
   model,
@@ -29,6 +30,11 @@ export const ModelCard: React.FC<ModelCardProps> = ({
   const { modelName, parameterCountBillions, modelSizeGB, pipeline, tags } =
     model;
   const isDownloading = downloadProgress !== undefined;
+  const showIcon = !isDownloaded || isSelected;
+
+  const handlePress = useCallback(() => {
+    onPress?.(model);
+  }, [onPress, model]);
 
   let iosIconName: SFSymbolProps['name'] = isDownloading
     ? 'arrow.down.circle.dotted'
@@ -42,36 +48,22 @@ export const ModelCard: React.FC<ModelCardProps> = ({
     androidIconName = 'check_circle';
   }
 
-  const tagView = (
-    <View style={styles.tags}>
-      {tags.map(tag => (
-        <View
-          key={tag}
-          style={[styles.tag, { backgroundColor: colors.surfaceContainer }]}
-        >
-          <Text style={[styles.tagText, { color: colors.onSurfaceVariant }]}>
-            {tag}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-
-  let icon = (
-    <PlatformIcon
-      iosIconName={iosIconName}
-      androidIconName={androidIconName}
-      size={28}
-      color={isSelected ? colors.successSurface : colors.primary}
-    />
-  );
-
-  const showIcon = !isDownloaded || isSelected;
-
   return (
-    <Pressable onPress={() => onPress?.(model)}>
+    <Pressable
+      onPress={handlePress}
+      accessibilityRole="button"
+      accessibilityLabel={modelName}
+      style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }, style]}
+    >
       <View style={[styles.container, { borderColor: colors.border }]}>
-        {showIcon && icon}
+        {showIcon && (
+          <PlatformIcon
+            iosIconName={iosIconName}
+            androidIconName={androidIconName}
+            size={28}
+            color={isSelected ? colors.successSurface : colors.primary}
+          />
+        )}
         <View
           style={showIcon ? styles.infoContainer : styles.infoContainerNoIcon}
         >
@@ -79,7 +71,28 @@ export const ModelCard: React.FC<ModelCardProps> = ({
             <Text style={styles.name} bold>
               {modelName}
             </Text>
-            {!isDownloading && tagView}
+            {!isDownloading && (
+              <View style={styles.tags}>
+                {tags.map(tag => (
+                  <View
+                    key={tag}
+                    style={[
+                      styles.tag,
+                      { backgroundColor: colors.surfaceContainer },
+                    ]}
+                  >
+                    <Text
+                      style={[
+                        styles.tagText,
+                        { color: colors.onSurfaceVariant },
+                      ]}
+                    >
+                      {tag}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
           {isDownloading ? (
             <ProgressBar progress={downloadProgress} />
