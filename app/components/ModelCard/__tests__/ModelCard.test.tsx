@@ -29,9 +29,19 @@ test('renders correctly ModelCard', () => {
   expect(tree).toMatchSnapshot();
 });
 
-test('renders correctly ModelCard when downloading', () => {
+test('renders correctly ModelCard when model is downloading', () => {
   const tree = render(
     <ModelCard model={mockModel} downloadProgress={0.4} />,
   ).toJSON();
+  expect(tree).toMatchSnapshot();
+});
+
+test('renders correctly ModelCard when model is downloaded', () => {
+  const tree = render(<ModelCard model={mockModel} isDownloaded />).toJSON();
+  expect(tree).toMatchSnapshot();
+});
+
+test('renders correctly ModelCard when model is selected', () => {
+  const tree = render(<ModelCard model={mockModel} isSelected />).toJSON();
   expect(tree).toMatchSnapshot();
 });

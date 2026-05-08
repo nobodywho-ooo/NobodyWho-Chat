@@ -13,7 +13,10 @@ export type NWColors = {
   onSurfaceDisabled: string;
   surfaceContainer: string;
   primary: string;
-  danger: string;
+  dangerSurface: string;
+  dangerContent: string;
+  successSurface: string;
+  successContent: string;
   border: string;
   shadow: string;
   tabBarActive: string;
@@ -33,7 +36,10 @@ export const lightColors: NWColors = {
   onSurfaceDisabled: '#c1c1c1',
   surfaceContainer: '#ebebeb',
   primary: '#628395',
-  danger: '#f9342a',
+  dangerSurface: '#f9342a',
+  dangerContent: '#FFFFFF',
+  successSurface: '#2ec728',
+  successContent: '#FFFFFF',
   border: '#e1e1e1',
   shadow: 'rgba(44, 44, 44, 0.24)',
   tabBarActive: '#628395',
@@ -53,7 +59,10 @@ export const darkColors: NWColors = {
   onSurfaceDisabled: '#8d8d8d',
   surfaceContainer: '#3c3c3c',
   primary: '#628395',
-  danger: '#F32013',
+  dangerSurface: '#f9342a',
+  dangerContent: '#FFFFFF',
+  successSurface: '#2ec728',
+  successContent: '#FFFFFF',
   border: '#404040',
   shadow: 'rgba(244, 244, 244, 0.48)',
   tabBarActive: '#628395',

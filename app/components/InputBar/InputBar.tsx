@@ -98,7 +98,7 @@ const InputBarAction: React.FC<InputBarActionProps> = ({
           iosIconName="stop.circle"
           androidIconName="stop_circle"
           size={28}
-          color={colors.danger}
+          color={colors.dangerSurface}
         />
       </Pressable>
     );

@@ -25,14 +25,31 @@ exports[`renders correctly ModelsScreen 1`] = `
       }
       variant="h4"
     >
-      Ready to use
+      In use
     </Text>
-    <ListItem
-      androidIconName="article"
-      iconBackgroundColor="#2ec728"
-      iosIconName="document.fill"
-      subtitle="1 models"
-      title="Downloaded"
+    <ModelCard
+      isSelected={true}
+      model={
+        {
+          "author": "Qwen",
+          "family": "Qwen3",
+          "id": 1,
+          "modelName": "Qwen3 4B Q4 K M",
+          "modelSizeGB": 2.5,
+          "parameterCountBillions": 4,
+          "paths": [
+            {
+              "fileName": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+              "modelPath": "https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+            },
+          ],
+          "pipeline": "textGeneration",
+          "tags": [
+            "Fast",
+          ],
+        }
+      }
+      onPress={[Function]}
     />
     <Text
       style={
@@ -42,8 +59,16 @@ exports[`renders correctly ModelsScreen 1`] = `
       }
       variant="h4"
     >
-      Downloading...
+      Ready to use
     </Text>
+    <ListItem
+      androidIconName="memory"
+      iconBackgroundColor="#628395"
+      iosIconName="cpu"
+      onPress={[Function]}
+      subtitle="1 models"
+      title="Downloaded"
+    />
     <Text
       style={
         {

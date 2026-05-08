@@ -1,9 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { useStyled } from 'hooks';
 import { filter, includes } from 'ramda';
 import { ErrorView, ListItem, ModelCard, Text } from 'components';
-import { Model } from 'types';
+import { Model, ModelPipeline } from 'types';
 
 import styles from './ModelsScreen.styles';
 
@@ -12,6 +13,8 @@ const MODELS_URL =
 
 export const ModelsScreen: React.FC = () => {
   const { colors } = useStyled();
+  const navigation = useNavigation();
+  const [currentModel, setCurrentModel] = useState<Model | undefined>();
   const [models, setModels] = useState<Model[]>([]);
   const [modelsDownloading, setModelsDownloading] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -47,6 +50,25 @@ export const ModelsScreen: React.FC = () => {
 
   useEffect(() => {
     fetchModels();
+    // WIP: fake model for now
+    let model: Model = {
+      id: 1,
+      modelName: 'Qwen3 4B Q4 K M',
+      modelSizeGB: 2.5,
+      parameterCountBillions: 4,
+      author: 'Qwen',
+      family: 'Qwen3',
+      paths: [
+        {
+          modelPath:
+            'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
+          fileName: 'Qwen_Qwen3-0.6B-Q4_K_M.gguf',
+        },
+      ],
+      pipeline: ModelPipeline.textGeneration,
+      tags: ['Fast'],
+    };
+    setCurrentModel(model);
   }, [fetchModels]);
 
   const handleModelPress = useCallback((model: Model) => {
@@ -60,9 +82,25 @@ export const ModelsScreen: React.FC = () => {
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
-      {modelsIdDownloaded.length != 0 && (
+      {!!currentModel && (
         <>
           <Text variant="h4" style={styles.firstHeader}>
+            In use
+          </Text>
+          <ModelCard
+            key={currentModel.id}
+            isSelected
+            model={currentModel}
+            onPress={handleModelPress}
+          />
+        </>
+      )}
+      {modelsIdDownloaded.length != 0 && (
+        <>
+          <Text
+            variant="h4"
+            style={!!currentModel ? styles.header : styles.firstHeader}
+          >
             Ready to use
           </Text>
           <ListItem
@@ -70,22 +108,28 @@ export const ModelsScreen: React.FC = () => {
             subtitle={`${modelsIdDownloaded.length} models`}
             iosIconName={'cpu'}
             androidIconName={'memory'}
-            iconBackgroundColor="#2ec728"
+            iconBackgroundColor={colors.primary}
+            // @ts-ignore
+            onPress={() => navigation.navigate('DownloadedModelsScreen')}
           />
         </>
       )}
+      {modelsDownloading.length > 0 && (
+        <>
+          <Text variant="h4" style={styles.header}>
+            Downloading...
+          </Text>
+          {modelsDownloading.map(model => (
+            <ModelCard
+              key={model.id}
+              model={model}
+              downloadProgress={0.4}
+              onPress={handleModelPress}
+            />
+          ))}
+        </>
+      )}
 
-      <Text variant="h4" style={styles.header}>
-        Downloading...
-      </Text>
-      {modelsDownloading.map(model => (
-        <ModelCard
-          key={model.id}
-          model={model}
-          downloadProgress={0.4}
-          onPress={handleModelPress}
-        />
-      ))}
       <Text variant="h4" style={styles.header}>
         Available to Download
       </Text>

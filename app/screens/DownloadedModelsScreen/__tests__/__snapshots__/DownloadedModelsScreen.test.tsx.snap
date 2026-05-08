@@ -1,0 +1,126 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly ModelsScreen when empty 1`] = `
+<RCTScrollView
+  contentInsetAdjustmentBehavior="automatic"
+  style={
+    [
+      {
+        "flex": 1,
+        "paddingHorizontal": 16,
+        "paddingTop": 16,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <View>
+    <ModelCard
+      isDownloaded={true}
+      isSelected={true}
+      model={
+        {
+          "author": "Qwen",
+          "family": "Qwen3",
+          "id": 1,
+          "modelName": "Qwen3 4B Q4 K M",
+          "modelSizeGB": 2.5,
+          "parameterCountBillions": 4,
+          "paths": [
+            {
+              "fileName": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+              "modelPath": "https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+            },
+          ],
+          "pipeline": "textGeneration",
+          "tags": [
+            "Fast",
+          ],
+        }
+      }
+      onPress={[Function]}
+    />
+    <ModelCard
+      isDownloaded={true}
+      isSelected={false}
+      model={
+        {
+          "author": "Qwen",
+          "family": "Qwen3",
+          "id": 2,
+          "modelName": "Qwen3 0.6B Q4 K M",
+          "modelSizeGB": 0.4,
+          "parameterCountBillions": 4,
+          "paths": [
+            {
+              "fileName": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+              "modelPath": "https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+            },
+          ],
+          "pipeline": "textGeneration",
+          "tags": [
+            "Fast",
+          ],
+        }
+      }
+      onPress={[Function]}
+    />
+    <ModelCard
+      isDownloaded={true}
+      isSelected={false}
+      model={
+        {
+          "author": "Liquid AI",
+          "family": "LFM2",
+          "id": 3,
+          "modelName": "LFM2 700M Q3 K M",
+          "modelSizeGB": 0.4,
+          "parameterCountBillions": 0.7,
+          "paths": [
+            {
+              "fileName": "LFM2-700M-Q3_K_M.gguf",
+              "modelPath": "https://huggingface.co/unsloth/LFM2-700M-GGUF/resolve/main/LFM2-700M-Q3_K_M.gguf",
+            },
+          ],
+          "pipeline": "textGeneration",
+          "tags": [
+            "Tiny",
+          ],
+        }
+      }
+      onPress={[Function]}
+    />
+    <ModelCard
+      isDownloaded={true}
+      isSelected={false}
+      model={
+        {
+          "author": "Google",
+          "family": "Gemma 4",
+          "id": 4,
+          "modelName": "Gemma 4 E2B it",
+          "modelSizeGB": 3.4,
+          "parameterCountBillions": 5,
+          "paths": [
+            {
+              "fileName": "gemma-4-E2B-it-Q3_K_S.gguf",
+              "modelPath": "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q3_K_S.gguf",
+            },
+            {
+              "fileName": "mmproj-BF16.gguf",
+              "projectionModelPath": "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/mmproj-BF16.gguf",
+            },
+          ],
+          "pipeline": "ImageAudioTextToText",
+          "tags": [
+            "Powerful",
+          ],
+        }
+      }
+      onPress={[Function]}
+    />
+  </View>
+</RCTScrollView>
+`;

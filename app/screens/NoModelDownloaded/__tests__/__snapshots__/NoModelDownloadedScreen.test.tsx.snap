@@ -35,6 +35,7 @@ exports[`renders correctly NoModelDownloadedScreen 1`] = `
     No model available
   </Text>
   <Button
+    onPress={[Function]}
     title="Download a model"
   />
 </View>

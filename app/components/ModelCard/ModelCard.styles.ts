@@ -14,6 +14,9 @@ export default StyleSheet.create({
     paddingLeft: Spacings.md,
     flex: 1,
   },
+  infoContainerNoIcon: {
+    flex: 1,
+  },
   detailsContainer: {
     flexDirection: 'row', 
     justifyContent: 'space-between',

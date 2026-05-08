@@ -1,6 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { isLiquidGlassSupported } from '@callstack/liquid-glass';
-import { SettingsScreen, ModelsScreen } from 'screens';
+import { SettingsScreen, ModelsScreen, DownloadedModelsScreen } from 'screens';
 import { useStyled } from 'hooks';
 
 const Stack = createNativeStackNavigator();
@@ -32,6 +32,11 @@ export const MoreStackNavigator = () => {
         name="ModelsScreen"
         component={ModelsScreen}
         options={{ title: 'Models' }}
+      />
+      <Stack.Screen
+        name="DownloadedModelsScreen"
+        component={DownloadedModelsScreen}
+        options={{ title: 'Downloaded Models' }}
       />
     </Stack.Navigator>
   );
