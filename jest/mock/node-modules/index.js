@@ -67,3 +67,17 @@ jest.mock("react-native-safe-area-context", () => {
     useSafeAreaInsets: () => jest.fn,
   };
 });
+
+jest.mock('@op-engineering/op-sqlite', () => {
+  const mockDb = {
+    execute: jest.fn().mockResolvedValue({ rows: [] }),
+    executeSync: jest.fn().mockReturnValue({ rows: [] }),
+    executeBatch: jest.fn().mockResolvedValue({}),
+    reactiveExecute: jest.fn().mockReturnValue(jest.fn()),
+    flushPendingReactiveQueries: jest.fn().mockResolvedValue(undefined),
+    close: jest.fn(),
+  };
+  return {
+    open: jest.fn().mockReturnValue(mockDb),
+  };
+});

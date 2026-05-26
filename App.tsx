@@ -1,4 +1,5 @@
-import * as React from 'react';
+import React, { useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { StatusBar } from 'react-native';
 import {
   NavigationContainer,
@@ -6,8 +7,10 @@ import {
   DarkTheme,
 } from '@react-navigation/native';
 import { ThemeProvider, isDarkModeEnabled } from 'context';
+import { initDatabase } from 'helpers';
 import { useStyled } from 'hooks';
 import { BottomTabNavigator } from 'navigation';
+import { ErrorScreen, LoadingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
 
 function AppContent() {
@@ -36,12 +39,36 @@ function AppContent() {
   );
 }
 
+function AppLoader() {
+  const [dbReady, setDbReady] = useState(false);
+  const [dbError, setDbError] = useState(false);
+
+  const init = useCallback(() => {
+    setDbError(false);
+    setDbReady(false);
+    initDatabase()
+      .then(() => setDbReady(true))
+      .catch(() => setDbError(true));
+  }, []);
+
+  useEffect(() => {
+    init();
+  }, [init]);
+
+  if (dbError) return <ErrorScreen onRetry={init} />;
+  if (!dbReady) return <LoadingScreen />;
+
+  return (
+    <AiServiceProvider>
+      <AppContent />
+    </AiServiceProvider>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider>
-      <AiServiceProvider>
-        <AppContent />
-      </AiServiceProvider>
+      <AppLoader />
     </ThemeProvider>
   );
 }

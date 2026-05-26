@@ -59,24 +59,6 @@ exports[`renders correctly ModelsScreen 1`] = `
       }
       variant="h4"
     >
-      Ready to use
-    </Text>
-    <ListItem
-      androidIconName="memory"
-      iconBackgroundColor="#628395"
-      iosIconName="cpu"
-      onPress={[Function]}
-      subtitle="1 models"
-      title="Downloaded"
-    />
-    <Text
-      style={
-        {
-          "marginVertical": 16,
-        }
-      }
-      variant="h4"
-    >
       Available to Download
     </Text>
     <ActivityIndicator

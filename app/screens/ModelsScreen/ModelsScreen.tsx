@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useStyled } from 'hooks';
-import { filter, includes } from 'ramda';
+import { useModels, useStyled } from 'hooks';
+import { filter, includes, map, prop } from 'ramda';
 import { ErrorView, ListItem, ModelCard, Text } from 'components';
 import { Model, ModelPipeline } from 'types';
 
@@ -14,6 +14,7 @@ const MODELS_URL =
 export const ModelsScreen: React.FC = () => {
   const { colors } = useStyled();
   const navigation = useNavigation();
+  const { models: storedModels } = useModels();
   const [currentModel, setCurrentModel] = useState<Model | undefined>();
   const [models, setModels] = useState<Model[]>([]);
   const [modelsDownloading, setModelsDownloading] = useState<Model[]>([]);
@@ -23,7 +24,7 @@ export const ModelsScreen: React.FC = () => {
   const showModelsToDownload = !isLoading && !hasError && models.length > 0;
 
   const modelsIdDownloading = [1];
-  const modelsIdDownloaded = [2];
+  const downloadedModelIds = map(prop('id'), storedModels);
 
   const fetchModels = useCallback(async () => {
     setIsLoading(true);
@@ -32,7 +33,7 @@ export const ModelsScreen: React.FC = () => {
       const response = await fetch(MODELS_URL);
       const data: Model[] = await response.json();
       const isAvailableToDownload = (model: Model) =>
-        !includes(model.id, [...modelsIdDownloading, ...modelsIdDownloaded]);
+        !includes(model.id, [...modelsIdDownloading, ...downloadedModelIds]);
 
       setModels(filter(isAvailableToDownload, data));
 
@@ -90,7 +91,7 @@ export const ModelsScreen: React.FC = () => {
           <ModelCard key={currentModel.id} isSelected model={currentModel} />
         </>
       )}
-      {modelsIdDownloaded.length > 0 && (
+      {downloadedModelIds.length > 0 && (
         <>
           <Text
             variant="h4"
@@ -100,7 +101,7 @@ export const ModelsScreen: React.FC = () => {
           </Text>
           <ListItem
             title={'Downloaded'}
-            subtitle={`${modelsIdDownloaded.length} models`}
+            subtitle={`${downloadedModelIds.length} models`}
             iosIconName={'cpu'}
             androidIconName={'memory'}
             iconBackgroundColor={colors.primary}
