@@ -17,6 +17,7 @@ Demonstrates the capabilities of **[NobodyWho](https://github.com/nobodywho-ooo/
 ## 1. Getting Started
 
 First, you will need to run `npm install` to install dependencies.
+For iOS, install pods with `cd ios && pod install && cd ..`
 
 ### 2. Run the App
 

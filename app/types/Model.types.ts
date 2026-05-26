@@ -21,7 +21,7 @@ export enum ModelPipeline {
   imageToImage = "imageToImage",
   imageTextToText = "imageTextToText",
   audioTextToText = "audioTextToText",
-  imageAudioTextToText = "ImageAudioTextToText",
+  imageAudioTextToText = "imageAudioTextToText",
   featureExtraction = "featureExtraction",
   textRanking = "textRanking"
 }

@@ -95,7 +95,7 @@ export const ModelsScreen: React.FC = () => {
           />
         </>
       )}
-      {modelsIdDownloaded.length != 0 && (
+      {modelsIdDownloaded.length > 0 && (
         <>
           <Text
             variant="h4"
