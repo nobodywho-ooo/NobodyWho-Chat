@@ -60,9 +60,9 @@ export const ModelsScreen: React.FC = () => {
       family: 'Qwen3',
       paths: [
         {
-          modelPath:
-            'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
+          url: 'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
           fileName: 'Qwen_Qwen3-0.6B-Q4_K_M.gguf',
+          type: 'model',
         },
       ],
       pipeline: ModelPipeline.textGeneration,
@@ -87,12 +87,7 @@ export const ModelsScreen: React.FC = () => {
           <Text variant="h4" style={styles.firstHeader}>
             In use
           </Text>
-          <ModelCard
-            key={currentModel.id}
-            isSelected
-            model={currentModel}
-            onPress={handleModelPress}
-          />
+          <ModelCard key={currentModel.id} isSelected model={currentModel} />
         </>
       )}
       {modelsIdDownloaded.length > 0 && (

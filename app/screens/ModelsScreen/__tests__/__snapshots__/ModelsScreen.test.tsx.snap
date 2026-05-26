@@ -40,7 +40,8 @@ exports[`renders correctly ModelsScreen 1`] = `
           "paths": [
             {
               "fileName": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
-              "modelPath": "https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
+              "type": "model",
+              "url": "https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
             },
           ],
           "pipeline": "textGeneration",
@@ -49,7 +50,6 @@ exports[`renders correctly ModelsScreen 1`] = `
           ],
         }
       }
-      onPress={[Function]}
     />
     <Text
       style={

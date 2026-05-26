@@ -1,7 +1,7 @@
 export interface ModelPath {
-  modelPath?: string;
-  projectionModelPath?: string;
+  url: string;
   fileName: string;
+  type: string;
 }
 
 export interface Model {

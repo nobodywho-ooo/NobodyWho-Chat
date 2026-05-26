@@ -25,9 +25,9 @@ export const DownloadedModelsScreen: React.FC = () => {
       family: 'Qwen3',
       paths: [
         {
-          modelPath:
-            'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
+          url: 'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
           fileName: 'Qwen_Qwen3-0.6B-Q4_K_M.gguf',
+          type: 'model',
         },
       ],
       pipeline: ModelPipeline.textGeneration,
@@ -45,9 +45,9 @@ export const DownloadedModelsScreen: React.FC = () => {
         family: 'Qwen3',
         paths: [
           {
-            modelPath:
-              'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
+            url: 'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
             fileName: 'Qwen_Qwen3-0.6B-Q4_K_M.gguf',
+            type: 'model',
           },
         ],
         pipeline: ModelPipeline.textGeneration,
@@ -62,9 +62,9 @@ export const DownloadedModelsScreen: React.FC = () => {
         family: 'Qwen3',
         paths: [
           {
-            modelPath:
-              'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
+            url: 'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
             fileName: 'Qwen_Qwen3-0.6B-Q4_K_M.gguf',
+            type: 'model',
           },
         ],
         pipeline: ModelPipeline.textGeneration,
@@ -79,9 +79,9 @@ export const DownloadedModelsScreen: React.FC = () => {
         family: 'LFM2',
         paths: [
           {
-            modelPath:
-              'https://huggingface.co/unsloth/LFM2-700M-GGUF/resolve/main/LFM2-700M-Q3_K_M.gguf',
+            url: 'https://huggingface.co/unsloth/LFM2-700M-GGUF/resolve/main/LFM2-700M-Q3_K_M.gguf',
             fileName: 'LFM2-700M-Q3_K_M.gguf',
+            type: 'model',
           },
         ],
         pipeline: ModelPipeline.textGeneration,
@@ -96,14 +96,14 @@ export const DownloadedModelsScreen: React.FC = () => {
         family: 'Gemma 4',
         paths: [
           {
-            modelPath:
-              'https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q3_K_S.gguf',
+            url: 'https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q3_K_S.gguf',
             fileName: 'gemma-4-E2B-it-Q3_K_S.gguf',
+            type: 'model',
           },
           {
-            projectionModelPath:
-              'https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/mmproj-BF16.gguf',
+            url: 'https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/mmproj-BF16.gguf',
             fileName: 'mmproj-BF16.gguf',
+            type: 'projection',
           },
         ],
         pipeline: ModelPipeline.imageAudioTextToText,

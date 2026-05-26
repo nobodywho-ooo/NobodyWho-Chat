@@ -2,6 +2,8 @@
 
 exports[`renders correctly ModelCard 1`] = `
 <View
+  accessibilityLabel="Qwen3 4B Q4 K M"
+  accessibilityRole="button"
   accessibilityState={
     {
       "busy": undefined,
@@ -31,6 +33,14 @@ exports[`renders correctly ModelCard 1`] = `
   onResponderTerminate={[Function]}
   onResponderTerminationRequest={[Function]}
   onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "opacity": 1,
+      },
+      undefined,
+    ]
+  }
 >
   <View
     style={
@@ -149,6 +159,8 @@ exports[`renders correctly ModelCard 1`] = `
 
 exports[`renders correctly ModelCard when model is downloaded 1`] = `
 <View
+  accessibilityLabel="Qwen3 4B Q4 K M"
+  accessibilityRole="button"
   accessibilityState={
     {
       "busy": undefined,
@@ -178,6 +190,14 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
   onResponderTerminate={[Function]}
   onResponderTerminationRequest={[Function]}
   onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "opacity": 1,
+      },
+      undefined,
+    ]
+  }
 >
   <View
     style={
@@ -289,6 +309,8 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
 
 exports[`renders correctly ModelCard when model is downloading 1`] = `
 <View
+  accessibilityLabel="Qwen3 4B Q4 K M"
+  accessibilityRole="button"
   accessibilityState={
     {
       "busy": undefined,
@@ -318,6 +340,14 @@ exports[`renders correctly ModelCard when model is downloading 1`] = `
   onResponderTerminate={[Function]}
   onResponderTerminationRequest={[Function]}
   onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "opacity": 1,
+      },
+      undefined,
+    ]
+  }
 >
   <View
     style={
@@ -381,6 +411,8 @@ exports[`renders correctly ModelCard when model is downloading 1`] = `
 
 exports[`renders correctly ModelCard when model is selected 1`] = `
 <View
+  accessibilityLabel="Qwen3 4B Q4 K M"
+  accessibilityRole="button"
   accessibilityState={
     {
       "busy": undefined,
@@ -410,6 +442,14 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
   onResponderTerminate={[Function]}
   onResponderTerminationRequest={[Function]}
   onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "opacity": 1,
+      },
+      undefined,
+    ]
+  }
 >
   <View
     style={
