@@ -32,18 +32,18 @@ exports[`renders correctly ModelsScreen 1`] = `
       model={
         {
           "author": "Qwen",
-          "family": "Qwen3",
-          "id": 1,
-          "modelName": "Qwen3 4B Q4 K M",
-          "modelSizeGB": 2.5,
-          "parameterCountBillions": 4,
-          "paths": [
+          "downloadLinks": [
             {
               "fileName": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
               "type": "model",
               "url": "https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
             },
           ],
+          "family": "Qwen3",
+          "id": 1,
+          "modelName": "Qwen3 4B Q4 K M",
+          "modelSizeGB": 2.5,
+          "parameterCountBillions": 4,
           "pipeline": "textGeneration",
           "tags": [
             "Fast",

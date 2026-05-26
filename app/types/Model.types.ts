@@ -1,4 +1,4 @@
-export interface ModelPath {
+export interface ModelDownloadLink {
   url: string;
   fileName: string;
   type: string;
@@ -11,7 +11,7 @@ export interface Model {
   parameterCountBillions: number;
   author: string;
   family: string;
-  paths: ModelPath[];
+  downloadLinks: ModelDownloadLink[];
   pipeline: ModelPipeline;
   tags: string[];
 }
@@ -29,9 +29,9 @@ export enum ModelPipeline {
 export const pipelineLabel: Record<ModelPipeline, string> = {
   [ModelPipeline.textGeneration]: 'Text generation',
   [ModelPipeline.imageToImage]: 'Image to Image',
-  [ModelPipeline.imageTextToText]: 'Image/Text to text',
-  [ModelPipeline.audioTextToText]: 'Audio/Text to text',
-  [ModelPipeline.imageAudioTextToText]: 'Image/Audio/Text to text',
+  [ModelPipeline.imageTextToText]: 'Image/Text to Text',
+  [ModelPipeline.audioTextToText]: 'Audio/Text to Text',
+  [ModelPipeline.imageAudioTextToText]: 'Image/Audio/Text to Text',
   [ModelPipeline.featureExtraction]: 'Feature extraction',
   [ModelPipeline.textRanking]: 'Text ranking',
 };

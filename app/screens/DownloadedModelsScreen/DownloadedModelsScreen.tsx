@@ -23,7 +23,7 @@ export const DownloadedModelsScreen: React.FC = () => {
       parameterCountBillions: 4,
       author: 'Qwen',
       family: 'Qwen3',
-      paths: [
+      downloadLinks: [
         {
           url: 'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
           fileName: 'Qwen_Qwen3-0.6B-Q4_K_M.gguf',
@@ -43,7 +43,7 @@ export const DownloadedModelsScreen: React.FC = () => {
         parameterCountBillions: 4,
         author: 'Qwen',
         family: 'Qwen3',
-        paths: [
+        downloadLinks: [
           {
             url: 'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
             fileName: 'Qwen_Qwen3-0.6B-Q4_K_M.gguf',
@@ -60,7 +60,7 @@ export const DownloadedModelsScreen: React.FC = () => {
         parameterCountBillions: 4,
         author: 'Qwen',
         family: 'Qwen3',
-        paths: [
+        downloadLinks: [
           {
             url: 'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
             fileName: 'Qwen_Qwen3-0.6B-Q4_K_M.gguf',
@@ -77,7 +77,7 @@ export const DownloadedModelsScreen: React.FC = () => {
         parameterCountBillions: 0.7,
         author: 'Liquid AI',
         family: 'LFM2',
-        paths: [
+        downloadLinks: [
           {
             url: 'https://huggingface.co/unsloth/LFM2-700M-GGUF/resolve/main/LFM2-700M-Q3_K_M.gguf',
             fileName: 'LFM2-700M-Q3_K_M.gguf',
@@ -94,7 +94,7 @@ export const DownloadedModelsScreen: React.FC = () => {
         parameterCountBillions: 5,
         author: 'Google',
         family: 'Gemma 4',
-        paths: [
+        downloadLinks: [
           {
             url: 'https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q3_K_S.gguf',
             fileName: 'gemma-4-E2B-it-Q3_K_S.gguf',
