@@ -20,8 +20,19 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
   size,
   color,
 }) => {
+  const style = { width: size, height: size };
+
   if (isIOS) {
-    return <SFSymbol name={iosIconName} size={size} color={color} />;
+    return (
+      <SFSymbol name={iosIconName} size={size} color={color} style={style} />
+    );
   }
-  return <MaterialSymbol name={androidIconName} size={size} color={color} />;
+  return (
+    <MaterialSymbol
+      name={androidIconName}
+      size={size}
+      color={color}
+      style={style}
+    />
+  );
 };

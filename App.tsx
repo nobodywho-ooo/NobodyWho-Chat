@@ -1,6 +1,8 @@
 import React, { useCallback } from 'react';
 import { useEffect, useState } from 'react';
 import { StatusBar } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   NavigationContainer,
   DefaultTheme,
@@ -67,8 +69,12 @@ function AppLoader() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AppLoader />
-    </ThemeProvider>
+    <GestureHandlerRootView>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AppLoader />
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

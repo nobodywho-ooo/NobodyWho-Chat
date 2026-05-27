@@ -61,19 +61,6 @@ export const ChatStackNavigator = () => {
         name="ChatScreen"
         component={screen}
         options={{ headerShown: false }}
-        // options={({ navigation }) => ({
-        //   title: 'Chat',
-        //   headerRight: () => (
-        //     <Pressable onPress={() => navigation.navigate('SettingsScreen')}>
-        //       <PlatformIcon
-        //         iosIconName="gearshape"
-        //         androidIconName="settings"
-        //         size={22}
-        //         color={colors.onSurface}
-        //       />
-        //     </Pressable>
-        //   ),
-        // })}
       />
       <Stack.Screen
         name="SettingsScreen"

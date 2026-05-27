@@ -30,7 +30,7 @@ export const lightColors: NWColors = {
   ctaSurfaceOutline: 'transparent',
   ctaBorderOutline: '#9f9f9f',
   surface: '#FFFFFF',
-  surfaceSecondary: '#FFFFFF',
+  surfaceSecondary: '#f7f7f7',
   onSurface: '#000000',
   onSurfaceVariant: '#7c7c7c',
   onSurfaceDisabled: '#c1c1c1',

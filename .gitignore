@@ -64,7 +64,6 @@ yarn-error.log
 
 *.gguf
 
-*.properties
 
 .claude/
 
