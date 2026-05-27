@@ -5,7 +5,6 @@ import { Button, PlatformIcon, Text } from 'components';
 import { useStyled } from 'hooks';
 
 import styles from './NoModelDownloadedScreen.styles';
-import { isIOS } from 'helpers';
 
 export const NoModelDownloadedScreen: React.FC = () => {
   const { colors } = useStyled();
@@ -32,16 +31,8 @@ export const NoModelDownloadedScreen: React.FC = () => {
       <Button
         title="Download a model"
         onPress={() => {
-          if (isIOS) {
-            // @ts-ignore
-            navigation.navigate('Settings', {
-              screen: 'ModelsScreen',
-              initial: false,
-            });
-          } else {
-            // @ts-ignore
-            navigation.navigate('Settings');
-          }
+          // @ts-ignore
+          navigation.navigate('ModelsScreen');
         }}
       />
     </View>

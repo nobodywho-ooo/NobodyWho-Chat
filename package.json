@@ -7,23 +7,28 @@
     "ios": "react-native run-ios",
     "start": "react-native start",
     "test": "jest",
-    "test-update": "jest --updateSnapshot"
+    "test-update": "jest --updateSnapshot",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx"
   },
   "dependencies": {
     "@callstack/liquid-glass": "^0.7.1",
     "@dr.pogodin/react-native-fs": "^2.38.2",
     "@op-engineering/op-sqlite": "^16.1.0",
-    "@react-navigation/bottom-tabs": "^8.0.0-alpha.25",
-    "@react-navigation/native": "^8.0.0-alpha.20",
-    "@react-navigation/native-stack": "^8.0.0-alpha.26",
+    "@react-navigation/drawer": "^8.0.0-alpha.34",
+    "@react-navigation/native": "^8.0.0-alpha.27",
+    "@react-navigation/native-stack": "^8.0.0-alpha.34",
     "@types/ramda": "^0.31.1",
     "ramda": "^0.32.0",
     "react": "19.2.3",
     "react-native": "0.85.2",
     "react-native-enriched-markdown": "^0.4.1",
+    "react-native-gesture-handler": "^2.31.2",
     "react-native-nobodywho": "2.2.0",
+    "react-native-reanimated": "^4.3.1",
     "react-native-safe-area-context": "^5.7.0",
-    "react-native-screens": "^4.24.0"
+    "react-native-screens": "^4.24.0",
+    "react-native-worklets": "^0.8.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

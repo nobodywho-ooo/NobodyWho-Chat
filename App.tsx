@@ -9,9 +9,9 @@ import {
 import { ThemeProvider, isDarkModeEnabled } from 'context';
 import { initDatabase } from 'helpers';
 import { useStyled } from 'hooks';
-import { BottomTabNavigator } from 'navigation';
 import { ErrorScreen, LoadingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
+import { DrawerNavigator } from 'navigation';
 
 function AppContent() {
   const { colors } = useStyled();
@@ -33,7 +33,7 @@ function AppContent() {
         translucent
       />
       <NavigationContainer theme={navigationTheme}>
-        <BottomTabNavigator />
+        <DrawerNavigator />
       </NavigationContainer>
     </>
   );

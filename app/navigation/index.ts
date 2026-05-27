@@ -1,3 +1,3 @@
-import BottomTabNavigator from './BottomTabNavigator';
+import { DrawerNavigator } from './DrawerNavigator';
 
-export { BottomTabNavigator };
+export { DrawerNavigator };

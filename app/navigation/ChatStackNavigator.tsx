@@ -1,14 +1,18 @@
 import * as React from 'react';
 import { useCallback, useEffect, useMemo } from 'react';
+import { Pressable } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { isLiquidGlassSupported } from '@callstack/liquid-glass';
 import { useStyled } from 'hooks';
 import { AiModelState, useAiService } from 'services';
+import { PlatformIcon } from 'components';
 import {
   ChatScreen,
+  DownloadedModelsScreen,
   ErrorScreen,
   LoadingScreen,
+  ModelsScreen,
   NoModelDownloadedScreen,
+  SettingsScreen,
 } from 'screens';
 
 const Stack = createNativeStackNavigator();
@@ -56,7 +60,37 @@ export const ChatStackNavigator = () => {
       <Stack.Screen
         name="ChatScreen"
         component={screen}
-        options={{ title: 'Chat' }}
+        options={{ headerShown: false }}
+        // options={({ navigation }) => ({
+        //   title: 'Chat',
+        //   headerRight: () => (
+        //     <Pressable onPress={() => navigation.navigate('SettingsScreen')}>
+        //       <PlatformIcon
+        //         iosIconName="gearshape"
+        //         androidIconName="settings"
+        //         size={22}
+        //         color={colors.onSurface}
+        //       />
+        //     </Pressable>
+        //   ),
+        // })}
+      />
+      <Stack.Screen
+        name="SettingsScreen"
+        component={SettingsScreen}
+        options={{
+          title: 'Settings',
+        }}
+      />
+      <Stack.Screen
+        name="ModelsScreen"
+        component={ModelsScreen}
+        options={{ title: 'Models' }}
+      />
+      <Stack.Screen
+        name="DownloadedModelsScreen"
+        component={DownloadedModelsScreen}
+        options={{ title: 'Downloaded Models' }}
       />
     </Stack.Navigator>
   );
