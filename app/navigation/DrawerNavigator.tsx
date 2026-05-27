@@ -2,10 +2,11 @@ import * as React from 'react';
 import { Dimensions, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createDrawerNavigator } from '@react-navigation/drawer';
+import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { ChatStackNavigator } from './ChatStackNavigator';
 import { DrawerContentScreen } from 'screens';
 import { PlatformIcon } from 'components';
-import { haptics } from 'helpers';
+import { haptics, isIOS } from 'helpers';
 import { useStyled } from 'hooks';
 
 const Drawer = createDrawerNavigator();
@@ -44,24 +45,31 @@ export const DrawerNavigator = () => {
       <Drawer.Screen
         name="Chat"
         component={ChatStackNavigator}
-        options={() => ({
-          title: 'Chat',
-          headerRight: () => (
-            <Pressable
-              onPress={() => {
-                // open options
-              }}
-              style={{ marginHorizontal: ICON_SIZE / 2 }}
-            >
-              <PlatformIcon
-                iosIconName="ellipsis.circle"
-                androidIconName="more_horiz"
-                size={ICON_SIZE}
-                color={colors.onSurface}
-              />
-            </Pressable>
-          ),
-        })}
+        options={({ route }) => {
+          const routeName = getFocusedRouteNameFromRoute(route) ?? 'ChatScreen';
+          const isAtRoot = routeName === 'ChatScreen';
+
+          return {
+            headerShown: isIOS || isAtRoot,
+            swipeEnabled: isIOS || isAtRoot,
+            title: 'Chat',
+            headerRight: () => (
+              <Pressable
+                onPress={() => {
+                  // open options
+                }}
+                style={{ marginHorizontal: ICON_SIZE / 2 }}
+              >
+                <PlatformIcon
+                  iosIconName="ellipsis.circle"
+                  androidIconName="more_horiz"
+                  size={ICON_SIZE}
+                  color={colors.onSurface}
+                />
+              </Pressable>
+            ),
+          };
+        }}
         listeners={{
           transitionEnd: () => haptics.soft(),
         }}

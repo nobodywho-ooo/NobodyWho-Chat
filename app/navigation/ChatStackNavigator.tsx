@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useCallback, useEffect, useMemo } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { IconButton, PlatformIcon } from 'components';
+import { PlatformIcon } from 'components';
 import { useStyled } from 'hooks';
 import { AiModelState, useAiService } from 'services';
 import {
@@ -14,6 +14,7 @@ import {
   SettingsScreen,
 } from 'screens';
 import { Pressable } from 'react-native';
+import { isIOS } from 'helpers';
 
 const Stack = createNativeStackNavigator();
 
@@ -32,6 +33,21 @@ export const ChatStackNavigator = () => {
   const ErrorScreenWithRetry = useMemo(
     () => () => <ErrorScreen onRetry={initChat} />,
     [initChat],
+  );
+
+  const renderCloseButton = useCallback(
+    (navigation: { goBack: () => void }) =>
+      isIOS && (
+        <Pressable onPress={navigation.goBack}>
+          <PlatformIcon
+            iosIconName={'xmark'}
+            androidIconName={'close'}
+            color={colors.onSurface}
+            size={22}
+          />
+        </Pressable>
+      ),
+    [colors.onSurface],
   );
 
   let screen = LoadingScreen;
@@ -68,16 +84,7 @@ export const ChatStackNavigator = () => {
         options={({ navigation }) => ({
           title: 'Settings',
           presentation: 'modal',
-          headerRight: () => (
-            <Pressable onPress={() => navigation.goBack()}>
-              <PlatformIcon
-                iosIconName={'xmark'}
-                androidIconName={'close'}
-                color={colors.onSurface}
-                size={22}
-              />
-            </Pressable>
-          ),
+          headerRight: () => renderCloseButton(navigation),
         })}
       />
       <Stack.Screen
@@ -86,22 +93,17 @@ export const ChatStackNavigator = () => {
         options={({ navigation }) => ({
           title: 'Models',
           presentation: 'modal',
-          headerRight: () => (
-            <Pressable onPress={() => navigation.goBack()}>
-              <PlatformIcon
-                iosIconName={'xmark'}
-                androidIconName={'close'}
-                color={colors.onSurface}
-                size={22}
-              />
-            </Pressable>
-          ),
+          headerRight: () => renderCloseButton(navigation),
         })}
       />
       <Stack.Screen
         name="DownloadedModelsScreen"
         component={DownloadedModelsScreen}
-        options={{ title: 'Downloaded Models' }}
+        options={({ navigation }) => ({
+          title: 'Downloaded Models',
+          presentation: 'modal',
+          headerRight: () => renderCloseButton(navigation),
+        })}
       />
     </Stack.Navigator>
   );
