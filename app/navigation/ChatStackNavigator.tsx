@@ -1,10 +1,9 @@
 import * as React from 'react';
 import { useCallback, useEffect, useMemo } from 'react';
-import { Pressable } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { IconButton, PlatformIcon } from 'components';
 import { useStyled } from 'hooks';
 import { AiModelState, useAiService } from 'services';
-import { PlatformIcon } from 'components';
 import {
   ChatScreen,
   DownloadedModelsScreen,
@@ -14,6 +13,7 @@ import {
   NoModelDownloadedScreen,
   SettingsScreen,
 } from 'screens';
+import { Pressable } from 'react-native';
 
 const Stack = createNativeStackNavigator();
 
@@ -65,14 +65,38 @@ export const ChatStackNavigator = () => {
       <Stack.Screen
         name="SettingsScreen"
         component={SettingsScreen}
-        options={{
+        options={({ navigation }) => ({
           title: 'Settings',
-        }}
+          presentation: 'modal',
+          headerRight: () => (
+            <Pressable onPress={() => navigation.goBack()}>
+              <PlatformIcon
+                iosIconName={'xmark'}
+                androidIconName={'close'}
+                color={colors.onSurface}
+                size={22}
+              />
+            </Pressable>
+          ),
+        })}
       />
       <Stack.Screen
         name="ModelsScreen"
         component={ModelsScreen}
-        options={{ title: 'Models' }}
+        options={({ navigation }) => ({
+          title: 'Models',
+          presentation: 'modal',
+          headerRight: () => (
+            <Pressable onPress={() => navigation.goBack()}>
+              <PlatformIcon
+                iosIconName={'xmark'}
+                androidIconName={'close'}
+                color={colors.onSurface}
+                size={22}
+              />
+            </Pressable>
+          ),
+        })}
       />
       <Stack.Screen
         name="DownloadedModelsScreen"

@@ -3,20 +3,27 @@ import { Dimensions, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { ChatStackNavigator } from './ChatStackNavigator';
-import { ConversationList, PlatformIcon } from 'components';
+import { DrawerContentScreen } from 'screens';
+import { PlatformIcon } from 'components';
 import { haptics } from 'helpers';
 import { useStyled } from 'hooks';
 
 const Drawer = createDrawerNavigator();
+const ICON_SIZE = 22;
 
 export const DrawerNavigator = () => {
-  const iconSize = 22;
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
 
   return (
     <Drawer.Navigator
-      drawerContent={() => <ConversationList />}
+      drawerContent={({ navigation }) => (
+        <DrawerContentScreen
+          onCloseDrawer={() => {
+            navigation.closeDrawer();
+          }}
+        />
+      )}
       screenOptions={{
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.onSurface,
@@ -44,12 +51,12 @@ export const DrawerNavigator = () => {
               onPress={() => {
                 // open options
               }}
-              style={{ marginHorizontal: iconSize / 2 }}
+              style={{ marginHorizontal: ICON_SIZE / 2 }}
             >
               <PlatformIcon
                 iosIconName="ellipsis.circle"
                 androidIconName="more_horiz"
-                size={iconSize}
+                size={ICON_SIZE}
                 color={colors.onSurface}
               />
             </Pressable>

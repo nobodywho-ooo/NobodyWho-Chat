@@ -38,7 +38,7 @@ exports[`renders correctly InputBar 1`] = `
           ],
         },
         {
-          "backgroundColor": "#FFFFFF",
+          "backgroundColor": "#f7f7f7",
         },
       ]
     }
@@ -159,7 +159,7 @@ exports[`renders correctly InputBar when streaming 1`] = `
           ],
         },
         {
-          "backgroundColor": "#FFFFFF",
+          "backgroundColor": "#f7f7f7",
         },
       ]
     }
@@ -263,7 +263,7 @@ exports[`renders correctly InputBar with value 1`] = `
           ],
         },
         {
-          "backgroundColor": "#FFFFFF",
+          "backgroundColor": "#f7f7f7",
         },
       ]
     }

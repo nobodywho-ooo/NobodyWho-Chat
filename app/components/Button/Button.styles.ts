@@ -21,6 +21,15 @@ export const getVariantStyles = (
           color: colors.ctaContentPrimary,
         },
       };
+    case 'secondary':
+      return {
+        button: {
+          backgroundColor: colors.ctaSurfaceSecondary,
+        },
+        text: {
+          color: colors.ctaContentSecondary,
+        },
+      };
     case 'outline':
       return {
         button: {
@@ -43,6 +52,11 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
   text: {
     fontSize: 16,

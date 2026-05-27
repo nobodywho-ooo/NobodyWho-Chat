@@ -3,6 +3,8 @@ import { Theme } from '../types/Theme.types';
 export type NWColors = {
   ctaContentPrimary: string;
   ctaSurfacePrimary: string;
+  ctaContentSecondary: string;
+  ctaSurfaceSecondary: string;
   ctaContentOutline: string;
   ctaSurfaceOutline: string;
   ctaBorderOutline: string;
@@ -26,6 +28,8 @@ export type NWColors = {
 export const lightColors: NWColors = {
   ctaContentPrimary: '#FFFFFF',
   ctaSurfacePrimary: '#628395',
+  ctaContentSecondary: '#FFFFFF',
+  ctaSurfaceSecondary: '#000000',
   ctaContentOutline: '#000000',
   ctaSurfaceOutline: 'transparent',
   ctaBorderOutline: '#9f9f9f',
@@ -49,6 +53,8 @@ export const lightColors: NWColors = {
 export const darkColors: NWColors = {
   ctaContentPrimary: '#FFFFFF',
   ctaSurfacePrimary: '#628395',
+  ctaContentSecondary: '#000000',
+  ctaSurfaceSecondary: '#FFFFFF',
   ctaContentOutline: '#FFFFFF',
   ctaSurfaceOutline: 'transparent',
   ctaBorderOutline: '#cacaca',

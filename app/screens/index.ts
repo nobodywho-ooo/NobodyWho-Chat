@@ -5,3 +5,4 @@ export * from './SettingsScreen/SettingsScreen';
 export * from './NoModelDownloaded/NoModelDownloadedScreen';
 export * from './ModelsScreen/ModelsScreen';
 export * from './DownloadedModelsScreen/DownloadedModelsScreen';
+export * from './DrawerContentScreen/DrawerContentScreen';

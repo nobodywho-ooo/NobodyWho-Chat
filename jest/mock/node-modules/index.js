@@ -13,17 +13,15 @@ jest.mock("@react-navigation/native-stack", () => {
   };
 });
 
-jest.mock("@react-navigation/bottom-tabs", () => {
+jest.mock("@react-navigation/core", () => {
   return {
-    createBottomTabNavigator: () => jest.fn,
-    useNavigation: () => ({ goBack: jest.fn() }),
     useRoute: () => jest.fn(),
   };
 });
 
-jest.mock("@react-navigation/core", () => {
+jest.mock("react-native-haptic-feedback", () => {
   return {
-    useRoute: () => jest.fn(),
+    trigger: jest.fn(),
   };
 });
 

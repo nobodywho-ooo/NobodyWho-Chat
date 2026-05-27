@@ -5,5 +5,11 @@ exports[`renders correctly PlatformIcon 1`] = `
   color="red"
   name="bubble.fill"
   size={48}
+  style={
+    {
+      "height": 48,
+      "width": 48,
+    }
+  }
 />
 `;
