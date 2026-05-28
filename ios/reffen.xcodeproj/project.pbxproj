@@ -112,6 +112,7 @@
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
+				537AC5FD2FC84B1300F28480 /* Copy Optional Assets */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
@@ -195,14 +196,36 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-reffen/Pods-reffen-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-reffen/Pods-reffen-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-reffen/Pods-reffen-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		537AC5FD2FC84B1300F28480 /* Copy Optional Assets */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Copy Optional Assets";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ \"${CONFIGURATION}\" = \"Debug\" ]; then\n  ASSETS_DIR=\"${SRCROOT}/../assets\"\n  DEST_DIR=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}\"\n\n  if [ ! -d \"${ASSETS_DIR}\" ]; then\n    echo \"No assets directory found, skipping.\"\n    exit 0\n  fi\n\n  for SRC in \"${ASSETS_DIR}\"/*; do\n    [ -f \"${SRC}\" ] || continue\n    FILENAME=$(basename \"${SRC}\")\n    echo \"Copying ${FILENAME} to bundle...\"\n    cp \"${SRC}\" \"${DEST_DIR}/${FILENAME}\"\n  done\nelse\n  echo \"Skipping asset copy for ${CONFIGURATION} build.\"\nfi\n";
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -234,9 +257,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-reffen/Pods-reffen-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-reffen/Pods-reffen-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;

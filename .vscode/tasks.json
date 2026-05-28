@@ -4,9 +4,26 @@
     {
       "label": "TypeScript Watch",
       "type": "shell",
-      "command": "npx tsc --noEmit --watch",
+      "command": "npx tsc --noEmit --watch --pretty false 2>&1 | grep --line-buffered -v node_modules",
       "isBackground": true,
-      "problemMatcher": "$tsc-watch",
+      "problemMatcher": {
+        "owner": "typescript-watch",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": {
+          "regexp": "^(.+)\\((\\d+),(\\d+)\\):\\s+(error|warning)\\s+(TS\\d+):\\s+(.+)$",
+          "file": 1,
+          "line": 2,
+          "column": 3,
+          "severity": 4,
+          "code": 5,
+          "message": 6
+        },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "File change detected",
+          "endsPattern": "Found \\d+ error"
+        }
+      },
       "group": "build",
       "runOptions": {
         "runOn": "folderOpen"

@@ -29,7 +29,11 @@ npm run android
 npm run iOS
 ```
 
-**Note:** For iOS, if you have issues with metro, run `npm start` and then run the project on Xcode.
+**Note:** 
+
+For iOS, if you have issues with metro, run `npm start` and then run the project on Xcode.
+
+The script `Copy Optional Assets` in `Xcode > Build Phases` copies files in `assets` folder (in debug mode only)
 
 #### Miscellaneous
 

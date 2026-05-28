@@ -1,6 +1,8 @@
-import * as React from 'react';
-import { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Pressable } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { isIOS } from 'helpers';
 import { PlatformIcon } from 'components';
 import { useStyled } from 'hooks';
 import { AiModelState, useAiService } from 'services';
@@ -13,9 +15,6 @@ import {
   NoModelDownloadedScreen,
   SettingsScreen,
 } from 'screens';
-import { Pressable } from 'react-native';
-import { useTranslation } from 'react-i18next';
-import { isIOS } from 'helpers';
 
 const Stack = createNativeStackNavigator();
 

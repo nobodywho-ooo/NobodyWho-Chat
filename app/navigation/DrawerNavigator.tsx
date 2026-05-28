@@ -3,12 +3,13 @@ import { Dimensions, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
-import { ChatStackNavigator } from './ChatStackNavigator';
+import { useTranslation } from 'react-i18next';
 import { DrawerContentScreen } from 'screens';
 import { PlatformIcon } from 'components';
-import { useTranslation } from 'react-i18next';
 import { haptics, isIOS } from 'helpers';
 import { useStyled } from 'hooks';
+
+import { ChatStackNavigator } from './ChatStackNavigator';
 
 const Drawer = createDrawerNavigator();
 const ICON_SIZE = 22;
@@ -16,6 +17,7 @@ const ICON_SIZE = 22;
 export const DrawerNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
+
   const insets = useSafeAreaInsets();
 
   return (
