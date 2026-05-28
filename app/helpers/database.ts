@@ -40,5 +40,27 @@ export async function initDatabase(): Promise<void> {
         tags TEXT NOT NULL DEFAULT '[]'
       )`,
     ],
+    [
+      `CREATE TABLE IF NOT EXISTS chats (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        model_id INTEGER NOT NULL,
+        FOREIGN KEY (model_id) REFERENCES models(id)
+      )`,
+    ],
+    [
+      `CREATE TABLE IF NOT EXISTS messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        chat_id INTEGER NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        tokens_per_second REAL,
+        time_to_first_token REAL,
+        documents_path TEXT NOT NULL DEFAULT '[]',
+        FOREIGN KEY (chat_id) REFERENCES chats(id)
+      )`,
+    ],
   ]);
 }
