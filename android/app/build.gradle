@@ -77,13 +77,18 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "ai.nobodywho.reffen"
+    namespace "ai.nobodywho.mobile"
     defaultConfig {
-        applicationId "ai.nobodywho.reffen"
+        applicationId "ai.nobodywho.mobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+    }
+    sourceSets {
+        debug {
+            assets.srcDirs += ["$rootDir/../assets"]
+        }
     }
     signingConfigs {
         debug {

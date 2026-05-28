@@ -1,4 +1,4 @@
-package ai.nobodywho.reffen
+package ai.nobodywho.mobile
 
 import android.app.Application
 import com.facebook.react.PackageList

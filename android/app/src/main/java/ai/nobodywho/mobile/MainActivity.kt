@@ -1,4 +1,4 @@
-package ai.nobodywho.reffen
+package ai.nobodywho.mobile
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
