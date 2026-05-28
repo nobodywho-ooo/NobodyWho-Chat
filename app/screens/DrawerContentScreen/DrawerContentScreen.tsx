@@ -53,7 +53,6 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
           <PlatformIcon
             iosIconName="gearshape"
             androidIconName="settings"
-            size={20}
             color={colors.onSurface}
           />
           <Text variant="body1" style={styles.actionLabel}>

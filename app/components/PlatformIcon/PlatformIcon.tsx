@@ -10,14 +10,14 @@ import { isIOS } from 'helpers';
 interface PlatformIconProps {
   iosIconName: SFSymbolProps['name'];
   androidIconName: MaterialSymbolProps['name'];
-  size: number;
+  size?: number;
   color: string;
 }
 
 export const PlatformIcon: React.FC<PlatformIconProps> = ({
   iosIconName,
   androidIconName,
-  size,
+  size = 20,
   color,
 }) => {
   const style = { width: size, height: size };

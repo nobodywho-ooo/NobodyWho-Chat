@@ -17,7 +17,14 @@ export const ErrorView: React.FC<ErrorViewProps> = ({ message, onRetry }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>{message}</Text>
-      <Button title={t('common.retry')} onPress={onRetry} />
+      <Button
+        icon={{
+          iosIconName: 'arrow.clockwise',
+          androidIconName: 'refresh',
+        }}
+        title={t('common.retry')}
+        onPress={onRetry}
+      />
     </View>
   );
 };

@@ -58,7 +58,6 @@ export const Button: React.FC<ButtonProps> = ({
           <PlatformIcon
             iosIconName={icon.iosIconName}
             androidIconName={icon.androidIconName}
-            size={20}
             color={variantStyle.text.color as string}
           />
         )}

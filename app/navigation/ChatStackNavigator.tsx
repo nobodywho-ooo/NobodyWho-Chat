@@ -65,7 +65,8 @@ export const ChatStackNavigator = () => {
       screen = LoadingScreen;
   }
 
-  screen = NoModelDownloadedScreen;
+  //TODO: wip
+  screen = ChatScreen;
 
   return (
     <Stack.Navigator

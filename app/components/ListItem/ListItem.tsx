@@ -41,7 +41,6 @@ export const ListItem: React.FC<ListItemProps> = ({
         <PlatformIcon
           iosIconName={iosIconName}
           androidIconName={androidIconName}
-          size={20}
           color="#FFFFFF"
         />
       </View>
