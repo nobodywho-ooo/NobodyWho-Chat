@@ -14,11 +14,13 @@ import {
   SettingsScreen,
 } from 'screens';
 import { Pressable } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { isIOS } from 'helpers';
 
 const Stack = createNativeStackNavigator();
 
 export const ChatStackNavigator = () => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
   const { chatState, createChat } = useAiService();
 
@@ -82,7 +84,7 @@ export const ChatStackNavigator = () => {
         name="SettingsScreen"
         component={SettingsScreen}
         options={({ navigation }) => ({
-          title: 'Settings',
+          title: t('navigation.settings'),
           presentation: 'modal',
           headerRight: () => renderCloseButton(navigation),
         })}
@@ -91,7 +93,7 @@ export const ChatStackNavigator = () => {
         name="ModelsScreen"
         component={ModelsScreen}
         options={({ navigation }) => ({
-          title: 'Models',
+          title: t('navigation.models'),
           presentation: 'modal',
           headerRight: () => renderCloseButton(navigation),
         })}
@@ -100,7 +102,7 @@ export const ChatStackNavigator = () => {
         name="DownloadedModelsScreen"
         component={DownloadedModelsScreen}
         options={({ navigation }) => ({
-          title: 'Downloaded Models',
+          title: t('navigation.downloadModels'),
           presentation: 'modal',
           headerRight: () => renderCloseButton(navigation),
         })}

@@ -1,0 +1,45 @@
+{
+  "common": {
+    "ok": "Ok",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "loading": "Loading…",
+    "error": "Error",
+    "somethingWentWrong": "Something went wrong"
+  },
+  "navigation": {
+    "chat": "Chat",
+    "models": "Models",
+    "settings": "Settings",
+    "downloadModels": "Downloaded Models"
+  },
+  "screens": {
+    "noModelDownloaded": {
+      "noModelAvailable": "No model available",
+      "downloadModel": "Download a model"
+    },
+    "drawerContent": {
+      "newChat": "New Chat",
+      "settings": "Settings"
+    },
+    "settings": {
+      "models": "Models",
+      "manageYourModels": "Manage your models"
+    },
+    "models": {
+      "inUse": "In use",
+      "readyToUse": "Ready to use",
+      "downloaded": "Downloaded",
+      "modelCount_one": "{{count}} model",
+      "modelCount_other": "{{count}} models",
+      "downloading": "Downloading...",
+      "availableToDownload": "Available to Download",
+      "errorCannotGetModelsAtTheMoment": "Cannot get the models at the moment",
+      "youHaveDownloadedAllTheModels": "You have downloaded all the models."
+    },
+    "downloadedModels": {
+      "noModelDownloaded": "No model downloaded",
+      "downloadAModel": "Download a model"
+    }
+  }
+}

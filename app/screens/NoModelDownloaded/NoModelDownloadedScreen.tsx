@@ -1,12 +1,14 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, Text } from 'components';
 import { useStyled } from 'hooks';
 
 import styles from './NoModelDownloadedScreen.styles';
 
 export const NoModelDownloadedScreen: React.FC = () => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
   const navigation = useNavigation();
 
@@ -26,10 +28,10 @@ export const NoModelDownloadedScreen: React.FC = () => {
         color={colors.onSurfaceDisabled}
       />
       <Text variant="h3" style={styles.text}>
-        No model available
+        {t('screens.noModelDownloaded.noModelAvailable')}
       </Text>
       <Button
-        title="Download a model"
+        title={t('screens.noModelDownloaded.downloadModel')}
         onPress={() => {
           // @ts-ignore
           navigation.navigate('ModelsScreen');

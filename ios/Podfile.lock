@@ -1973,6 +1973,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNLocalize (3.7.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNReactNativeHapticFeedback (3.0.0):
     - hermes-engine
     - RCTRequired
@@ -2273,6 +2295,7 @@ DEPENDENCIES:
   - "ReactNativeFs (from `../node_modules/@dr.pogodin/react-native-fs`)"
   - "ReactNavigation (from `../node_modules/@react-navigation/native`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
+  - RNLocalize (from `../node_modules/react-native-localize`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -2446,6 +2469,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-navigation/native"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
+  RNLocalize:
+    :path: "../node_modules/react-native-localize"
   RNReactNativeHapticFeedback:
     :path: "../node_modules/react-native-haptic-feedback"
   RNReanimated:
@@ -2539,6 +2564,7 @@ SPEC CHECKSUMS:
   ReactNativeFs: 21026144ac71a65acf6855c52b1a8eb31012bb5d
   ReactNavigation: d018e14289d84619ff32fe8fd1722da1b71fcc3b
   RNGestureHandler: 2ff61eac036eaf89f6818bf4ed9c39771a17d134
+  RNLocalize: f370284ea42c48f29f0d8dd3a7bcc28a04f82155
   RNReactNativeHapticFeedback: 16e5f7fd37e2acc5a33ea14f48bfd88ff43776ee
   RNReanimated: f735b1747a7a93bda7ca102c6d37a3cf54b6d5e8
   RNScreens: 991cc417cd396602a6cf59a42139e5a9d91462a9

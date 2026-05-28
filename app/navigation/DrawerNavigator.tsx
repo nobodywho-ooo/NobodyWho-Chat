@@ -6,6 +6,7 @@ import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { ChatStackNavigator } from './ChatStackNavigator';
 import { DrawerContentScreen } from 'screens';
 import { PlatformIcon } from 'components';
+import { useTranslation } from 'react-i18next';
 import { haptics, isIOS } from 'helpers';
 import { useStyled } from 'hooks';
 
@@ -13,6 +14,7 @@ const Drawer = createDrawerNavigator();
 const ICON_SIZE = 22;
 
 export const DrawerNavigator = () => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
 
@@ -52,7 +54,7 @@ export const DrawerNavigator = () => {
           return {
             headerShown: isIOS || isAtRoot,
             swipeEnabled: isIOS || isAtRoot,
-            title: 'Chat',
+            title: t('navigation.chat'),
             headerRight: () => (
               <Pressable
                 onPress={() => {

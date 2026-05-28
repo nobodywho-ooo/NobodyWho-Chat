@@ -1,0 +1,45 @@
+{
+  "common": {
+    "ok": "Ok",
+    "cancel": "Annuller",
+    "retry": "Prøv igen",
+    "loading": "Indlæser…",
+    "error": "Fejl",
+    "somethingWentWrong": "Noget gik galt"
+  },
+  "navigation": {
+    "chat": "Chat",
+    "models": "Modeller",
+    "settings": "Indstillinger",
+    "downloadModels": "Downloadede modeller"
+  },
+  "screens": {
+    "noModelDownloaded": {
+      "noModelAvailable": "Ingen model tilgængelig",
+      "downloadModel": "Download en model"
+    },
+    "drawerContent": {
+      "newChat": "Ny chat",
+      "settings": "Indstillinger"
+    },
+    "settings": {
+      "models": "Modeller",
+      "manageYourModels": "Administrer dine modeller"
+    },
+    "models": {
+      "inUse": "I brug",
+      "readyToUse": "Klar til brug",
+      "downloaded": "Downloadet",
+      "modelCount_one": "{{count}} model",
+      "modelCount_other": "{{count}} modeller",
+      "downloading": "Downloader...",
+      "availableToDownload": "Tilgængelig til download",
+      "errorCannotGetModelsAtTheMoment": "Kan ikke hente modellerne i øjeblikket",
+      "youHaveDownloadedAllTheModels": "Du har downloadet alle modellerne."
+    },
+    "downloadedModels": {
+      "noModelDownloaded": "Ingen model downloadet",
+      "downloadAModel": "Download en model"
+    }
+  }
+}

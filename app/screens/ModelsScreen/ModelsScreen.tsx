@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import { useModels, useStyled } from 'hooks';
 import { filter, includes, map, prop } from 'ramda';
 import { ErrorView, ListItem, ModelCard, Text } from 'components';
@@ -12,6 +13,7 @@ const MODELS_URL =
   'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/backend.json';
 
 export const ModelsScreen: React.FC = () => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
   const navigation = useNavigation();
   const { models: storedModels } = useModels();
@@ -86,7 +88,7 @@ export const ModelsScreen: React.FC = () => {
       {!!currentModel && (
         <>
           <Text variant="h4" style={styles.firstHeader}>
-            In use
+            {t('screens.models.inUse')}
           </Text>
           <ModelCard key={currentModel.id} isSelected model={currentModel} />
         </>
@@ -97,11 +99,13 @@ export const ModelsScreen: React.FC = () => {
             variant="h4"
             style={!!currentModel ? styles.header : styles.firstHeader}
           >
-            Ready to use
+            {t('screens.models.readyToUse')}
           </Text>
           <ListItem
-            title={'Downloaded'}
-            subtitle={`${downloadedModelIds.length} models`}
+            title={t('screens.models.downloaded')}
+            subtitle={t('screens.models.modelCount', {
+              count: downloadedModelIds.length,
+            })}
             iosIconName={'cpu'}
             androidIconName={'memory'}
             iconBackgroundColor={colors.primary}
@@ -113,7 +117,7 @@ export const ModelsScreen: React.FC = () => {
       {modelsDownloading.length > 0 && (
         <>
           <Text variant="h4" style={styles.header}>
-            Downloading...
+            {t('screens.models.downloading')}
           </Text>
           {modelsDownloading.map(model => (
             <ModelCard
@@ -127,7 +131,7 @@ export const ModelsScreen: React.FC = () => {
       )}
 
       <Text variant="h4" style={styles.header}>
-        Available to Download
+        {t('screens.models.availableToDownload')}
       </Text>
       {isLoading && (
         <ActivityIndicator
@@ -137,7 +141,7 @@ export const ModelsScreen: React.FC = () => {
       )}
       {hasError && (
         <ErrorView
-          message="Cannot get the models at the moment"
+          message={t('screens.models.errorCannotGetModelsAtTheMoment')}
           onRetry={fetchModels}
         />
       )}
@@ -151,7 +155,7 @@ export const ModelsScreen: React.FC = () => {
           />
         ))}
       {hasFetch && models.length == 0 && (
-        <Text>You have downloaded all the models.</Text>
+        <Text>{t('screens.models.youHaveDownloadedAllTheModels')}</Text>
       )}
     </ScrollView>
   );

@@ -18,6 +18,7 @@ module.exports = {
           repositories: './app/repositories',
           screens: './app/screens',
           helpers: './app/helpers',
+          i18n: './app/i18n',
         },
       },
     ],

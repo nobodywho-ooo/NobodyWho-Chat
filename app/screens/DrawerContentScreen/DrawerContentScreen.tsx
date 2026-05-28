@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useTranslation } from 'react-i18next';
 import {
   Button,
   ConversationList,
@@ -19,6 +20,7 @@ interface DrawerContentScreenProps {
 export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
   onCloseDrawer,
 }) => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
   const navigation = useNavigation();
 
@@ -55,7 +57,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
             color={colors.onSurface}
           />
           <Text variant="body1" style={styles.actionLabel}>
-            Settings
+            {t('screens.drawerContent.settings')}
           </Text>
         </Pressable>
       </View>
@@ -64,7 +66,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
 
       <View style={styles.floatingButton}>
         <Button
-          title="New Chat"
+          title={t('screens.drawerContent.newChat')}
           variant="secondary"
           icon={{ iosIconName: 'plus.bubble', androidIconName: 'add_comment' }}
           onPress={closeDrawer}
