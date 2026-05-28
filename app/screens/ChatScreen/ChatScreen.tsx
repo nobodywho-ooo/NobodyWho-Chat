@@ -3,10 +3,11 @@ import { FlatList, Keyboard, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Message } from 'react-native-nobodywho';
 import { InputBar, MessageListItem } from 'components';
-import { EmptyChat } from './components/EmptyChat/EmptyChat';
 import { useStyled } from 'hooks';
 import { useAiService } from 'services';
 import { isAndroid, isIOS, formatThinkingBlocks } from 'helpers';
+
+import { EmptyChat } from './components/EmptyChat/EmptyChat';
 
 import styles from './ChatScreen.styles';
 
