@@ -15,6 +15,12 @@ exports[`renders correctly ErrorScreen 1`] = `
     ]
   }
 >
+  <PlatformIcon
+    androidIconName="warning"
+    color="#c1c1c1"
+    iosIconName="exclamationmark.triangle"
+    size={50}
+  />
   <View
     style={
       {
@@ -30,11 +36,17 @@ exports[`renders correctly ErrorScreen 1`] = `
         }
       }
     >
-      Something went wrong
+      common.somethingWentWrong
     </Text>
     <Button
+      icon={
+        {
+          "androidIconName": "refresh",
+          "iosIconName": "arrow.clockwise",
+        }
+      }
       onPress={[Function]}
-      title="Retry"
+      title="common.retry"
     />
   </View>
 </View>

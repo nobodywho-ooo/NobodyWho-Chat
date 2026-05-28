@@ -13,6 +13,11 @@
     "settings": "Settings",
     "downloadModels": "Downloaded Models"
   },
+  "components": {
+    "emptyChat": {
+      "startAChat": "Start a chat"
+    }
+  },
   "screens": {
     "noModelDownloaded": {
       "noModelAvailable": "No model available",

@@ -4,13 +4,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Message } from 'react-native-nobodywho';
 import { InputBar, MessageListItem } from 'components';
 import { EmptyChat } from './components/EmptyChat/EmptyChat';
-import { useStyled, useTabBarBottomPadding } from 'hooks';
+import { useStyled } from 'hooks';
 import { useAiService } from 'services';
 import { isAndroid, isIOS } from 'helpers';
 
 import styles from './ChatScreen.styles';
 
-const INPUT_BAR_BOTTOM_GAP = 14;
+const INPUT_BAR_PADDING = 14;
 
 export const ChatScreen: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -21,8 +21,6 @@ export const ChatScreen: React.FC = () => {
   const { chat: currentChat } = useAiService();
   const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
-  // Use useBottomTabBarHeight when available, see https://github.com/react-navigation/react-navigation/discussions/12949?sort=new
-  const paddingBottom = useTabBarBottomPadding();
   const isKeyboardVisible = keyboardHeight > 0;
 
   useEffect(() => {
@@ -105,10 +103,10 @@ export const ChatScreen: React.FC = () => {
   };
 
   const bottomOffset = isKeyboardVisible
-    ? keyboardHeight + (isAndroid ? insets.bottom : 0) + INPUT_BAR_BOTTOM_GAP
-    : paddingBottom + INPUT_BAR_BOTTOM_GAP;
-  const footerHeight =
-    paddingBottom + INPUT_BAR_BOTTOM_GAP * 2 + InputBar.height;
+    ? keyboardHeight + (isAndroid ? insets.bottom : 0) + INPUT_BAR_PADDING
+    : insets.bottom + INPUT_BAR_PADDING;
+
+  const footerHeight = insets.bottom + INPUT_BAR_PADDING * 2 + InputBar.height;
 
   const ListFooter = useMemo(
     () => <View style={{ height: footerHeight }} />,

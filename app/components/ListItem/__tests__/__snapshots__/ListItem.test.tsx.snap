@@ -62,7 +62,6 @@ exports[`renders correctly ListItem 1`] = `
       androidIconName="chat_bubble"
       color="#FFFFFF"
       iosIconName="bubble.fill"
-      size={20}
     />
   </View>
   <View
@@ -180,7 +179,6 @@ exports[`renders correctly ListItem when disabled 1`] = `
       androidIconName="chat_bubble"
       color="#FFFFFF"
       iosIconName="bubble.fill"
-      size={20}
     />
   </View>
   <View

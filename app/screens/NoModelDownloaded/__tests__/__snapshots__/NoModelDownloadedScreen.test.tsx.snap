@@ -32,11 +32,11 @@ exports[`renders correctly NoModelDownloadedScreen 1`] = `
     }
     variant="h3"
   >
-    No model available
+    screens.noModelDownloaded.noModelAvailable
   </Text>
   <Button
     onPress={[Function]}
-    title="Download a model"
+    title="screens.noModelDownloaded.downloadModel"
   />
 </View>
 `;

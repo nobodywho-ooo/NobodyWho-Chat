@@ -97,7 +97,6 @@ exports[`renders correctly DrawerContentScreen 1`] = `
         androidIconName="settings"
         color="#000000"
         iosIconName="gearshape"
-        size={20}
       />
       <Text
         style={
@@ -107,7 +106,7 @@ exports[`renders correctly DrawerContentScreen 1`] = `
         }
         variant="body1"
       >
-        Settings
+        screens.drawerContent.settings
       </Text>
     </View>
   </View>
@@ -137,7 +136,7 @@ exports[`renders correctly DrawerContentScreen 1`] = `
         }
       }
       onPress={[Function]}
-      title="New Chat"
+      title="screens.drawerContent.newChat"
       variant="secondary"
     />
   </View>

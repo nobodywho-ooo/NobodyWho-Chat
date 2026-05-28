@@ -26,7 +26,7 @@ exports[`renders correctly ChatScreen 1`] = `
   >
     <PlatformIcon
       androidIconName="chat_bubble"
-      color="#7c7c7c"
+      color="#c1c1c1"
       iosIconName="bubble.fill"
       size={48}
     />
@@ -42,7 +42,7 @@ exports[`renders correctly ChatScreen 1`] = `
         ]
       }
     >
-      Start a chat
+      components.emptyChat.startAChat
     </Text>
   </View>
   <InputBar
@@ -52,7 +52,7 @@ exports[`renders correctly ChatScreen 1`] = `
     onStop={[Function]}
     style={
       {
-        "bottom": 104,
+        "bottom": NaN,
       }
     }
     value=""

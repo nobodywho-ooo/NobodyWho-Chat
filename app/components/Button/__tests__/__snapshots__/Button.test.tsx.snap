@@ -295,7 +295,6 @@ exports[`Button renders with icon 1`] = `
       androidIconName="add_comment"
       color="#FFFFFF"
       iosIconName="plus.bubble"
-      size={20}
     />
     <Text
       style={

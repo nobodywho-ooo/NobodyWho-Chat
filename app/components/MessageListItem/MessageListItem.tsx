@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
-import { ChatMessage, Role } from 'react-native-nobodywho';
+import { Message } from 'react-native-nobodywho';
 import { getMarkdownStyle } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
 import { Text } from '../Text/Text';
@@ -9,7 +9,7 @@ import { Text } from '../Text/Text';
 import styles from './MessageListItem.styles';
 
 interface MessageListItemProps {
-  message: ChatMessage;
+  message: Message;
 }
 
 const MessageListItem: React.FC<MessageListItemProps> = ({ message }) => {
@@ -22,7 +22,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({ message }) => {
     [isDarkMode, colors.onSurface],
   );
 
-  if (role == Role.User) {
+  if (role == 'user') {
     return (
       <View
         style={[

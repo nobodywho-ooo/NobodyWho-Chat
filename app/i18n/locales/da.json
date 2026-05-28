@@ -41,5 +41,10 @@
       "noModelDownloaded": "Ingen model downloadet",
       "downloadAModel": "Download en model"
     }
+  },
+  "components": {
+    "emptyChat": {
+      "startAChat": "Start en chat"
+    }
   }
 }

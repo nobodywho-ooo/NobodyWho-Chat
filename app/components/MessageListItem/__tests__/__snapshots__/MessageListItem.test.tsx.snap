@@ -1,6 +1,8 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders correctly MessageListItem 1`] = `
+exports[`renders correctly MessageListItem for assistant 1`] = `null`;
+
+exports[`renders correctly MessageListItem for user 1`] = `
 <View
   style={
     [
@@ -26,7 +28,7 @@ exports[`renders correctly MessageListItem 1`] = `
       }
     }
   >
-    What is water?
+    Is the water wet?
   </Text>
 </View>
 `;
