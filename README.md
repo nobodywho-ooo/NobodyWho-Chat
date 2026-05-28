@@ -33,7 +33,7 @@ npm run iOS
 
 For iOS, if you have issues with metro, run `npm start` and then run the project on Xcode.
 
-The script `Copy Optional Assets` in `Xcode > Build Phases` copies files in `assets` folder (in debug mode only)
+The script `Copy Optional Assets` in `Xcode > Build Phases` copies files in `assets` folder (in debug mode only). On Android, this step is achieved with `assets.srcDirs += ["$rootDir/../assets"]` in `build.gradle`.
 
 #### Miscellaneous
 
