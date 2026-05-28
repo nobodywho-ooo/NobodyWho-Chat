@@ -72,6 +72,14 @@ jest.mock("react-native-safe-area-context", () => {
   };
 });
 
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: key => key,
+    i18n: { changeLanguage: jest.fn() },
+  }),
+  initReactI18next: { type: '3rdParty', init: jest.fn() },
+}));
+
 jest.mock('@op-engineering/op-sqlite', () => {
   const mockDb = {
     execute: jest.fn().mockResolvedValue({ rows: [] }),
