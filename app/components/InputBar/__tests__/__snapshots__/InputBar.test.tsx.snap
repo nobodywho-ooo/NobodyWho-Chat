@@ -62,61 +62,18 @@ exports[`renders correctly InputBar 1`] = `
       }
       value=""
     />
-    <View
-      accessibilityState={
+    <IconButton
+      backgroundColor="#b0c1cb"
+      color="#FFFFFF"
+      icon={
         {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
+          "androidIconName": "arrow_upward",
+          "iosIconName": "arrow.up",
         }
       }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onBlur={[Function]}
-      onClick={[Function]}
-      onFocus={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-      style={
-        {
-          "justifyContent": "center",
-          "marginLeft": 8,
-          "paddingHorizontal": 12,
-          "paddingVertical": 6,
-        }
-      }
-    >
-      <Text
-        style={
-          [
-            {
-              "fontSize": 16,
-            },
-            {
-              "color": "#7c7c7c",
-              "fontWeight": "600",
-            },
-          ]
-        }
-      >
-        Send
-      </Text>
-    </View>
+      onPress={[Function]}
+      size={20}
+    />
   </View>
 </View>
 `;
@@ -287,61 +244,18 @@ exports[`renders correctly InputBar with value 1`] = `
       }
       value="Type here"
     />
-    <View
-      accessibilityState={
+    <IconButton
+      backgroundColor="#628395"
+      color="#FFFFFF"
+      icon={
         {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
+          "androidIconName": "arrow_upward",
+          "iosIconName": "arrow.up",
         }
       }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onBlur={[Function]}
-      onClick={[Function]}
-      onFocus={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-      style={
-        {
-          "justifyContent": "center",
-          "marginLeft": 8,
-          "paddingHorizontal": 12,
-          "paddingVertical": 6,
-        }
-      }
-    >
-      <Text
-        style={
-          [
-            {
-              "fontSize": 16,
-            },
-            {
-              "color": "#628395",
-              "fontWeight": "500",
-            },
-          ]
-        }
-      >
-        Send
-      </Text>
-    </View>
+      onPress={[Function]}
+      size={20}
+    />
   </View>
 </View>
 `;

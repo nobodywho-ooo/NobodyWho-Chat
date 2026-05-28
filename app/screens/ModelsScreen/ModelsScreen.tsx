@@ -61,6 +61,9 @@ export const ModelsScreen: React.FC = () => {
       parameterCountBillions: 4,
       author: 'Qwen',
       family: 'Qwen3',
+      thinking: true,
+      imageIngestion: false,
+      audioIngestion: false,
       downloadLinks: [
         {
           url: 'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',

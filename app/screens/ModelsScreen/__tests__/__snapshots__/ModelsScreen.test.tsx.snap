@@ -31,6 +31,7 @@ exports[`renders correctly ModelsScreen 1`] = `
       isSelected={true}
       model={
         {
+          "audioIngestion": false,
           "author": "Qwen",
           "downloadLinks": [
             {
@@ -41,6 +42,7 @@ exports[`renders correctly ModelsScreen 1`] = `
           ],
           "family": "Qwen3",
           "id": 1,
+          "imageIngestion": false,
           "modelName": "Qwen3 4B Q4 K M",
           "modelSizeGB": 2.5,
           "parameterCountBillions": 4,
@@ -48,6 +50,7 @@ exports[`renders correctly ModelsScreen 1`] = `
           "tags": [
             "Fast",
           ],
+          "thinking": true,
         }
       }
     />

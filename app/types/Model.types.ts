@@ -11,6 +11,9 @@ export interface Model {
   parameterCountBillions: number;
   author: string;
   family: string;
+  thinking: boolean;
+  imageIngestion: boolean;
+  audioIngestion: boolean;
   downloadLinks: ModelDownloadLink[];
   pipeline: ModelPipeline;
   tags: string[];

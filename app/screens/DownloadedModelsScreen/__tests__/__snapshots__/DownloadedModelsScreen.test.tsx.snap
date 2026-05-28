@@ -22,6 +22,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
       isSelected={true}
       model={
         {
+          "audioIngestion": false,
           "author": "Qwen",
           "downloadLinks": [
             {
@@ -32,6 +33,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
           ],
           "family": "Qwen3",
           "id": 1,
+          "imageIngestion": false,
           "modelName": "Qwen3 4B Q4 K M",
           "modelSizeGB": 2.5,
           "parameterCountBillions": 4,
@@ -39,6 +41,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
           "tags": [
             "Fast",
           ],
+          "thinking": true,
         }
       }
       onPress={[Function]}
@@ -48,6 +51,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
       isSelected={false}
       model={
         {
+          "audioIngestion": false,
           "author": "Qwen",
           "downloadLinks": [
             {
@@ -58,6 +62,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
           ],
           "family": "Qwen3",
           "id": 2,
+          "imageIngestion": false,
           "modelName": "Qwen3 0.6B Q4 K M",
           "modelSizeGB": 0.4,
           "parameterCountBillions": 4,
@@ -65,6 +70,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
           "tags": [
             "Fast",
           ],
+          "thinking": true,
         }
       }
       onPress={[Function]}
@@ -74,6 +80,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
       isSelected={false}
       model={
         {
+          "audioIngestion": false,
           "author": "Liquid AI",
           "downloadLinks": [
             {
@@ -84,6 +91,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
           ],
           "family": "LFM2",
           "id": 3,
+          "imageIngestion": false,
           "modelName": "LFM2 700M Q3 K M",
           "modelSizeGB": 0.4,
           "parameterCountBillions": 0.7,
@@ -91,6 +99,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
           "tags": [
             "Tiny",
           ],
+          "thinking": false,
         }
       }
       onPress={[Function]}
@@ -100,6 +109,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
       isSelected={false}
       model={
         {
+          "audioIngestion": true,
           "author": "Google",
           "downloadLinks": [
             {
@@ -115,6 +125,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
           ],
           "family": "Gemma 4",
           "id": 4,
+          "imageIngestion": true,
           "modelName": "Gemma 4 E2B it",
           "modelSizeGB": 3.4,
           "parameterCountBillions": 5,
@@ -122,6 +133,7 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
           "tags": [
             "Powerful",
           ],
+          "thinking": true,
         }
       }
       onPress={[Function]}

@@ -32,6 +32,9 @@ export async function initDatabase(): Promise<void> {
         parameter_count_billions REAL NOT NULL,
         author TEXT NOT NULL,
         family TEXT NOT NULL,
+        thinking INTEGER DEFAULT 0,
+        image_ingestion INTEGER DEFAULT 0,
+        audio_ingestion INTEGER DEFAULT 0,
         download_links TEXT NOT NULL DEFAULT '[]',
         pipeline TEXT NOT NULL,
         tags TEXT NOT NULL DEFAULT '[]'
