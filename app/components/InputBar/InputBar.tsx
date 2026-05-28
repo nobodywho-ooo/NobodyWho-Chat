@@ -12,7 +12,7 @@ import {
   isLiquidGlassSupported,
 } from '@callstack/liquid-glass';
 import { useStyled } from 'hooks';
-import { PlatformIcon } from 'components';
+import { IconButton, PlatformIcon } from 'components';
 
 import { styles, getBoxShadow, INPUT_BAR_HEIGHT } from './InputBar.styles';
 
@@ -104,27 +104,24 @@ const InputBarAction: React.FC<InputBarActionProps> = ({
     );
   }
 
-  let color = colors.primary;
-  let fontWeight: '500' | '600' = '500';
+  let color = colors.ctaContentPrimary;
+  let backgroundColor = colors.ctaSurfacePrimary;
 
   if (value === '') {
-    color = colors.onSurfaceVariant;
-    fontWeight = '600';
+    color = colors.ctaContentPrimary;
+    backgroundColor = colors.ctaSurfacePrimaryDisabled;
   }
 
   return (
-    <Pressable onPress={onSend} style={styles.sendButton}>
-      <Text
-        style={[
-          styles.sendButtonText,
-          {
-            color: color,
-            fontWeight: fontWeight,
-          },
-        ]}
-      >
-        Send
-      </Text>
-    </Pressable>
+    <IconButton
+      icon={{
+        iosIconName: 'arrow.up',
+        androidIconName: 'arrow_upward',
+      }}
+      onPress={onSend}
+      size={20}
+      color={color}
+      backgroundColor={backgroundColor}
+    />
   );
 };

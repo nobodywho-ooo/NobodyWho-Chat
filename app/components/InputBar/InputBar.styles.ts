@@ -34,14 +34,5 @@ export const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     maxHeight: 100,
-  },
-  sendButton: {
-    marginLeft: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    justifyContent: 'center',
-  },
-  sendButtonText: {
-    fontSize: 16,
-  },
+  }
 });

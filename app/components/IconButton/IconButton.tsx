@@ -17,13 +17,15 @@ export interface IconButtonIconProps {
 interface IconButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   icon: IconButtonIconProps;
   size?: number;
-  style?: StyleProp<ViewStyle>;
+  color?: string;
+  backgroundColor?: string;
 }
 
 export const IconButton: React.FC<IconButtonProps> = ({
   icon,
   size = 20,
-  style,
+  color,
+  backgroundColor,
   ...props
 }) => {
   const { colors } = useStyled();
@@ -33,8 +35,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
       hitSlop={8}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: colors.surfaceContainer },
-        style,
+        { backgroundColor: backgroundColor ?? colors.surfaceContainer },
         pressed && { opacity: 0.6 },
       ]}
       {...props}
@@ -43,7 +44,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
         iosIconName={icon.iosIconName}
         androidIconName={icon.androidIconName}
         size={size}
-        color={colors.onSurface}
+        color={color ?? colors.onSurface}
       />
     </Pressable>
   );
