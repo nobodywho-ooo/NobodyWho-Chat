@@ -6,7 +6,7 @@ import { InputBar, MessageListItem } from 'components';
 import { EmptyChat } from './components/EmptyChat/EmptyChat';
 import { useStyled } from 'hooks';
 import { useAiService } from 'services';
-import { isAndroid, isIOS } from 'helpers';
+import { isAndroid, isIOS, formatThinkingBlocks } from 'helpers';
 
 import styles from './ChatScreen.styles';
 
@@ -23,15 +23,12 @@ export const ChatScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const isKeyboardVisible = keyboardHeight > 0;
 
-  const scrollToEnd = useCallback(
-    (_width: number, contentHeight: number) => {
-      flatListRef.current?.scrollToOffset({
-        offset: contentHeight,
-        animated: false,
-      });
-    },
-    [],
-  );
+  const scrollToEnd = useCallback((_width: number, contentHeight: number) => {
+    flatListRef.current?.scrollToOffset({
+      offset: contentHeight,
+      animated: false,
+    });
+  }, []);
 
   useEffect(() => {
     const showEvent = isIOS ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -82,7 +79,7 @@ export const ChatScreen: React.FC = () => {
           const next = [...prev];
           next[next.length - 1] = {
             role: 'assistant',
-            content: accumulated,
+            content: formatThinkingBlocks(accumulated),
           };
           return next;
         });
