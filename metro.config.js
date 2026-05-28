@@ -1,4 +1,6 @@
+const path = require('path');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+const { bundleModeMetroConfig } = require('react-native-worklets/bundleMode');
 
 /**
  * Metro configuration
@@ -6,6 +8,29 @@ const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
  *
  * @type {import('@react-native/metro-config').MetroConfig}
  */
-const config = {};
 
-module.exports = mergeConfig(getDefaultConfig(__dirname), config);
+let config = getDefaultConfig(__dirname);
+
+config.watchFolders = (config.watchFolders || []).concat(
+  path.resolve(__dirname, 'node_modules/react-native-worklets/.worklets'),
+);
+
+const defaultResolver = config.resolver.resolveRequest;
+
+config = mergeConfig(config, bundleModeMetroConfig);
+
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  if (moduleName.startsWith('react-native-worklets/.worklets/')) {
+    return bundleModeMetroConfig.resolver.resolveRequest(
+      context,
+      moduleName,
+      platform,
+    );
+  }
+  if (defaultResolver) {
+    return defaultResolver(context, moduleName, platform);
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
+
+module.exports = config;

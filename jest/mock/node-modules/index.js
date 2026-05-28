@@ -48,6 +48,12 @@ jest.mock('react-native-enriched-markdown', () => {
   };
 });
 
+jest.mock('react-native-streamdown', () => {
+  return {
+    StreamdownText: jest.fn(),
+  };
+});
+
 jest.mock('react-native-nobodywho', () => {
   return {
     ChatMessage: jest.fn(),

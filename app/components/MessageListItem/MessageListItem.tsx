@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
-import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
+import { StreamdownText } from 'react-native-streamdown';
 import { Message } from 'react-native-nobodywho';
 import { getMarkdownStyle } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
@@ -36,7 +36,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({ message }) => {
   }
 
   return (
-    <EnrichedMarkdownText
+    <StreamdownText
       containerStyle={styles.assistantContainer}
       markdown={content}
       markdownStyle={markdownStyle}

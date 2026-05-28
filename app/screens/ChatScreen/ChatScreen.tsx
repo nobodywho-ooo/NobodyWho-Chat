@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, View, Keyboard } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { FlatList, Keyboard, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Message } from 'react-native-nobodywho';
 import { InputBar, MessageListItem } from 'components';
@@ -23,13 +23,15 @@ export const ChatScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const isKeyboardVisible = keyboardHeight > 0;
 
-  useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 150);
-    }
-  }, [messages]);
+  const scrollToEnd = useCallback(
+    (_width: number, contentHeight: number) => {
+      flatListRef.current?.scrollToOffset({
+        offset: contentHeight,
+        animated: false,
+      });
+    },
+    [],
+  );
 
   useEffect(() => {
     const showEvent = isIOS ? 'keyboardWillShow' : 'keyboardDidShow';
@@ -106,12 +108,7 @@ export const ChatScreen: React.FC = () => {
     ? keyboardHeight + (isAndroid ? insets.bottom : 0) + INPUT_BAR_PADDING
     : insets.bottom + INPUT_BAR_PADDING;
 
-  const footerHeight = insets.bottom + INPUT_BAR_PADDING * 2 + InputBar.height;
-
-  const ListFooter = useMemo(
-    () => <View style={{ height: footerHeight }} />,
-    [footerHeight],
-  );
+  const listPaddingBottom = bottomOffset + InputBar.height + INPUT_BAR_PADDING;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
@@ -122,11 +119,14 @@ export const ChatScreen: React.FC = () => {
           ref={flatListRef}
           data={messages}
           style={styles.listContainer}
-          contentContainerStyle={[styles.listContent]}
-          ListFooterComponent={ListFooter}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: listPaddingBottom },
+          ]}
           keyExtractor={(_, index) => index.toString()}
           showsVerticalScrollIndicator={false}
           renderItem={({ item }) => <MessageListItem message={item} />}
+          onContentSizeChange={scrollToEnd}
           keyboardDismissMode="interactive"
         />
       )}

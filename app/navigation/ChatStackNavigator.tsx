@@ -64,9 +64,6 @@ export const ChatStackNavigator = () => {
       screen = LoadingScreen;
   }
 
-  //TODO: wip
-  screen = ChatScreen;
-
   return (
     <Stack.Navigator
       screenOptions={{
