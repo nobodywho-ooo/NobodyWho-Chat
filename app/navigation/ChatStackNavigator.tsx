@@ -24,7 +24,13 @@ export const ChatStackNavigator = () => {
   const { chatState, createChat } = useAiService();
 
   const initChat = useCallback(async () => {
-    await createChat();
+    try {
+      await createChat();
+    } catch (error) {
+      if (__DEV__) {
+        console.log('initChat error', error);
+      }
+    }
   }, [createChat]);
 
   useEffect(() => {
