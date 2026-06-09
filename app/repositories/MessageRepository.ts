@@ -5,7 +5,7 @@ export function rowToMessage(row: Record<string, any>): ChatMessage {
   return {
     id: row.id as number,
     timestamp: row.timestamp as string,
-    chatId: row.chat_id as number,
+    conversationId: row.conversation_id as number,
     role: row.role as string,
     content: row.content as string,
     tokensPerSecond: row.tokens_per_second as number | undefined,
@@ -14,13 +14,13 @@ export function rowToMessage(row: Record<string, any>): ChatMessage {
   };
 }
 
-export async function getMessagesByChatId(
-  chatId: number,
+export async function getMessagesByConversationId(
+  conversationId: number,
 ): Promise<ChatMessage[]> {
   const db = getDatabase();
   const result = await db.execute(
-    'SELECT * FROM messages WHERE chat_id = ? ORDER BY timestamp ASC',
-    [chatId],
+    'SELECT * FROM messages WHERE conversation_id = ? ORDER BY timestamp ASC',
+    [conversationId],
   );
   return result.rows.map(rowToMessage);
 }
@@ -32,10 +32,10 @@ export async function insertMessage(
   let insertId = 0;
   await db.transaction(async tx => {
     const result = await tx.execute(
-      `INSERT INTO messages (chat_id, role, content, tokens_per_second, time_to_first_token, documents_path)
+      `INSERT INTO messages (conversation_id, role, content, tokens_per_second, time_to_first_token, documents_path)
       VALUES (?, ?, ?, ?, ?, ?)`,
       [
-        message.chatId,
+        message.conversationId,
         message.role,
         message.content,
         message.tokensPerSecond ?? null,
@@ -48,11 +48,13 @@ export async function insertMessage(
   return insertId;
 }
 
-export async function deleteMessagesByChatId(
-  chatId: number,
+export async function deleteMessagesByConversationId(
+  conversationId: number,
 ): Promise<void> {
   const db = getDatabase();
   await db.transaction(async tx => {
-    await tx.execute('DELETE FROM messages WHERE chat_id = ?', [chatId]);
+    await tx.execute('DELETE FROM messages WHERE conversation_id = ?', [
+      conversationId,
+    ]);
   });
 }

@@ -2,13 +2,14 @@ import { ChatMessage } from 'types';
 import { rowToMessage } from 'repositories';
 import { useReactiveQuery } from './useReactiveQuery';
 
-export function useMessages(chatId: number | undefined) {
+export function useMessages(conversationId: number | undefined) {
   const messages = useReactiveQuery<ChatMessage>({
-    query: 'SELECT * FROM messages WHERE chat_id = ? ORDER BY timestamp ASC',
-    args: chatId !== undefined ? [chatId] : [],
+    query:
+      'SELECT * FROM messages WHERE conversation_id = ? ORDER BY timestamp ASC',
+    args: conversationId !== undefined ? [conversationId] : [],
     tables: ['messages'],
     map: rowToMessage,
-    enabled: chatId !== undefined,
+    enabled: conversationId !== undefined,
   });
 
   return { messages };

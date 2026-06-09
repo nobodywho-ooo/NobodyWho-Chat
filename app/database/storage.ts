@@ -1,7 +1,7 @@
 import { Storage } from '@op-engineering/op-sqlite';
 
 const MODEL_ID_IN_USE = 'modelIdInUse';
-const CHAT_ID_IN_USE = 'chatIdInUse';
+const CONVERSATION_ID_IN_USE = 'conversationIdInUse';
 
 let _storage: Storage | null = null;
 
@@ -42,31 +42,31 @@ export async function setModelIdInUse(id: number): Promise<void> {
 }
 
 
-/* CHAT ID IN USE */
+/* CONVERSATION ID IN USE */
 
-export async function getChatIdInUse(): Promise<number | undefined> {
-  const value = await getStorage().getItem(CHAT_ID_IN_USE);
+export async function getConversationIdInUse(): Promise<number | undefined> {
+  const value = await getStorage().getItem(CONVERSATION_ID_IN_USE);
   return value !== undefined ? parseInt(value, 10) : undefined;
 }
 
-type ChatIdInUseListener = (id: number | undefined) => void;
+type ConversationIdInUseListener = (id: number | undefined) => void;
 
-const _chatIdInUseListeners = new Set<ChatIdInUseListener>();
+const _conversationIdInUseListeners = new Set<ConversationIdInUseListener>();
 
-export function subscribeChatIdInUse(
-  listener: ChatIdInUseListener,
+export function subscribeConversationIdInUse(
+  listener: ConversationIdInUseListener,
 ): () => void {
-  _chatIdInUseListeners.add(listener);
+  _conversationIdInUseListeners.add(listener);
   return () => {
-    _chatIdInUseListeners.delete(listener);
+    _conversationIdInUseListeners.delete(listener);
   };
 }
 
-export async function setChatIdInUse(id: number): Promise<void> {
-  const current = await getChatIdInUse();
-  await getStorage().setItem(CHAT_ID_IN_USE, id.toString());
+export async function setConversationIdInUse(id: number): Promise<void> {
+  const current = await getConversationIdInUse();
+  await getStorage().setItem(CONVERSATION_ID_IN_USE, id.toString());
   // Only notify subscribers when the value actually changes.
   if (current !== id) {
-    _chatIdInUseListeners.forEach(listener => listener(id));
+    _conversationIdInUseListeners.forEach(listener => listener(id));
   }
 }

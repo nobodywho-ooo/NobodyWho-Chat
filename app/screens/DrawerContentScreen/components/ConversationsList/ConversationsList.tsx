@@ -2,12 +2,12 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'components';
-import { useChats, useStyled } from 'hooks';
+import { useConversations, useStyled } from 'hooks';
 
 export const ConversationsList = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const { chats } = useChats();
+  const { conversations } = useConversations();
 
   return (
     <ScrollView
@@ -17,14 +17,14 @@ export const ConversationsList = () => {
       <Text style={[styles.header, { color: colors.onSurfaceVariant }]}>
         {t('components.conversationsList.conversations')}
       </Text>
-      {chats.length === 0 && (
+      {conversations.length === 0 && (
         <Text style={[styles.emptyText, { color: colors.onSurface }]}>
           {t('components.conversationsList.noConversations')}
         </Text>
       )}
-      {chats.map(chat => (
+      {conversations.map(conversation => (
         <Pressable
-          key={chat.id}
+          key={conversation.id}
           style={({ pressed }) => [
             styles.item,
             {
@@ -38,7 +38,7 @@ export const ConversationsList = () => {
             style={[styles.itemText, { color: colors.onSurface }]}
             numberOfLines={1}
           >
-            {chat.title}
+            {conversation.title}
           </Text>
         </Pressable>
       ))}

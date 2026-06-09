@@ -1,4 +1,4 @@
-export interface Chat {
+export interface Conversation {
   id: number;
   title: string;
   lastUsed: string;

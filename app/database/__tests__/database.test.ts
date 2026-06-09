@@ -45,7 +45,7 @@ describe('closeDatabase', () => {
 });
 
 describe('initDatabase', () => {
-  test('creates the models, chats and messages tables in one batch', async () => {
+  test('creates the models, conversations and messages tables in one batch', async () => {
     const db = getDatabase() as any;
     db.executeBatch.mockClear();
 
@@ -58,7 +58,7 @@ describe('initDatabase', () => {
       .join('\n');
 
     expect(sql).toContain('CREATE TABLE IF NOT EXISTS models');
-    expect(sql).toContain('CREATE TABLE IF NOT EXISTS chats');
+    expect(sql).toContain('CREATE TABLE IF NOT EXISTS conversations');
     expect(sql).toContain('CREATE TABLE IF NOT EXISTS messages');
   });
 });

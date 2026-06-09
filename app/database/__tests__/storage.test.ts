@@ -3,13 +3,13 @@ import {
   getModelIdInUse,
   setModelIdInUse,
   subscribeModelIdInUse,
-  getChatIdInUse,
-  setChatIdInUse,
-  subscribeChatIdInUse,
+  getConversationIdInUse,
+  setConversationIdInUse,
+  subscribeConversationIdInUse,
 } from '../storage';
 
 const MODEL_ID_IN_USE = 'modelIdInUse';
-const CHAT_ID_IN_USE = 'chatIdInUse';
+const CONVERSATION_ID_IN_USE = 'conversationIdInUse';
 
 const storage = getStorage() as any;
 
@@ -95,35 +95,35 @@ describe('subscribeModelIdInUse', () => {
   });
 });
 
-describe('getChatIdInUse', () => {
+describe('getConversationIdInUse', () => {
   test('returns the stored id parsed as an integer', async () => {
     storage.getItem.mockResolvedValue('7');
 
-    await expect(getChatIdInUse()).resolves.toBe(7);
-    expect(storage.getItem).toHaveBeenCalledWith(CHAT_ID_IN_USE);
+    await expect(getConversationIdInUse()).resolves.toBe(7);
+    expect(storage.getItem).toHaveBeenCalledWith(CONVERSATION_ID_IN_USE);
   });
 
   test('returns undefined when nothing is stored', async () => {
     storage.getItem.mockResolvedValue(undefined);
 
-    await expect(getChatIdInUse()).resolves.toBeUndefined();
+    await expect(getConversationIdInUse()).resolves.toBeUndefined();
   });
 });
 
-describe('setChatIdInUse', () => {
-  test('writes the id as a string under the chat-id key', async () => {
-    await setChatIdInUse(42);
+describe('setConversationIdInUse', () => {
+  test('writes the id as a string under the conversation-id key', async () => {
+    await setConversationIdInUse(42);
 
-    expect(storage.setItem).toHaveBeenCalledWith(CHAT_ID_IN_USE, '42');
+    expect(storage.setItem).toHaveBeenCalledWith(CONVERSATION_ID_IN_USE, '42');
   });
 });
 
-describe('subscribeChatIdInUse', () => {
-  test('notifies subscribers when the chat id changes', async () => {
+describe('subscribeConversationIdInUse', () => {
+  test('notifies subscribers when the conversation id changes', async () => {
     const listener = jest.fn();
-    const unsubscribe = subscribeChatIdInUse(listener);
+    const unsubscribe = subscribeConversationIdInUse(listener);
 
-    await setChatIdInUse(3);
+    await setConversationIdInUse(3);
 
     expect(listener).toHaveBeenCalledWith(3);
     unsubscribe();
@@ -132,10 +132,10 @@ describe('subscribeChatIdInUse', () => {
   test('notifies every active subscriber', async () => {
     const a = jest.fn();
     const b = jest.fn();
-    const unsubA = subscribeChatIdInUse(a);
-    const unsubB = subscribeChatIdInUse(b);
+    const unsubA = subscribeConversationIdInUse(a);
+    const unsubB = subscribeConversationIdInUse(b);
 
-    await setChatIdInUse(1);
+    await setConversationIdInUse(1);
 
     expect(a).toHaveBeenCalledWith(1);
     expect(b).toHaveBeenCalledWith(1);
@@ -145,22 +145,22 @@ describe('subscribeChatIdInUse', () => {
 
   test('stops notifying after unsubscribe', async () => {
     const listener = jest.fn();
-    const unsubscribe = subscribeChatIdInUse(listener);
+    const unsubscribe = subscribeConversationIdInUse(listener);
 
     unsubscribe();
-    await setChatIdInUse(9);
+    await setConversationIdInUse(9);
 
     expect(listener).not.toHaveBeenCalled();
   });
 
-  test('does not notify when the chat id is unchanged', async () => {
+  test('does not notify when the conversation id is unchanged', async () => {
     storage.getItem.mockResolvedValue('5');
     const listener = jest.fn();
-    const unsubscribe = subscribeChatIdInUse(listener);
+    const unsubscribe = subscribeConversationIdInUse(listener);
 
-    await setChatIdInUse(5);
+    await setConversationIdInUse(5);
 
-    expect(storage.setItem).toHaveBeenCalledWith(CHAT_ID_IN_USE, '5');
+    expect(storage.setItem).toHaveBeenCalledWith(CONVERSATION_ID_IN_USE, '5');
     expect(listener).not.toHaveBeenCalled();
     unsubscribe();
   });

@@ -7,10 +7,10 @@ import { ChatMessage } from 'types';
 import {
   getModelIdInUse,
   subscribeModelIdInUse,
-  getChatIdInUse,
-  subscribeChatIdInUse,
+  getConversationIdInUse,
+  subscribeConversationIdInUse,
 } from 'database';
-import { getMessagesByChatId, getModelById } from 'repositories';
+import { getMessagesByConversationId, getModelById } from 'repositories';
 import { devLog, isIOS } from 'helpers';
 import { PlatformIcon } from 'components';
 import { useModels, useStyled } from 'hooks';
@@ -79,15 +79,14 @@ export const ChatStackNavigator = () => {
       throw new Error('ChatStackNavigator: chat is not ready');
     }
 
-    const chatIdInUse = await getChatIdInUse();
-    if (chatIdInUse === undefined) {
-      // undefined chat id means a brand new chat.
-      await chat.current.resetHistory();
-      setChatHistory([]);
-      return;
+    const conversationIdInUse = await getConversationIdInUse();
+    if (conversationIdInUse === undefined) {
+      throw new Error(
+        `ChatStackNavigator: conversation ${conversationIdInUse} not found`,
+      );
     }
 
-    const messages = await getMessagesByChatId(chatIdInUse);
+    const messages = await getMessagesByConversationId(conversationIdInUse);
     const history = toChatHistory(messages);
     await chat.current.setChatHistory(history);
     setChatHistory(history);
@@ -138,9 +137,9 @@ export const ChatStackNavigator = () => {
     });
   }, [disposeChat, startSession]);
 
-  // The in-use chat changed: reload only the history into the existing chat.
+  // The in-use conversation changed: reload only the history into the chat.
   useEffect(() => {
-    return subscribeChatIdInUse(() => {
+    return subscribeConversationIdInUse(() => {
       refreshChatHistory();
     });
   }, [refreshChatHistory]);

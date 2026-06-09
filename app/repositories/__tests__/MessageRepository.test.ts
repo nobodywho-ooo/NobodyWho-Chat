@@ -2,9 +2,9 @@ import { getDatabase } from 'database';
 
 import {
   rowToMessage,
-  getMessagesByChatId,
+  getMessagesByConversationId,
   insertMessage,
-  deleteMessagesByChatId,
+  deleteMessagesByConversationId,
 } from '../MessageRepository';
 
 const db = getDatabase() as any;
@@ -19,7 +19,7 @@ describe('rowToMessage', () => {
       rowToMessage({
         id: 1,
         timestamp: 't',
-        chat_id: 2,
+        conversation_id: 2,
         role: 'user',
         content: 'c',
         tokens_per_second: 5,
@@ -29,7 +29,7 @@ describe('rowToMessage', () => {
     ).toEqual({
       id: 1,
       timestamp: 't',
-      chatId: 2,
+      conversationId: 2,
       role: 'user',
       content: 'c',
       tokensPerSecond: 5,
@@ -39,14 +39,14 @@ describe('rowToMessage', () => {
   });
 });
 
-describe('getMessagesByChatId', () => {
-  test('queries the chat ordered by timestamp and maps the rows', async () => {
+describe('getMessagesByConversationId', () => {
+  test('queries the conversation ordered by timestamp and maps the rows', async () => {
     db.execute.mockResolvedValue({
       rows: [
         {
           id: 1,
           timestamp: 't',
-          chat_id: 2,
+          conversation_id: 2,
           role: 'user',
           content: 'c',
           documents_path: '[]',
@@ -54,13 +54,13 @@ describe('getMessagesByChatId', () => {
       ],
     });
 
-    const messages = await getMessagesByChatId(2);
+    const messages = await getMessagesByConversationId(2);
 
     expect(db.execute).toHaveBeenCalledWith(
-      'SELECT * FROM messages WHERE chat_id = ? ORDER BY timestamp ASC',
+      'SELECT * FROM messages WHERE conversation_id = ? ORDER BY timestamp ASC',
       [2],
     );
-    expect(messages[0].chatId).toBe(2);
+    expect(messages[0].conversationId).toBe(2);
     expect(messages[0].documentsPath).toEqual([]);
   });
 });
@@ -70,7 +70,7 @@ describe('insertMessage', () => {
     db.execute.mockResolvedValue({ insertId: 11, rows: [] });
 
     const id = await insertMessage({
-      chatId: 2,
+      conversationId: 2,
       role: 'user',
       content: 'hi',
       documentsPath: ['/a'],
@@ -87,7 +87,7 @@ describe('insertMessage', () => {
     db.execute.mockResolvedValue({ insertId: 12, rows: [] });
 
     await insertMessage({
-      chatId: 2,
+      conversationId: 2,
       role: 'assistant',
       content: 'yo',
       tokensPerSecond: 9,
@@ -106,12 +106,12 @@ describe('insertMessage', () => {
   });
 });
 
-describe('deleteMessagesByChatId', () => {
-  test('deletes every message for the chat', async () => {
-    await deleteMessagesByChatId(4);
+describe('deleteMessagesByConversationId', () => {
+  test('deletes every message for the conversation', async () => {
+    await deleteMessagesByConversationId(4);
 
     expect(db.execute).toHaveBeenCalledWith(
-      'DELETE FROM messages WHERE chat_id = ?',
+      'DELETE FROM messages WHERE conversation_id = ?',
       [4],
     );
   });

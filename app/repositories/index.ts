@@ -1,3 +1,3 @@
 export * from './ModelRepository';
-export * from './ChatRepository';
+export * from './ConversationRepository';
 export * from './MessageRepository';

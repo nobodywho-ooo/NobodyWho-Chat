@@ -1,7 +1,7 @@
 export interface ChatMessage {
   id: number;
   timestamp: string;
-  chatId: number;
+  conversationId: number;
   role: string;
   content: string;
   tokensPerSecond?: number;
