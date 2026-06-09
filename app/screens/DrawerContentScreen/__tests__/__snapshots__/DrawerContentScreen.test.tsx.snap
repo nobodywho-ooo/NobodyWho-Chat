@@ -110,7 +110,7 @@ exports[`renders correctly DrawerContentScreen 1`] = `
       </Text>
     </View>
   </View>
-  <ConversationList />
+  <ConversationsList />
   <View
     style={
       {

@@ -1,20 +1,13 @@
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Text } from 'components';
-import { useStyled } from 'hooks';
+import { useChats, useStyled } from 'hooks';
 
-const FAKE_CONVERSATIONS = [
-  'How to cook pasta al dente like an italian and italian love',
-  'Explain quantum computing',
-  'Trip planning for Japan',
-  'Debug my Python script',
-  'Weekly grocery list ideas',
-  'Summarize this research paper',
-  'Help me write a cover letter',
-];
-
-export const ConversationList = () => {
+export const ConversationsList = () => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
+  const { chats } = useChats();
 
   return (
     <ScrollView
@@ -22,11 +15,16 @@ export const ConversationList = () => {
       contentContainerStyle={styles.content}
     >
       <Text style={[styles.header, { color: colors.onSurfaceVariant }]}>
-        Conversations
+        {t('components.conversationsList.conversations')}
       </Text>
-      {FAKE_CONVERSATIONS.map(title => (
+      {chats.length === 0 && (
+        <Text style={[styles.emptyText, { color: colors.onSurface }]}>
+          {t('components.conversationsList.noConversations')}
+        </Text>
+      )}
+      {chats.map(chat => (
         <Pressable
-          key={title}
+          key={chat.id}
           style={({ pressed }) => [
             styles.item,
             {
@@ -40,7 +38,7 @@ export const ConversationList = () => {
             style={[styles.itemText, { color: colors.onSurface }]}
             numberOfLines={1}
           >
-            {title}
+            {chat.title}
           </Text>
         </Pressable>
       ))}
@@ -71,5 +69,8 @@ const styles = StyleSheet.create({
   },
   itemText: {
     fontSize: 15,
+  },
+  emptyText: {
+    paddingHorizontal: 16,
   },
 });

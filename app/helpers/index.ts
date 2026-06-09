@@ -3,6 +3,7 @@ import { getAssetPath } from './assets';
 import { devLog } from './log';
 import { getMarkdownStyle, formatThinkingBlocks } from './markdown';
 import { getDatabase, closeDatabase, initDatabase } from './database';
+import { getStorage, getModelIdInUse, setModelIdInUse } from './storage';
 import { haptics } from './haptics';
 
 export {
@@ -17,5 +18,8 @@ export {
   getDatabase,
   closeDatabase,
   initDatabase,
+  getStorage,
+  getModelIdInUse,
+  setModelIdInUse,
   haptics,
 };

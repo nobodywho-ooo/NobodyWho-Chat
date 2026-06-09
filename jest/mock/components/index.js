@@ -10,4 +10,6 @@ jest.mock("../../../app/components/InputBar/InputBar", () => ({ InputBar: 'Input
 jest.mock("../../../app/components/ModelCard/ModelCard", () => ({ ModelCard: 'ModelCard' }));
 jest.mock("../../../app/components/ProgressBar/ProgressBar", () => ({ ProgressBar: 'ProgressBar' }));
 jest.mock("../../../app/components/IconButton/IconButton", () => ({ IconButton: 'IconButton' }));
-jest.mock("../../../app/components/ConversationList/ConversationList", () => ({ ConversationList: 'ConversationList' }));
+
+/* Screens Components */
+jest.mock("../../../app/screens/DrawerContentScreen/components/ConversationsList/ConversationsList", () => ({ ConversationsList: 'ConversationsList' }));

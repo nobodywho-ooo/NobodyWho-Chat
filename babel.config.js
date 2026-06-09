@@ -7,6 +7,7 @@ module.exports = {
         root: ['.'],
         extensions: ['.ios.js', '.android.js', '.js', '.ts', '.tsx', '.json'],
         alias: {
+          jest: './jest',
           components: './app/components',
           navigation: './app/navigation',
           style: './app/style',

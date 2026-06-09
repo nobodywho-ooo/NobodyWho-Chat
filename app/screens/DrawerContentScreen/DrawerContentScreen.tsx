@@ -2,13 +2,8 @@ import React from 'react';
 import { Pressable, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import {
-  Button,
-  ConversationList,
-  IconButton,
-  PlatformIcon,
-  Text,
-} from 'components';
+import { Button, IconButton, PlatformIcon, Text } from 'components';
+import { ConversationsList } from './components';
 import { useStyled } from 'hooks';
 
 import styles from './DrawerContentScreen.styles';
@@ -61,7 +56,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         </Pressable>
       </View>
 
-      <ConversationList />
+      <ConversationsList />
 
       <View style={styles.floatingButton}>
         <Button

@@ -3,7 +3,8 @@ import { ActivityIndicator, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useModels, useStyled } from 'hooks';
-import { filter, includes, map, prop } from 'ramda';
+import { getModelIdInUse } from 'helpers';
+import { filter, find, includes, map, pathEq, prop } from 'ramda';
 import { ErrorView, ListItem, ModelCard, Text } from 'components';
 import { Model, ModelPipeline } from 'types';
 
@@ -51,30 +52,18 @@ export const ModelsScreen: React.FC = () => {
     }
   }, []);
 
+  const loadModelInUse = useCallback(async () => {
+    const modelIdInUse = await getModelIdInUse();
+    const currentModel = find(pathEq(modelIdInUse, ['id']), storedModels);
+    setCurrentModel(currentModel);
+  }, [storedModels]);
+
+  useEffect(() => {
+    loadModelInUse();
+  }, [loadModelInUse]);
+
   useEffect(() => {
     fetchModels();
-    // WIP: fake model for now
-    let model: Model = {
-      id: 1,
-      modelName: 'Qwen3 4B Q4 K M',
-      modelSizeGB: 2.5,
-      parameterCountBillions: 4,
-      author: 'Qwen',
-      family: 'Qwen3',
-      thinking: true,
-      imageIngestion: false,
-      audioIngestion: false,
-      downloadLinks: [
-        {
-          url: 'https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf',
-          fileName: 'Qwen_Qwen3-0.6B-Q4_K_M.gguf',
-          type: 'model',
-        },
-      ],
-      pipeline: ModelPipeline.textGeneration,
-      tags: ['Fast'],
-    };
-    setCurrentModel(model);
   }, [fetchModels]);
 
   const handleModelPress = useCallback((model: Model) => {

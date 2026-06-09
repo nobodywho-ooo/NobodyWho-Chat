@@ -29,24 +29,30 @@ export async function insertMessage(
   message: Omit<ChatMessage, 'id' | 'timestamp'>,
 ): Promise<number> {
   const db = getDatabase();
-  const result = await db.execute(
-    `INSERT INTO messages (chat_id, role, content, tokens_per_second, time_to_first_token, documents_path)
-    VALUES (?, ?, ?, ?, ?, ?)`,
-    [
-      message.chatId,
-      message.role,
-      message.content,
-      message.tokensPerSecond ?? null,
-      message.timeToFirstToken ?? null,
-      JSON.stringify(message.documentsPath),
-    ],
-  );
-  return result.insertId!;
+  let insertId = 0;
+  await db.transaction(async tx => {
+    const result = await tx.execute(
+      `INSERT INTO messages (chat_id, role, content, tokens_per_second, time_to_first_token, documents_path)
+      VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        message.chatId,
+        message.role,
+        message.content,
+        message.tokensPerSecond ?? null,
+        message.timeToFirstToken ?? null,
+        JSON.stringify(message.documentsPath),
+      ],
+    );
+    insertId = result.insertId!;
+  });
+  return insertId;
 }
 
 export async function deleteMessagesByChatId(
   chatId: number,
 ): Promise<void> {
   const db = getDatabase();
-  await db.execute('DELETE FROM messages WHERE chat_id = ?', [chatId]);
+  await db.transaction(async tx => {
+    await tx.execute('DELETE FROM messages WHERE chat_id = ?', [chatId]);
+  });
 }

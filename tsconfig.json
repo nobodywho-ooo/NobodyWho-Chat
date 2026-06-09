@@ -5,6 +5,7 @@
     "types": ["jest"],
     "customConditions": ["react-native", "react-native-strict-api"],
     "paths": {
+      "jest/*": ["./jest/*"],
       "components": ["./app/components"],
       "navigation": ["./app/navigation"],
       "style": ["./app/style"],

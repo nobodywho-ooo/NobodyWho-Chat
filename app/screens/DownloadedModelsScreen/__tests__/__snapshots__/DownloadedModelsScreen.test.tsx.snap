@@ -1,6 +1,33 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly ModelsScreen when empty 1`] = `
+<View
+  style={
+    {
+      "alignItems": "center",
+      "flex": 1,
+      "justifyContent": "center",
+    }
+  }
+>
+  <Text
+    style={
+      {
+        "paddingBottom": 16,
+      }
+    }
+    variant="h4"
+  >
+    screens.downloadedModels.noModelDownloaded
+  </Text>
+  <Button
+    onPress={[Function]}
+    title="screens.downloadedModels.downloadAModel"
+  />
+</View>
+`;
+
+exports[`renders downloaded models with one selected 1`] = `
 <RCTScrollView
   contentInsetAdjustmentBehavior="automatic"
   style={
@@ -19,86 +46,20 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
   <View>
     <ModelCard
       isDownloaded={true}
-      isSelected={true}
+      isSelected={false}
       model={
         {
           "audioIngestion": false,
-          "author": "Qwen",
-          "downloadLinks": [
-            {
-              "fileName": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
-              "type": "model",
-              "url": "https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
-            },
-          ],
-          "family": "Qwen3",
+          "author": "Author",
+          "downloadLinks": [],
+          "family": "Family",
           "id": 1,
           "imageIngestion": false,
-          "modelName": "Qwen3 4B Q4 K M",
-          "modelSizeGB": 2.5,
-          "parameterCountBillions": 4,
+          "modelName": "Model 1",
+          "modelSizeGB": 1,
+          "parameterCountBillions": 1,
           "pipeline": "textGeneration",
-          "tags": [
-            "Fast",
-          ],
-          "thinking": true,
-        }
-      }
-      onPress={[Function]}
-    />
-    <ModelCard
-      isDownloaded={true}
-      isSelected={false}
-      model={
-        {
-          "audioIngestion": false,
-          "author": "Qwen",
-          "downloadLinks": [
-            {
-              "fileName": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
-              "type": "model",
-              "url": "https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
-            },
-          ],
-          "family": "Qwen3",
-          "id": 2,
-          "imageIngestion": false,
-          "modelName": "Qwen3 0.6B Q4 K M",
-          "modelSizeGB": 0.4,
-          "parameterCountBillions": 4,
-          "pipeline": "textGeneration",
-          "tags": [
-            "Fast",
-          ],
-          "thinking": true,
-        }
-      }
-      onPress={[Function]}
-    />
-    <ModelCard
-      isDownloaded={true}
-      isSelected={false}
-      model={
-        {
-          "audioIngestion": false,
-          "author": "Liquid AI",
-          "downloadLinks": [
-            {
-              "fileName": "LFM2-700M-Q3_K_M.gguf",
-              "type": "model",
-              "url": "https://huggingface.co/unsloth/LFM2-700M-GGUF/resolve/main/LFM2-700M-Q3_K_M.gguf",
-            },
-          ],
-          "family": "LFM2",
-          "id": 3,
-          "imageIngestion": false,
-          "modelName": "LFM2 700M Q3 K M",
-          "modelSizeGB": 0.4,
-          "parameterCountBillions": 0.7,
-          "pipeline": "textGeneration",
-          "tags": [
-            "Tiny",
-          ],
+          "tags": [],
           "thinking": false,
         }
       }
@@ -106,34 +67,21 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
     />
     <ModelCard
       isDownloaded={true}
-      isSelected={false}
+      isSelected={true}
       model={
         {
-          "audioIngestion": true,
-          "author": "Google",
-          "downloadLinks": [
-            {
-              "fileName": "gemma-4-E2B-it-Q3_K_S.gguf",
-              "type": "model",
-              "url": "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/gemma-4-E2B-it-Q3_K_S.gguf",
-            },
-            {
-              "fileName": "mmproj-BF16.gguf",
-              "type": "projection",
-              "url": "https://huggingface.co/unsloth/gemma-4-E2B-it-GGUF/resolve/main/mmproj-BF16.gguf",
-            },
-          ],
-          "family": "Gemma 4",
-          "id": 4,
-          "imageIngestion": true,
-          "modelName": "Gemma 4 E2B it",
-          "modelSizeGB": 3.4,
-          "parameterCountBillions": 5,
-          "pipeline": "imageAudioTextToText",
-          "tags": [
-            "Powerful",
-          ],
-          "thinking": true,
+          "audioIngestion": false,
+          "author": "Author",
+          "downloadLinks": [],
+          "family": "Family",
+          "id": 2,
+          "imageIngestion": false,
+          "modelName": "Model 2",
+          "modelSizeGB": 1,
+          "parameterCountBillions": 1,
+          "pipeline": "textGeneration",
+          "tags": [],
+          "thinking": false,
         }
       }
       onPress={[Function]}

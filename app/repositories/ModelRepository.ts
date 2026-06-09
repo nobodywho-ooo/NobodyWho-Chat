@@ -32,25 +32,27 @@ export async function getModelById(id: number): Promise<Model | undefined> {
 
 export async function insertModel(model: Model): Promise<void> {
   const db = getDatabase();
-  await db.execute(
-    `INSERT OR REPLACE INTO models
-      (id, model_name, model_size_gb, parameter_count_billions, author, family, thinking, image_ingestion, audio_ingestion, download_links, pipeline, tags)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [
-      model.id,
-      model.modelName,
-      model.modelSizeGB,
-      model.parameterCountBillions,
-      model.author,
-      model.family,
-      model.thinking ? 1 : 0,
-      model.imageIngestion ? 1 : 0,
-      model.audioIngestion ? 1 : 0,
-      JSON.stringify(model.downloadLinks),
-      model.pipeline,
-      JSON.stringify(model.tags),
-    ],
-  );
+  await db.transaction(async tx => {
+    await tx.execute(
+      `INSERT OR REPLACE INTO models
+        (id, model_name, model_size_gb, parameter_count_billions, author, family, thinking, image_ingestion, audio_ingestion, download_links, pipeline, tags)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        model.id,
+        model.modelName,
+        model.modelSizeGB,
+        model.parameterCountBillions,
+        model.author,
+        model.family,
+        model.thinking ? 1 : 0,
+        model.imageIngestion ? 1 : 0,
+        model.audioIngestion ? 1 : 0,
+        JSON.stringify(model.downloadLinks),
+        model.pipeline,
+        JSON.stringify(model.tags),
+      ],
+    );
+  });
 }
 
 export async function insertModels(models: Model[]): Promise<void> {
@@ -83,10 +85,14 @@ export async function insertModels(models: Model[]): Promise<void> {
 
 export async function deleteModel(id: number): Promise<void> {
   const db = getDatabase();
-  await db.execute('DELETE FROM models WHERE id = ?', [id]);
+  await db.transaction(async tx => {
+    await tx.execute('DELETE FROM models WHERE id = ?', [id]);
+  });
 }
 
 export async function deleteAllModels(): Promise<void> {
   const db = getDatabase();
-  await db.execute('DELETE FROM models');
+  await db.transaction(async tx => {
+    await tx.execute('DELETE FROM models');
+  });
 }

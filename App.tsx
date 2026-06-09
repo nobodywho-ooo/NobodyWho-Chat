@@ -10,7 +10,9 @@ import {
   DarkTheme,
 } from '@react-navigation/native';
 import { ThemeProvider, isDarkModeEnabled } from 'context';
-import { initDatabase } from 'helpers';
+import { initDatabase, setModelIdInUse } from 'helpers';
+import { insertModel } from 'repositories';
+import { ModelPipeline } from 'types';
 import { useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
@@ -46,12 +48,36 @@ function AppLoader() {
   const [dbReady, setDbReady] = useState(false);
   const [dbError, setDbError] = useState(false);
 
-  const init = useCallback(() => {
+  const init = useCallback(async () => {
     setDbError(false);
     setDbReady(false);
-    initDatabase()
-      .then(() => setDbReady(true))
-      .catch(() => setDbError(true));
+    try {
+      await initDatabase();
+
+      if (__DEV__) {
+        // Create and set local model
+        await insertModel({
+          id: 0,
+          modelName: 'chat-model',
+          modelSizeGB: 0.5,
+          parameterCountBillions: 0.6,
+          author: 'Alibaba Cloud',
+          family: 'Qwen',
+          thinking: true,
+          imageIngestion: false,
+          audioIngestion: false,
+          downloadLinks: [],
+          pipeline: ModelPipeline.textGeneration,
+          tags: [],
+        });
+
+        await setModelIdInUse(0);
+      }
+
+      setDbReady(true);
+    } catch {
+      setDbError(true);
+    }
   }, []);
 
   useEffect(() => {

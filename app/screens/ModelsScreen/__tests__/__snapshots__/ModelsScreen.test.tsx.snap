@@ -1,6 +1,68 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders correctly ModelsScreen 1`] = `
+exports[`0 models to download (network failure), 0 models downloaded and no model in use 1`] = `
+<RCTScrollView
+  contentInsetAdjustmentBehavior="automatic"
+  style={
+    [
+      {
+        "flex": 1,
+        "paddingHorizontal": 16,
+        "paddingTop": 16,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <View>
+    <Text
+      style={
+        {
+          "marginVertical": 16,
+        }
+      }
+      variant="h4"
+    >
+      screens.models.availableToDownload
+    </Text>
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "paddingVertical": 32,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "marginBottom": 16,
+          }
+        }
+      >
+        screens.models.errorCannotGetModelsAtTheMoment
+      </Text>
+      <Button
+        icon={
+          {
+            "androidIconName": "refresh",
+            "iosIconName": "arrow.clockwise",
+          }
+        }
+        onPress={[Function]}
+        title="common.retry"
+      />
+    </View>
+    <Text>
+      screens.models.youHaveDownloadedAllTheModels
+    </Text>
+  </View>
+</RCTScrollView>
+`;
+
+exports[`0 models to download (network failure), 1 model downloaded and 1 in use 1`] = `
 <RCTScrollView
   contentInsetAdjustmentBehavior="automatic"
   style={
@@ -32,25 +94,17 @@ exports[`renders correctly ModelsScreen 1`] = `
       model={
         {
           "audioIngestion": false,
-          "author": "Qwen",
-          "downloadLinks": [
-            {
-              "fileName": "Qwen_Qwen3-0.6B-Q4_K_M.gguf",
-              "type": "model",
-              "url": "https://huggingface.co/NobodyWho/Qwen_Qwen3-0.6B-GGUF/resolve/main/Qwen_Qwen3-0.6B-Q4_K_M.gguf",
-            },
-          ],
-          "family": "Qwen3",
-          "id": 1,
+          "author": "Author",
+          "downloadLinks": [],
+          "family": "Family",
+          "id": 10,
           "imageIngestion": false,
-          "modelName": "Qwen3 4B Q4 K M",
-          "modelSizeGB": 2.5,
-          "parameterCountBillions": 4,
+          "modelName": "Model 10",
+          "modelSizeGB": 1,
+          "parameterCountBillions": 1,
           "pipeline": "textGeneration",
-          "tags": [
-            "Fast",
-          ],
-          "thinking": true,
+          "tags": [],
+          "thinking": false,
         }
       }
     />
@@ -62,15 +116,172 @@ exports[`renders correctly ModelsScreen 1`] = `
       }
       variant="h4"
     >
-      screens.models.availableToDownload
+      screens.models.readyToUse
     </Text>
-    <ActivityIndicator
-      color="#7c7c7c"
+    <ListItem
+      androidIconName="memory"
+      iconBackgroundColor="#628395"
+      iosIconName="cpu"
+      onPress={[Function]}
+      subtitle="screens.models.modelCount"
+      title="screens.models.downloaded"
+    />
+    <Text
       style={
         {
-          "marginTop": 16,
+          "marginVertical": 16,
         }
       }
+      variant="h4"
+    >
+      screens.models.availableToDownload
+    </Text>
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "paddingVertical": 32,
+        }
+      }
+    >
+      <Text
+        style={
+          {
+            "marginBottom": 16,
+          }
+        }
+      >
+        screens.models.errorCannotGetModelsAtTheMoment
+      </Text>
+      <Button
+        icon={
+          {
+            "androidIconName": "refresh",
+            "iosIconName": "arrow.clockwise",
+          }
+        }
+        onPress={[Function]}
+        title="common.retry"
+      />
+    </View>
+    <Text>
+      screens.models.youHaveDownloadedAllTheModels
+    </Text>
+  </View>
+</RCTScrollView>
+`;
+
+exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
+<RCTScrollView
+  contentInsetAdjustmentBehavior="automatic"
+  style={
+    [
+      {
+        "flex": 1,
+        "paddingHorizontal": 16,
+        "paddingTop": 16,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <View>
+    <Text
+      style={
+        {
+          "marginBottom": 16,
+        }
+      }
+      variant="h4"
+    >
+      screens.models.inUse
+    </Text>
+    <ModelCard
+      isSelected={true}
+      model={
+        {
+          "audioIngestion": false,
+          "author": "Author",
+          "downloadLinks": [],
+          "family": "Family",
+          "id": 10,
+          "imageIngestion": false,
+          "modelName": "Model 10",
+          "modelSizeGB": 1,
+          "parameterCountBillions": 1,
+          "pipeline": "textGeneration",
+          "tags": [],
+          "thinking": false,
+        }
+      }
+    />
+    <Text
+      style={
+        {
+          "marginVertical": 16,
+        }
+      }
+      variant="h4"
+    >
+      screens.models.readyToUse
+    </Text>
+    <ListItem
+      androidIconName="memory"
+      iconBackgroundColor="#628395"
+      iosIconName="cpu"
+      onPress={[Function]}
+      subtitle="screens.models.modelCount"
+      title="screens.models.downloaded"
+    />
+    <Text
+      style={
+        {
+          "marginVertical": 16,
+        }
+      }
+      variant="h4"
+    >
+      screens.models.availableToDownload
+    </Text>
+    <ModelCard
+      model={
+        {
+          "audioIngestion": false,
+          "author": "Author",
+          "downloadLinks": [],
+          "family": "Family",
+          "id": 20,
+          "imageIngestion": false,
+          "modelName": "Model 20",
+          "modelSizeGB": 1,
+          "parameterCountBillions": 1,
+          "pipeline": "textGeneration",
+          "tags": [],
+          "thinking": false,
+        }
+      }
+      onPress={[Function]}
+    />
+    <ModelCard
+      model={
+        {
+          "audioIngestion": false,
+          "author": "Author",
+          "downloadLinks": [],
+          "family": "Family",
+          "id": 21,
+          "imageIngestion": false,
+          "modelName": "Model 21",
+          "modelSizeGB": 1,
+          "parameterCountBillions": 1,
+          "pipeline": "textGeneration",
+          "tags": [],
+          "thinking": false,
+        }
+      }
+      onPress={[Function]}
     />
   </View>
 </RCTScrollView>

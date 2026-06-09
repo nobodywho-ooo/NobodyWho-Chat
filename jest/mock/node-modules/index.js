@@ -91,5 +91,9 @@ jest.mock('@op-engineering/op-sqlite', () => {
   };
   return {
     open: jest.fn().mockReturnValue(mockDb),
+    Storage: jest.fn().mockReturnValue({
+      getItem: jest.fn().mockReturnValue(jest.fn()),
+      setItem: jest.fn().mockReturnValue(jest.fn())
+    }),
   };
 });

@@ -16,6 +16,10 @@
   "components": {
     "emptyChat": {
       "startAChat": "Start a chat"
+    },
+    "conversationsList": {
+      "conversations": "Conversations",
+      "noConversations": "No conversation yet."
     }
   },
   "screens": {

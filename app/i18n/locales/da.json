@@ -13,6 +13,15 @@
     "settings": "Indstillinger",
     "downloadModels": "Downloadede modeller"
   },
+  "components": {
+    "emptyChat": {
+      "startAChat": "Start en chat"
+    },
+    "conversationsList": {
+      "conversations": "Samtaler",
+      "noConversations": "Ingen samtaler endnu."
+    }
+  },
   "screens": {
     "noModelDownloaded": {
       "noModelAvailable": "Ingen model tilgængelig",
@@ -40,11 +49,6 @@
     "downloadedModels": {
       "noModelDownloaded": "Ingen model downloadet",
       "downloadAModel": "Download en model"
-    }
-  },
-  "components": {
-    "emptyChat": {
-      "startAChat": "Start en chat"
     }
   }
 }

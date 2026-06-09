@@ -1,5 +1,4 @@
 import { Button } from './Button/Button';
-import { ConversationList } from './ConversationList/ConversationList';
 import { ProgressBar } from './ProgressBar/ProgressBar';
 import { ErrorView } from './ErrorView/ErrorView';
 import { IconButton } from './IconButton/IconButton';
@@ -10,4 +9,4 @@ import { ModelCard } from './ModelCard/ModelCard';
 import { PlatformIcon } from './PlatformIcon/PlatformIcon';
 import { Text } from './Text/Text';
 
-export { Button, ConversationList, ProgressBar, ErrorView, IconButton, InputBar, ListItem, MessageListItem, ModelCard, PlatformIcon, Text };
+export { Button, ProgressBar, ErrorView, IconButton, InputBar, ListItem, MessageListItem, ModelCard, PlatformIcon, Text };
