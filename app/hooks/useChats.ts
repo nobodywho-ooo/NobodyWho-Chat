@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Chat } from 'types';
-import { getDatabase } from 'helpers';
+import { getDatabase } from 'database';
 import { getAllChats, rowToChat } from 'repositories';
 
 export function useChats() {

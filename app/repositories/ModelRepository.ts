@@ -1,4 +1,4 @@
-import { getDatabase } from 'helpers';
+import { getDatabase } from 'database';
 import { Model, ModelDownloadLink, ModelPipeline } from 'types';
 
 export function rowToModel(row: Record<string, any>): Model {

@@ -1,4 +1,4 @@
-import { getDatabase } from 'helpers';
+import { getDatabase } from 'database';
 import { ChatMessage } from 'types';
 
 function rowToMessage(row: Record<string, any>): ChatMessage {

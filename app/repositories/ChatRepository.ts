@@ -1,4 +1,4 @@
-import { getDatabase } from 'helpers';
+import { getDatabase } from 'database';
 import { Chat } from 'types';
 
 export function rowToChat(row: Record<string, any>): Chat {

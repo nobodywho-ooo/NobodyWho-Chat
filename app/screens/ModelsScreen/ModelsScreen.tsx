@@ -3,7 +3,7 @@ import { ActivityIndicator, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useModels, useStyled } from 'hooks';
-import { getModelIdInUse } from 'helpers';
+import { getModelIdInUse } from 'database';
 import { filter, find, includes, map, pathEq, prop } from 'ramda';
 import { ErrorView, ListItem, ModelCard, Text } from 'components';
 import { Model, ModelPipeline } from 'types';

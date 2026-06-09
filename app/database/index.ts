@@ -1,0 +1,4 @@
+import { getDatabase, closeDatabase, initDatabase } from './database';
+import { getStorage, getModelIdInUse, setModelIdInUse } from './storage';
+
+export { getDatabase, closeDatabase, initDatabase, getStorage, getModelIdInUse, setModelIdInUse }

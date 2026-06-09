@@ -3,7 +3,7 @@ import { ScrollView, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useModels, useStyled } from 'hooks';
-import { getModelIdInUse } from 'helpers';
+import { getModelIdInUse } from 'database';
 import { Button, ModelCard, Text } from 'components';
 import { Model } from 'types';
 

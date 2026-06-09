@@ -1,5 +1,5 @@
 import { open, DB } from '@op-engineering/op-sqlite';
-import { devLog } from './log';
+import { devLog } from '../helpers/log';
 
 const DB_NAME = 'nobodywho.sqlite';
 

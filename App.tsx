@@ -10,7 +10,7 @@ import {
   DarkTheme,
 } from '@react-navigation/native';
 import { ThemeProvider, isDarkModeEnabled } from 'context';
-import { initDatabase, setModelIdInUse } from 'helpers';
+import { initDatabase, setModelIdInUse } from 'database';
 import { insertModel } from 'repositories';
 import { ModelPipeline } from 'types';
 import { useStyled } from 'hooks';

@@ -2,7 +2,7 @@ import React from 'react';
 import { render, act } from '@testing-library/react-native';
 
 import { mockUseModels } from 'jest/mock/hooks';
-import { mockGetModelIdInUse } from 'jest/mock/helpers';
+import { mockGetModelIdInUse } from 'jest/mock/database';
 import { buildModel } from 'jest/factories/model';
 
 import { DownloadedModelsScreen } from '../DownloadedModelsScreen';

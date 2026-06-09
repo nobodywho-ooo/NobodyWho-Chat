@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Model } from 'types';
-import { getDatabase } from 'helpers';
+import { getDatabase } from 'database';
 import { getAllModels, rowToModel } from 'repositories';
 
 export function useModels() {
