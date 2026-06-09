@@ -87,8 +87,6 @@ jest.mock('@op-engineering/op-sqlite', () => {
     executeBatch: jest.fn().mockResolvedValue({}),
     reactiveExecute: jest.fn().mockReturnValue(jest.fn()),
     flushPendingReactiveQueries: jest.fn().mockResolvedValue(undefined),
-    // Runs the callback with a tx that delegates to execute, so tests can
-    // assert transactional writes on the same `execute` mock.
     transaction: jest.fn(async fn => fn({ execute: mockDb.execute })),
     close: jest.fn(),
   };
