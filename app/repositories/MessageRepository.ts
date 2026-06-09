@@ -1,7 +1,7 @@
 import { getDatabase } from 'database';
 import { ChatMessage } from 'types';
 
-function rowToMessage(row: Record<string, any>): ChatMessage {
+export function rowToMessage(row: Record<string, any>): ChatMessage {
   return {
     id: row.id as number,
     timestamp: row.timestamp as string,

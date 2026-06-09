@@ -1,25 +1,13 @@
-import { useEffect, useState } from 'react';
 import { Chat } from 'types';
-import { getDatabase } from 'database';
-import { getAllChats, rowToChat } from 'repositories';
+import { rowToChat } from 'repositories';
+import { useReactiveQuery } from './useReactiveQuery';
 
 export function useChats() {
-  const [chats, setChats] = useState<Chat[]>([]);
-
-  useEffect(() => {
-    getAllChats().then(setChats);
-
-    const db = getDatabase();
-    const unsubscribe = db.reactiveExecute({
-      query: 'SELECT * FROM chats ORDER BY last_used DESC',
-      arguments: [],
-      fireOn: [{ table: 'chats' }],
-      callback: response => {
-        setChats(response.rows.map(rowToChat));
-      },
-    });
-    return unsubscribe;
-  }, []);
+  const chats = useReactiveQuery<Chat>({
+    query: 'SELECT * FROM chats ORDER BY last_used DESC',
+    tables: ['chats'],
+    map: rowToChat,
+  });
 
   return { chats };
 }

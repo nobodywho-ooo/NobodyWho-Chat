@@ -1,25 +1,13 @@
-import { useEffect, useState } from 'react';
 import { Model } from 'types';
-import { getDatabase } from 'database';
-import { getAllModels, rowToModel } from 'repositories';
+import { rowToModel } from 'repositories';
+import { useReactiveQuery } from './useReactiveQuery';
 
 export function useModels() {
-  const [models, setModels] = useState<Model[]>([]);
-
-  useEffect(() => {
-    getAllModels().then(setModels);
-
-    const db = getDatabase();
-    const unsubscribe = db.reactiveExecute({
-      query: 'SELECT * FROM models ORDER BY id',
-      arguments: [],
-      fireOn: [{ table: 'models' }],
-      callback: response => {
-        setModels(response.rows.map(rowToModel));
-      },
-    });
-    return unsubscribe;
-  }, []);
+  const models = useReactiveQuery<Model>({
+    query: 'SELECT * FROM models ORDER BY id',
+    tables: ['models'],
+    map: rowToModel,
+  });
 
   return { models };
 }
