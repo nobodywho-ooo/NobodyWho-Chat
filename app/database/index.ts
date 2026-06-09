@@ -4,6 +4,9 @@ import {
   getModelIdInUse,
   setModelIdInUse,
   subscribeModelIdInUse,
+  getChatIdInUse,
+  setChatIdInUse,
+  subscribeChatIdInUse,
 } from './storage';
 
 export {
@@ -14,4 +17,7 @@ export {
   getModelIdInUse,
   setModelIdInUse,
   subscribeModelIdInUse,
+  getChatIdInUse,
+  setChatIdInUse,
+  subscribeChatIdInUse,
 }

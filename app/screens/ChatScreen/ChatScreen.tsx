@@ -13,8 +13,14 @@ import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
 
-export const ChatScreen: React.FC = () => {
-  const [messages, setMessages] = useState<Message[]>([]);
+interface ChatScreenProps {
+  messages: Message[];
+}
+
+export const ChatScreen: React.FC<ChatScreenProps> = ({
+  messages: initialMessages,
+}) => {
+  const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputText, setInputText] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -23,6 +29,10 @@ export const ChatScreen: React.FC = () => {
   const flatListRef = useRef<FlatList>(null);
   const insets = useSafeAreaInsets();
   const isKeyboardVisible = keyboardHeight > 0;
+
+  useEffect(() => {
+    setMessages(initialMessages);
+  }, [initialMessages]);
 
   const scrollToEnd = useCallback((_width: number, contentHeight: number) => {
     flatListRef.current?.scrollToOffset({
