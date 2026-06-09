@@ -16,6 +16,20 @@ export async function getModelIdInUse(): Promise<number | undefined> {
   return value !== undefined ? parseInt(value, 10) : undefined;
 }
 
+type ModelIdInUseListener = (id: number | undefined) => void;
+
+const _modelIdInUseListeners = new Set<ModelIdInUseListener>();
+
+export function subscribeModelIdInUse(
+  listener: ModelIdInUseListener,
+): () => void {
+  _modelIdInUseListeners.add(listener);
+  return () => {
+    _modelIdInUseListeners.delete(listener);
+  };
+}
+
 export async function setModelIdInUse(id: number): Promise<void> {
   await getStorage().setItem(MODEL_ID_IN_USE, id.toString());
+  _modelIdInUseListeners.forEach(listener => listener(id));
 }

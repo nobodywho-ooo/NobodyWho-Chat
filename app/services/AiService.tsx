@@ -14,6 +14,7 @@ import {
   SamplerConfig,
 } from 'react-native-nobodywho';
 import { devLog, getAssetPath } from 'helpers';
+import { Model, ModelPipeline } from 'types';
 
 export enum AiModelState {
   NotLoaded = 'notLoaded',
@@ -22,44 +23,31 @@ export enum AiModelState {
   Error = 'error',
 }
 
+// Filename of the model bundled with the app for local dev (model id 0).
+const DEV_CHAT_MODEL = 'chat-model.gguf';
+
 enum ModelName {
-  Chat = 'chat-model.gguf',
-  Projection = 'projection-model.gguf',
   Embedding = 'embedding-model.gguf',
   Reranker = 'reranker-model.gguf',
 }
 
 interface AiServiceState {
   chatState: AiModelState;
-  chatWithToolCallingState: AiModelState;
-  visionHearingChatState: AiModelState;
   encoderState: AiModelState;
   crossEncoderState: AiModelState;
 }
 
 interface AiServiceContextValue extends AiServiceState {
   chat: React.RefObject<Chat | undefined>;
-  chatWithToolCalling: React.RefObject<Chat | undefined>;
-  visionHearingChat: React.RefObject<Chat | undefined>;
   encoder: React.RefObject<Encoder | undefined>;
   crossEncoder: React.RefObject<CrossEncoder | undefined>;
 
-  createChat: (opts?: {
-    useGpu?: boolean;
-    systemPrompt?: string;
-    sampler?: SamplerConfig;
-    contextSize?: number;
-  }) => Promise<void>;
-  createToolCallingChat: (opts?: {
+  createChat: (opts: {
+    model: Model;
     useGpu?: boolean;
     tools?: Tool[];
     systemPrompt?: string;
     sampler?: SamplerConfig;
-    contextSize?: number;
-  }) => Promise<void>;
-  createVisionHearingChat: (opts?: {
-    useGpu?: boolean;
-    systemPrompt?: string;
     contextSize?: number;
   }) => Promise<void>;
   createEncoder: (opts?: {
@@ -70,6 +58,7 @@ interface AiServiceContextValue extends AiServiceState {
     useGpu?: boolean;
     contextSize?: number;
   }) => Promise<void>;
+  disposeChat: () => void;
   dispose: () => void;
 }
 
@@ -79,8 +68,6 @@ const AiServiceContext = createContext<AiServiceContextValue | undefined>(
 
 const _initialState: AiServiceState = {
   chatState: AiModelState.NotLoaded,
-  chatWithToolCallingState: AiModelState.NotLoaded,
-  visionHearingChatState: AiModelState.NotLoaded,
   encoderState: AiModelState.NotLoaded,
   crossEncoderState: AiModelState.NotLoaded,
 };
@@ -93,21 +80,19 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   // Guard to prevent duplicate loading of the same model. For e.g if createChat is called twice quickly
   const inFlight = useRef({
     chat: false,
-    chatWithToolCalling: false,
-    visionHearingChat: false,
     encoder: false,
     crossEncoder: false,
   });
 
   const chatRef = useRef<Chat | undefined>(undefined);
-  const chatWithToolCallingRef = useRef<Chat | undefined>(undefined);
-  const visionHearingChatRef = useRef<Chat | undefined>(undefined);
   const encoderRef = useRef<Encoder | undefined>(undefined);
   const crossEncoderRef = useRef<CrossEncoder | undefined>(undefined);
 
   const createChat = useCallback(
-    async (opts?: {
+    async (opts: {
+      model: Model;
       useGpu?: boolean;
+      tools?: Tool[];
       systemPrompt?: string;
       sampler?: SamplerConfig;
       contextSize?: number;
@@ -116,10 +101,29 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       inFlight.current.chat = true;
       setState(s => ({ ...s, chatState: AiModelState.Loading }));
       try {
-        const modelPath = await getAssetPath(ModelName.Chat);
+        const { model } = opts;
+
+        let modelPath: string;
+        let projectionModelPath: string | undefined;
+
+        if (model.id === 0) {
+          modelPath = await getAssetPath(DEV_CHAT_MODEL);
+        } else {
+          modelPath = model.downloadLinks.find(link => link.type === 'model')
+            ?.url as string;
+
+          if (model.pipeline !== ModelPipeline.textGeneration) {
+            projectionModelPath = model.downloadLinks.find(
+              link => link.type === 'projection',
+            )?.url;
+          }
+        }
+
         const chat = await Chat.fromPath({
           modelPath,
+          projectionModelPath,
           useGpu: opts?.useGpu ?? true,
+          tools: opts?.tools ?? [],
           systemPrompt: opts?.systemPrompt,
           sampler: opts?.sampler,
           contextSize: opts?.contextSize,
@@ -131,84 +135,6 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         setState(s => ({ ...s, chatState: AiModelState.Error }));
       } finally {
         inFlight.current.chat = false;
-      }
-    },
-    [],
-  );
-
-  const createToolCallingChat = useCallback(
-    async (opts?: {
-      useGpu?: boolean;
-      tools?: Tool[];
-      systemPrompt?: string;
-      sampler?: SamplerConfig;
-      contextSize?: number;
-    }) => {
-      if (
-        inFlight.current.chatWithToolCalling ||
-        chatWithToolCallingRef.current
-      )
-        return;
-      inFlight.current.chatWithToolCalling = true;
-      setState(s => ({
-        ...s,
-        chatWithToolCallingState: AiModelState.Loading,
-      }));
-      try {
-        const modelPath = await getAssetPath(ModelName.Chat);
-        const chat = await Chat.fromPath({
-          modelPath: modelPath,
-          useGpu: opts?.useGpu ?? true,
-          tools: opts?.tools ?? [],
-          systemPrompt: opts?.systemPrompt,
-          sampler: opts?.sampler,
-          contextSize: opts?.contextSize,
-        });
-        chatWithToolCallingRef.current = chat;
-        setState(s => ({
-          ...s,
-          chatWithToolCallingState: AiModelState.Ready,
-        }));
-      } catch (error) {
-        devLog('AiService error', error);
-        setState(s => ({
-          ...s,
-          chatWithToolCallingState: AiModelState.Error,
-        }));
-      } finally {
-        inFlight.current.chatWithToolCalling = false;
-      }
-    },
-    [],
-  );
-
-  const createVisionHearingChat = useCallback(
-    async (opts?: {
-      useGpu?: boolean;
-      systemPrompt?: string;
-      contextSize?: number;
-    }) => {
-      if (inFlight.current.visionHearingChat || visionHearingChatRef.current)
-        return;
-      inFlight.current.visionHearingChat = true;
-      setState(s => ({ ...s, visionHearingChatState: AiModelState.Loading }));
-      try {
-        const modelPath = await getAssetPath(ModelName.Chat);
-        const projectionModelPath = await getAssetPath(ModelName.Projection);
-        const chat = await Chat.fromPath({
-          modelPath,
-          projectionModelPath,
-          useGpu: opts?.useGpu ?? true,
-          systemPrompt: opts?.systemPrompt,
-          contextSize: opts?.contextSize,
-        });
-        visionHearingChatRef.current = chat;
-        setState(s => ({ ...s, visionHearingChatState: AiModelState.Ready }));
-      } catch (error) {
-        devLog('AiService error', error);
-        setState(s => ({ ...s, visionHearingChatState: AiModelState.Error }));
-      } finally {
-        inFlight.current.visionHearingChat = false;
       }
     },
     [],
@@ -264,18 +190,21 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     [],
   );
 
+  const disposeChat = useCallback(() => {
+    chatRef.current = undefined;
+    inFlight.current.chat = false;
+
+    setState(s => ({ ...s, chatState: AiModelState.NotLoaded }));
+  }, []);
+
   const dispose = useCallback(() => {
     chatRef.current = undefined;
-    chatWithToolCallingRef.current = undefined;
-    visionHearingChatRef.current = undefined;
     encoderRef.current = undefined;
     crossEncoderRef.current = undefined;
 
     // Reset in-flight flags so a subsequent createX() isn't silently skipped
     // if dispose ran while a load was pending.
     inFlight.current.chat = false;
-    inFlight.current.chatWithToolCalling = false;
-    inFlight.current.visionHearingChat = false;
     inFlight.current.encoder = false;
     inFlight.current.crossEncoder = false;
 
@@ -286,24 +215,20 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     () => ({
       ...state,
       chat: chatRef,
-      chatWithToolCalling: chatWithToolCallingRef,
-      visionHearingChat: visionHearingChatRef,
       encoder: encoderRef,
       crossEncoder: crossEncoderRef,
       createChat,
-      createToolCallingChat,
-      createVisionHearingChat,
       createEncoder,
       createCrossEncoder,
+      disposeChat,
       dispose,
     }),
     [
       state,
       createChat,
-      createToolCallingChat,
-      createVisionHearingChat,
       createEncoder,
       createCrossEncoder,
+      disposeChat,
       dispose,
     ],
   );

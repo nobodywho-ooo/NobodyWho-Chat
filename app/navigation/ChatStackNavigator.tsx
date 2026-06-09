@@ -1,10 +1,12 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { isIOS } from 'helpers';
+import { getModelIdInUse, subscribeModelIdInUse } from 'database';
+import { getModelById } from 'repositories';
+import { devLog, isIOS } from 'helpers';
 import { PlatformIcon } from 'components';
-import { useStyled } from 'hooks';
+import { useModels, useStyled } from 'hooks';
 import { AiModelState, useAiService } from 'services';
 import {
   ChatScreen,
@@ -21,21 +23,39 @@ const Stack = createNativeStackNavigator();
 export const ChatStackNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const { chatState, createChat } = useAiService();
+  const { models } = useModels();
+  const { chatState, createChat, disposeChat } = useAiService();
+  const [initError, setInitError] = useState(false);
 
   const initChat = useCallback(async () => {
+    setInitError(false);
     try {
-      await createChat();
-    } catch (error) {
-      if (__DEV__) {
-        console.log('initChat error', error);
+      const modelId = await getModelIdInUse();
+      if (modelId === undefined) {
+        throw new Error('No model in use');
       }
+      const model = await getModelById(modelId);
+      if (model === undefined) {
+        throw new Error(`Model ${modelId} not found`);
+      }
+      await createChat({ model });
+    } catch (error) {
+      devLog('initChat error', error);
+      setInitError(true);
     }
   }, [createChat]);
 
   useEffect(() => {
     initChat();
   }, [initChat]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeModelIdInUse(() => {
+      disposeChat();
+      initChat();
+    });
+    return unsubscribe;
+  }, [disposeChat, initChat]);
 
   const ErrorScreenWithRetry = useMemo(
     () => () => <ErrorScreen onRetry={initChat} />,
@@ -59,15 +79,21 @@ export const ChatStackNavigator = () => {
 
   let screen = LoadingScreen;
 
-  switch (chatState) {
-    case AiModelState.Ready:
-      screen = ChatScreen;
-      break;
-    case AiModelState.Error:
-      screen = ErrorScreenWithRetry;
-      break;
-    default:
-      screen = LoadingScreen;
+  if (models.length == 0) {
+    screen = NoModelDownloadedScreen;
+  } else if (initError) {
+    screen = ErrorScreenWithRetry;
+  } else {
+    switch (chatState) {
+      case AiModelState.Ready:
+        screen = ChatScreen;
+        break;
+      case AiModelState.Error:
+        screen = ErrorScreenWithRetry;
+        break;
+      default:
+        screen = LoadingScreen;
+    }
   }
 
   return (
