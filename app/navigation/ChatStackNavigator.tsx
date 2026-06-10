@@ -10,7 +10,7 @@ import { Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Message } from 'react-native-nobodywho';
 import { ChatMessage } from 'types';
-import { getAppState, subscribeAppState } from 'database';
+import { getAppState, setAppState, subscribeAppState } from 'database';
 import {
   getConversationById,
   getMessagesByConversationId,
@@ -39,6 +39,8 @@ enum SessionStatus {
   Error = 'error',
 }
 
+type LoadedConversationId = number | undefined;
+
 const toChatHistory = (messages: ChatMessage[]): Message[] =>
   messages.map((message): Message => {
     switch (message.role) {
@@ -61,6 +63,9 @@ export const ChatStackNavigator = () => {
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
+  const [loadedConversationId, setLoadedConversationId] =
+    useState<LoadedConversationId>(undefined);
+  const loadedConversationIdRef = useRef<LoadedConversationId>(undefined);
 
   // --- Lifecycle steps -------------------------------------------------------
 
@@ -90,6 +95,8 @@ export const ChatStackNavigator = () => {
     if (conversationIdInUse === undefined) {
       await chat.current.setChatHistory([]);
       setChatHistory([]);
+      setLoadedConversationId(undefined);
+      loadedConversationIdRef.current = undefined;
       return;
     }
 
@@ -110,6 +117,8 @@ export const ChatStackNavigator = () => {
     const history = toChatHistory(messages);
     await chat.current.setChatHistory(history);
     setChatHistory(history);
+    setLoadedConversationId(conversationIdInUse);
+    loadedConversationIdRef.current = conversationIdInUse;
   }, [chat]);
 
   // --- Lifecycle orchestrators ----------------------------------------------
@@ -154,6 +163,15 @@ export const ChatStackNavigator = () => {
     [runSession, resetAndLoadChatHistory],
   );
 
+  // Called by ChatScreen when it creates a conversation for its first message.
+  // The screen already displays that conversation, so we record it as loaded
+  // (making the subscription below skip a reload) and persist it for the drawer
+  // and next launch — without touching chatHistory, so the screen never remounts.
+  const handleConversationCreated = useCallback((id: number) => {
+    loadedConversationIdRef.current = id;
+    setAppState({ conversationIdInUse: id });
+  }, []);
+
   // --- Lifecycle triggers ----------------------------------------------------
 
   // Initial load. With no model in use there is no session to start —
@@ -174,6 +192,11 @@ export const ChatStackNavigator = () => {
           startSession();
         }
       } else if (next.conversationIdInUse !== prev.conversationIdInUse) {
+        // Skip when we already display this conversation (ChatScreen just
+        // created it); only an external switch needs a history reload.
+        if (next.conversationIdInUse === loadedConversationIdRef.current) {
+          return;
+        }
         refreshChatHistory();
       }
     });
@@ -185,8 +208,14 @@ export const ChatStackNavigator = () => {
   );
 
   const ChatScreenWithHistory = useMemo(
-    () => () => <ChatScreen messages={chatHistory} />,
-    [chatHistory],
+    () => () => (
+      <ChatScreen
+        conversationId={loadedConversationId}
+        messages={chatHistory}
+        onConversationCreated={handleConversationCreated}
+      />
+    ),
+    [chatHistory, loadedConversationId, handleConversationCreated],
   );
 
   const screen = useMemo(() => {

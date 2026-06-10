@@ -3,11 +3,14 @@ import { render, act, waitFor } from '@testing-library/react-native';
 
 import { mockUseModels } from 'jest/mock/hooks';
 import { buildModel } from 'jest/factories/model';
-import { setAppState } from 'database';
+import { getAppState, setAppState } from 'database';
+import { InputBar } from 'components';
 import {
   getModelById,
   getConversationById,
   getMessagesByConversationId,
+  insertConversation,
+  insertMessage,
 } from 'repositories';
 
 import { ChatStackNavigator } from '../ChatStackNavigator';
@@ -29,6 +32,7 @@ jest.mock('@react-navigation/native-stack', () => {
 const mockChatInstance = {
   setChatHistory: jest.fn(async () => {}),
   stopGeneration: jest.fn(),
+  ask: jest.fn(),
 };
 const mockChatRef: { current: typeof mockChatInstance | undefined } = {
   current: undefined,
@@ -52,12 +56,16 @@ jest.mock('repositories', () => ({
   getModelById: jest.fn(),
   getConversationById: jest.fn(),
   getMessagesByConversationId: jest.fn(),
+  insertConversation: jest.fn(),
+  insertMessage: jest.fn(),
 }));
 
 const mockGetModelById = getModelById as jest.Mock;
 const mockGetConversationById = getConversationById as jest.Mock;
 const mockGetMessagesByConversationId =
   getMessagesByConversationId as jest.Mock;
+const mockInsertConversation = insertConversation as jest.Mock;
+const mockInsertMessage = insertMessage as jest.Mock;
 
 beforeEach(async () => {
   mockUseModels.mockReturnValue({ models: [buildModel(0)] });
@@ -65,9 +73,16 @@ beforeEach(async () => {
   mockCreateChat.mockClear();
   mockDisposeChat.mockClear();
   mockChatInstance.setChatHistory.mockClear();
+  mockChatInstance.ask
+    .mockReset()
+    .mockImplementation(async function* () {
+      yield 'hello';
+    });
   mockGetModelById.mockReset().mockResolvedValue(buildModel(0));
   mockGetConversationById.mockReset();
   mockGetMessagesByConversationId.mockReset().mockResolvedValue([]);
+  mockInsertConversation.mockReset().mockResolvedValue(9);
+  mockInsertMessage.mockReset().mockResolvedValue(1);
   // Reset the real appState store between tests.
   await setAppState({
     modelIdInUse: undefined,
@@ -160,4 +175,27 @@ test('reloads only the history when the in-use conversation changes', async () =
   );
   expect(mockDisposeChat).not.toHaveBeenCalled();
   expect(mockCreateChat).toHaveBeenCalledTimes(1);
+});
+
+test('sending the first message persists in use without reloading the chat', async () => {
+  await setAppState({ modelIdInUse: 0 });
+
+  const screen = render(<ChatStackNavigator />);
+  await waitFor(() =>
+    expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy(),
+  );
+  // Only the initial empty load so far.
+  expect(mockChatInstance.setChatHistory).toHaveBeenCalledTimes(1);
+
+  const bar = screen.UNSAFE_getByType(InputBar as never);
+  act(() => bar.props.onChangeText('first message'));
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onSend();
+  });
+
+  // The new conversation is recorded as in use...
+  expect(getAppState().conversationIdInUse).toBe(9);
+  // ...but the navigator did NOT reload (no extra history load, no remount).
+  expect(mockGetMessagesByConversationId).not.toHaveBeenCalled();
+  expect(mockChatInstance.setChatHistory).toHaveBeenCalledTimes(1);
 });

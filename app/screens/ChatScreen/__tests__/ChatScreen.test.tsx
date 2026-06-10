@@ -8,7 +8,11 @@ import { ChatScreen } from '../ChatScreen';
 test('renders correctly empty ChatScreen', () => {
   const tree = render(
     <AiServiceProvider>
-      <ChatScreen messages={[]} />
+      <ChatScreen
+        conversationId={undefined}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />
     </AiServiceProvider>,
   ).toJSON();
   expect(tree).toMatchSnapshot();
@@ -22,7 +26,11 @@ test('renders ChatScreen with existing messages', () => {
 
   const { toJSON } = render(
     <AiServiceProvider>
-      <ChatScreen messages={messages} />
+      <ChatScreen
+        conversationId={5}
+        messages={messages}
+        onConversationCreated={jest.fn()}
+      />
     </AiServiceProvider>,
   );
 

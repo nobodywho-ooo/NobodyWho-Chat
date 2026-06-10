@@ -16,12 +16,9 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { modelIdInUse } = useAppState();
   const navigation = useNavigation();
 
-  const handleModelPress = useCallback(
-    (model: Model) => {
-      setAppState({ modelIdInUse: model.id, conversationIdInUse: undefined });
-    },
-    [navigation],
-  );
+  const handleModelPress = useCallback((model: Model) => {
+    setAppState({ modelIdInUse: model.id, conversationIdInUse: undefined });
+  }, []);
 
   if (models.length === 0) {
     return (
