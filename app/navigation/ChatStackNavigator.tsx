@@ -1,5 +1,7 @@
 import React, {
+  createContext,
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -16,7 +18,7 @@ import {
   getMessagesByConversationId,
   getModelById,
 } from 'repositories';
-import { devLog, isIOS, stripThinkingBlocks } from 'helpers';
+import { devLog, isIOS } from 'helpers';
 import { PlatformIcon } from 'components';
 import { useAppState, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
@@ -45,7 +47,8 @@ const toChatHistory = (messages: ChatMessage[]): Message[] =>
   messages.map((message): Message => {
     switch (message.role) {
       case 'assistant':
-        return { role: 'assistant', content: message.content };
+        // TODO: fix in NW - toolCalls needs to be provided otherwise setChatHistory crash
+        return { role: 'assistant', content: message.content, toolCalls: [] };
       case 'system':
         return { role: 'system', content: message.content };
       case 'user':
@@ -53,6 +56,56 @@ const toChatHistory = (messages: ChatMessage[]): Message[] =>
         return { role: 'user', content: message.content };
     }
   });
+
+interface ChatRootContextValue {
+  hasModels: boolean;
+  modelIdInUse: number | undefined;
+  status: SessionStatus;
+  chatHistory: Message[];
+  conversationId: LoadedConversationId;
+  onConversationCreated: (id: number) => void;
+  onRetry: () => void;
+}
+
+const defaultChatRootValue: ChatRootContextValue = {
+  hasModels: false,
+  modelIdInUse: undefined,
+  status: SessionStatus.Loading,
+  chatHistory: [],
+  conversationId: undefined,
+  onConversationCreated: () => undefined,
+  onRetry: () => undefined,
+};
+
+const ChatRootContext =
+  createContext<ChatRootContextValue>(defaultChatRootValue);
+
+const ChatRootScreen = () => {
+  const ctx = useContext(ChatRootContext);
+
+  if (!ctx.hasModels) {
+    return <NoModelDownloadedScreen />;
+  }
+  if (ctx.modelIdInUse === undefined) {
+    return <NoModelSelectedScreen />;
+  }
+
+  switch (ctx.status) {
+    case SessionStatus.Ready:
+      return (
+        <ChatScreen
+          conversationId={ctx.conversationId}
+          messages={ctx.chatHistory}
+          onConversationCreated={ctx.onConversationCreated}
+        />
+      );
+    case SessionStatus.Error:
+      return <ErrorScreen onRetry={ctx.onRetry} />;
+    case SessionStatus.Loading:
+    default:
+      return <LoadingScreen />;
+  }
+};
 
 export const ChatStackNavigator = () => {
   const { t } = useTranslation();
@@ -115,12 +168,7 @@ export const ChatStackNavigator = () => {
     const messages = await getMessagesByConversationId(conversationIdInUse);
     const history = toChatHistory(messages);
 
-    const contextHistory = history.map(message =>
-      message.role === 'assistant'
-        ? { ...message, content: stripThinkingBlocks(message.content) }
-        : message,
-    );
-    await chat.current.setChatHistory(contextHistory);
+    await chat.current.setChatHistory(history);
 
     setChatHistory(history);
     setLoadedConversationId(conversationIdInUse);
@@ -209,47 +257,26 @@ export const ChatStackNavigator = () => {
     });
   }, [disposeChat, startSession, refreshChatHistory]);
 
-  const ErrorScreenWithRetry = useMemo(
-    () => () => <ErrorScreen onRetry={startSession} />,
-    [startSession],
+  const chatRootValue = useMemo<ChatRootContextValue>(
+    () => ({
+      hasModels: models.length > 0,
+      modelIdInUse,
+      status,
+      chatHistory,
+      conversationId: loadedConversationId,
+      onConversationCreated: handleConversationCreated,
+      onRetry: startSession,
+    }),
+    [
+      models.length,
+      modelIdInUse,
+      status,
+      chatHistory,
+      loadedConversationId,
+      handleConversationCreated,
+      startSession,
+    ],
   );
-
-  const ChatScreenWithHistory = useMemo(
-    () => () => (
-      <ChatScreen
-        conversationId={loadedConversationId}
-        messages={chatHistory}
-        onConversationCreated={handleConversationCreated}
-      />
-    ),
-    [chatHistory, loadedConversationId, handleConversationCreated],
-  );
-
-  const screen = useMemo(() => {
-    if (models.length === 0) {
-      return NoModelDownloadedScreen;
-    }
-
-    if (modelIdInUse === undefined) {
-      return NoModelSelectedScreen;
-    }
-
-    switch (status) {
-      case SessionStatus.Ready:
-        return ChatScreenWithHistory;
-      case SessionStatus.Error:
-        return ErrorScreenWithRetry;
-      case SessionStatus.Loading:
-      default:
-        return LoadingScreen;
-    }
-  }, [
-    models.length,
-    modelIdInUse,
-    status,
-    ChatScreenWithHistory,
-    ErrorScreenWithRetry,
-  ]);
 
   const renderCloseButton = useCallback(
     (navigation: { goBack: () => void }) =>
@@ -267,45 +294,47 @@ export const ChatStackNavigator = () => {
   );
 
   return (
-    <Stack.Navigator
-      screenOptions={{
-        headerStyle: { backgroundColor: colors.surface },
-        headerTintColor: colors.onSurface,
-        headerTitleStyle: { color: colors.onSurface },
-      }}
-    >
-      <Stack.Screen
-        name="ChatScreen"
-        component={screen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="SettingsScreen"
-        component={SettingsScreen}
-        options={({ navigation }) => ({
-          title: t('navigation.settings'),
-          presentation: 'modal',
-          headerRight: () => renderCloseButton(navigation),
-        })}
-      />
-      <Stack.Screen
-        name="ModelsScreen"
-        component={ModelsScreen}
-        options={({ navigation }) => ({
-          title: t('navigation.models'),
-          presentation: 'modal',
-          headerRight: () => renderCloseButton(navigation),
-        })}
-      />
-      <Stack.Screen
-        name="DownloadedModelsScreen"
-        component={DownloadedModelsScreen}
-        options={({ navigation }) => ({
-          title: t('navigation.downloadModels'),
-          presentation: 'modal',
-          headerRight: () => renderCloseButton(navigation),
-        })}
-      />
-    </Stack.Navigator>
+    <ChatRootContext.Provider value={chatRootValue}>
+      <Stack.Navigator
+        screenOptions={{
+          headerStyle: { backgroundColor: colors.surface },
+          headerTintColor: colors.onSurface,
+          headerTitleStyle: { color: colors.onSurface },
+        }}
+      >
+        <Stack.Screen
+          name="ChatScreen"
+          component={ChatRootScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="SettingsScreen"
+          component={SettingsScreen}
+          options={({ navigation }) => ({
+            title: t('navigation.settings'),
+            presentation: 'modal',
+            headerRight: () => renderCloseButton(navigation),
+          })}
+        />
+        <Stack.Screen
+          name="ModelsScreen"
+          component={ModelsScreen}
+          options={({ navigation }) => ({
+            title: t('navigation.models'),
+            presentation: 'modal',
+            headerRight: () => renderCloseButton(navigation),
+          })}
+        />
+        <Stack.Screen
+          name="DownloadedModelsScreen"
+          component={DownloadedModelsScreen}
+          options={({ navigation }) => ({
+            title: t('navigation.downloadModels'),
+            presentation: 'modal',
+            headerRight: () => renderCloseButton(navigation),
+          })}
+        />
+      </Stack.Navigator>
+    </ChatRootContext.Provider>
   );
 };

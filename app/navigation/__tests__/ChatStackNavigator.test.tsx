@@ -72,7 +72,7 @@ beforeEach(async () => {
   mockChatRef.current = undefined;
   mockCreateChat.mockClear();
   mockDisposeChat.mockClear();
-  mockChatInstance.setChatHistory.mockClear();
+  mockChatInstance.setChatHistory.mockReset().mockResolvedValue(undefined);
   mockChatInstance.ask
     .mockReset()
     .mockImplementation(async function* () {
@@ -149,6 +149,42 @@ test('disposes and rebuilds the chat when the in-use model changes', async () =>
   expect(mockDisposeChat).toHaveBeenCalledTimes(1);
   await waitFor(() => expect(mockCreateChat).toHaveBeenCalledTimes(2));
   expect(mockCreateChat).toHaveBeenLastCalledWith({ model: buildModel(1) });
+});
+
+test('injects restored assistant messages with an empty toolCalls array', async () => {
+  mockGetConversationById.mockResolvedValue({
+    id: 5,
+    title: 'Chat 5',
+    lastUsed: 'now',
+    modelId: 0,
+  });
+  mockGetMessagesByConversationId.mockResolvedValue([
+    { id: 1, conversationId: 5, role: 'user', content: 'hi', documentsPath: [] },
+    {
+      id: 2,
+      conversationId: 5,
+      role: 'assistant',
+      content: '<think>reasoning</think>answer',
+      documentsPath: [],
+    },
+  ]);
+  await setAppState({ modelIdInUse: 0, conversationIdInUse: 5 });
+
+  render(<ChatStackNavigator />);
+
+  await waitFor(() =>
+    expect(mockChatInstance.setChatHistory).toHaveBeenCalled(),
+  );
+  const injected =
+    mockChatInstance.setChatHistory.mock.calls[
+      mockChatInstance.setChatHistory.mock.calls.length - 1
+    ][0];
+  expect(injected).toEqual([
+    { role: 'user', content: 'hi' },
+    // Raw content (incl. <think>) is injected; toolCalls present so the FFI
+    // converter doesn't receive null.
+    { role: 'assistant', content: '<think>reasoning</think>answer', toolCalls: [] },
+  ]);
 });
 
 test('reloads only the history when the in-use conversation changes', async () => {

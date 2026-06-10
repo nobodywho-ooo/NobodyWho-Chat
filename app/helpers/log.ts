@@ -1,6 +1,7 @@
-
 const expandErrors = (value: unknown): unknown =>
-  value instanceof Error ? (value.stack ?? `${value.name}: ${value.message}`) : value;
+  value instanceof Error
+    ? `${value.message}${value.stack ? `\n${value.stack}` : ''}`
+    : value;
 
 export const devLog = (...args: unknown[]): void => {
   if (__DEV__) {

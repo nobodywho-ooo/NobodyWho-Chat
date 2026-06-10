@@ -16,6 +16,16 @@ import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
 
+// Persisted assistant messages keep their raw <think>…</think> blocks; render
+// them the same way live streaming does (see handleSend) so a reloaded
+// conversation looks identical to one being streamed.
+const formatMessages = (messages: Message[]): Message[] =>
+  messages.map(message =>
+    message.role === 'assistant'
+      ? { ...message, content: formatThinkingBlocks(message.content) }
+      : message,
+  );
+
 interface ChatScreenProps {
   conversationId: number | undefined;
   messages: Message[];
@@ -28,7 +38,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   onConversationCreated,
 }) => {
   const { t } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>(() =>
+    formatMessages(initialMessages),
+  );
   const [conversationId, setConversationId] = useState(initialConversationId);
   const [inputText, setInputText] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -40,7 +52,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const isKeyboardVisible = keyboardHeight > 0;
 
   useEffect(() => {
-    setMessages(initialMessages);
+    setMessages(formatMessages(initialMessages));
     setConversationId(initialConversationId);
   }, [initialMessages, initialConversationId]);
 
