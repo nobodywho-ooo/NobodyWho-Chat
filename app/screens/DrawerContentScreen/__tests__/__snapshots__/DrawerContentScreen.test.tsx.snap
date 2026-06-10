@@ -110,7 +110,9 @@ exports[`renders correctly DrawerContentScreen 1`] = `
       </Text>
     </View>
   </View>
-  <ConversationsList />
+  <ConversationsList
+    onCloseDrawer={[Function]}
+  />
   <View
     style={
       {

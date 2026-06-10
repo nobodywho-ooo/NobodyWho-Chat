@@ -1,48 +1,80 @@
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import React, { useCallback } from 'react';
+import { FlatList, ListRenderItem, Pressable, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'components';
-import { useConversations, useStyled } from 'hooks';
+import { setAppState } from 'database';
+import { useAppState, useConversations, useStyled } from 'hooks';
+import { Conversation } from 'types';
 
-export const ConversationsList = () => {
+interface ConversationsListProps {
+  onCloseDrawer: () => void;
+}
+
+export const ConversationsList: React.FC<ConversationsListProps> = ({
+  onCloseDrawer,
+}) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { conversations } = useConversations();
+  const { conversationIdInUse } = useAppState();
+
+  const handleConversationPress = useCallback(
+    (conversation: Conversation) => {
+      setAppState({
+        modelIdInUse: conversation.modelId,
+        conversationIdInUse: conversation.id,
+      });
+      onCloseDrawer();
+    },
+    [onCloseDrawer],
+  );
+
+  const renderItem = useCallback<ListRenderItem<Conversation>>(
+    ({ item }) => (
+      <Pressable
+        onPress={() => handleConversationPress(item)}
+        style={({ pressed }) => [
+          styles.item,
+          {
+            backgroundColor: pressed ? colors.surfaceContainer : 'transparent',
+          },
+        ]}
+      >
+        <Text
+          style={[styles.itemText, { color: colors.onSurface }]}
+          numberOfLines={1}
+          bold={item.id === conversationIdInUse}
+        >
+          {item.title}
+        </Text>
+      </Pressable>
+    ),
+    [
+      colors.surfaceContainer,
+      colors.onSurface,
+      conversationIdInUse,
+      handleConversationPress,
+    ],
+  );
 
   return (
-    <ScrollView
-      style={[styles.container]}
+    <FlatList
+      style={styles.container}
       contentContainerStyle={styles.content}
-    >
-      <Text style={[styles.header, { color: colors.onSurfaceVariant }]}>
-        {t('components.conversationsList.conversations')}
-      </Text>
-      {conversations.length === 0 && (
+      data={conversations}
+      keyExtractor={conversation => conversation.id.toString()}
+      renderItem={renderItem}
+      ListHeaderComponent={
+        <Text style={[styles.header, { color: colors.onSurfaceVariant }]}>
+          {t('components.conversationsList.conversations')}
+        </Text>
+      }
+      ListEmptyComponent={
         <Text style={[styles.emptyText, { color: colors.onSurface }]}>
           {t('components.conversationsList.noConversations')}
         </Text>
-      )}
-      {conversations.map(conversation => (
-        <Pressable
-          key={conversation.id}
-          style={({ pressed }) => [
-            styles.item,
-            {
-              backgroundColor: pressed
-                ? colors.surfaceContainer
-                : 'transparent',
-            },
-          ]}
-        >
-          <Text
-            style={[styles.itemText, { color: colors.onSurface }]}
-            numberOfLines={1}
-          >
-            {conversation.title}
-          </Text>
-        </Pressable>
-      ))}
-    </ScrollView>
+      }
+    />
   );
 };
 

@@ -64,7 +64,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         </Pressable>
       </View>
 
-      <ConversationsList />
+      <ConversationsList onCloseDrawer={closeDrawer} />
 
       <View style={styles.floatingButton}>
         <Button
