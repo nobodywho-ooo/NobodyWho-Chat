@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Pressable, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { setAppState } from 'database';
 import { Button, IconButton, PlatformIcon, Text } from 'components';
 import { ConversationsList } from './components';
 import { useStyled } from 'hooks';
@@ -21,6 +22,16 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
 
   const closeDrawer = onCloseDrawer;
 
+  const handleSettingsPress = useCallback(() => {
+    // @ts-ignore
+    navigation.navigate('SettingsScreen');
+  }, [navigation]);
+
+  const handleNewChatPress = useCallback(() => {
+    setAppState({ conversationIdInUse: undefined });
+    closeDrawer();
+  }, [closeDrawer]);
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -35,10 +46,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
 
       <View style={styles.actions}>
         <Pressable
-          onPress={() => {
-            // @ts-ignore
-            navigation.navigate('SettingsScreen');
-          }}
+          onPress={handleSettingsPress}
           style={({ pressed }) => [
             styles.actionButton,
             { backgroundColor: colors.surfaceContainer },
@@ -63,7 +71,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
           title={t('screens.drawerContent.newChat')}
           variant="secondary"
           icon={{ iosIconName: 'plus.bubble', androidIconName: 'add_comment' }}
-          onPress={closeDrawer}
+          onPress={handleNewChatPress}
         />
       </View>
     </View>

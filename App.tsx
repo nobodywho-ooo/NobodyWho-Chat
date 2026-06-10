@@ -11,11 +11,7 @@ import {
 } from '@react-navigation/native';
 import { ThemeProvider, isDarkModeEnabled } from 'context';
 import { initDatabase, hydrateAppState, setAppState } from 'database';
-import {
-  getAllConversations,
-  insertConversation,
-  insertModel,
-} from 'repositories';
+import { insertModel } from 'repositories';
 import { ModelPipeline } from 'types';
 import { useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen } from 'screens';
@@ -77,22 +73,7 @@ function AppLoader() {
           tags: [],
         });
 
-        // // Reuse the existing local-model conversation if one was seeded on a
-        // // prior launch, otherwise create it.
-        // const conversations = await getAllConversations();
-        // const existingConversation = conversations.find(
-        //   conversation => conversation.modelId === 0,
-        // );
-        // const conversationId = existingConversation
-        //   ? existingConversation.id
-        //   : await insertConversation({ title: 'New chat', modelId: 0 });
-
-        // // Both ids in one update so subscribers never observe a model and a
-        // // conversation that don't belong together.
-        // await setAppState({
-        //   modelIdInUse: 0,
-        //   conversationIdInUse: conversationId,
-        // });
+        await setAppState({ modelIdInUse: 0 });
       }
 
       setDbReady(true);

@@ -75,12 +75,14 @@ export const ChatStackNavigator = () => {
 
   const resetAndLoadChatHistory = useCallback(async () => {
     if (chat.current === undefined) {
-      throw new Error('ChatStackNavigator: chat is not ready');
+      throw new Error('ChatStackNavigator: current chat is undefined');
     }
 
     const { modelIdInUse, conversationIdInUse } = getAppState();
     if (conversationIdInUse === undefined) {
-      throw new Error('ChatStackNavigator: no conversation in use');
+      await chat.current.setChatHistory([]);
+      setChatHistory([]);
+      return;
     }
 
     const conversation = await getConversationById(conversationIdInUse);
