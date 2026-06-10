@@ -3,6 +3,7 @@ import { ScrollView, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAppState, useModels, useStyled } from 'hooks';
+import { setAppState } from 'database';
 import { Button, ModelCard, Text } from 'components';
 import { Model } from 'types';
 
@@ -15,13 +16,14 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { modelIdInUse } = useAppState();
   const navigation = useNavigation();
 
-  const handleModelPress = useCallback((model: Model) => {
-    console.log('Model pressed:', model);
-    // Unload current model
-    // load new model
-  }, []);
+  const handleModelPress = useCallback(
+    (model: Model) => {
+      setAppState({ modelIdInUse: model.id, conversationIdInUse: undefined });
+    },
+    [navigation],
+  );
 
-  if (models.length == 0) {
+  if (models.length === 0) {
     return (
       <View style={styles.noModelContainer}>
         <Text variant="h4" style={styles.noModelContainerText}>
@@ -45,7 +47,7 @@ export const DownloadedModelsScreen: React.FC = () => {
           <ModelCard
             key={model.id}
             isDownloaded
-            isSelected={modelIdInUse == model.id}
+            isSelected={modelIdInUse === model.id}
             model={model}
             onPress={handleModelPress}
           />

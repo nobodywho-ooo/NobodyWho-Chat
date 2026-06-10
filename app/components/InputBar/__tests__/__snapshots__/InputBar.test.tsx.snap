@@ -46,7 +46,7 @@ exports[`renders correctly InputBar 1`] = `
     <TextInput
       multiline={true}
       onChangeText={[Function]}
-      placeholder="Ask something..."
+      placeholder="components.inputBar.placeholder"
       placeholderTextColor="#999"
       style={
         [
@@ -124,7 +124,7 @@ exports[`renders correctly InputBar when streaming 1`] = `
     <TextInput
       multiline={true}
       onChangeText={[Function]}
-      placeholder="Ask something..."
+      placeholder="components.inputBar.placeholder"
       placeholderTextColor="#999"
       style={
         [
@@ -228,7 +228,7 @@ exports[`renders correctly InputBar with value 1`] = `
     <TextInput
       multiline={true}
       onChangeText={[Function]}
-      placeholder="Ask something..."
+      placeholder="components.inputBar.placeholder"
       placeholderTextColor="#999"
       style={
         [

@@ -1,0 +1,42 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly NoModelSelectedScreen 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "flex": 1,
+        "justifyContent": "center",
+        "paddingHorizontal": 16,
+        "paddingTop": 16,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <PlatformIcon
+    androidIconName="memory"
+    color="#c1c1c1"
+    iosIconName="cpu"
+    size={50}
+  />
+  <Text
+    style={
+      {
+        "paddingBottom": 20,
+        "paddingTop": 32,
+      }
+    }
+    variant="h3"
+  >
+    screens.noModelSelected.pleaseSelectAModel
+  </Text>
+  <Button
+    onPress={[Function]}
+    title="screens.noModelSelected.selectModel"
+  />
+</View>
+`;

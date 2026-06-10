@@ -1,4 +1,5 @@
 import { open, DB } from '@op-engineering/op-sqlite';
+import { ModelPipeline } from 'types';
 import { devLog } from '../helpers/log';
 
 const DB_NAME = 'nobodywho.sqlite';
@@ -8,6 +9,8 @@ let _db: DB | null = null;
 export function getDatabase(): DB {
   if (!_db) {
     _db = open({ name: DB_NAME });
+    _db.executeSync('PRAGMA foreign_keys = ON');
+    _db.executeSync('PRAGMA journal_mode = WAL');
     devLog('Database opened:', DB_NAME);
   }
   return _db;
@@ -21,46 +24,63 @@ export function closeDatabase(): void {
   }
 }
 
+const PIPELINES = Object.values(ModelPipeline)
+  .map(pipeline => `'${pipeline}'`)
+  .join(', ');
+
+// Append-only list of schema migrations: entry N migrates the schema from
+// user_version N to N + 1. Never edit a shipped entry — add a new one.
+const MIGRATIONS: string[][] = [
+  // v0 -> v1: initial schema, created on a blank database.
+  [
+    `CREATE TABLE models (
+      id INTEGER PRIMARY KEY,
+      model_name TEXT NOT NULL,
+      model_size_gb REAL NOT NULL,
+      parameter_count_billions REAL NOT NULL,
+      author TEXT NOT NULL,
+      family TEXT NOT NULL,
+      thinking INTEGER DEFAULT 0,
+      image_ingestion INTEGER DEFAULT 0,
+      audio_ingestion INTEGER DEFAULT 0,
+      download_links TEXT NOT NULL DEFAULT '[]',
+      pipeline TEXT NOT NULL CHECK (pipeline IN (${PIPELINES})),
+      tags TEXT NOT NULL DEFAULT '[]'
+    )`,
+    `CREATE TABLE conversations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      model_id INTEGER NOT NULL,
+      FOREIGN KEY (model_id) REFERENCES models(id) ON DELETE CASCADE
+    )`,
+    `CREATE TABLE messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      conversation_id INTEGER NOT NULL,
+      role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system', 'tool')),
+      content TEXT NOT NULL,
+      tokens_per_second REAL,
+      time_to_first_token REAL,
+      documents_path TEXT NOT NULL DEFAULT '[]',
+      FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
+    )`,
+    `CREATE INDEX idx_messages_conversation_id ON messages(conversation_id)`,
+  ],
+];
+
 export async function initDatabase(): Promise<void> {
   const db = getDatabase();
-  await db.executeBatch([
-    [
-      `CREATE TABLE IF NOT EXISTS models (
-        id INTEGER PRIMARY KEY,
-        model_name TEXT NOT NULL,
-        model_size_gb REAL NOT NULL,
-        parameter_count_billions REAL NOT NULL,
-        author TEXT NOT NULL,
-        family TEXT NOT NULL,
-        thinking INTEGER DEFAULT 0,
-        image_ingestion INTEGER DEFAULT 0,
-        audio_ingestion INTEGER DEFAULT 0,
-        download_links TEXT NOT NULL DEFAULT '[]',
-        pipeline TEXT NOT NULL,
-        tags TEXT NOT NULL DEFAULT '[]'
-      )`,
-    ],
-    [
-      `CREATE TABLE IF NOT EXISTS conversations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        last_used TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        model_id INTEGER NOT NULL,
-        FOREIGN KEY (model_id) REFERENCES models(id)
-      )`,
-    ],
-    [
-      `CREATE TABLE IF NOT EXISTS messages (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        conversation_id INTEGER NOT NULL,
-        role TEXT NOT NULL,
-        content TEXT NOT NULL,
-        tokens_per_second REAL,
-        time_to_first_token REAL,
-        documents_path TEXT NOT NULL DEFAULT '[]',
-        FOREIGN KEY (conversation_id) REFERENCES conversations(id)
-      )`,
-    ],
-  ]);
+  const result = await db.execute('PRAGMA user_version');
+  const version = (result.rows[0]?.user_version as number | undefined) ?? 0;
+
+  for (let v = version; v < MIGRATIONS.length; v++) {
+    await db.transaction(async tx => {
+      for (const statement of MIGRATIONS[v]) {
+        await tx.execute(statement);
+      }
+      await tx.execute(`PRAGMA user_version = ${v + 1}`);
+    });
+    devLog('Database migrated to version', v + 1);
+  }
 }

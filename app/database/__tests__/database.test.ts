@@ -16,6 +16,13 @@ describe('getDatabase', () => {
     expect(openMock).toHaveBeenCalledWith({ name: 'nobodywho.sqlite' });
   });
 
+  test('enables foreign keys and WAL mode on open', () => {
+    const db = getDatabase() as any;
+
+    expect(db.executeSync).toHaveBeenCalledWith('PRAGMA foreign_keys = ON');
+    expect(db.executeSync).toHaveBeenCalledWith('PRAGMA journal_mode = WAL');
+  });
+
   test('memoizes the connection across calls', () => {
     const first = getDatabase();
     const second = getDatabase();
@@ -45,20 +52,41 @@ describe('closeDatabase', () => {
 });
 
 describe('initDatabase', () => {
-  test('creates the models, conversations and messages tables in one batch', async () => {
+  test('applies the initial migration on a fresh database', async () => {
     const db = getDatabase() as any;
-    db.executeBatch.mockClear();
+    db.execute.mockClear().mockResolvedValue({ rows: [] });
+    db.transaction.mockClear();
 
     await initDatabase();
 
-    expect(db.executeBatch).toHaveBeenCalledTimes(1);
+    expect(db.transaction).toHaveBeenCalledTimes(1);
 
-    const sql = (db.executeBatch.mock.calls[0][0] as string[][])
-      .map(statement => statement[0])
+    const sql = db.execute.mock.calls
+      .map((call: any[]) => call[0] as string)
       .join('\n');
 
-    expect(sql).toContain('CREATE TABLE IF NOT EXISTS models');
-    expect(sql).toContain('CREATE TABLE IF NOT EXISTS conversations');
-    expect(sql).toContain('CREATE TABLE IF NOT EXISTS messages');
+    expect(sql).toContain('CREATE TABLE models');
+    expect(sql).toContain('CREATE TABLE conversations');
+    expect(sql).toContain('CREATE TABLE messages');
+    expect(sql).toContain('REFERENCES models(id) ON DELETE CASCADE');
+    expect(sql).toContain('REFERENCES conversations(id) ON DELETE CASCADE');
+    expect(sql).toContain("CHECK (role IN ('user', 'assistant', 'system', 'tool'))");
+    expect(sql).toContain("CHECK (pipeline IN ('textGeneration'");
+    expect(sql).toContain(
+      'CREATE INDEX idx_messages_conversation_id ON messages(conversation_id)',
+    );
+    expect(sql).toContain('PRAGMA user_version = 1');
+  });
+
+  test('does nothing when the schema is already up to date', async () => {
+    const db = getDatabase() as any;
+    db.execute.mockClear().mockResolvedValue({ rows: [{ user_version: 1 }] });
+    db.transaction.mockClear();
+
+    await initDatabase();
+
+    expect(db.transaction).not.toHaveBeenCalled();
+    expect(db.execute).toHaveBeenCalledTimes(1);
+    expect(db.execute).toHaveBeenCalledWith('PRAGMA user_version');
   });
 });

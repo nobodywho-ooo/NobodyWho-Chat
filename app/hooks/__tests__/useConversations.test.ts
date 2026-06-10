@@ -17,7 +17,7 @@ test('queries the conversations table and wraps the result', () => {
   const { result } = renderHook(() => useConversations());
 
   expect(mockUseReactiveQuery).toHaveBeenCalledWith({
-    query: 'SELECT * FROM conversations ORDER BY last_used DESC',
+    query: 'SELECT * FROM conversations ORDER BY last_used DESC, id DESC',
     tables: ['conversations'],
     map: rowToConversation,
   });

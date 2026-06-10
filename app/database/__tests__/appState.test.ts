@@ -111,6 +111,22 @@ describe('subscribeAppState', () => {
     unsubB();
   });
 
+  test('a throwing listener does not block the others', async () => {
+    const throwing = jest.fn(() => {
+      throw new Error('subscriber boom');
+    });
+    const healthy = jest.fn();
+    const unsubThrowing = subscribeAppState(throwing);
+    const unsubHealthy = subscribeAppState(healthy);
+
+    await expect(setAppState({ modelIdInUse: 1 })).resolves.toBeUndefined();
+
+    expect(throwing).toHaveBeenCalledTimes(1);
+    expect(healthy).toHaveBeenCalledTimes(1);
+    unsubThrowing();
+    unsubHealthy();
+  });
+
   test('stops notifying after unsubscribe', async () => {
     const listener = jest.fn();
     const unsubscribe = subscribeAppState(listener);

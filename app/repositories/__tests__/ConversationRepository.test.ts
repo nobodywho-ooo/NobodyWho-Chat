@@ -34,7 +34,7 @@ describe('getAllConversations', () => {
     const conversations = await getAllConversations();
 
     expect(db.execute).toHaveBeenCalledWith(
-      'SELECT * FROM conversations ORDER BY last_used DESC',
+      'SELECT * FROM conversations ORDER BY last_used DESC, id DESC',
     );
     expect(conversations).toEqual([
       { id: 1, title: 'a', lastUsed: 'x', modelId: 2 },
@@ -48,7 +48,7 @@ describe('getLastUsedConversationId', () => {
 
     expect(await getLastUsedConversationId()).toBe(9);
     expect(db.execute).toHaveBeenCalledWith(
-      'SELECT id FROM conversations ORDER BY last_used DESC LIMIT 1',
+      'SELECT id FROM conversations ORDER BY last_used DESC, id DESC LIMIT 1',
     );
   });
 

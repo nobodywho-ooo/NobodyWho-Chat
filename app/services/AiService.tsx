@@ -88,6 +88,10 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   const encoderRef = useRef<Encoder | undefined>(undefined);
   const crossEncoderRef = useRef<CrossEncoder | undefined>(undefined);
 
+  // Bumped on every dispose. A createChat that resolves after its generation
+  // passed must discard its instance instead of resurrecting a disposed chat.
+  const chatGeneration = useRef(0);
+
   const createChat = useCallback(
     async (opts: {
       model: Model;
@@ -99,6 +103,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     }) => {
       if (inFlight.current.chat || chatRef.current) return;
       inFlight.current.chat = true;
+      const generation = chatGeneration.current;
       setState(s => ({ ...s, chatState: AiModelState.Loading }));
       try {
         const { model } = opts;
@@ -128,13 +133,25 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
           sampler: opts?.sampler,
           contextSize: opts?.contextSize,
         });
+
+        if (generation !== chatGeneration.current) {
+          // Disposed while loading; a newer chat may already be in flight.
+          chat.destroy();
+          return;
+        }
+
         chatRef.current = chat;
         setState(s => ({ ...s, chatState: AiModelState.Ready }));
       } catch (error) {
         devLog('AiService error', error);
         setState(s => ({ ...s, chatState: AiModelState.Error }));
+        throw error;
       } finally {
-        inFlight.current.chat = false;
+        // A dispose during the load already handed the in-flight slot to the
+        // next createChat — only the owning generation may release it.
+        if (generation === chatGeneration.current) {
+          inFlight.current.chat = false;
+        }
       }
     },
     [],
@@ -191,6 +208,8 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   );
 
   const disposeChat = useCallback(() => {
+    chatGeneration.current += 1;
+    chatRef.current?.destroy();
     chatRef.current = undefined;
     inFlight.current.chat = false;
 
@@ -198,6 +217,10 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   const dispose = useCallback(() => {
+    chatGeneration.current += 1;
+    chatRef.current?.destroy();
+    encoderRef.current?.destroy();
+    crossEncoderRef.current?.destroy();
     chatRef.current = undefined;
     encoderRef.current = undefined;
     crossEncoderRef.current = undefined;

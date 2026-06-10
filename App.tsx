@@ -10,9 +10,15 @@ import {
   DarkTheme,
 } from '@react-navigation/native';
 import { ThemeProvider, isDarkModeEnabled } from 'context';
-import { initDatabase, hydrateAppState, setAppState } from 'database';
-import { insertModel } from 'repositories';
+import {
+  initDatabase,
+  hydrateAppState,
+  getAppState,
+  setAppState,
+} from 'database';
+import { getConversationById, getModelById, insertModel } from 'repositories';
 import { ModelPipeline } from 'types';
+import { devLog } from 'helpers';
 import { useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
@@ -44,6 +50,33 @@ function AppContent() {
   );
 }
 
+// Hydrated state can point at rows that no longer exist (model deleted,
+// database reset). Clear stale ids so the app degrades to the select-a-model
+// or empty-chat flows instead of dead-ending on the error screen.
+async function dropStaleIdsInUse(): Promise<void> {
+  const { modelIdInUse, conversationIdInUse } = getAppState();
+
+  if (
+    modelIdInUse !== undefined &&
+    (await getModelById(modelIdInUse)) === undefined
+  ) {
+    await setAppState({
+      modelIdInUse: undefined,
+      conversationIdInUse: undefined,
+    });
+    return;
+  }
+
+  if (conversationIdInUse === undefined) {
+    return;
+  }
+
+  const conversation = await getConversationById(conversationIdInUse);
+  if (conversation === undefined || conversation.modelId !== modelIdInUse) {
+    await setAppState({ conversationIdInUse: undefined });
+  }
+}
+
 function AppLoader() {
   const [dbReady, setDbReady] = useState(false);
   const [dbError, setDbError] = useState(false);
@@ -57,27 +90,29 @@ function AppLoader() {
 
       // TODO: delete this if when model download is working
       if (__DEV__) {
-        // Create and set local model
-        await insertModel({
-          id: 0,
-          modelName: 'chat-model',
-          modelSizeGB: 0.5,
-          parameterCountBillions: 0.6,
-          author: 'Alibaba Cloud',
-          family: 'Qwen',
-          thinking: true,
-          imageIngestion: false,
-          audioIngestion: false,
-          downloadLinks: [],
-          pipeline: ModelPipeline.textGeneration,
-          tags: [],
-        });
-
-        await setAppState({ modelIdInUse: 0 });
+        if ((await getModelById(0)) === undefined) {
+          await insertModel({
+            id: 0,
+            modelName: 'chat-model',
+            modelSizeGB: 0.5,
+            parameterCountBillions: 0.6,
+            author: 'Alibaba Cloud',
+            family: 'Qwen',
+            thinking: true,
+            imageIngestion: false,
+            audioIngestion: false,
+            downloadLinks: [],
+            pipeline: ModelPipeline.textGeneration,
+            tags: [],
+          });
+        }
       }
 
+      await dropStaleIdsInUse();
+
       setDbReady(true);
-    } catch {
+    } catch (error) {
+      devLog('App init failed', error);
       setDbError(true);
     }
   }, []);

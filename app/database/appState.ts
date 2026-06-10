@@ -1,3 +1,4 @@
+import { devLog } from 'helpers';
 import { getStorage } from './storage';
 
 const APP_STATE = 'appState';
@@ -44,5 +45,12 @@ export async function setAppState(patch: Partial<AppState>): Promise<void> {
   }
   _state = next;
   await getStorage().setItem(APP_STATE, JSON.stringify(next));
-  _listeners.forEach(listener => listener(next, prev));
+  // One throwing listener must not starve the others or reject setAppState.
+  _listeners.forEach(listener => {
+    try {
+      listener(next, prev);
+    } catch (error) {
+      devLog('appState listener error', error);
+    }
+  });
 }

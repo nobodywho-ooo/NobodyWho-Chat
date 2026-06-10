@@ -18,11 +18,11 @@ export const SettingsScreen: React.FC = () => {
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
       <ListItem
-        title="Models"
-        subtitle="Manage your models"
+        title={t('screens.settings.models')}
+        subtitle={t('screens.settings.manageYourModels')}
         iosIconName="document.fill"
         androidIconName="article"
-        iconBackgroundColor="#5856D6"
+        iconBackgroundColor={colors.primary}
         // @ts-ignore
         onPress={() => navigation.navigate('ModelsScreen')}
       />

@@ -37,10 +37,23 @@ describe('rowToMessage', () => {
       documentsPath: ['/x'],
     });
   });
+
+  test('falls back to an empty documents_path on corrupt JSON', () => {
+    const message = rowToMessage({
+      id: 1,
+      timestamp: 't',
+      conversation_id: 2,
+      role: 'user',
+      content: 'c',
+      documents_path: 'not json',
+    });
+
+    expect(message.documentsPath).toEqual([]);
+  });
 });
 
 describe('getMessagesByConversationId', () => {
-  test('queries the conversation ordered by timestamp and maps the rows', async () => {
+  test('queries the conversation ordered by id and maps the rows', async () => {
     db.execute.mockResolvedValue({
       rows: [
         {
@@ -57,7 +70,7 @@ describe('getMessagesByConversationId', () => {
     const messages = await getMessagesByConversationId(2);
 
     expect(db.execute).toHaveBeenCalledWith(
-      'SELECT * FROM messages WHERE conversation_id = ? ORDER BY timestamp ASC',
+      'SELECT * FROM messages WHERE conversation_id = ? ORDER BY id ASC',
       [2],
     );
     expect(messages[0].conversationId).toBe(2);
@@ -81,6 +94,22 @@ describe('insertMessage', () => {
       [2, 'user', 'hi', null, null, '["/a"]'],
     );
     expect(id).toBe(11);
+  });
+
+  test('bumps the conversation last_used in the same transaction', async () => {
+    db.execute.mockResolvedValue({ insertId: 11, rows: [] });
+
+    await insertMessage({
+      conversationId: 2,
+      role: 'user',
+      content: 'hi',
+      documentsPath: [],
+    });
+
+    expect(db.execute).toHaveBeenCalledWith(
+      'UPDATE conversations SET last_used = CURRENT_TIMESTAMP WHERE id = ?',
+      [2],
+    );
   });
 
   test('persists provided performance metrics', async () => {

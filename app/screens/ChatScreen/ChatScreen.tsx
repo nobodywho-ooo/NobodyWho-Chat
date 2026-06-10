@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FlatList, Keyboard, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Message } from 'react-native-nobodywho';
 import { InputBar, MessageListItem } from 'components';
 import { useStyled } from 'hooks';
 import { useAiService } from 'services';
-import { isAndroid, isIOS, formatThinkingBlocks } from 'helpers';
+import { devLog, isAndroid, isIOS, formatThinkingBlocks } from 'helpers';
 
 import { EmptyChat } from './components/EmptyChat/EmptyChat';
 
@@ -20,6 +21,7 @@ interface ChatScreenProps {
 export const ChatScreen: React.FC<ChatScreenProps> = ({
   messages: initialMessages,
 }) => {
+  const { t } = useTranslation();
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [inputText, setInputText] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -33,6 +35,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   useEffect(() => {
     setMessages(initialMessages);
   }, [initialMessages]);
+
+  // Don't let a generation keep streaming into a screen that is gone.
+  // Reading the ref at cleanup time is deliberate: the chat instance may
+  // have been recreated since mount and we must stop the current one.
+  useEffect(() => {
+    return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      currentChat.current?.stopGeneration();
+    };
+  }, [currentChat]);
 
   const scrollToEnd = useCallback((_width: number, contentHeight: number) => {
     flatListRef.current?.scrollToOffset({
@@ -80,8 +92,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     Keyboard.dismiss();
     setIsStreaming(true);
 
+    let accumulated = '';
     try {
-      let accumulated = '';
       const streamResult = chat.ask(userInput);
 
       for await (const token of streamResult) {
@@ -96,7 +108,20 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         });
       }
     } catch (error) {
-      console.error('Chat generation failed:', error);
+      devLog('ChatScreen generation failed', error);
+      // Surface the failure in the assistant bubble (after any partial
+      // output) instead of leaving it empty forever.
+      const failure = t('screens.chat.generationFailed');
+      setMessages(prev => {
+        const next = [...prev];
+        next[next.length - 1] = {
+          role: 'assistant',
+          content: accumulated
+            ? `${formatThinkingBlocks(accumulated)}\n\n${failure}`
+            : failure,
+        };
+        return next;
+      });
     } finally {
       setIsStreaming(false);
     }

@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -12,7 +18,7 @@ import {
 } from 'repositories';
 import { devLog, isIOS } from 'helpers';
 import { PlatformIcon } from 'components';
-import { useModels, useStyled } from 'hooks';
+import { useAppState, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
 import {
   ChatScreen,
@@ -21,6 +27,7 @@ import {
   LoadingScreen,
   ModelsScreen,
   NoModelDownloadedScreen,
+  NoModelSelectedScreen,
   SettingsScreen,
 } from 'screens';
 
@@ -49,6 +56,7 @@ export const ChatStackNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { models } = useModels();
+  const { modelIdInUse } = useAppState();
   const { chat, createChat, disposeChat } = useAiService();
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
@@ -57,14 +65,14 @@ export const ChatStackNavigator = () => {
   // --- Lifecycle steps -------------------------------------------------------
 
   const mountModelAndCreateChat = useCallback(async () => {
-    const { modelIdInUse } = getAppState();
-    if (modelIdInUse === undefined) {
+    const { modelIdInUse: modelId } = getAppState();
+    if (modelId === undefined) {
       throw new Error('ChatStackNavigator: no model in use');
     }
 
-    const model = await getModelById(modelIdInUse);
+    const model = await getModelById(modelId);
     if (model === undefined) {
-      throw new Error(`ChatStackNavigator: model ${modelIdInUse} not found`);
+      throw new Error(`ChatStackNavigator: model ${modelId} not found`);
     }
 
     await createChat({ model });
@@ -78,7 +86,7 @@ export const ChatStackNavigator = () => {
       throw new Error('ChatStackNavigator: current chat is undefined');
     }
 
-    const { modelIdInUse, conversationIdInUse } = getAppState();
+    const { modelIdInUse: modelId, conversationIdInUse } = getAppState();
     if (conversationIdInUse === undefined) {
       await chat.current.setChatHistory([]);
       setChatHistory([]);
@@ -92,9 +100,9 @@ export const ChatStackNavigator = () => {
       );
     }
 
-    if (conversation.modelId !== modelIdInUse) {
+    if (conversation.modelId !== modelId) {
       throw new Error(
-        `ChatStackNavigator: conversation ${conversationIdInUse} belongs to model ${conversation.modelId}, not ${modelIdInUse}`,
+        `ChatStackNavigator: conversation ${conversationIdInUse} belongs to model ${conversation.modelId}, not ${modelId}`,
       );
     }
 
@@ -106,14 +114,26 @@ export const ChatStackNavigator = () => {
 
   // --- Lifecycle orchestrators ----------------------------------------------
 
+  // Sessions have no cancellation, so when a new one starts while another is
+  // still in flight (e.g. rapid model switches), only the latest may report
+  // its outcome — a stale session finishing late must not flip the status.
+  const sessionIdRef = useRef(0);
+
   const runSession = useCallback(async (steps: () => Promise<void>) => {
+    const sessionId = ++sessionIdRef.current;
+    const isCurrent = () => sessionId === sessionIdRef.current;
+
     setStatus(SessionStatus.Loading);
     try {
       await steps();
-      setStatus(SessionStatus.Ready);
+      if (isCurrent()) {
+        setStatus(SessionStatus.Ready);
+      }
     } catch (error) {
-      devLog('ChatStackNavigator session error', error);
-      setStatus(SessionStatus.Error);
+      if (isCurrent()) {
+        devLog('ChatStackNavigator session error', error);
+        setStatus(SessionStatus.Error);
+      }
     }
   }, []);
 
@@ -136,9 +156,12 @@ export const ChatStackNavigator = () => {
 
   // --- Lifecycle triggers ----------------------------------------------------
 
-  // Initial load.
+  // Initial load. With no model in use there is no session to start —
+  // NoModelSelectedScreen is shown instead.
   useEffect(() => {
-    startSession();
+    if (getAppState().modelIdInUse !== undefined) {
+      startSession();
+    }
   }, [startSession]);
 
   // React to app-state changes: a model change tears down the chat and
@@ -147,7 +170,9 @@ export const ChatStackNavigator = () => {
     return subscribeAppState((next, prev) => {
       if (next.modelIdInUse !== prev.modelIdInUse) {
         disposeChat();
-        startSession();
+        if (next.modelIdInUse !== undefined) {
+          startSession();
+        }
       } else if (next.conversationIdInUse !== prev.conversationIdInUse) {
         refreshChatHistory();
       }
@@ -169,6 +194,10 @@ export const ChatStackNavigator = () => {
       return NoModelDownloadedScreen;
     }
 
+    if (modelIdInUse === undefined) {
+      return NoModelSelectedScreen;
+    }
+
     switch (status) {
       case SessionStatus.Ready:
         return ChatScreenWithHistory;
@@ -178,7 +207,13 @@ export const ChatStackNavigator = () => {
       default:
         return LoadingScreen;
     }
-  }, [models.length, status, ChatScreenWithHistory, ErrorScreenWithRetry]);
+  }, [
+    models.length,
+    modelIdInUse,
+    status,
+    ChatScreenWithHistory,
+    ErrorScreenWithRetry,
+  ]);
 
   const renderCloseButton = useCallback(
     (navigation: { goBack: () => void }) =>

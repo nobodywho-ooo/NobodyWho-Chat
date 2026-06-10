@@ -1,4 +1,5 @@
 import { getDatabase } from 'database';
+import { safeJsonParse } from 'helpers';
 import { ChatMessage } from 'types';
 
 export function rowToMessage(row: Record<string, any>): ChatMessage {
@@ -10,7 +11,7 @@ export function rowToMessage(row: Record<string, any>): ChatMessage {
     content: row.content as string,
     tokensPerSecond: row.tokens_per_second as number | undefined,
     timeToFirstToken: row.time_to_first_token as number | undefined,
-    documentsPath: JSON.parse(row.documents_path as string) as string[],
+    documentsPath: safeJsonParse<string[]>(row.documents_path, []),
   };
 }
 
@@ -19,7 +20,7 @@ export async function getMessagesByConversationId(
 ): Promise<ChatMessage[]> {
   const db = getDatabase();
   const result = await db.execute(
-    'SELECT * FROM messages WHERE conversation_id = ? ORDER BY timestamp ASC',
+    'SELECT * FROM messages WHERE conversation_id = ? ORDER BY id ASC',
     [conversationId],
   );
   return result.rows.map(rowToMessage);
@@ -44,6 +45,11 @@ export async function insertMessage(
       ],
     );
     insertId = result.insertId!;
+
+    await tx.execute(
+      'UPDATE conversations SET last_used = CURRENT_TIMESTAMP WHERE id = ?',
+      [message.conversationId],
+    );
   });
   return insertId;
 }

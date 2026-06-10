@@ -22,7 +22,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({ message }) => {
     [isDarkMode, colors.onSurface],
   );
 
-  if (role == 'user') {
+  if (role === 'user') {
     return (
       <View
         style={[

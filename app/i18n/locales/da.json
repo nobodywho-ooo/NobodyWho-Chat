@@ -17,6 +17,9 @@
     "emptyChat": {
       "startAChat": "Start en chat"
     },
+    "inputBar": {
+      "placeholder": "Spørg om noget..."
+    },
     "conversationsList": {
       "conversations": "Samtaler",
       "noConversations": "Ingen samtaler endnu."
@@ -26,6 +29,10 @@
     "noModelDownloaded": {
       "noModelAvailable": "Ingen model tilgængelig",
       "downloadModel": "Download en model"
+    },
+    "noModelSelected": {
+      "pleaseSelectAModel": "Vælg venligst en model",
+      "selectModel": "Vælg en model"
     },
     "drawerContent": {
       "newChat": "Ny chat",
@@ -49,6 +56,9 @@
     "downloadedModels": {
       "noModelDownloaded": "Ingen model downloadet",
       "downloadAModel": "Download en model"
+    },
+    "chat": {
+      "generationFailed": "Noget gik galt under genereringen af et svar."
     }
   }
 }

@@ -50,6 +50,17 @@ describe('rowToModel', () => {
       tags: ['x'],
     });
   });
+
+  test('falls back to empty arrays on corrupt JSON columns', () => {
+    const model = rowToModel({
+      ...rawRow,
+      download_links: 'not json',
+      tags: undefined,
+    });
+
+    expect(model.downloadLinks).toEqual([]);
+    expect(model.tags).toEqual([]);
+  });
 });
 
 describe('getAllModels', () => {

@@ -1,4 +1,5 @@
 import { getDatabase } from 'database';
+import { safeJsonParse } from 'helpers';
 import { Model, ModelDownloadLink, ModelPipeline } from 'types';
 
 export function rowToModel(row: Record<string, any>): Model {
@@ -12,9 +13,9 @@ export function rowToModel(row: Record<string, any>): Model {
     thinking: !!(row.thinking as number),
     imageIngestion: !!(row.image_ingestion as number),
     audioIngestion: !!(row.audio_ingestion as number),
-    downloadLinks: JSON.parse(row.download_links as string) as ModelDownloadLink[],
+    downloadLinks: safeJsonParse<ModelDownloadLink[]>(row.download_links, []),
     pipeline: row.pipeline as ModelPipeline,
-    tags: JSON.parse(row.tags as string) as string[],
+    tags: safeJsonParse<string[]>(row.tags, []),
   };
 }
 

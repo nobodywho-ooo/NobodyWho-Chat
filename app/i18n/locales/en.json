@@ -17,6 +17,9 @@
     "emptyChat": {
       "startAChat": "Start a chat"
     },
+    "inputBar": {
+      "placeholder": "Ask something..."
+    },
     "conversationsList": {
       "conversations": "Conversations",
       "noConversations": "No conversation yet."
@@ -26,6 +29,10 @@
     "noModelDownloaded": {
       "noModelAvailable": "No model available",
       "downloadModel": "Download a model"
+    },
+    "noModelSelected": {
+      "pleaseSelectAModel": "Please select a model",
+      "selectModel": "Select a model"
     },
     "drawerContent": {
       "newChat": "New Chat",
@@ -49,6 +56,9 @@
     "downloadedModels": {
       "noModelDownloaded": "No model downloaded",
       "downloadAModel": "Download a model"
+    },
+    "chat": {
+      "generationFailed": "Something went wrong while generating a response."
     }
   }
 }

@@ -80,6 +80,42 @@ test('when disabled, returns [] without querying or subscribing', () => {
   expect(db.reactiveExecute).not.toHaveBeenCalled();
 });
 
+test('handles a failing initial load without throwing', async () => {
+  db.execute.mockRejectedValue(new Error('db boom'));
+
+  const { result } = renderHook(() =>
+    useReactiveQuery({ query: 'Q', tables: ['t'], map: row => row }),
+  );
+  await act(async () => {});
+
+  expect(result.current).toEqual([]);
+});
+
+test('discards a stale initial load that resolves after a reactive update', async () => {
+  let resolveInitial: (value: any) => void;
+  db.execute.mockReturnValue(
+    new Promise(resolve => {
+      resolveInitial = resolve;
+    }),
+  );
+  let captured: any;
+  db.reactiveExecute.mockImplementation((config: any) => {
+    captured = config;
+    return jest.fn();
+  });
+
+  const { result } = renderHook(() =>
+    useReactiveQuery<number>({ query: 'Q', tables: ['t'], map: row => row.n }),
+  );
+
+  // The reactive subscription delivers fresh rows first...
+  act(() => captured.callback({ rows: [{ n: 7 }] }));
+  // ...then the slower initial load resolves with stale rows.
+  await act(async () => resolveInitial!({ rows: [{ n: 1 }] }));
+
+  expect(result.current).toEqual([7]);
+});
+
 test('unsubscribes on unmount', async () => {
   const unsubscribe = jest.fn();
   db.reactiveExecute.mockReturnValue(unsubscribe);

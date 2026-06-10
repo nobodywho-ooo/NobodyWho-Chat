@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, PressableProps, StyleProp, ViewStyle } from 'react-native';
+import { Pressable, PressableProps } from 'react-native';
 import {
   type SFSymbolProps,
   type MaterialSymbolProps,

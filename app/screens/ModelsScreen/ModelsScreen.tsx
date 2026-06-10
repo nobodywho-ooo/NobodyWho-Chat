@@ -5,12 +5,15 @@ import { useTranslation } from 'react-i18next';
 import { useAppState, useModels, useStyled } from 'hooks';
 import { filter, find, includes, map, pathEq, prop } from 'ramda';
 import { ErrorView, ListItem, ModelCard, Text } from 'components';
-import { Model, ModelPipeline } from 'types';
+import { Model } from 'types';
 
 import styles from './ModelsScreen.styles';
 
 const MODELS_URL =
   'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/backend.json';
+
+// Placeholder until the download flow lands.
+const MODEL_IDS_DOWNLOADING = [1];
 
 export const ModelsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -25,8 +28,10 @@ export const ModelsScreen: React.FC = () => {
   const [hasFetch, setHasFetch] = useState(false);
   const showModelsToDownload = !isLoading && !hasError && models.length > 0;
 
-  const modelsIdDownloading = [1];
-  const downloadedModelIds = map(prop('id'), storedModels);
+  const downloadedModelIds = useMemo(
+    () => map(prop('id'), storedModels),
+    [storedModels],
+  );
 
   const fetchModels = useCallback(async () => {
     setIsLoading(true);
@@ -35,12 +40,12 @@ export const ModelsScreen: React.FC = () => {
       const response = await fetch(MODELS_URL);
       const data: Model[] = await response.json();
       const isAvailableToDownload = (model: Model) =>
-        !includes(model.id, [...modelsIdDownloading, ...downloadedModelIds]);
+        !includes(model.id, [...MODEL_IDS_DOWNLOADING, ...downloadedModelIds]);
 
       setModels(filter(isAvailableToDownload, data));
 
       const isDownloading = (model: Model) =>
-        includes(model.id, modelsIdDownloading);
+        includes(model.id, MODEL_IDS_DOWNLOADING);
 
       setModelsDownloading(filter(isDownloading, data));
     } catch {
@@ -49,7 +54,7 @@ export const ModelsScreen: React.FC = () => {
       setIsLoading(false);
       setHasFetch(true);
     }
-  }, []);
+  }, [downloadedModelIds]);
 
   const currentModel = useMemo(
     () => find(pathEq(modelIdInUse, ['id']), storedModels),
@@ -83,7 +88,7 @@ export const ModelsScreen: React.FC = () => {
         <>
           <Text
             variant="h4"
-            style={!!currentModel ? styles.header : styles.firstHeader}
+            style={currentModel ? styles.header : styles.firstHeader}
           >
             {t('screens.models.readyToUse')}
           </Text>
@@ -140,7 +145,7 @@ export const ModelsScreen: React.FC = () => {
             onPress={handleModelPress}
           />
         ))}
-      {hasFetch && models.length == 0 && (
+      {hasFetch && models.length === 0 && (
         <Text>{t('screens.models.youHaveDownloadedAllTheModels')}</Text>
       )}
     </ScrollView>

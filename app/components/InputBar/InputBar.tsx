@@ -1,23 +1,17 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  StyleProp,
-  ViewStyle,
-} from 'react-native';
+import { View, TextInput, Pressable, StyleProp, ViewStyle } from 'react-native';
 import {
   LiquidGlassView,
   isLiquidGlassSupported,
 } from '@callstack/liquid-glass';
+import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
 import { IconButton, PlatformIcon } from 'components';
 
 import { styles, getBoxShadow, INPUT_BAR_HEIGHT } from './InputBar.styles';
 
-const getInputWrapperProps = (isLiquidGlassSupported: boolean) =>
-  isLiquidGlassSupported
+const getInputWrapperProps = (liquidGlassSupported: boolean) =>
+  liquidGlassSupported
     ? {
         effect: 'regular' as const,
         interactive: true,
@@ -40,6 +34,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   onStop,
   style,
 }) => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
   const InputWrapper = isLiquidGlassSupported ? LiquidGlassView : View;
 
@@ -57,7 +52,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
       >
         <TextInput
           style={[styles.textInput, { color: colors.onSurface }]}
-          placeholder="Ask something..."
+          placeholder={t('components.inputBar.placeholder')}
           placeholderTextColor="#999"
           value={value}
           onChangeText={onChangeText}

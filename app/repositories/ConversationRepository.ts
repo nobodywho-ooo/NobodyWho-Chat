@@ -13,7 +13,7 @@ export function rowToConversation(row: Record<string, any>): Conversation {
 export async function getAllConversations(): Promise<Conversation[]> {
   const db = getDatabase();
   const result = await db.execute(
-    'SELECT * FROM conversations ORDER BY last_used DESC',
+    'SELECT * FROM conversations ORDER BY last_used DESC, id DESC',
   );
   return result.rows.map(rowToConversation);
 }
@@ -21,7 +21,7 @@ export async function getAllConversations(): Promise<Conversation[]> {
 export async function getLastUsedConversationId(): Promise<number | undefined> {
   const db = getDatabase();
   const result = await db.execute(
-    'SELECT id FROM conversations ORDER BY last_used DESC LIMIT 1',
+    'SELECT id FROM conversations ORDER BY last_used DESC, id DESC LIMIT 1',
   );
   return result.rows.length > 0 ? (result.rows[0].id as number) : undefined;
 }
