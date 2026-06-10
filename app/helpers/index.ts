@@ -2,7 +2,8 @@ import { isIOS, isAndroid, getIOSVersion, isIOS26OrLater } from './platform';
 import { getAssetPath } from './assets';
 import { devLog } from './log';
 import { safeJsonParse } from './json';
-import { getMarkdownStyle, formatThinkingBlocks } from './markdown';
+import { getMarkdownStyle } from './markdown';
+import { formatThinkingBlocks, stripThinkingBlocks } from './thinking';
 import { haptics } from './haptics';
 
 export {
@@ -15,5 +16,6 @@ export {
   safeJsonParse,
   getMarkdownStyle,
   formatThinkingBlocks,
+  stripThinkingBlocks,
   haptics,
 };

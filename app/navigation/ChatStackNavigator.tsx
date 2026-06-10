@@ -16,7 +16,7 @@ import {
   getMessagesByConversationId,
   getModelById,
 } from 'repositories';
-import { devLog, isIOS } from 'helpers';
+import { devLog, isIOS, stripThinkingBlocks } from 'helpers';
 import { PlatformIcon } from 'components';
 import { useAppState, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
@@ -65,7 +65,7 @@ export const ChatStackNavigator = () => {
   const [chatHistory, setChatHistory] = useState<Message[]>([]);
   const [loadedConversationId, setLoadedConversationId] =
     useState<LoadedConversationId>(undefined);
-  const loadedConversationIdRef = useRef<LoadedConversationId>(undefined);
+  const selfCreatedConversationIdRef = useRef<LoadedConversationId>(undefined);
 
   // --- Lifecycle steps -------------------------------------------------------
 
@@ -96,7 +96,6 @@ export const ChatStackNavigator = () => {
       await chat.current.setChatHistory([]);
       setChatHistory([]);
       setLoadedConversationId(undefined);
-      loadedConversationIdRef.current = undefined;
       return;
     }
 
@@ -115,10 +114,16 @@ export const ChatStackNavigator = () => {
 
     const messages = await getMessagesByConversationId(conversationIdInUse);
     const history = toChatHistory(messages);
-    await chat.current.setChatHistory(history);
+
+    const contextHistory = history.map(message =>
+      message.role === 'assistant'
+        ? { ...message, content: stripThinkingBlocks(message.content) }
+        : message,
+    );
+    await chat.current.setChatHistory(contextHistory);
+
     setChatHistory(history);
     setLoadedConversationId(conversationIdInUse);
-    loadedConversationIdRef.current = conversationIdInUse;
   }, [chat]);
 
   // --- Lifecycle orchestrators ----------------------------------------------
@@ -168,7 +173,7 @@ export const ChatStackNavigator = () => {
   // (making the subscription below skip a reload) and persist it for the drawer
   // and next launch — without touching chatHistory, so the screen never remounts.
   const handleConversationCreated = useCallback((id: number) => {
-    loadedConversationIdRef.current = id;
+    selfCreatedConversationIdRef.current = id;
     setAppState({ conversationIdInUse: id });
   }, []);
 
@@ -192,9 +197,11 @@ export const ChatStackNavigator = () => {
           startSession();
         }
       } else if (next.conversationIdInUse !== prev.conversationIdInUse) {
-        // Skip when we already display this conversation (ChatScreen just
-        // created it); only an external switch needs a history reload.
-        if (next.conversationIdInUse === loadedConversationIdRef.current) {
+        if (
+          selfCreatedConversationIdRef.current !== undefined &&
+          next.conversationIdInUse === selfCreatedConversationIdRef.current
+        ) {
+          selfCreatedConversationIdRef.current = undefined;
           return;
         }
         refreshChatHistory();

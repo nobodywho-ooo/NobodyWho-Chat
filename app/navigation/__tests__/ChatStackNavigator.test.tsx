@@ -30,7 +30,7 @@ jest.mock('@react-navigation/native-stack', () => {
 });
 
 const mockChatInstance = {
-  setChatHistory: jest.fn(async () => {}),
+  setChatHistory: jest.fn(async (_history: unknown[] = []) => {}),
   stopGeneration: jest.fn(),
   ask: jest.fn(),
 };
@@ -198,4 +198,37 @@ test('sending the first message persists in use without reloading the chat', asy
   // ...but the navigator did NOT reload (no extra history load, no remount).
   expect(mockGetMessagesByConversationId).not.toHaveBeenCalled();
   expect(mockChatInstance.setChatHistory).toHaveBeenCalledTimes(1);
+});
+
+test('clearing the conversation after a load error reloads and recovers', async () => {
+  // A conversation whose history fails to inject puts the session in error.
+  mockGetConversationById.mockResolvedValue({
+    id: 5,
+    title: 'Chat 5',
+    lastUsed: 'now',
+    modelId: 0,
+  });
+  mockGetMessagesByConversationId.mockResolvedValue([
+    { id: 1, conversationId: 5, role: 'user', content: 'hi', documentsPath: [] },
+  ]);
+  mockChatInstance.setChatHistory.mockImplementation(async (history = []) => {
+    if (history.length > 0) {
+      throw new Error('setChatHistory boom');
+    }
+  });
+  await setAppState({ modelIdInUse: 0, conversationIdInUse: 5 });
+
+  const screen = render(<ChatStackNavigator />);
+  await waitFor(() =>
+    expect(screen.getByText('common.somethingWentWrong')).toBeTruthy(),
+  );
+
+  // "New Chat" clears the conversation; the empty reload must clear the error.
+  await act(async () => {
+    await setAppState({ conversationIdInUse: undefined });
+  });
+
+  await waitFor(() =>
+    expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy(),
+  );
 });
