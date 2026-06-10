@@ -10,11 +10,7 @@ import {
   DarkTheme,
 } from '@react-navigation/native';
 import { ThemeProvider, isDarkModeEnabled } from 'context';
-import {
-  initDatabase,
-  setModelIdInUse,
-  setConversationIdInUse,
-} from 'database';
+import { initDatabase, hydrateAppState, setAppState } from 'database';
 import {
   getAllConversations,
   insertConversation,
@@ -61,7 +57,9 @@ function AppLoader() {
     setDbReady(false);
     try {
       await initDatabase();
+      await hydrateAppState();
 
+      // TODO: delete this if when model download is working
       if (__DEV__) {
         // Create and set local model
         await insertModel({
@@ -79,19 +77,22 @@ function AppLoader() {
           tags: [],
         });
 
-        await setModelIdInUse(0);
+        // // Reuse the existing local-model conversation if one was seeded on a
+        // // prior launch, otherwise create it.
+        // const conversations = await getAllConversations();
+        // const existingConversation = conversations.find(
+        //   conversation => conversation.modelId === 0,
+        // );
+        // const conversationId = existingConversation
+        //   ? existingConversation.id
+        //   : await insertConversation({ title: 'New chat', modelId: 0 });
 
-        // Reuse the existing local-model conversation if one was seeded on a
-        // prior launch, otherwise create it. Then mark it as the active one.
-        const conversations = await getAllConversations();
-        const existingConversation = conversations.find(
-          conversation => conversation.modelId === 0,
-        );
-        const conversationId = existingConversation
-          ? existingConversation.id
-          : await insertConversation({ title: 'New chat', modelId: 0 });
-
-        await setConversationIdInUse(conversationId);
+        // // Both ids in one update so subscribers never observe a model and a
+        // // conversation that don't belong together.
+        // await setAppState({
+        //   modelIdInUse: 0,
+        //   conversationIdInUse: conversationId,
+        // });
       }
 
       setDbReady(true);

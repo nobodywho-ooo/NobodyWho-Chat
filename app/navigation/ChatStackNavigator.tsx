@@ -4,12 +4,7 @@ import { Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Message } from 'react-native-nobodywho';
 import { ChatMessage } from 'types';
-import {
-  getModelIdInUse,
-  subscribeModelIdInUse,
-  getConversationIdInUse,
-  subscribeConversationIdInUse,
-} from 'database';
+import { getAppState, subscribeAppState } from 'database';
 import {
   getConversationById,
   getMessagesByConversationId,
@@ -62,7 +57,7 @@ export const ChatStackNavigator = () => {
   // --- Lifecycle steps -------------------------------------------------------
 
   const mountModelAndCreateChat = useCallback(async () => {
-    const modelIdInUse = await getModelIdInUse();
+    const { modelIdInUse } = getAppState();
     if (modelIdInUse === undefined) {
       throw new Error('ChatStackNavigator: no model in use');
     }
@@ -83,26 +78,22 @@ export const ChatStackNavigator = () => {
       throw new Error('ChatStackNavigator: chat is not ready');
     }
 
-    const conversationIdInUse = await getConversationIdInUse();
+    const { modelIdInUse, conversationIdInUse } = getAppState();
     if (conversationIdInUse === undefined) {
+      throw new Error('ChatStackNavigator: no conversation in use');
+    }
+
+    const conversation = await getConversationById(conversationIdInUse);
+    if (conversation === undefined) {
       throw new Error(
         `ChatStackNavigator: conversation ${conversationIdInUse} not found`,
       );
     }
-    const conversation = await getConversationById(conversationIdInUse);
 
-    if (conversation === undefined) {
+    if (conversation.modelId !== modelIdInUse) {
       throw new Error(
-        `ChatStackNavigator: conversation ${conversationIdInUse} is undefined`,
+        `ChatStackNavigator: conversation ${conversationIdInUse} belongs to model ${conversation.modelId}, not ${modelIdInUse}`,
       );
-    }
-
-    const modelIdInUse = await getModelIdInUse();
-    if (conversation.modelId != modelIdInUse) {
-      // TODO: check side effects
-      // model id and conversation id don't match, waiting for a new conversationIdInUse to be emitted
-      setChatHistory([]);
-      return;
     }
 
     const messages = await getMessagesByConversationId(conversationIdInUse);
@@ -119,10 +110,6 @@ export const ChatStackNavigator = () => {
       await steps();
       setStatus(SessionStatus.Ready);
     } catch (error) {
-      if (error == Error('waiting')) {
-        devLog('ChatStackNavigator Waiting');
-        return;
-      }
       devLog('ChatStackNavigator session error', error);
       setStatus(SessionStatus.Error);
     }
@@ -152,20 +139,18 @@ export const ChatStackNavigator = () => {
     startSession();
   }, [startSession]);
 
-  // The in-use model changed: tear down the chat and rebuild from scratch.
+  // React to app-state changes: a model change tears down the chat and
+  // rebuilds from scratch; a conversation-only change reloads just the history.
   useEffect(() => {
-    return subscribeModelIdInUse(() => {
-      disposeChat();
-      startSession();
+    return subscribeAppState((next, prev) => {
+      if (next.modelIdInUse !== prev.modelIdInUse) {
+        disposeChat();
+        startSession();
+      } else if (next.conversationIdInUse !== prev.conversationIdInUse) {
+        refreshChatHistory();
+      }
     });
-  }, [disposeChat, startSession]);
-
-  // The in-use conversation changed: reload only the history into the chat.
-  useEffect(() => {
-    return subscribeConversationIdInUse(() => {
-      refreshChatHistory();
-    });
-  }, [refreshChatHistory]);
+  }, [disposeChat, startSession, refreshChatHistory]);
 
   const ErrorScreenWithRetry = useMemo(
     () => () => <ErrorScreen onRetry={startSession} />,

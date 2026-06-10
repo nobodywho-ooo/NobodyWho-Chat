@@ -1,9 +1,8 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback } from 'react';
 import { ScrollView, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useModels, useStyled } from 'hooks';
-import { getModelIdInUse } from 'database';
+import { useAppState, useModels, useStyled } from 'hooks';
 import { Button, ModelCard, Text } from 'components';
 import { Model } from 'types';
 
@@ -13,12 +12,8 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { models } = useModels();
-  const [modelIdInUse, setModelIdInUse] = useState<number | undefined>();
+  const { modelIdInUse } = useAppState();
   const navigation = useNavigation();
-
-  useEffect(() => {
-    getModelIdInUse().then(setModelIdInUse);
-  }, [models]);
 
   const handleModelPress = useCallback((model: Model) => {
     console.log('Model pressed:', model);
