@@ -10,7 +10,11 @@ import {
   getConversationIdInUse,
   subscribeConversationIdInUse,
 } from 'database';
-import { getMessagesByConversationId, getModelById } from 'repositories';
+import {
+  getConversationById,
+  getMessagesByConversationId,
+  getModelById,
+} from 'repositories';
 import { devLog, isIOS } from 'helpers';
 import { PlatformIcon } from 'components';
 import { useModels, useStyled } from 'hooks';
@@ -85,6 +89,21 @@ export const ChatStackNavigator = () => {
         `ChatStackNavigator: conversation ${conversationIdInUse} not found`,
       );
     }
+    const conversation = await getConversationById(conversationIdInUse);
+
+    if (conversation === undefined) {
+      throw new Error(
+        `ChatStackNavigator: conversation ${conversationIdInUse} is undefined`,
+      );
+    }
+
+    const modelIdInUse = await getModelIdInUse();
+    if (conversation.modelId != modelIdInUse) {
+      // TODO: check side effects
+      // model id and conversation id don't match, waiting for a new conversationIdInUse to be emitted
+      setChatHistory([]);
+      return;
+    }
 
     const messages = await getMessagesByConversationId(conversationIdInUse);
     const history = toChatHistory(messages);
@@ -100,6 +119,10 @@ export const ChatStackNavigator = () => {
       await steps();
       setStatus(SessionStatus.Ready);
     } catch (error) {
+      if (error == Error('waiting')) {
+        devLog('ChatStackNavigator Waiting');
+        return;
+      }
       devLog('ChatStackNavigator session error', error);
       setStatus(SessionStatus.Error);
     }
