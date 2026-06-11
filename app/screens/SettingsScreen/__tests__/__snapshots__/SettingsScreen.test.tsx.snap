@@ -1,0 +1,46 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly SettingsScreen 1`] = `
+<RCTScrollView
+  contentInsetAdjustmentBehavior="automatic"
+  style={
+    [
+      {
+        "flex": 1,
+        "paddingHorizontal": 16,
+        "paddingTop": 16,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <View>
+    <ListItem
+      androidIconName="layers"
+      iconBackgroundColor="#FF9500"
+      iosIconName="square.stack.3d.up.fill"
+      onPress={[Function]}
+      subtitle="screens.settings.manageYourModels"
+      title="screens.settings.models"
+    />
+    <ListItem
+      androidIconName="description"
+      iconBackgroundColor="#5856D6"
+      iosIconName="doc.text.fill"
+      onPress={[Function]}
+      subtitle="screens.settings.termsSubtitle"
+      title="screens.settings.terms"
+    />
+    <ListItem
+      androidIconName="privacy_tip"
+      iconBackgroundColor="#34C759"
+      iosIconName="lock.shield.fill"
+      onPress={[Function]}
+      subtitle="screens.settings.privacyPolicySubtitle"
+      title="screens.settings.privacyPolicy"
+    />
+  </View>
+</RCTScrollView>
+`;

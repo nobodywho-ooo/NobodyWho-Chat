@@ -30,7 +30,9 @@ import {
   ModelsScreen,
   NoModelDownloadedScreen,
   NoModelSelectedScreen,
+  PrivacyPolicyScreen,
   SettingsScreen,
+  TermsScreen,
 } from 'screens';
 
 const Stack = createNativeStackNavigator();
@@ -330,6 +332,24 @@ export const ChatStackNavigator = () => {
           component={DownloadedModelsScreen}
           options={({ navigation }) => ({
             title: t('navigation.downloadModels'),
+            presentation: 'modal',
+            headerRight: () => renderCloseButton(navigation),
+          })}
+        />
+        <Stack.Screen
+          name="TermsScreen"
+          component={TermsScreen}
+          options={({ navigation }) => ({
+            title: t('navigation.terms'),
+            presentation: 'modal',
+            headerRight: () => renderCloseButton(navigation),
+          })}
+        />
+        <Stack.Screen
+          name="PrivacyPolicyScreen"
+          component={PrivacyPolicyScreen}
+          options={({ navigation }) => ({
+            title: t('navigation.privacyPolicy'),
             presentation: 'modal',
             headerRight: () => renderCloseButton(navigation),
           })}

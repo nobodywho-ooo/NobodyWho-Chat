@@ -12,6 +12,8 @@
     "models": "Modeller",
     "settings": "Indstillinger",
     "downloadModels": "Downloadede modeller",
+    "terms": "Vilkår og betingelser",
+    "privacyPolicy": "Privatlivspolitik",
     "chatMenu": {
       "newChat": "Ny chat",
       "deleteChat": "Slet chat"
@@ -45,7 +47,11 @@
     },
     "settings": {
       "models": "Modeller",
-      "manageYourModels": "Administrer dine modeller"
+      "manageYourModels": "Administrer dine modeller",
+      "terms": "Vilkår og betingelser",
+      "termsSubtitle": "Læs vores brugervilkår",
+      "privacyPolicy": "Privatlivspolitik",
+      "privacyPolicySubtitle": "Sådan håndterer vi dine data"
     },
     "models": {
       "inUse": "I brug",

@@ -70,11 +70,6 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
         data={conversations}
         keyExtractor={conversation => conversation.id.toString()}
         renderItem={renderItem}
-        // ListHeaderComponent={
-        //   <Text style={[styles.header, { color: colors.onSurfaceVariant }]}>
-        //     {t('components.conversationsList.recent')}
-        //   </Text>
-        // }
         ListEmptyComponent={
           <Text style={[styles.emptyText, { color: colors.onSurface }]}>
             {t('components.conversationsList.noConversations')}

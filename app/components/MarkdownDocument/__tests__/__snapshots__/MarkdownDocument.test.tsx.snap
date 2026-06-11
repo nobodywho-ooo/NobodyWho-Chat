@@ -1,0 +1,29 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`MarkdownDocument matches snapshot 1`] = `
+<RCTScrollView
+  contentContainerStyle={
+    {
+      "padding": 20,
+    }
+  }
+  contentInsetAdjustmentBehavior="automatic"
+  style={
+    [
+      {
+        "flex": 1,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <View>
+    <EnrichedMarkdownText
+      markdown="# Hello world"
+      markdownStyle={{}}
+    />
+  </View>
+</RCTScrollView>
+`;

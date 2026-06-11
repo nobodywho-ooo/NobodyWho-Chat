@@ -20,11 +20,29 @@ export const SettingsScreen: React.FC = () => {
       <ListItem
         title={t('screens.settings.models')}
         subtitle={t('screens.settings.manageYourModels')}
-        iosIconName="document.fill"
-        androidIconName="article"
-        iconBackgroundColor={colors.primary}
+        iosIconName="square.stack.3d.up.fill"
+        androidIconName="layers"
+        iconBackgroundColor="#FF9500"
         // @ts-ignore
         onPress={() => navigation.navigate('ModelsScreen')}
+      />
+      <ListItem
+        title={t('screens.settings.terms')}
+        subtitle={t('screens.settings.termsSubtitle')}
+        iosIconName="doc.text.fill"
+        androidIconName="description"
+        iconBackgroundColor="#5856D6"
+        // @ts-ignore
+        onPress={() => navigation.navigate('TermsScreen')}
+      />
+      <ListItem
+        title={t('screens.settings.privacyPolicy')}
+        subtitle={t('screens.settings.privacyPolicySubtitle')}
+        iosIconName="lock.shield.fill"
+        androidIconName="privacy_tip"
+        iconBackgroundColor="#34C759"
+        // @ts-ignore
+        onPress={() => navigation.navigate('PrivacyPolicyScreen')}
       />
     </ScrollView>
   );

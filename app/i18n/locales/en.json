@@ -12,6 +12,8 @@
     "models": "Models",
     "settings": "Settings",
     "downloadModels": "Downloaded Models",
+    "terms": "Terms & Conditions",
+    "privacyPolicy": "Privacy Policy",
     "chatMenu": {
       "newChat": "New Chat",
       "deleteChat": "Delete Chat"
@@ -45,7 +47,11 @@
     },
     "settings": {
       "models": "Models",
-      "manageYourModels": "Manage your models"
+      "manageYourModels": "Manage your models",
+      "terms": "Terms & Conditions",
+      "termsSubtitle": "Read our terms of use",
+      "privacyPolicy": "Privacy Policy",
+      "privacyPolicySubtitle": "How we handle your data"
     },
     "models": {
       "inUse": "In use",
