@@ -2,16 +2,11 @@ import React from 'react';
 import { renderHook, act } from '@testing-library/react-native';
 
 import { buildModel } from 'jest/factories/model';
+import { mockFromPath } from 'jest/mock/node-modules';
 
 import { AiServiceProvider, useAiService, AiModelState } from '../AiService';
 
-const mockFromPath = jest.fn();
-
-jest.mock('react-native-nobodywho', () => ({
-  Chat: { fromPath: (opts: any) => mockFromPath(opts) },
-  Encoder: { fromPath: jest.fn() },
-  CrossEncoder: { fromPath: jest.fn() },
-}));
+(globalThis as unknown as { __DEV__: boolean }).__DEV__ = false;
 
 const model = buildModel(1, {
   downloadLinks: [

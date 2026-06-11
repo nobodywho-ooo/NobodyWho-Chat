@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 
-import { mockNavigate } from 'jest/mock/navigation';
+import { mockNavigate } from 'jest/mock/node-modules';
 
 import { NoModelSelectedScreen } from '../NoModelSelectedScreen';
 

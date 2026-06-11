@@ -93,12 +93,26 @@ function AppLoader() {
         if ((await getModelById(0)) === undefined) {
           await insertModel({
             id: 0,
-            modelName: 'chat-model',
+            modelName: 'Qwen3-0.6B',
             modelSizeGB: 0.5,
             parameterCountBillions: 0.6,
             author: 'Alibaba Cloud',
             family: 'Qwen',
             thinking: true,
+            imageIngestion: false,
+            audioIngestion: false,
+            downloadLinks: [],
+            pipeline: ModelPipeline.textGeneration,
+            tags: [],
+          });
+          await insertModel({
+            id: 1,
+            modelName: 'Bonsai-1.7B',
+            modelSizeGB: 0.25,
+            parameterCountBillions: 1.7,
+            author: 'Prism ML',
+            family: 'Bonsai',
+            thinking: false,
             imageIngestion: false,
             audioIngestion: false,
             downloadLinks: [],

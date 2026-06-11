@@ -5,6 +5,7 @@ import { Text } from 'components';
 import { setAppState } from 'database';
 import { useAppState, useConversations, useStyled } from 'hooks';
 import { Conversation } from 'types';
+import { Spacings } from 'style';
 
 interface ConversationsListProps {
   onCloseDrawer: () => void;
@@ -66,7 +67,7 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
       renderItem={renderItem}
       ListHeaderComponent={
         <Text style={[styles.header, { color: colors.onSurfaceVariant }]}>
-          {t('components.conversationsList.conversations')}
+          {t('components.conversationsList.recent')}
         </Text>
       }
       ListEmptyComponent={
@@ -83,26 +84,26 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    paddingTop: 16,
+    paddingTop: Spacings.lg,
   },
   header: {
-    fontSize: 12,
+    fontSize: Spacings.md,
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    paddingHorizontal: 16,
-    marginBottom: 8,
+    paddingHorizontal: Spacings.lg,
+    marginBottom: Spacings.sm,
   },
   item: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    marginHorizontal: 8,
+    paddingVertical: Spacings.md,
+    paddingHorizontal: Spacings.lg,
+    borderRadius: Spacings.sm,
+    marginHorizontal: Spacings.sm,
   },
   itemText: {
     fontSize: 15,
   },
   emptyText: {
-    paddingHorizontal: 16,
+    paddingHorizontal: Spacings.lg,
   },
 });

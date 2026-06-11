@@ -8,10 +8,14 @@
     "somethingWentWrong": "Something went wrong"
   },
   "navigation": {
-    "chat": "Chat",
+    "newChat": "New Chat",
     "models": "Models",
     "settings": "Settings",
-    "downloadModels": "Downloaded Models"
+    "downloadModels": "Downloaded Models",
+    "chatMenu": {
+      "newChat": "New Chat",
+      "deleteChat": "Delete Chat"
+    }
   },
   "components": {
     "emptyChat": {
@@ -21,7 +25,7 @@
       "placeholder": "Ask something..."
     },
     "conversationsList": {
-      "conversations": "Conversations",
+      "recent": "Recent",
       "noConversations": "No conversation yet."
     }
   },

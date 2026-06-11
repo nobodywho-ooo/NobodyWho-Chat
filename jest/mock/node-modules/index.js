@@ -1,21 +1,8 @@
-jest.mock("@react-navigation/native", () => {
+jest.mock("@react-native-menu/menu", () => {
+  const mockReact = require('react');
   return {
-    useNavigation: () => ({ goBack: jest.fn() }),
-    useRoute: () => jest.fn(),
-    SFSymbol: 'SFSymbol',
-    MaterialSymbol: 'MaterialSymbol',
-  };
-});
-
-jest.mock("@react-navigation/native-stack", () => {
-  return {
-    createNativeStackNavigator: () => jest.fn,
-  };
-});
-
-jest.mock("@react-navigation/core", () => {
-  return {
-    useRoute: () => jest.fn(),
+    MenuView: ({ children }) =>
+      mockReact.createElement(mockReact.Fragment, null, children),
   };
 });
 
@@ -54,8 +41,13 @@ jest.mock('react-native-streamdown', () => {
   };
 });
 
+export const mockFromPath = jest.fn();
+
 jest.mock('react-native-nobodywho', () => {
   return {
+    Chat: { fromPath: (opts) => mockFromPath(opts) },
+    Encoder: { fromPath: jest.fn() },
+    CrossEncoder: { fromPath: jest.fn() },
     ChatMessage: jest.fn(),
     Role: {
       User: 0,
@@ -98,3 +90,60 @@ jest.mock('@op-engineering/op-sqlite', () => {
     }),
   };
 });
+
+jest.mock("@react-navigation/native", () => {
+  return {
+    useNavigation: () => ({ goBack: jest.fn() }),
+    useRoute: () => jest.fn(),
+    getFocusedRouteNameFromRoute: jest.fn(),
+    SFSymbol: 'SFSymbol',
+    MaterialSymbol: 'MaterialSymbol',
+  };
+});
+
+jest.mock("@react-navigation/native-stack", () => {
+  return {
+    createNativeStackNavigator: () => jest.fn,
+  };
+});
+
+jest.mock("@react-navigation/core", () => {
+  return {
+    useRoute: () => jest.fn(),
+  };
+});
+
+jest.mock("@react-navigation/drawer", () => {
+  const mockReact = require('react');
+  return {
+    createDrawerNavigator: () => ({
+      Navigator: ({ children }) =>
+        mockReact.createElement(mockReact.Fragment, null, children),
+      Screen: ({ options }) => {
+        const resolved =
+          typeof options === 'function'
+            ? options({ route: { key: 'Chat', name: 'Chat' } })
+            : options;
+        return mockReact.createElement(
+          mockReact.Fragment,
+          null,
+          resolved.headerTitle
+            ? resolved.headerTitle({ children: resolved.title })
+            : null,
+          resolved.headerRight ? resolved.headerRight() : null,
+        );
+      },
+    }),
+  };
+});
+
+export const mockNavigate = jest.fn();
+export const mockGoBack = jest.fn();
+
+jest.mock('@react-navigation/native', () => ({
+  useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
+  getFocusedRouteNameFromRoute: jest.fn(() => 'ChatScreen'),
+  useRoute: () => ({}),
+  SFSymbol: 'SFSymbol',
+  MaterialSymbol: 'MaterialSymbol',
+}));

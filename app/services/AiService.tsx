@@ -23,9 +23,6 @@ export enum AiModelState {
   Error = 'error',
 }
 
-// Filename of the model bundled with the app for local dev (model id 0).
-const DEV_CHAT_MODEL = 'chat-model.gguf';
-
 enum ModelName {
   Embedding = 'embedding-model.gguf',
   Reranker = 'reranker-model.gguf',
@@ -111,8 +108,8 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         let modelPath: string;
         let projectionModelPath: string | undefined;
 
-        if (model.id === 0) {
-          modelPath = await getAssetPath(DEV_CHAT_MODEL);
+        if (__DEV__) {
+          modelPath = await getAssetPath(`${model.modelName}.gguf`);
         } else {
           modelPath = model.downloadLinks.find(link => link.type === 'model')
             ?.url as string;
@@ -123,7 +120,6 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
             )?.url;
           }
         }
-
         const chat = await Chat.fromPath({
           modelPath,
           projectionModelPath,

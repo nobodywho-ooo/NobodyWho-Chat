@@ -15,6 +15,7 @@
     "@callstack/liquid-glass": "^0.7.1",
     "@dr.pogodin/react-native-fs": "^2.38.2",
     "@op-engineering/op-sqlite": "^16.1.0",
+    "@react-native-menu/menu": "^2.0.0",
     "@react-navigation/drawer": "^8.0.0-alpha.34",
     "@react-navigation/native": "^8.0.0-alpha.27",
     "@react-navigation/native-stack": "^8.0.0-alpha.34",

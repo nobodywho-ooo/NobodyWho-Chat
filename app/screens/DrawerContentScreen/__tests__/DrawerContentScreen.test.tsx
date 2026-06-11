@@ -2,7 +2,7 @@ import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 
 import { mockSetAppState } from 'jest/mock/database';
-import { mockNavigate } from 'jest/mock/navigation';
+import { mockNavigate } from 'jest/mock/node-modules';
 
 import { DrawerContentScreen } from '../DrawerContentScreen';
 

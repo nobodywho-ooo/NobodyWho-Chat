@@ -8,10 +8,14 @@
     "somethingWentWrong": "Noget gik galt"
   },
   "navigation": {
-    "chat": "Chat",
+    "newChat": "Ny chat",
     "models": "Modeller",
     "settings": "Indstillinger",
-    "downloadModels": "Downloadede modeller"
+    "downloadModels": "Downloadede modeller",
+    "chatMenu": {
+      "newChat": "Ny chat",
+      "deleteChat": "Slet chat"
+    }
   },
   "components": {
     "emptyChat": {
@@ -21,7 +25,7 @@
       "placeholder": "Spørg om noget..."
     },
     "conversationsList": {
-      "conversations": "Samtaler",
+      "recent": "Seneste",
       "noConversations": "Ingen samtaler endnu."
     }
   },

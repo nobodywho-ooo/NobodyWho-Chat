@@ -1,15 +1,22 @@
 import * as React from 'react';
-import { Dimensions, Pressable, StyleSheet, View } from 'react-native';
+import { Dimensions, Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   createDrawerNavigator,
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import {
+  MenuView,
+  type MenuAction,
+  type NativeActionEvent,
+} from '@react-native-menu/menu';
 import { useTranslation } from 'react-i18next';
+import { setAppState } from 'database';
+import { deleteConversation } from 'repositories';
 import { DrawerContentScreen } from 'screens';
 import { PlatformIcon, Text } from 'components';
-import { haptics, isIOS } from 'helpers';
+import { devLog, haptics, isIOS } from 'helpers';
 import { useAppState, useConversations, useModels, useStyled } from 'hooks';
 
 import { ChatStackNavigator } from './ChatStackNavigator';
@@ -18,15 +25,81 @@ import { Spacings } from 'style';
 const Drawer = createDrawerNavigator();
 const ICON_SIZE = 22;
 
+const MENU_ACTION_NEW_CHAT = 'new-chat';
+const MENU_ACTION_DELETE_CHAT = 'delete-chat';
+
 const ChatHeaderRight = () => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
+  const { conversationIdInUse } = useAppState();
+
+  const handleMenuAction = React.useCallback(
+    async ({ nativeEvent }: NativeActionEvent) => {
+      if (nativeEvent.event === MENU_ACTION_NEW_CHAT) {
+        setAppState({ conversationIdInUse: undefined });
+        return;
+      }
+
+      if (
+        nativeEvent.event === MENU_ACTION_DELETE_CHAT &&
+        conversationIdInUse !== undefined
+      ) {
+        setAppState({ conversationIdInUse: undefined });
+
+        try {
+          await deleteConversation(conversationIdInUse);
+        } catch (error) {
+          devLog('Failed to delete conversation', error);
+        }
+      }
+    },
+    [conversationIdInUse],
+  );
+
+  const newChatAction: MenuAction = {
+    id: MENU_ACTION_NEW_CHAT,
+    title: t('navigation.chatMenu.newChat'),
+    imageColor: colors.onSurface,
+    image: Platform.select({
+      ios: 'plus.bubble',
+      android: 'add_comment',
+    }),
+  };
+
+  const deleteChatAction: MenuAction = {
+    id: MENU_ACTION_DELETE_CHAT,
+    title: t('navigation.chatMenu.deleteChat'),
+    attributes: { destructive: true },
+    titleColor: colors.dangerSurface,
+    imageColor: colors.dangerSurface,
+    image: Platform.select({
+      ios: 'trash',
+      android: 'ic_menu_delete',
+    }),
+  };
+
+  const actions: MenuAction[] = isIOS
+    ? [
+        {
+          id: 'new-chat-section',
+          title: '',
+          displayInline: true,
+          subactions: [newChatAction],
+        },
+        {
+          id: 'delete-chat-section',
+          title: '',
+          displayInline: true,
+          subactions: [deleteChatAction],
+        },
+      ]
+    : [newChatAction, deleteChatAction];
 
   return (
-    <Pressable
-      onPress={() => {
-        // open options
-      }}
+    <MenuView
       style={{ marginHorizontal: ICON_SIZE / 2 }}
+      onPressAction={handleMenuAction}
+      actions={actions}
     >
       <PlatformIcon
         iosIconName="ellipsis.circle"
@@ -34,7 +107,7 @@ const ChatHeaderRight = () => {
         size={ICON_SIZE}
         color={colors.onSurface}
       />
-    </Pressable>
+    </MenuView>
   );
 };
 
@@ -119,7 +192,7 @@ export const DrawerNavigator = () => {
           return {
             headerShown: isIOS || isAtRoot,
             swipeEnabled: isIOS || isAtRoot,
-            title: currentConversationTitle ?? t('navigation.chat'),
+            title: currentConversationTitle ?? t('navigation.newChat'),
             headerTitle: renderChatHeaderTitle,
             headerTitleContainerStyle: { marginHorizontal: 8 },
             headerRight:
