@@ -51,7 +51,8 @@
       "terms": "Terms & Conditions",
       "termsSubtitle": "Read our terms of use",
       "privacyPolicy": "Privacy Policy",
-      "privacyPolicySubtitle": "How we handle your data"
+      "privacyPolicySubtitle": "How we handle your data",
+      "website": "Website"
     },
     "models": {
       "inUse": "In use",

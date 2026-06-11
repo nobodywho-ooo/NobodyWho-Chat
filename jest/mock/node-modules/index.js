@@ -12,6 +12,11 @@ jest.mock("react-native-haptic-feedback", () => {
   };
 });
 
+jest.mock('react-native-device-info', () => ({
+  getVersion: jest.fn(() => '1.0.0'),
+  getBuildNumber: jest.fn(() => '1'),
+}));
+
 jest.mock('@dr.pogodin/react-native-fs', () => {
   return {
     copyFile: jest.fn(),

@@ -1973,6 +1973,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNDeviceInfo (15.0.2):
+    - React-Core
   - RNGestureHandler (2.31.2):
     - hermes-engine
     - RCTRequired
@@ -2317,6 +2319,7 @@ DEPENDENCIES:
   - ReactNativeEnrichedMarkdown (from `../node_modules/react-native-enriched-markdown`)
   - "ReactNativeFs (from `../node_modules/@dr.pogodin/react-native-fs`)"
   - "ReactNavigation (from `../node_modules/@react-navigation/native`)"
+  - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNLocalize (from `../node_modules/react-native-localize`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
@@ -2492,6 +2495,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@dr.pogodin/react-native-fs"
   ReactNavigation:
     :path: "../node_modules/@react-navigation/native"
+  RNDeviceInfo:
+    :path: "../node_modules/react-native-device-info"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNLocalize:
@@ -2589,6 +2594,7 @@ SPEC CHECKSUMS:
   ReactNativeEnrichedMarkdown: aec0b8248da08abc8b3613aa6c588d160f64e761
   ReactNativeFs: 703f58b245cb5145e95ce7f5a686e901f7b62fac
   ReactNavigation: ab9d9193a07d8d87c5994df0baf1be56b19a269a
+  RNDeviceInfo: d79872e11c8e9c4de0d65b0ee6e0cee719f37fea
   RNGestureHandler: acf7db8499c11193d9b4b6b1cc1439ff4f01a693
   RNLocalize: a0dd99f2d709904a07fb826e0b748234f629af34
   RNReactNativeHapticFeedback: 9fae19e7c07fe4e635bc9c1e0be9583668b40e06

@@ -11,4 +11,16 @@ export default StyleSheet.create({
     alignSelf: 'center',
     paddingVertical: Spacings.xl,
   },
+  websiteButton: {
+    alignSelf: 'center',
+    marginTop: Spacings.xxxl,
+  },
+  appName: {
+    paddingTop: Spacings.xl,
+    alignSelf: 'center'
+  },
+  appInfo: {
+    paddingTop: Spacings.sm,
+    alignSelf: 'center'
+  }
 });

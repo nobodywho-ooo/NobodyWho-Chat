@@ -1,4 +1,5 @@
 import React from 'react';
+import { Linking } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 
 import { mockNavigate } from 'jest/mock/node-modules';
@@ -41,4 +42,17 @@ test('pressing privacy policy navigates to the PrivacyPolicyScreen', () => {
   );
 
   expect(mockNavigate).toHaveBeenCalledWith('PrivacyPolicyScreen');
+});
+
+test('pressing website opens the NobodyWho site', () => {
+  const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  const screen = render(<SettingsScreen />);
+
+  fireEvent.press(
+    screen.UNSAFE_getByProps({ title: 'screens.settings.website' }),
+  );
+
+  expect(openURL).toHaveBeenCalledWith('https://www.nobodywho.ai/');
+
+  openURL.mockRestore();
 });

@@ -41,6 +41,46 @@ exports[`renders correctly SettingsScreen 1`] = `
       subtitle="screens.settings.privacyPolicySubtitle"
       title="screens.settings.privacyPolicy"
     />
+    <Button
+      icon={
+        {
+          "androidIconName": "public",
+          "iosIconName": "globe",
+        }
+      }
+      onPress={[Function]}
+      style={
+        {
+          "alignSelf": "center",
+          "marginTop": 48,
+        }
+      }
+      title="screens.settings.website"
+      variant="outline"
+    />
+    <Text
+      bold={true}
+      style={
+        {
+          "alignSelf": "center",
+          "paddingTop": 20,
+        }
+      }
+      variant="h3"
+    >
+      NobodyWho Chat
+    </Text>
+    <Text
+      style={
+        {
+          "alignSelf": "center",
+          "paddingTop": 8,
+        }
+      }
+      variant="body2"
+    >
+      version 1.0.0 - build 1
+    </Text>
   </View>
 </RCTScrollView>
 `;

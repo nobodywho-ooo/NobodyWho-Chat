@@ -51,7 +51,8 @@
       "terms": "Vilkår og betingelser",
       "termsSubtitle": "Læs vores brugervilkår",
       "privacyPolicy": "Privatlivspolitik",
-      "privacyPolicySubtitle": "Sådan håndterer vi dine data"
+      "privacyPolicySubtitle": "Sådan håndterer vi dine data",
+      "website": "Hjemmeside"
     },
     "models": {
       "inUse": "I brug",
