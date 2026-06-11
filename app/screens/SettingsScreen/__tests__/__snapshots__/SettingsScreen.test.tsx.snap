@@ -52,7 +52,7 @@ exports[`renders correctly SettingsScreen 1`] = `
       style={
         {
           "alignSelf": "center",
-          "marginTop": 48,
+          "marginTop": 64,
         }
       }
       title="screens.settings.website"

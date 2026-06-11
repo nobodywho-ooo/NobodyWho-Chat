@@ -13,7 +13,7 @@ export default StyleSheet.create({
   },
   websiteButton: {
     alignSelf: 'center',
-    marginTop: Spacings.xxxl,
+    marginTop: Spacings.xxxxl,
   },
   appName: {
     paddingTop: Spacings.xl,
