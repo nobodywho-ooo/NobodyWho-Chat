@@ -5,7 +5,7 @@ export default StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
+  headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -13,24 +13,14 @@ export default StyleSheet.create({
     paddingTop: Spacings.lg,
     paddingBottom: Spacings.md,
   },
-  actions: {
+  actionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     paddingHorizontal: Spacings.xl,
     gap: Spacings.sm,
     paddingBottom: Spacings.lg,
   },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingVertical: Spacings.md,
-    paddingHorizontal: Spacings.lg,
-    borderRadius: Spacings.md,
-    gap: Spacings.md,
-  },
-  actionLabel: {
-    fontWeight: '500',
-  },
-  floatingButton: {
+  floatingButtonContainer: {
     position: 'absolute',
     bottom: Spacings.xxl,
     alignSelf: 'center',

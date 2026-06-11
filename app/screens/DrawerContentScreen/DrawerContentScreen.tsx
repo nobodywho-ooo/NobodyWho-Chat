@@ -1,11 +1,11 @@
 import React, { useCallback } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { setAppState } from 'database';
-import { Button, IconButton, PlatformIcon, Text } from 'components';
-import { ConversationsList } from './components';
-import { useStyled } from 'hooks';
+import { Button, IconButton, Text } from 'components';
+import { ActionButton, ConversationsList } from './components';
+import { useModels } from 'hooks';
 
 import styles from './DrawerContentScreen.styles';
 
@@ -17,14 +17,19 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
   onCloseDrawer,
 }) => {
   const { t } = useTranslation();
-  const { colors } = useStyled();
   const navigation = useNavigation();
+  const { models } = useModels();
 
   const closeDrawer = onCloseDrawer;
 
   const handleSettingsPress = useCallback(() => {
     // @ts-ignore
     navigation.navigate('SettingsScreen');
+  }, [navigation]);
+
+  const handleChangeModelPress = useCallback(() => {
+    // @ts-ignore
+    navigation.navigate('DownloadedModelsScreen');
   }, [navigation]);
 
   const handleNewChatPress = useCallback(() => {
@@ -34,7 +39,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={styles.headerContainer}>
         <Text variant="h3" bold>
           NobodyWho
         </Text>
@@ -44,29 +49,28 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         />
       </View>
 
-      <View style={styles.actions}>
-        <Pressable
+      <View style={styles.actionsContainer}>
+        <ActionButton
+          icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
+          label={t('screens.drawerContent.settings')}
           onPress={handleSettingsPress}
-          style={({ pressed }) => [
-            styles.actionButton,
-            { backgroundColor: colors.surfaceContainer },
-            pressed && { opacity: 0.6 },
-          ]}
-        >
-          <PlatformIcon
-            iosIconName="gearshape"
-            androidIconName="settings"
-            color={colors.onSurface}
+        />
+
+        {models.length >= 2 && (
+          <ActionButton
+            icon={{
+              iosIconName: 'arrow.left.arrow.right',
+              androidIconName: 'swap_horiz',
+            }}
+            label={t('screens.drawerContent.changeModel')}
+            onPress={handleChangeModelPress}
           />
-          <Text variant="body1" style={styles.actionLabel}>
-            {t('screens.drawerContent.settings')}
-          </Text>
-        </Pressable>
+        )}
       </View>
 
       <ConversationsList onCloseDrawer={closeDrawer} />
 
-      <View style={styles.floatingButton}>
+      <View style={styles.floatingButtonContainer}>
         <Button
           title={t('screens.drawerContent.newChat')}
           variant="secondary"

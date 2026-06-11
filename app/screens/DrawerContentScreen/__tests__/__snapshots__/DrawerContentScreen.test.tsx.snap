@@ -39,6 +39,8 @@ exports[`renders correctly DrawerContentScreen 1`] = `
   <View
     style={
       {
+        "flexDirection": "row",
+        "flexWrap": "wrap",
         "gap": 8,
         "paddingBottom": 16,
         "paddingHorizontal": 20,

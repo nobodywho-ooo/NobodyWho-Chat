@@ -40,7 +40,8 @@
     },
     "drawerContent": {
       "newChat": "New Chat",
-      "settings": "Settings"
+      "settings": "Settings",
+      "changeModel": "Change model"
     },
     "settings": {
       "models": "Models",

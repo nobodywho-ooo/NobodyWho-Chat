@@ -40,7 +40,8 @@
     },
     "drawerContent": {
       "newChat": "Ny chat",
-      "settings": "Indstillinger"
+      "settings": "Indstillinger",
+      "changeModel": "Skift model"
     },
     "settings": {
       "models": "Modeller",
