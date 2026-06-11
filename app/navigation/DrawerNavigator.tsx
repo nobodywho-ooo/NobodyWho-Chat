@@ -1,7 +1,10 @@
 import * as React from 'react';
 import { Dimensions, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { createDrawerNavigator } from '@react-navigation/drawer';
+import {
+  createDrawerNavigator,
+  type DrawerContentComponentProps,
+} from '@react-navigation/drawer';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { DrawerContentScreen } from 'screens';
@@ -14,6 +17,36 @@ import { ChatStackNavigator } from './ChatStackNavigator';
 const Drawer = createDrawerNavigator();
 const ICON_SIZE = 22;
 
+const ChatHeaderRight = () => {
+  const { colors } = useStyled();
+
+  return (
+    <Pressable
+      onPress={() => {
+        // open options
+      }}
+      style={{ marginHorizontal: ICON_SIZE / 2 }}
+    >
+      <PlatformIcon
+        iosIconName="ellipsis.circle"
+        androidIconName="more_horiz"
+        size={ICON_SIZE}
+        color={colors.onSurface}
+      />
+    </Pressable>
+  );
+};
+
+const renderChatHeaderRight = () => <ChatHeaderRight />;
+
+const renderDrawerContent = ({ navigation }: DrawerContentComponentProps) => (
+  <DrawerContentScreen
+    onCloseDrawer={() => {
+      navigation.closeDrawer();
+    }}
+  />
+);
+
 export const DrawerNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
@@ -22,13 +55,7 @@ export const DrawerNavigator = () => {
 
   return (
     <Drawer.Navigator
-      drawerContent={({ navigation }) => (
-        <DrawerContentScreen
-          onCloseDrawer={() => {
-            navigation.closeDrawer();
-          }}
-        />
-      )}
+      drawerContent={renderDrawerContent}
       screenOptions={{
         headerStyle: { backgroundColor: colors.surface },
         headerTintColor: colors.onSurface,
@@ -57,21 +84,7 @@ export const DrawerNavigator = () => {
             headerShown: isIOS || isAtRoot,
             swipeEnabled: isIOS || isAtRoot,
             title: t('navigation.chat'),
-            headerRight: () => (
-              <Pressable
-                onPress={() => {
-                  // open options
-                }}
-                style={{ marginHorizontal: ICON_SIZE / 2 }}
-              >
-                <PlatformIcon
-                  iosIconName="ellipsis.circle"
-                  androidIconName="more_horiz"
-                  size={ICON_SIZE}
-                  color={colors.onSurface}
-                />
-              </Pressable>
-            ),
+            headerRight: renderChatHeaderRight,
           };
         }}
         listeners={{
