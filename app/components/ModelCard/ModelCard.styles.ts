@@ -9,36 +9,19 @@ export default StyleSheet.create({
     marginBottom: Spacings.sm,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: Spacings.md,
   },
   infoContainer: {
-    paddingLeft: Spacings.md,
     flex: 1,
-  },
-  infoContainerNoIcon: {
-    flex: 1,
-  },
-  detailsContainer: {
-    flexDirection: 'row', 
-    justifyContent: 'space-between',
-    marginBottom: Spacings.sm,
-  },
-  name: {
-    flex: 1,
-    marginRight: Spacings.sm,
-  },
-  tags: {
-    flexDirection: 'row',
     gap: Spacings.xs,
   },
-  tag: {
-    borderRadius: 6,
-    paddingHorizontal: Spacings.sm,
-    paddingVertical: Spacings.xxs,
-  },
-  tagText: {
-    fontSize: 12,
-  },
-  metaData: {
+  pipeline: {
     fontSize: 13,
+  },
+  tagsContainer: {
+    marginTop: Spacings.xs,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacings.xs,
   },
 });

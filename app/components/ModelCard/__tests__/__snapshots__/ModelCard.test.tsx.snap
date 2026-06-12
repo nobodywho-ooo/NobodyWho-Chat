@@ -50,6 +50,7 @@ exports[`renders correctly ModelCard 1`] = `
           "borderRadius": 12,
           "borderWidth": 1,
           "flexDirection": "row",
+          "gap": 12,
           "marginBottom": 8,
           "padding": 12,
         },
@@ -59,79 +60,24 @@ exports[`renders correctly ModelCard 1`] = `
       ]
     }
   >
-    <PlatformIcon
-      androidIconName="download"
-      color="#628395"
-      iosIconName="arrow.down.circle"
-      size={28}
+    <SvgMock
+      color="#000000"
+      height={28}
+      width={28}
     />
     <View
       style={
         {
           "flex": 1,
-          "paddingLeft": 12,
+          "gap": 4,
         }
       }
     >
-      <View
-        style={
-          {
-            "flexDirection": "row",
-            "justifyContent": "space-between",
-            "marginBottom": 8,
-          }
-        }
+      <Text
+        bold={true}
       >
-        <Text
-          bold={true}
-          style={
-            {
-              "flex": 1,
-              "marginRight": 8,
-            }
-          }
-        >
-          Qwen3 4B Q4 K M
-        </Text>
-        <View
-          style={
-            {
-              "flexDirection": "row",
-              "gap": 4,
-            }
-          }
-        >
-          <View
-            style={
-              [
-                {
-                  "borderRadius": 6,
-                  "paddingHorizontal": 8,
-                  "paddingVertical": 2,
-                },
-                {
-                  "backgroundColor": "#ebebeb",
-                },
-              ]
-            }
-          >
-            <Text
-              style={
-                [
-                  {
-                    "fontSize": 12,
-                  },
-                  {
-                    "color": "#7c7c7c",
-                  },
-                ]
-              }
-            >
-              Thinking
-            </Text>
-          </View>
-        </View>
-      </View>
+        Qwen3 4B Q4 K M
+      </Text>
       <Text
         style={
           [
@@ -145,14 +91,171 @@ exports[`renders correctly ModelCard 1`] = `
         }
       >
         Text generation
-         · 
-        4
-        B ·
-         
-        2.5
-         GB
       </Text>
+      <View
+        style={
+          {
+            "flexDirection": "row",
+            "flexWrap": "wrap",
+            "gap": 4,
+            "marginTop": 4,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="layers"
+            color="#7c7c7c"
+            iosIconName="square.stack.3d.up.fill"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            4B
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="storage"
+            color="#7c7c7c"
+            iosIconName="internaldrive"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            2.5 GB
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="lightbulb"
+            color="#7c7c7c"
+            iosIconName="lightbulb"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            Thinking
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            Multilingual
+          </Text>
+        </View>
+      </View>
     </View>
+    <PlatformIcon
+      androidIconName="download"
+      color="#628395"
+      iosIconName="arrow.down.circle"
+      size={28}
+    />
   </View>
 </View>
 `;
@@ -207,6 +310,7 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
           "borderRadius": 12,
           "borderWidth": 1,
           "flexDirection": "row",
+          "gap": 12,
           "marginBottom": 8,
           "padding": 12,
         },
@@ -216,72 +320,24 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
       ]
     }
   >
+    <SvgMock
+      color="#000000"
+      height={28}
+      width={28}
+    />
     <View
       style={
         {
           "flex": 1,
+          "gap": 4,
         }
       }
     >
-      <View
-        style={
-          {
-            "flexDirection": "row",
-            "justifyContent": "space-between",
-            "marginBottom": 8,
-          }
-        }
+      <Text
+        bold={true}
       >
-        <Text
-          bold={true}
-          style={
-            {
-              "flex": 1,
-              "marginRight": 8,
-            }
-          }
-        >
-          Qwen3 4B Q4 K M
-        </Text>
-        <View
-          style={
-            {
-              "flexDirection": "row",
-              "gap": 4,
-            }
-          }
-        >
-          <View
-            style={
-              [
-                {
-                  "borderRadius": 6,
-                  "paddingHorizontal": 8,
-                  "paddingVertical": 2,
-                },
-                {
-                  "backgroundColor": "#ebebeb",
-                },
-              ]
-            }
-          >
-            <Text
-              style={
-                [
-                  {
-                    "fontSize": 12,
-                  },
-                  {
-                    "color": "#7c7c7c",
-                  },
-                ]
-              }
-            >
-              Thinking
-            </Text>
-          </View>
-        </View>
-      </View>
+        Qwen3 4B Q4 K M
+      </Text>
       <Text
         style={
           [
@@ -295,13 +351,164 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
         }
       >
         Text generation
-         · 
-        4
-        B ·
-         
-        2.5
-         GB
       </Text>
+      <View
+        style={
+          {
+            "flexDirection": "row",
+            "flexWrap": "wrap",
+            "gap": 4,
+            "marginTop": 4,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="layers"
+            color="#7c7c7c"
+            iosIconName="square.stack.3d.up.fill"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            4B
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="storage"
+            color="#7c7c7c"
+            iosIconName="internaldrive"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            2.5 GB
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="lightbulb"
+            color="#7c7c7c"
+            iosIconName="lightbulb"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            Thinking
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            Multilingual
+          </Text>
+        </View>
+      </View>
     </View>
   </View>
 </View>
@@ -357,6 +564,7 @@ exports[`renders correctly ModelCard when model is downloading 1`] = `
           "borderRadius": 12,
           "borderWidth": 1,
           "flexDirection": "row",
+          "gap": 12,
           "marginBottom": 8,
           "padding": 12,
         },
@@ -366,45 +574,48 @@ exports[`renders correctly ModelCard when model is downloading 1`] = `
       ]
     }
   >
+    <SvgMock
+      color="#000000"
+      height={28}
+      width={28}
+    />
+    <View
+      style={
+        {
+          "flex": 1,
+          "gap": 4,
+        }
+      }
+    >
+      <Text
+        bold={true}
+      >
+        Qwen3 4B Q4 K M
+      </Text>
+      <Text
+        style={
+          [
+            {
+              "fontSize": 13,
+            },
+            {
+              "color": "#7c7c7c",
+            },
+          ]
+        }
+      >
+        Text generation
+      </Text>
+      <ProgressBar
+        progress={0.4}
+      />
+    </View>
     <PlatformIcon
       androidIconName="downloading"
       color="#628395"
       iosIconName="arrow.down.circle.dotted"
       size={28}
     />
-    <View
-      style={
-        {
-          "flex": 1,
-          "paddingLeft": 12,
-        }
-      }
-    >
-      <View
-        style={
-          {
-            "flexDirection": "row",
-            "justifyContent": "space-between",
-            "marginBottom": 8,
-          }
-        }
-      >
-        <Text
-          bold={true}
-          style={
-            {
-              "flex": 1,
-              "marginRight": 8,
-            }
-          }
-        >
-          Qwen3 4B Q4 K M
-        </Text>
-      </View>
-      <ProgressBar
-        progress={0.4}
-      />
-    </View>
   </View>
 </View>
 `;
@@ -459,6 +670,7 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
           "borderRadius": 12,
           "borderWidth": 1,
           "flexDirection": "row",
+          "gap": 12,
           "marginBottom": 8,
           "padding": 12,
         },
@@ -478,69 +690,15 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
       style={
         {
           "flex": 1,
-          "paddingLeft": 12,
+          "gap": 4,
         }
       }
     >
-      <View
-        style={
-          {
-            "flexDirection": "row",
-            "justifyContent": "space-between",
-            "marginBottom": 8,
-          }
-        }
+      <Text
+        bold={true}
       >
-        <Text
-          bold={true}
-          style={
-            {
-              "flex": 1,
-              "marginRight": 8,
-            }
-          }
-        >
-          Qwen3 4B Q4 K M
-        </Text>
-        <View
-          style={
-            {
-              "flexDirection": "row",
-              "gap": 4,
-            }
-          }
-        >
-          <View
-            style={
-              [
-                {
-                  "borderRadius": 6,
-                  "paddingHorizontal": 8,
-                  "paddingVertical": 2,
-                },
-                {
-                  "backgroundColor": "#ebebeb",
-                },
-              ]
-            }
-          >
-            <Text
-              style={
-                [
-                  {
-                    "fontSize": 12,
-                  },
-                  {
-                    "color": "#7c7c7c",
-                  },
-                ]
-              }
-            >
-              Thinking
-            </Text>
-          </View>
-        </View>
-      </View>
+        Qwen3 4B Q4 K M
+      </Text>
       <Text
         style={
           [
@@ -554,13 +712,164 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
         }
       >
         Text generation
-         · 
-        4
-        B ·
-         
-        2.5
-         GB
       </Text>
+      <View
+        style={
+          {
+            "flexDirection": "row",
+            "flexWrap": "wrap",
+            "gap": 4,
+            "marginTop": 4,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="layers"
+            color="#7c7c7c"
+            iosIconName="square.stack.3d.up.fill"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            4B
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="storage"
+            color="#7c7c7c"
+            iosIconName="internaldrive"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            2.5 GB
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="lightbulb"
+            color="#7c7c7c"
+            iosIconName="lightbulb"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            Thinking
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            Multilingual
+          </Text>
+        </View>
+      </View>
     </View>
   </View>
 </View>

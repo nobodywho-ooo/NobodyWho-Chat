@@ -46,6 +46,11 @@ jest.mock('react-native-streamdown', () => {
   };
 });
 
+jest.mock('react-native-linear-gradient', () => ({
+  __esModule: true,
+  default: 'LinearGradient',
+}));
+
 export const mockFromPath = jest.fn();
 
 jest.mock('react-native-nobodywho', () => {

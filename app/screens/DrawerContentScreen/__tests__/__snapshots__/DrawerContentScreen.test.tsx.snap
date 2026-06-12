@@ -42,8 +42,9 @@ exports[`renders correctly DrawerContentScreen 1`] = `
         "flexDirection": "row",
         "flexWrap": "wrap",
         "gap": 8,
-        "paddingBottom": 16,
+        "paddingBottom": 32,
         "paddingHorizontal": 20,
+        "paddingTop": 16,
       }
     }
   >
@@ -114,6 +115,36 @@ exports[`renders correctly DrawerContentScreen 1`] = `
   </View>
   <ConversationsList
     onCloseDrawer={[Function]}
+  />
+  <LinearGradient
+    colors={
+      [
+        "rgba(255, 255, 255, 0)",
+        "rgba(255, 255, 255, 0.9)",
+      ]
+    }
+    end={
+      {
+        "x": 0,
+        "y": 1,
+      }
+    }
+    pointerEvents="none"
+    start={
+      {
+        "x": 0,
+        "y": 0,
+      }
+    }
+    style={
+      {
+        "bottom": 0,
+        "height": 140,
+        "left": 0,
+        "position": "absolute",
+        "right": 0,
+      }
+    }
   />
   <View
     style={

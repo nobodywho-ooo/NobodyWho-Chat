@@ -2,10 +2,13 @@ import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import LinearGradient from 'react-native-linear-gradient';
 import { setAppState } from 'database';
 import { Button, IconButton, Text } from 'components';
 import { ActionButton, ConversationsList } from './components';
+import { useTheme } from 'context';
 import { useModels } from 'hooks';
+import { Theme } from 'types';
 
 import styles from './DrawerContentScreen.styles';
 
@@ -13,12 +16,18 @@ interface DrawerContentScreenProps {
   onCloseDrawer: () => void;
 }
 
+const gradientColors: Record<Theme, string[]> = {
+  light: ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.9)'],
+  dark: ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 0.9)'],
+};
+
 export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
   onCloseDrawer,
 }) => {
   const { t } = useTranslation();
   const navigation = useNavigation();
   const { models } = useModels();
+  const theme = useTheme();
 
   const closeDrawer = onCloseDrawer;
 
@@ -69,6 +78,14 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
       </View>
 
       <ConversationsList onCloseDrawer={closeDrawer} />
+
+      <LinearGradient
+        pointerEvents="none"
+        colors={gradientColors[theme]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 1 }}
+        style={styles.bottomGradient}
+      />
 
       <View style={styles.floatingButtonContainer}>
         <Button

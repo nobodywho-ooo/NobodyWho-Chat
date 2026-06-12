@@ -38,7 +38,7 @@ export const SettingsScreen: React.FC = () => {
         subtitle={t('screens.settings.manageYourModels')}
         iosIconName="square.stack.3d.up.fill"
         androidIconName="layers"
-        iconBackgroundColor="#FF9500"
+        iconBackgroundColor="#5856D6"
         // @ts-ignore
         onPress={() => navigation.navigate('ModelsScreen')}
       />
@@ -48,7 +48,7 @@ export const SettingsScreen: React.FC = () => {
         subtitle={t('screens.settings.termsSubtitle')}
         iosIconName="doc.text.fill"
         androidIconName="description"
-        iconBackgroundColor="#5856D6"
+        iconBackgroundColor="#FF9500"
         // @ts-ignore
         onPress={() => navigation.navigate('TermsScreen')}
       />

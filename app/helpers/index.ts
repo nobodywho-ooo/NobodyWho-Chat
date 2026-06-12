@@ -5,8 +5,10 @@ import { safeJsonParse } from './json';
 import { getMarkdownStyle } from './markdown';
 import { formatThinkingBlocks, stripThinkingBlocks } from './thinking';
 import { haptics } from './haptics';
+import { getFamilyIcon } from './familyIcon';
 
 export {
+  getFamilyIcon,
   getAssetPath,
   isIOS,
   isAndroid,

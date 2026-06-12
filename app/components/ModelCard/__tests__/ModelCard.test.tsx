@@ -24,7 +24,7 @@ const mockModel: Model = {
     },
   ],
   pipeline: ModelPipeline.textGeneration,
-  tags: ['Thinking'],
+  tags: ['Multilingual'],
 };
 
 test('renders correctly ModelCard', () => {

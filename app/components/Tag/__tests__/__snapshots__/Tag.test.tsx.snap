@@ -1,0 +1,112 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Tag renders a label with an icon 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "borderRadius": 6,
+        "flexDirection": "row",
+        "gap": 2,
+        "paddingHorizontal": 8,
+        "paddingVertical": 2,
+      },
+      {
+        "backgroundColor": "#ebebeb",
+      },
+    ]
+  }
+>
+  <PlatformIcon
+    androidIconName="layers"
+    color="#7c7c7c"
+    iosIconName="square.stack.3d.up.fill"
+    size={12}
+  />
+  <Text
+    style={
+      [
+        {
+          "fontSize": 12,
+        },
+        {
+          "color": "#7c7c7c",
+        },
+      ]
+    }
+  >
+    4B
+  </Text>
+</View>
+`;
+
+exports[`Tag renders a label without an icon 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "borderRadius": 6,
+        "flexDirection": "row",
+        "gap": 2,
+        "paddingHorizontal": 8,
+        "paddingVertical": 2,
+      },
+      {
+        "backgroundColor": "#ebebeb",
+      },
+    ]
+  }
+>
+  <Text
+    style={
+      [
+        {
+          "fontSize": 12,
+        },
+        {
+          "color": "#7c7c7c",
+        },
+      ]
+    }
+  >
+    Multilingual
+  </Text>
+</View>
+`;
+
+exports[`Tag renders no icon when only one platform icon name is provided 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "borderRadius": 6,
+        "flexDirection": "row",
+        "gap": 2,
+        "paddingHorizontal": 8,
+        "paddingVertical": 2,
+      },
+      {
+        "backgroundColor": "#ebebeb",
+      },
+    ]
+  }
+>
+  <Text
+    style={
+      [
+        {
+          "fontSize": 12,
+        },
+        {
+          "color": "#7c7c7c",
+        },
+      ]
+    }
+  >
+    2.5 GB
+  </Text>
+</View>
+`;

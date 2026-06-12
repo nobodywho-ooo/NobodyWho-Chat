@@ -20,7 +20,8 @@ module.exports = {
           screens: './app/screens',
           helpers: './app/helpers',
           i18n: './app/i18n',
-          database: './app/database'
+          database: './app/database',
+          svg: './svg'
         },
       },
     ],

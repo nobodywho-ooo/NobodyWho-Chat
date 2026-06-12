@@ -21,6 +21,14 @@ export default StyleSheet.create({
     paddingTop: Spacings.lg,
     paddingBottom: Spacings.xxl,
   },
+  bottomGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    // TODO: height should be calculated
+    height: 140,
+  },
   floatingButtonContainer: {
     position: 'absolute',
     bottom: Spacings.xxl,

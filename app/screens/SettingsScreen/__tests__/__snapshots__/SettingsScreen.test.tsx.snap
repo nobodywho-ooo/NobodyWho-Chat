@@ -17,17 +17,29 @@ exports[`renders correctly SettingsScreen 1`] = `
   }
 >
   <View>
+    <Text>
+      screens.settings.mySettings
+    </Text>
     <ListItem
       androidIconName="layers"
-      iconBackgroundColor="#FF9500"
+      iconBackgroundColor="#5856D6"
       iosIconName="square.stack.3d.up.fill"
       onPress={[Function]}
       subtitle="screens.settings.manageYourModels"
       title="screens.settings.models"
     />
+    <Text
+      style={
+        {
+          "paddingTop": 20,
+        }
+      }
+    >
+      screens.settings.about
+    </Text>
     <ListItem
       androidIconName="description"
-      iconBackgroundColor="#5856D6"
+      iconBackgroundColor="#FF9500"
       iosIconName="doc.text.fill"
       onPress={[Function]}
       subtitle="screens.settings.termsSubtitle"
@@ -41,28 +53,45 @@ exports[`renders correctly SettingsScreen 1`] = `
       subtitle="screens.settings.privacyPolicySubtitle"
       title="screens.settings.privacyPolicy"
     />
-    <Button
-      icon={
-        {
-          "androidIconName": "public",
-          "iosIconName": "globe",
-        }
-      }
-      onPress={[Function]}
+    <View
       style={
         {
-          "alignSelf": "center",
+          "flexDirection": "row",
+          "flexWrap": "wrap",
+          "gap": 8,
           "marginTop": 64,
         }
       }
-      title="screens.settings.website"
-      variant="outline"
-    />
+    >
+      <Button
+        icon={
+          {
+            "androidIconName": "public",
+            "iosIconName": "globe",
+          }
+        }
+        onPress={[Function]}
+        small={true}
+        title="screens.settings.website"
+        variant="outline"
+      />
+      <Button
+        icon={
+          {
+            "androidIconName": "code",
+            "iosIconName": "chevron.left.forwardslash.chevron.right",
+          }
+        }
+        onPress={[Function]}
+        small={true}
+        title="screens.settings.github"
+        variant="outline"
+      />
+    </View>
     <Text
       bold={true}
       style={
         {
-          "alignSelf": "center",
           "paddingTop": 20,
         }
       }
@@ -73,7 +102,6 @@ exports[`renders correctly SettingsScreen 1`] = `
     <Text
       style={
         {
-          "alignSelf": "center",
           "paddingTop": 8,
         }
       }

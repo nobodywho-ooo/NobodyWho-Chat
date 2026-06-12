@@ -8,6 +8,7 @@ import { MarkdownDocument } from './MarkdownDocument/MarkdownDocument';
 import { MessageListItem } from './MessageListItem/MessageListItem';
 import { ModelCard } from './ModelCard/ModelCard';
 import { PlatformIcon } from './PlatformIcon/PlatformIcon';
+import { Tag } from './Tag/Tag';
 import { Text } from './Text/Text';
 
-export { Button, ProgressBar, ErrorView, IconButton, InputBar, ListItem, MarkdownDocument, MessageListItem, ModelCard, PlatformIcon, Text };
+export { Button, ProgressBar, ErrorView, IconButton, InputBar, ListItem, MarkdownDocument, MessageListItem, ModelCard, PlatformIcon, Tag, Text };

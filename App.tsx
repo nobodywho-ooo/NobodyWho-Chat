@@ -97,13 +97,13 @@ function AppLoader() {
             modelSizeGB: 0.5,
             parameterCountBillions: 0.6,
             author: 'Alibaba Cloud',
-            family: 'Qwen',
+            family: 'qwen3',
             thinking: true,
             imageIngestion: false,
             audioIngestion: false,
             downloadLinks: [],
             pipeline: ModelPipeline.textGeneration,
-            tags: [],
+            tags: ['Smart'],
           });
           await insertModel({
             id: 1,
@@ -111,13 +111,13 @@ function AppLoader() {
             modelSizeGB: 0.25,
             parameterCountBillions: 1.7,
             author: 'Prism ML',
-            family: 'Bonsai',
+            family: 'bonsai',
             thinking: false,
             imageIngestion: false,
             audioIngestion: false,
             downloadLinks: [],
             pipeline: ModelPipeline.textGeneration,
-            tags: [],
+            tags: ['Dense'],
           });
         }
       }

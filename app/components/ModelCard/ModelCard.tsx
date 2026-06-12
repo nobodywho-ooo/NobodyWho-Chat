@@ -1,10 +1,12 @@
 import React, { useCallback } from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { useStyled } from 'hooks';
+import { getFamilyIcon } from 'helpers';
 import { Model, pipelineLabel } from 'types';
 import { Text } from '../Text/Text';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
+import { Tag } from '../Tag/Tag';
 
 import styles from './ModelCard.styles';
 import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
@@ -27,26 +29,30 @@ export const ModelCard: React.FC<ModelCardProps> = ({
   onPress,
 }) => {
   const { colors } = useStyled();
-  const { modelName, parameterCountBillions, modelSizeGB, pipeline, tags } =
-    model;
+  const {
+    modelName,
+    parameterCountBillions,
+    modelSizeGB,
+    pipeline,
+    tags,
+    family,
+    thinking,
+  } = model;
   const isDownloading = downloadProgress !== undefined;
-  const showIcon = !isDownloaded || isSelected;
+
+  const FamilyIcon = isSelected ? undefined : getFamilyIcon(family);
+  const showDownloadIcon = !isDownloaded && !isSelected;
 
   const handlePress = useCallback(() => {
     onPress?.(model);
   }, [onPress, model]);
 
-  let iosIconName: SFSymbolProps['name'] = isDownloading
+  const downloadIosIcon: SFSymbolProps['name'] = isDownloading
     ? 'arrow.down.circle.dotted'
     : 'arrow.down.circle';
-  let androidIconName: MaterialSymbolProps['name'] = isDownloading
+  const downloadAndroidIcon: MaterialSymbolProps['name'] = isDownloading
     ? 'downloading'
     : 'download';
-
-  if (isSelected) {
-    iosIconName = 'checkmark.circle';
-    androidIconName = 'check_circle';
-  }
 
   return (
     <Pressable
@@ -56,53 +62,60 @@ export const ModelCard: React.FC<ModelCardProps> = ({
       style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }, style]}
     >
       <View style={[styles.container, { borderColor: colors.border }]}>
-        {showIcon && (
+        {isSelected && (
           <PlatformIcon
-            iosIconName={iosIconName}
-            androidIconName={androidIconName}
+            iosIconName="checkmark.circle"
+            androidIconName="check_circle"
             size={28}
-            color={isSelected ? colors.successSurface : colors.primary}
+            color={colors.successSurface}
           />
         )}
-        <View
-          style={showIcon ? styles.infoContainer : styles.infoContainerNoIcon}
-        >
-          <View style={styles.detailsContainer}>
-            <Text style={styles.name} bold>
-              {modelName}
-            </Text>
-            {!isDownloading && (
-              <View style={styles.tags}>
-                {tags.map(tag => (
-                  <View
-                    key={tag}
-                    style={[
-                      styles.tag,
-                      { backgroundColor: colors.surfaceContainer },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.tagText,
-                        { color: colors.onSurfaceVariant },
-                      ]}
-                    >
-                      {tag}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
+        {FamilyIcon && (
+          <FamilyIcon width={28} height={28} color={colors.onSurface} />
+        )}
+
+        <View style={styles.infoContainer}>
+          <Text bold>{modelName}</Text>
+          <Text style={[styles.pipeline, { color: colors.onSurfaceVariant }]}>
+            {pipelineLabel[pipeline]}
+          </Text>
+
           {isDownloading ? (
             <ProgressBar progress={downloadProgress} />
           ) : (
-            <Text style={[styles.metaData, { color: colors.onSurfaceVariant }]}>
-              {pipelineLabel[pipeline]} · {parameterCountBillions}B ·{' '}
-              {modelSizeGB} GB
-            </Text>
+            <View style={styles.tagsContainer}>
+              <Tag
+                iosIconName="square.stack.3d.up.fill"
+                androidIconName="layers"
+                label={`${parameterCountBillions}B`}
+              />
+              <Tag
+                iosIconName="internaldrive"
+                androidIconName="storage"
+                label={`${modelSizeGB} GB`}
+              />
+              {thinking && (
+                <Tag
+                  iosIconName="lightbulb"
+                  androidIconName="lightbulb"
+                  label="Thinking"
+                />
+              )}
+              {tags.map(tag => (
+                <Tag key={tag} label={tag} />
+              ))}
+            </View>
           )}
         </View>
+
+        {showDownloadIcon && (
+          <PlatformIcon
+            iosIconName={downloadIosIcon}
+            androidIconName={downloadAndroidIcon}
+            size={28}
+            color={colors.primary}
+          />
+        )}
       </View>
     </Pressable>
   );
