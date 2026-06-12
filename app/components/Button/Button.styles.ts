@@ -53,6 +53,10 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
+  buttonSmall: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
   content: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -61,5 +65,8 @@ export const styles = StyleSheet.create({
   text: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  textSmall: {
+    fontSize: 14,
   },
 });

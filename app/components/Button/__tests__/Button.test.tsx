@@ -32,4 +32,9 @@ describe('Button', () => {
     ).toJSON();
     expect(tree).toMatchSnapshot();
   });
+
+  test('renders small', () => {
+    const tree = render(<Button title="Small" small />).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 });

@@ -18,7 +18,8 @@ export default StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: Spacings.xl,
     gap: Spacings.sm,
-    paddingBottom: Spacings.lg,
+    paddingTop: Spacings.lg,
+    paddingBottom: Spacings.xxl,
   },
   floatingButtonContainer: {
     position: 'absolute',

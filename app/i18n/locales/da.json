@@ -46,13 +46,16 @@
       "changeModel": "Skift model"
     },
     "settings": {
+      "mySettings": "Mine indstillinger",
       "models": "Modeller",
       "manageYourModels": "Administrer dine modeller",
+      "about": "Om",
       "terms": "Vilkår og betingelser",
       "termsSubtitle": "Læs vores brugervilkår",
       "privacyPolicy": "Privatlivspolitik",
       "privacyPolicySubtitle": "Sådan håndterer vi dine data",
-      "website": "Hjemmeside"
+      "website": "Hjemmeside",
+      "github": "Github"
     },
     "models": {
       "inUse": "I brug",

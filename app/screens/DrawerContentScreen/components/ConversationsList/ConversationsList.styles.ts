@@ -26,6 +26,6 @@ export default StyleSheet.create({
     fontSize: 15,
   },
   emptyText: {
-    paddingHorizontal: Spacings.lg,
+    paddingHorizontal: Spacings.xl,
   },
 });

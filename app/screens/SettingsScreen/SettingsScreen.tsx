@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, ScrollView } from 'react-native';
+import { Linking, ScrollView, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
+import { devLog } from 'helpers';
 import { useStyled } from 'hooks';
 import { Button, ListItem, Text } from 'components';
 
@@ -21,11 +22,17 @@ export const SettingsScreen: React.FC = () => {
     setAppInfo(`version ${version} - build ${buildNumber}`);
   }, []);
 
+  const openURL = (url: string) =>
+    Linking.openURL(url).catch(error =>
+      devLog('Failed to open URL', url, error),
+    );
+
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
+      <Text>{t('screens.settings.mySettings')}</Text>
       <ListItem
         title={t('screens.settings.models')}
         subtitle={t('screens.settings.manageYourModels')}
@@ -35,6 +42,7 @@ export const SettingsScreen: React.FC = () => {
         // @ts-ignore
         onPress={() => navigation.navigate('ModelsScreen')}
       />
+      <Text style={styles.sectionHeader}>{t('screens.settings.about')}</Text>
       <ListItem
         title={t('screens.settings.terms')}
         subtitle={t('screens.settings.termsSubtitle')}
@@ -53,13 +61,25 @@ export const SettingsScreen: React.FC = () => {
         // @ts-ignore
         onPress={() => navigation.navigate('PrivacyPolicyScreen')}
       />
-      <Button
-        title={t('screens.settings.website')}
-        variant="outline"
-        icon={{ iosIconName: 'globe', androidIconName: 'public' }}
-        style={styles.websiteButton}
-        onPress={() => Linking.openURL('https://www.nobodywho.ai/')}
-      />
+      <View style={styles.buttonsContainer}>
+        <Button
+          title={t('screens.settings.website')}
+          variant="outline"
+          small
+          icon={{ iosIconName: 'globe', androidIconName: 'public' }}
+          onPress={() => openURL('https://www.nobodywho.ai/')}
+        />
+        <Button
+          title={t('screens.settings.github')}
+          variant="outline"
+          small
+          icon={{
+            iosIconName: 'chevron.left.forwardslash.chevron.right',
+            androidIconName: 'code',
+          }}
+          onPress={() => openURL('https://github.com/nobodywho-ooo/nobodywho')}
+        />
+      </View>
       <Text variant="h3" bold style={styles.appName}>
         NobodyWho Chat
       </Text>

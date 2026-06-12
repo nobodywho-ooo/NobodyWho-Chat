@@ -26,6 +26,7 @@ interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   title: string;
   variant?: ButtonVariant;
   icon?: ButtonIconProps;
+  small?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -33,6 +34,7 @@ export const Button: React.FC<ButtonProps> = ({
   title,
   variant = 'primary',
   icon,
+  small = false,
   style,
   ...props
 }) => {
@@ -43,6 +45,7 @@ export const Button: React.FC<ButtonProps> = ({
     <Pressable
       style={({ pressed }) => [
         styles.button,
+        small && styles.buttonSmall,
         variantStyle.button,
         style,
         pressed && { opacity: 0.7 },
@@ -58,10 +61,15 @@ export const Button: React.FC<ButtonProps> = ({
           <PlatformIcon
             iosIconName={icon.iosIconName}
             androidIconName={icon.androidIconName}
+            size={small ? 16 : 20}
             color={variantStyle.text.color as string}
           />
         )}
-        <Text style={[styles.text, variantStyle.text]}>{title}</Text>
+        <Text
+          style={[styles.text, small && styles.textSmall, variantStyle.text]}
+        >
+          {title}
+        </Text>
       </View>
     </Pressable>
   );

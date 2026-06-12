@@ -46,13 +46,16 @@
       "changeModel": "Change model"
     },
     "settings": {
+      "mySettings": "My Settings",
       "models": "Models",
       "manageYourModels": "Manage your models",
+      "about": "About",
       "terms": "Terms & Conditions",
       "termsSubtitle": "Read our terms of use",
       "privacyPolicy": "Privacy Policy",
       "privacyPolicySubtitle": "How we handle your data",
-      "website": "Website"
+      "website": "Website",
+      "github": "Github"
     },
     "models": {
       "inUse": "In use",

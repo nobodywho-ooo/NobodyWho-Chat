@@ -11,16 +11,19 @@ export default StyleSheet.create({
     alignSelf: 'center',
     paddingVertical: Spacings.xl,
   },
-  websiteButton: {
-    alignSelf: 'center',
+  buttonsContainer: {
     marginTop: Spacings.xxxxl,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacings.sm,
   },
   appName: {
     paddingTop: Spacings.xl,
-    alignSelf: 'center'
   },
   appInfo: {
     paddingTop: Spacings.sm,
-    alignSelf: 'center'
+  },
+  sectionHeader:{ 
+    paddingTop: Spacings.xl
   }
 });
