@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, act } from '@testing-library/react-native';
 
-import { InputBar } from 'components';
+import { InputBar } from '../components/InputBar/InputBar';
 import { insertConversation, insertMessage } from 'repositories';
 
 import { ChatScreen } from '../ChatScreen';

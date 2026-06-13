@@ -4,7 +4,7 @@ exports[`renders correctly MessageListItem for assistant 1`] = `
 <View
   style={
     {
-      "marginTop": 10,
+      "marginTop": 12,
       "marginVertical": 12,
     }
   }
@@ -15,7 +15,7 @@ exports[`renders correctly MessageListItem for assistant 1`] = `
         "alignItems": "center",
         "alignSelf": "flex-start",
         "flexDirection": "row",
-        "marginTop": 6,
+        "marginTop": 12,
       }
     }
   >

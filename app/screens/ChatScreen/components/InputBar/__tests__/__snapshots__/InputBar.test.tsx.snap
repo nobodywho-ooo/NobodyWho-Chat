@@ -5,40 +5,65 @@ exports[`renders correctly InputBar 1`] = `
   style={
     [
       {
+        "bottom": 0,
         "left": 0,
         "paddingHorizontal": 12,
+        "paddingTop": 4,
         "position": "absolute",
         "right": 0,
       },
       undefined,
+      {
+        "backgroundColor": "#FFFFFF",
+      },
     ]
   }
 >
+  <LinearGradient
+    colors={
+      [
+        "rgba(255, 255, 255, 0)",
+        "rgba(255, 255, 255, 0.9)",
+      ]
+    }
+    end={
+      {
+        "x": 0,
+        "y": 1,
+      }
+    }
+    pointerEvents="none"
+    start={
+      {
+        "x": 0,
+        "y": 0,
+      }
+    }
+    style={
+      {
+        "height": 10,
+        "left": -12,
+        "position": "absolute",
+        "right": -12,
+        "top": -10,
+      }
+    }
+  />
   <View
     style={
       [
         {
           "alignItems": "center",
-          "borderRadius": 24,
+          "borderRadius": 16,
           "flexDirection": "row",
-          "minHeight": 48,
+          "minHeight": 42,
           "paddingHorizontal": 16,
           "paddingVertical": 8,
         },
         {
-          "boxShadow": [
-            {
-              "blurRadius": "15px",
-              "color": "rgba(44, 44, 44, 0.24)",
-              "inset": false,
-              "offsetX": 0,
-              "offsetY": 0,
-              "spreadDistance": "4px",
-            },
-          ],
-        },
-        {
-          "backgroundColor": "#f7f7f7",
+          "backgroundColor": "#FFFFFF",
+          "borderColor": "#e1e1e1",
+          "borderWidth": 1,
         },
       ]
     }
@@ -54,6 +79,8 @@ exports[`renders correctly InputBar 1`] = `
             "flex": 1,
             "fontSize": 16,
             "maxHeight": 100,
+            "paddingRight": 6,
+            "paddingTop": -4,
           },
           {
             "color": "#000000",
@@ -83,40 +110,65 @@ exports[`renders correctly InputBar when streaming 1`] = `
   style={
     [
       {
+        "bottom": 0,
         "left": 0,
         "paddingHorizontal": 12,
+        "paddingTop": 4,
         "position": "absolute",
         "right": 0,
       },
       undefined,
+      {
+        "backgroundColor": "#FFFFFF",
+      },
     ]
   }
 >
+  <LinearGradient
+    colors={
+      [
+        "rgba(255, 255, 255, 0)",
+        "rgba(255, 255, 255, 0.9)",
+      ]
+    }
+    end={
+      {
+        "x": 0,
+        "y": 1,
+      }
+    }
+    pointerEvents="none"
+    start={
+      {
+        "x": 0,
+        "y": 0,
+      }
+    }
+    style={
+      {
+        "height": 10,
+        "left": -12,
+        "position": "absolute",
+        "right": -12,
+        "top": -10,
+      }
+    }
+  />
   <View
     style={
       [
         {
           "alignItems": "center",
-          "borderRadius": 24,
+          "borderRadius": 16,
           "flexDirection": "row",
-          "minHeight": 48,
+          "minHeight": 42,
           "paddingHorizontal": 16,
           "paddingVertical": 8,
         },
         {
-          "boxShadow": [
-            {
-              "blurRadius": "15px",
-              "color": "rgba(44, 44, 44, 0.24)",
-              "inset": false,
-              "offsetX": 0,
-              "offsetY": 0,
-              "spreadDistance": "4px",
-            },
-          ],
-        },
-        {
-          "backgroundColor": "#f7f7f7",
+          "backgroundColor": "#FFFFFF",
+          "borderColor": "#e1e1e1",
+          "borderWidth": 1,
         },
       ]
     }
@@ -132,6 +184,8 @@ exports[`renders correctly InputBar when streaming 1`] = `
             "flex": 1,
             "fontSize": 16,
             "maxHeight": 100,
+            "paddingRight": 6,
+            "paddingTop": -4,
           },
           {
             "color": "#000000",
@@ -187,40 +241,65 @@ exports[`renders correctly InputBar with value 1`] = `
   style={
     [
       {
+        "bottom": 0,
         "left": 0,
         "paddingHorizontal": 12,
+        "paddingTop": 4,
         "position": "absolute",
         "right": 0,
       },
       undefined,
+      {
+        "backgroundColor": "#FFFFFF",
+      },
     ]
   }
 >
+  <LinearGradient
+    colors={
+      [
+        "rgba(255, 255, 255, 0)",
+        "rgba(255, 255, 255, 0.9)",
+      ]
+    }
+    end={
+      {
+        "x": 0,
+        "y": 1,
+      }
+    }
+    pointerEvents="none"
+    start={
+      {
+        "x": 0,
+        "y": 0,
+      }
+    }
+    style={
+      {
+        "height": 10,
+        "left": -12,
+        "position": "absolute",
+        "right": -12,
+        "top": -10,
+      }
+    }
+  />
   <View
     style={
       [
         {
           "alignItems": "center",
-          "borderRadius": 24,
+          "borderRadius": 16,
           "flexDirection": "row",
-          "minHeight": 48,
+          "minHeight": 42,
           "paddingHorizontal": 16,
           "paddingVertical": 8,
         },
         {
-          "boxShadow": [
-            {
-              "blurRadius": "15px",
-              "color": "rgba(44, 44, 44, 0.24)",
-              "inset": false,
-              "offsetX": 0,
-              "offsetY": 0,
-              "spreadDistance": "4px",
-            },
-          ],
-        },
-        {
-          "backgroundColor": "#f7f7f7",
+          "backgroundColor": "#FFFFFF",
+          "borderColor": "#e1e1e1",
+          "borderWidth": 1,
         },
       ]
     }
@@ -236,6 +315,8 @@ exports[`renders correctly InputBar with value 1`] = `
             "flex": 1,
             "fontSize": 16,
             "maxHeight": 100,
+            "paddingRight": 6,
+            "paddingTop": -4,
           },
           {
             "color": "#000000",

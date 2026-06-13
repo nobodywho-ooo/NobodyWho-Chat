@@ -4,7 +4,7 @@ import { render, act, waitFor } from '@testing-library/react-native';
 import { mockUseModels } from 'jest/mock/hooks';
 import { buildModel } from 'jest/factories/model';
 import { getAppState, setAppState } from 'database';
-import { InputBar } from 'components';
+import { InputBar } from '../../screens/ChatScreen/components/InputBar/InputBar';
 import {
   getModelById,
   getConversationById,
