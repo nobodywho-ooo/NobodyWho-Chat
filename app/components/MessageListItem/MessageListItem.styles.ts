@@ -20,7 +20,27 @@ export default StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
   },
-  metricsContainer: {
+  footerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
     marginTop: 6,
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  copyButtonPressed: {
+    opacity: 0.6,
+  },
+  copyLabel: {
+    marginLeft: 4,
+    lineHeight: 16,
+    includeFontPadding: false,
+  },
+  metricsText: {
+    marginLeft: 12,
+    lineHeight: 16,
+    includeFontPadding: false,
   },
 });

@@ -70,5 +70,18 @@
   },
   "engines": {
     "node": ">= 22.11.0"
+  },
+  "codegenConfig": {
+    "name": "ReffenSpecs",
+    "type": "modules",
+    "jsSrcsDir": "specs",
+    "android": {
+      "javaPackageName": "ai.nobodywho.mobile.specs"
+    },
+    "ios": {
+      "modulesProvider": {
+        "NativeClipboard": "RTNClipboard"
+      }
+    }
   }
 }

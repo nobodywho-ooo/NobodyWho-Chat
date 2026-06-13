@@ -26,6 +26,10 @@
     "inputBar": {
       "placeholder": "Spørg om noget..."
     },
+    "messageListItem": {
+      "copy": "Kopiér",
+      "copied": "Kopieret"
+    },
     "conversationsList": {
       "recent": "Seneste",
       "noConversations": "Ingen samtaler endnu."

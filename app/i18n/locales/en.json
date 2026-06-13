@@ -26,6 +26,10 @@
     "inputBar": {
       "placeholder": "Ask something..."
     },
+    "messageListItem": {
+      "copy": "Copy",
+      "copied": "Copied"
+    },
     "conversationsList": {
       "recent": "Recent",
       "noConversations": "No conversation yet."

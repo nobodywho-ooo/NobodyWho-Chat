@@ -2,3 +2,8 @@
 jest.mock('../../../app/helpers/log', () => ({
   devLog: jest.fn(),
 }));
+
+// Stub the clipboard helper so the NativeClipboard TurboModule is never resolved in tests.
+jest.mock('../../../app/helpers/clipboard', () => ({
+  copyToClipboard: jest.fn(),
+}));

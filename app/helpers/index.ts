@@ -6,6 +6,7 @@ import { getMarkdownStyle } from './markdown';
 import { formatThinkingBlocks, stripThinkingBlocks } from './thinking';
 import { haptics } from './haptics';
 import { getFamilyIcon } from './familyIcon';
+import { copyToClipboard } from './clipboard';
 
 export {
   getFamilyIcon,
@@ -20,4 +21,5 @@ export {
   formatThinkingBlocks,
   stripThinkingBlocks,
   haptics,
+  copyToClipboard,
 };
