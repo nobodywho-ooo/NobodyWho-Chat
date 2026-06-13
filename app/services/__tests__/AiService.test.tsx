@@ -53,7 +53,7 @@ test('createChat sets the error state and rethrows on failure', async () => {
 });
 
 test('disposeChat destroys the current chat instance', async () => {
-  const chat = { destroy: jest.fn() };
+  const chat = { stopGeneration: jest.fn(), destroy: jest.fn() };
   mockFromPath.mockResolvedValue(chat);
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
@@ -65,6 +65,55 @@ test('disposeChat destroys the current chat instance', async () => {
   expect(chat.destroy).toHaveBeenCalledTimes(1);
   expect(result.current.chat.current).toBeUndefined();
   expect(result.current.chatState).toBe(AiModelState.NotLoaded);
+});
+
+test('disposeChat stops generation before destroying the chat', async () => {
+  const order: string[] = [];
+  const chat = {
+    stopGeneration: jest.fn(() => order.push('stop')),
+    destroy: jest.fn(() => order.push('destroy')),
+  };
+  mockFromPath.mockResolvedValue(chat);
+  const { result } = renderHook(() => useAiService(), { wrapper });
+  await act(async () => {
+    await result.current.createChat({ model });
+  });
+
+  act(() => result.current.disposeChat());
+
+  // Order matters: an in-flight stream must be stopped before its context is freed.
+  expect(order).toEqual(['stop', 'destroy']);
+  expect(result.current.chat.current).toBeUndefined();
+});
+
+test('disposeChat clears the chat even when destroy throws, so a reload works', async () => {
+  const chat = {
+    stopGeneration: jest.fn(),
+    destroy: jest.fn(() => {
+      throw new Error('destroy boom');
+    }),
+  };
+  mockFromPath.mockResolvedValueOnce(chat);
+  const { result } = renderHook(() => useAiService(), { wrapper });
+  await act(async () => {
+    await result.current.createChat({ model });
+  });
+
+  act(() => result.current.disposeChat());
+
+  // The ref is cleared despite the throw (no zombie instance left behind).
+  expect(chat.destroy).toHaveBeenCalledTimes(1);
+  expect(result.current.chat.current).toBeUndefined();
+  expect(result.current.chatState).toBe(AiModelState.NotLoaded);
+
+  // ...so the next createChat isn't blocked by a stale ref and loads cleanly.
+  const next = { destroy: jest.fn() };
+  mockFromPath.mockResolvedValueOnce(next);
+  await act(async () => {
+    await result.current.createChat({ model });
+  });
+  expect(result.current.chat.current).toBe(next);
+  expect(result.current.chatState).toBe(AiModelState.Ready);
 });
 
 test('a chat resolving after disposeChat is discarded and destroyed', async () => {

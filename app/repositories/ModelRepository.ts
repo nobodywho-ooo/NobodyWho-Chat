@@ -31,13 +31,30 @@ export async function getModelById(id: number): Promise<Model | undefined> {
   return result.rows.length > 0 ? rowToModel(result.rows[0]) : undefined;
 }
 
+// A true upsert — NOT `INSERT OR REPLACE`. With `PRAGMA foreign_keys = ON`,
+// REPLACE deletes the conflicting row before re-inserting, and that delete
+// cascades through `conversations`/`messages` (ON DELETE CASCADE) — wiping a
+// model's entire chat history on any re-insert (e.g. a catalog refresh).
+// `ON CONFLICT(id) DO UPDATE` mutates the row in place, so no cascade fires.
 export async function insertModel(model: Model): Promise<void> {
   const db = getDatabase();
   await db.transaction(async tx => {
     await tx.execute(
-      `INSERT OR REPLACE INTO models
+      `INSERT INTO models
         (id, model_name, model_size_gb, parameter_count_billions, author, family, thinking, image_ingestion, audio_ingestion, download_links, pipeline, tags)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        model_name = excluded.model_name,
+        model_size_gb = excluded.model_size_gb,
+        parameter_count_billions = excluded.parameter_count_billions,
+        author = excluded.author,
+        family = excluded.family,
+        thinking = excluded.thinking,
+        image_ingestion = excluded.image_ingestion,
+        audio_ingestion = excluded.audio_ingestion,
+        download_links = excluded.download_links,
+        pipeline = excluded.pipeline,
+        tags = excluded.tags`,
       [
         model.id,
         model.modelName,
@@ -54,34 +71,6 @@ export async function insertModel(model: Model): Promise<void> {
       ],
     );
   });
-}
-
-export async function insertModels(models: Model[]): Promise<void> {
-  if (models.length === 0) return;
-  const db = getDatabase();
-  const query = `INSERT OR REPLACE INTO models
-    (id, model_name, model_size_gb, parameter_count_billions, author, family, thinking, image_ingestion, audio_ingestion, download_links, pipeline, tags)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
-
-  await db.executeBatch(
-    models.map(m => [
-      query,
-      [
-        m.id,
-        m.modelName,
-        m.modelSizeGB,
-        m.parameterCountBillions,
-        m.author,
-        m.family,
-        m.thinking ? 1 : 0,
-        m.imageIngestion ? 1 : 0,
-        m.audioIngestion ? 1 : 0,
-        JSON.stringify(m.downloadLinks),
-        m.pipeline,
-        JSON.stringify(m.tags),
-      ],
-    ]),
-  );
 }
 
 export async function deleteModel(id: number): Promise<void> {

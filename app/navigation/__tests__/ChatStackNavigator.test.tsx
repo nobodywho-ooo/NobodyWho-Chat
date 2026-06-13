@@ -213,6 +213,49 @@ test('reloads only the history when the in-use conversation changes', async () =
   expect(mockCreateChat).toHaveBeenCalledTimes(1);
 });
 
+test('switching conversations keeps the chat screen mounted (no loading flash)', async () => {
+  await setAppState({ modelIdInUse: 0 });
+
+  const screen = render(<ChatStackNavigator />);
+  await waitFor(() =>
+    expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy(),
+  );
+
+  mockGetConversationById.mockResolvedValue({
+    id: 5,
+    title: 'Chat 5',
+    lastUsed: 'now',
+    modelId: 0,
+  });
+  mockGetMessagesByConversationId.mockResolvedValue([
+    { id: 1, conversationId: 5, role: 'user', content: 'hi', documentsPath: [] },
+  ]);
+
+  // Make the (non-empty) history injection hang so we can observe the in-between
+  // state; the empty initial load already resolved above.
+  let resolveSetHistory: () => void = () => {};
+  mockChatInstance.setChatHistory.mockImplementation((history = []) =>
+    history.length === 0
+      ? Promise.resolve()
+      : new Promise<void>(resolve => {
+          resolveSetHistory = resolve;
+        }),
+  );
+
+  await act(async () => {
+    setAppState({ conversationIdInUse: 5 });
+  });
+
+  // History injection is still pending. The old design flipped status to Loading
+  // (unmounting ChatScreen for the loading screen); the new design stays Ready, so
+  // the previous conversation's content is still on screen instead of a flash.
+  expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy();
+
+  await act(async () => {
+    resolveSetHistory();
+  });
+});
+
 test('sending the first message persists in use without reloading the chat', async () => {
   await setAppState({ modelIdInUse: 0 });
 

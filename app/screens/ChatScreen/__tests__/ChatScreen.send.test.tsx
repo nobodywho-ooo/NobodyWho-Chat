@@ -17,8 +17,10 @@ const mockChat = {
   stopGeneration: jest.fn(),
   setChatHistory: jest.fn(),
 };
+// Stable ref (like the real AiService) so a test can swap chat.current mid-stream.
+const mockChatRef: { current: typeof mockChat | undefined } = { current: mockChat };
 jest.mock('services', () => ({
-  useAiService: () => ({ chat: { current: mockChat } }),
+  useAiService: () => ({ chat: mockChatRef }),
 }));
 
 jest.mock('repositories', () => ({
@@ -36,6 +38,7 @@ const stream = async function* () {
 };
 
 beforeEach(() => {
+  mockChatRef.current = mockChat;
   mockChat.ask.mockReset().mockImplementation(() => stream());
   mockInsertConversation.mockReset().mockResolvedValue(42);
   mockInsertMessage.mockReset().mockResolvedValue(1);
@@ -75,12 +78,17 @@ test('first send creates a conversation, persists both messages and notifies', a
     content: 'Hi there',
     documentsPath: [],
   });
-  expect(mockInsertMessage).toHaveBeenNthCalledWith(2, {
-    conversationId: 42,
-    role: 'assistant',
-    content: 'Hello world',
-    documentsPath: [],
-  });
+  expect(mockInsertMessage).toHaveBeenNthCalledWith(
+    2,
+    expect.objectContaining({
+      conversationId: 42,
+      role: 'assistant',
+      content: 'Hello world',
+      documentsPath: [],
+      timeToFirstToken: expect.any(Number),
+      tokensPerSecond: expect.any(Number),
+    }),
+  );
   expect(onConversationCreated).toHaveBeenCalledWith(42);
 });
 
@@ -122,4 +130,77 @@ test('an existing conversation never creates a new one', async () => {
     1,
     expect.objectContaining({ conversationId: 7 }),
   );
+});
+
+test('persists the user message before generation starts (crash-safety)', async () => {
+  let userPersistedBeforeFirstToken = false;
+  mockChat.ask.mockImplementation(() =>
+    (async function* () {
+      userPersistedBeforeFirstToken = mockInsertMessage.mock.calls.some(
+        ([m]) => m.role === 'user' && m.content === 'Keep me',
+      );
+      yield 'ok';
+    })(),
+  );
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'Keep me');
+
+  expect(userPersistedBeforeFirstToken).toBe(true);
+});
+
+test('records tokens/sec and time-to-first-token on the assistant message', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'metrics please');
+
+  const assistantCall = mockInsertMessage.mock.calls.find(
+    ([m]) => m.role === 'assistant',
+  );
+  expect(assistantCall?.[0]).toEqual(
+    expect.objectContaining({
+      tokensPerSecond: expect.any(Number),
+      timeToFirstToken: expect.any(Number),
+    }),
+  );
+});
+
+test('a model swap mid-stream stops streaming without persisting the assistant', async () => {
+  // Simulate disposeChat nulling chat.current after the first token arrives.
+  mockChat.ask.mockImplementation(() =>
+    (async function* () {
+      yield 'partial';
+      mockChatRef.current = undefined;
+      yield 'ignored after swap';
+    })(),
+  );
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  // The user message was persisted before streaming (crash-safety); the
+  // assistant message is NOT, because the chat was swapped mid-stream.
+  const roles = mockInsertMessage.mock.calls.map(([m]) => m.role);
+  expect(roles).toContain('user');
+  expect(roles).not.toContain('assistant');
 });

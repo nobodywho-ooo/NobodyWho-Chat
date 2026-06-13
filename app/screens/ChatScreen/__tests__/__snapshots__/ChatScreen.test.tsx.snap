@@ -99,7 +99,16 @@ exports[`renders ChatScreen with existing messages 1`] = `
         onFocusCapture={[Function]}
         onLayout={[Function]}
         style={null}
-      />
+      >
+        <View
+          style={
+            {
+              "marginTop": 10,
+              "marginVertical": 12,
+            }
+          }
+        />
+      </View>
     </View>
   </RCTScrollView>
   <InputBar

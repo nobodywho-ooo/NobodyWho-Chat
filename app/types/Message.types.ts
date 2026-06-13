@@ -1,3 +1,5 @@
+import { Message } from 'react-native-nobodywho';
+
 export interface ChatMessage {
   id: number;
   timestamp: string;
@@ -8,3 +10,8 @@ export interface ChatMessage {
   timeToFirstToken?: number;
   documentsPath: string[];
 }
+
+export type DisplayMessage = Message & {
+  tokensPerSecond?: number;
+  timeToFirstToken?: number;
+};

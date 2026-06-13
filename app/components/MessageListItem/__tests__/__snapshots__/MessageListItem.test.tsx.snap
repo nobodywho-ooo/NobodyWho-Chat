@@ -1,6 +1,15 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`renders correctly MessageListItem for assistant 1`] = `null`;
+exports[`renders correctly MessageListItem for assistant 1`] = `
+<View
+  style={
+    {
+      "marginTop": 10,
+      "marginVertical": 12,
+    }
+  }
+/>
+`;
 
 exports[`renders correctly MessageListItem for user 1`] = `
 <View

@@ -12,10 +12,15 @@ export default StyleSheet.create({
   assistantContainer: {
     marginVertical: 12,
     marginTop: 10,
+  },
+  streamdownContainer: {
     alignItems: 'flex-start',
   },
   text: {
     fontSize: 15,
     lineHeight: 22,
+  },
+  metricsContainer: {
+    marginTop: 6,
   },
 });

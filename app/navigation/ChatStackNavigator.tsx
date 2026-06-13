@@ -10,8 +10,7 @@ import React, {
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Message } from 'react-native-nobodywho';
-import { ChatMessage } from 'types';
+import { ChatMessage, DisplayMessage } from 'types';
 import { getAppState, setAppState, subscribeAppState } from 'database';
 import {
   getConversationById,
@@ -45,12 +44,18 @@ enum SessionStatus {
 
 type LoadedConversationId = number | undefined;
 
-const toChatHistory = (messages: ChatMessage[]): Message[] =>
-  messages.map((message): Message => {
+const toChatHistory = (messages: ChatMessage[]): DisplayMessage[] =>
+  messages.map((message): DisplayMessage => {
     switch (message.role) {
       case 'assistant':
         // TODO: fix in NW - toolCalls needs to be provided otherwise setChatHistory crash
-        return { role: 'assistant', content: message.content, toolCalls: [] };
+        return {
+          role: 'assistant',
+          content: message.content,
+          toolCalls: [],
+          tokensPerSecond: message.tokensPerSecond,
+          timeToFirstToken: message.timeToFirstToken,
+        };
       case 'system':
         return { role: 'system', content: message.content };
       case 'user':
@@ -63,7 +68,7 @@ interface ChatRootContextValue {
   hasModels: boolean;
   modelIdInUse: number | undefined;
   status: SessionStatus;
-  chatHistory: Message[];
+  chatHistory: DisplayMessage[];
   conversationId: LoadedConversationId;
   onConversationCreated: (id: number) => void;
   onRetry: () => void;
@@ -117,7 +122,7 @@ export const ChatStackNavigator = () => {
   const { chat, createChat, disposeChat } = useAiService();
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
-  const [chatHistory, setChatHistory] = useState<Message[]>([]);
+  const [chatHistory, setChatHistory] = useState<DisplayMessage[]>([]);
   const [loadedConversationId, setLoadedConversationId] =
     useState<LoadedConversationId>(undefined);
   const selfCreatedConversationIdRef = useRef<LoadedConversationId>(undefined);
@@ -213,10 +218,18 @@ export const ChatStackNavigator = () => {
   );
 
   // History-only refresh: used when the in-use chat changes (same model/chat).
-  const refreshChatHistory = useCallback(
-    () => runSession(resetAndLoadChatHistory),
-    [runSession, resetAndLoadChatHistory],
-  );
+  const refreshChatHistory = useCallback(async () => {
+    try {
+      await resetAndLoadChatHistory();
+      setStatus(SessionStatus.Ready);
+    } catch (error) {
+      // A model switch can dispose our chat mid-load; since that takes seconds,
+      // let its startSession own the status rather than flashing an error screen.
+      if (chat.current === undefined) return;
+      devLog('ChatStackNavigator history refresh error', error);
+      setStatus(SessionStatus.Error);
+    }
+  }, [chat, resetAndLoadChatHistory]);
 
   // Called by ChatScreen when it creates a conversation for its first message.
   // The screen already displays that conversation, so we record it as loaded

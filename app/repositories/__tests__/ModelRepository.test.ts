@@ -6,7 +6,6 @@ import {
   getAllModels,
   getModelById,
   insertModel,
-  insertModels,
   deleteModel,
   deleteAllModels,
 } from '../ModelRepository';
@@ -30,7 +29,6 @@ const rawRow = {
 
 beforeEach(() => {
   db.execute.mockReset().mockResolvedValue({ rows: [] });
-  db.executeBatch.mockReset().mockResolvedValue({});
 });
 
 describe('rowToModel', () => {
@@ -92,7 +90,7 @@ describe('getModelById', () => {
 });
 
 describe('insertModel', () => {
-  test('serializes booleans and JSON columns into the insert', async () => {
+  test('upserts via ON CONFLICT and serializes booleans/JSON columns', async () => {
     const model = buildModel(3, {
       modelName: 'Q',
       thinking: true,
@@ -102,23 +100,13 @@ describe('insertModel', () => {
     await insertModel(model);
 
     expect(db.execute).toHaveBeenCalledWith(
-      expect.stringContaining('INSERT OR REPLACE INTO models'),
+      expect.stringContaining('ON CONFLICT(id) DO UPDATE'),
       [3, 'Q', 1, 1, 'Author', 'Family', 1, 0, 0, '[]', 'textGeneration', '["fast"]'],
     );
-  });
-});
-
-describe('insertModels', () => {
-  test('does nothing for an empty array', async () => {
-    await insertModels([]);
-    expect(db.executeBatch).not.toHaveBeenCalled();
-  });
-
-  test('batch-inserts every model', async () => {
-    await insertModels([buildModel(1), buildModel(2)]);
-
-    expect(db.executeBatch).toHaveBeenCalledTimes(1);
-    expect(db.executeBatch.mock.calls[0][0]).toHaveLength(2);
+    // Must NOT use INSERT OR REPLACE: with FKs on, REPLACE cascade-deletes the
+    // model's conversations and messages.
+    const [sql] = db.execute.mock.calls[0];
+    expect(sql).not.toContain('OR REPLACE');
   });
 });
 

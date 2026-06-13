@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Message } from 'react-native-nobodywho';
 import { InputBar, MessageListItem } from 'components';
 import { useStyled } from 'hooks';
+import { DisplayMessage } from 'types';
 import { getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
 import { useAiService } from 'services';
@@ -19,16 +20,30 @@ const INPUT_BAR_PADDING = 14;
 // Persisted assistant messages keep their raw <think>…</think> blocks; render
 // them the same way live streaming does (see handleSend) so a reloaded
 // conversation looks identical to one being streamed.
-const formatMessages = (messages: Message[]): Message[] =>
+const formatMessages = (messages: DisplayMessage[]): DisplayMessage[] =>
   messages.map(message =>
     message.role === 'assistant'
       ? { ...message, content: formatThinkingBlocks(message.content) }
       : message,
   );
 
+const computeGenerationMetrics = (
+  startedAt: number,
+  firstTokenAt: number | undefined,
+  tokenCount: number,
+): { tokensPerSecond?: number; timeToFirstToken?: number } => {
+  if (firstTokenAt === undefined || tokenCount === 0) return {};
+  const timeToFirstToken = firstTokenAt - startedAt;
+  const generationMs = Math.max(Date.now() - firstTokenAt, 1);
+  return {
+    tokensPerSecond: tokenCount / (generationMs / 1000),
+    timeToFirstToken,
+  };
+};
+
 interface ChatScreenProps {
   conversationId: number | undefined;
-  messages: Message[];
+  messages: DisplayMessage[];
   onConversationCreated: (conversationId: number) => void;
 }
 
@@ -38,7 +53,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   onConversationCreated,
 }) => {
   const { t } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>(() =>
+  const [messages, setMessages] = useState<DisplayMessage[]>(() =>
     formatMessages(initialMessages),
   );
   const [conversationId, setConversationId] = useState(initialConversationId);
@@ -96,6 +111,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       return;
     }
 
+    const activeChat = chat.current;
+
     const { modelIdInUse } = getAppState();
     if (modelIdInUse === undefined) {
       return;
@@ -115,11 +132,34 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     Keyboard.dismiss();
     setIsStreaming(true);
 
+    const isNewConversation = conversationId === undefined;
+    const id = isNewConversation
+      ? await insertConversation({ title: userInput, modelId: modelIdInUse })
+      : conversationId;
+
+    if (isNewConversation) {
+      setConversationId(id);
+      onConversationCreated(id);
+    }
+
+    await insertMessage({
+      conversationId: id,
+      role: 'user',
+      content: userInput,
+      documentsPath: [],
+    });
+
+    const startedAt = Date.now();
+    let firstTokenAt: number | undefined;
+    let tokenCount = 0;
     let accumulated = '';
     try {
-      const streamResult = chat.current.ask(userInput);
+      const streamResult = activeChat.ask(userInput);
 
       for await (const token of streamResult) {
+        if (chat.current !== activeChat) break;
+        if (firstTokenAt === undefined) firstTokenAt = Date.now();
+        tokenCount += 1;
         accumulated += token;
         setMessages(prev => {
           const next = [...prev];
@@ -131,28 +171,35 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         });
       }
 
-      const isNewConversation = conversationId === undefined;
-      const id = isNewConversation
-        ? await insertConversation({ title: userInput, modelId: modelIdInUse })
-        : conversationId;
+      if (chat.current !== activeChat) {
+        return;
+      }
 
-      await insertMessage({
-        conversationId: id,
-        role: 'user',
-        content: userInput,
-        documentsPath: [],
+      const metrics = computeGenerationMetrics(
+        startedAt,
+        firstTokenAt,
+        tokenCount,
+      );
+
+      // Re-stamp the just-finished assistant message with its metrics so
+      // MessageListItem can render them beneath the streamed content.
+      setMessages(prev => {
+        const next = [...prev];
+        next[next.length - 1] = {
+          role: 'assistant',
+          content: formatThinkingBlocks(accumulated),
+          ...metrics,
+        };
+        return next;
       });
+
       await insertMessage({
         conversationId: id,
         role: 'assistant',
         content: accumulated,
         documentsPath: [],
+        ...metrics,
       });
-
-      if (isNewConversation) {
-        setConversationId(id);
-        onConversationCreated(id);
-      }
     } catch (error) {
       devLog('ChatScreen generation failed', error);
       const failure = t('screens.chat.generationFailed');

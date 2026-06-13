@@ -205,18 +205,38 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const disposeChat = useCallback(() => {
     chatGeneration.current += 1;
-    chatRef.current?.destroy();
+    const instance = chatRef.current;
     chatRef.current = undefined;
     inFlight.current.chat = false;
+
+    try {
+      // Stop any in-flight generation before freeing the context, so a stream
+      // still being consumed (e.g. ChatScreen mid-send during a model switch)
+      // ends cleanly instead of the native context being torn out under it.
+      instance?.stopGeneration();
+    } catch (error) {
+      devLog('AiService disposeChat stopGeneration failed', error);
+    }
+    try {
+      instance?.destroy();
+    } catch (error) {
+      devLog('AiService disposeChat destroy failed', error);
+    }
 
     setState(s => ({ ...s, chatState: AiModelState.NotLoaded }));
   }, []);
 
   const dispose = useCallback(() => {
     chatGeneration.current += 1;
-    chatRef.current?.destroy();
-    encoderRef.current?.destroy();
-    crossEncoderRef.current?.destroy();
+    // Clear refs BEFORE destroying so a throwing destroy() can't leave a stale
+    // instance that blocks the next createX(); destroy each independently so one
+    // failure doesn't skip the others.
+    const chatInstance = chatRef.current;
+    const instances = [
+      chatInstance,
+      encoderRef.current,
+      crossEncoderRef.current,
+    ];
     chatRef.current = undefined;
     encoderRef.current = undefined;
     crossEncoderRef.current = undefined;
@@ -226,6 +246,20 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     inFlight.current.chat = false;
     inFlight.current.encoder = false;
     inFlight.current.crossEncoder = false;
+
+    // Only Chat streams, so stop its generation before freeing the context.
+    try {
+      chatInstance?.stopGeneration();
+    } catch (error) {
+      devLog('AiService dispose stopGeneration failed', error);
+    }
+    for (const instance of instances) {
+      try {
+        instance?.destroy();
+      } catch (error) {
+        devLog('AiService dispose destroy failed', error);
+      }
+    }
 
     setState(_initialState);
   }, []);
