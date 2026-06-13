@@ -17,9 +17,13 @@ const formatTimeToFirstToken = (ms: number): string =>
 
 interface MessageListItemProps {
   message: DisplayMessage;
+  isStreaming?: boolean;
 }
 
-const MessageListItem: React.FC<MessageListItemProps> = ({ message }) => {
+const MessageListItem: React.FC<MessageListItemProps> = ({
+  message,
+  isStreaming = false,
+}) => {
   const { t } = useTranslation();
   const { content, role, tokensPerSecond, timeToFirstToken } = message;
   const { colors } = useStyled();
@@ -97,16 +101,18 @@ const MessageListItem: React.FC<MessageListItemProps> = ({ message }) => {
               size={14}
               color={accentColor}
             />
-            <Text
-              variant="caption"
-              style={[styles.copyLabel, { color: accentColor }]}
-            >
-              {t(
-                copied
-                  ? 'components.messageListItem.copied'
-                  : 'components.messageListItem.copy',
-              )}
-            </Text>
+            {!isStreaming && (
+              <Text
+                variant="caption"
+                style={[styles.copyLabel, { color: accentColor }]}
+              >
+                {t(
+                  copied
+                    ? 'components.messageListItem.copied'
+                    : 'components.messageListItem.copy',
+                )}
+              </Text>
+            )}
           </Pressable>
           {metrics.length > 0 && (
             <Text

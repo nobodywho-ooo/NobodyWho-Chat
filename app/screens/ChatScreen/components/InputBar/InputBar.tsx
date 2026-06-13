@@ -1,22 +1,11 @@
 import React from 'react';
 import { View, TextInput, Pressable, StyleProp, ViewStyle } from 'react-native';
-import {
-  LiquidGlassView,
-  isLiquidGlassSupported,
-} from '@callstack/liquid-glass';
 import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
 import { IconButton, PlatformIcon } from 'components';
 
-import { styles, getBoxShadow, INPUT_BAR_HEIGHT } from './InputBar.styles';
+import { styles, INPUT_BAR_HEIGHT } from './InputBar.styles';
 
-const getInputWrapperProps = (liquidGlassSupported: boolean) =>
-  liquidGlassSupported
-    ? {
-        effect: 'regular' as const,
-        interactive: true,
-      }
-    : {};
 interface InputBarProps {
   value: string;
   isStreaming: boolean;
@@ -36,20 +25,22 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const InputWrapper = isLiquidGlassSupported ? LiquidGlassView : View;
+
+  const extraStyle = {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderWidth: 1,
+  };
+
+  const mainViewStyle = [
+    styles.mainContainer,
+    style,
+    { backgroundColor: colors.surface },
+  ];
 
   return (
-    <View style={[styles.inputBarOuter, style]}>
-      <InputWrapper
-        style={[
-          styles.inputBarInner,
-          !isLiquidGlassSupported && getBoxShadow(colors.shadow),
-          !isLiquidGlassSupported && {
-            backgroundColor: colors.surfaceSecondary,
-          },
-        ]}
-        {...getInputWrapperProps(isLiquidGlassSupported)}
-      >
+    <View style={mainViewStyle}>
+      <View style={[styles.inputBarInner, extraStyle]}>
         <TextInput
           style={[styles.textInput, { color: colors.onSurface }]}
           placeholder={t('components.inputBar.placeholder')}
@@ -64,7 +55,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
           onSend={onSend}
           onStop={onStop}
         />
-      </InputWrapper>
+      </View>
     </View>
   );
 };

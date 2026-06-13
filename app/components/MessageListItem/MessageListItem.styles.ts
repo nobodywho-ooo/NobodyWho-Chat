@@ -1,17 +1,18 @@
 import { StyleSheet } from 'react-native';
+import { Spacings } from 'style';
 
 export default StyleSheet.create({
   userContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginVertical: 12,
+    paddingHorizontal: Spacings.lg,
+    paddingVertical: Spacings.md,
+    marginVertical: Spacings.md,
     maxWidth: '90%',
     alignSelf: 'flex-end',
     borderRadius: 16,
   },
   assistantContainer: {
-    marginVertical: 12,
-    marginTop: 10,
+    marginVertical: Spacings.md,
+    marginTop: Spacings.md,
   },
   streamdownContainer: {
     alignItems: 'flex-start',
@@ -24,7 +25,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
-    marginTop: 6,
+    marginTop: Spacings.md,
   },
   copyButton: {
     flexDirection: 'row',

@@ -86,6 +86,24 @@ test('shows a copied confirmation after copying, then reverts', () => {
   jest.useRealTimers();
 });
 
+test('hides the copy label while the message is streaming', () => {
+  const message: Message = { role: 'assistant', content: 'streaming…' };
+  const { getByRole, queryByText } = render(
+    <MessageListItem message={message} isStreaming />,
+  );
+  // The copy button still renders; only its text label is hidden mid-stream.
+  expect(getByRole('button')).toBeTruthy();
+  expect(queryByText('components.messageListItem.copy')).toBeNull();
+});
+
+test('shows the copy label once the message is no longer streaming', () => {
+  const message: Message = { role: 'assistant', content: 'done' };
+  const { getByText } = render(
+    <MessageListItem message={message} isStreaming={false} />,
+  );
+  expect(getByText('components.messageListItem.copy')).toBeTruthy();
+});
+
 test('does not render a copy button for user messages', () => {
   const message: Message = { role: 'user', content: 'hello' };
   const { queryByRole } = render(<MessageListItem message={message} />);

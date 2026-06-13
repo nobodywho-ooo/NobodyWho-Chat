@@ -27,13 +27,6 @@ jest.mock('@dr.pogodin/react-native-fs', () => {
   };
 });
 
-jest.mock('@callstack/liquid-glass', () => {
-  return {
-    LiquidGlassView: 'LiquidGlassView',
-    isLiquidGlassSupported: false,
-  };
-});
-
 jest.mock('react-native-enriched-markdown', () => {
   return {
     EnrichedMarkdownText: jest.fn(),

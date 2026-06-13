@@ -3,16 +3,15 @@ import { FlatList, Keyboard, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Message } from 'react-native-nobodywho';
-import { InputBar, MessageListItem } from 'components';
+import { MessageListItem } from 'components';
 import { useStyled } from 'hooks';
 import { DisplayMessage } from 'types';
 import { getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
 import { useAiService } from 'services';
-import { devLog, isAndroid, isIOS, formatThinkingBlocks } from 'helpers';
+import { devLog, isIOS, formatThinkingBlocks, isAndroid } from 'helpers';
 
-import { EmptyChat } from './components/EmptyChat/EmptyChat';
-
+import { EmptyChat, InputBar } from './components';
 import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
@@ -245,7 +244,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           ]}
           keyExtractor={(_, index) => index.toString()}
           showsVerticalScrollIndicator={false}
-          renderItem={({ item }) => <MessageListItem message={item} />}
+          renderItem={({ item, index }) => (
+            <MessageListItem
+              message={item}
+              isStreaming={isStreaming && index === messages.length - 1}
+            />
+          )}
           onContentSizeChange={scrollToEnd}
           keyboardDismissMode="interactive"
         />
@@ -256,7 +260,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         onChangeText={setInputText}
         onSend={handleSend}
         onStop={stopStreaming}
-        style={{ bottom: bottomOffset }}
+        style={{ paddingBottom: bottomOffset }}
       />
     </View>
   );

@@ -6,28 +6,6 @@ PODS:
     - hermes-engine/Pre-built (= 250829098.0.10)
   - hermes-engine/Pre-built (250829098.0.10)
   - iosMath (0.9.4)
-  - LiquidGlass (0.7.1):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - Nobodywho (2.2.0):
     - hermes-engine
     - RCTRequired
@@ -2288,7 +2266,6 @@ DEPENDENCIES:
   - BVLinearGradient (from `../node_modules/react-native-linear-gradient`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
-  - "LiquidGlass (from `../node_modules/@callstack/liquid-glass`)"
   - Nobodywho (from `../node_modules/react-native-nobodywho`)
   - "op-sqlite (from `../node_modules/@op-engineering/op-sqlite`)"
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
@@ -2390,8 +2367,6 @@ EXTERNAL SOURCES:
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-v250829098.0.10
-  LiquidGlass:
-    :path: "../node_modules/@callstack/liquid-glass"
   Nobodywho:
     :path: "../node_modules/react-native-nobodywho"
   op-sqlite:
@@ -2570,7 +2545,6 @@ SPEC CHECKSUMS:
   FBLazyVector: 26fd21c75314e101f280d401e97f27d54f3f7064
   hermes-engine: a7dcf50ffa69c1b17f0d0ed5724f8754567a4e47
   iosMath: f7a6cbadf9d836d2149c2a84c435b1effc244cba
-  LiquidGlass: 79edfdadba32c29aa45772a4684cfead35698e9a
   Nobodywho: f89f969603260f9daf2dd6cb083053a27c8c0fab
   op-sqlite: fe2ab854138fface0bda8b23fb686d8d8e0600b0
   RCTDeprecation: c7a2768f905d76ca6d2cfefb26e4349eacbdfca3
@@ -2642,7 +2616,7 @@ SPEC CHECKSUMS:
   React-utils: 862e61256698fe3841aec1af476abf924a6737c3
   React-webperformancenativemodule: e745e43264767cb8f4334fc11bf3fbff880050d0
   ReactAppDependencyProvider: 22e2265d86a4e871e5e858f4e7ef1c8d01103680
-  ReactCodegen: 83265e95ee464ab2144e66f840c2827b88b8a3cc
+  ReactCodegen: 0b719b6b8acdf39185c7cc883dc33c0e5660e68d
   ReactCommon: a804bb8d1dcf3ecdec3a77eb8bba19b7863bbbdb
   ReactNativeDependencies: 455919c5dfe11abf037bfb6fb4166b0c6dd2840b
   ReactNativeEnrichedMarkdown: 861d6937d7f4a6481e8446538dc715c93b545143
