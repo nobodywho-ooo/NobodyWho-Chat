@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { Spacings } from 'style';
 
 export const INPUT_BAR_HEIGHT = 42;
+const TOP_GRADIENT_HEIGHT = 10;
 
 export const styles = StyleSheet.create({
   mainContainer: {
@@ -11,6 +12,13 @@ export const styles = StyleSheet.create({
     bottom: 0,
     paddingTop: Spacings.xs,
     paddingHorizontal: Spacings.md,
+  },
+  topGradient: {
+    position: 'absolute',
+    left: -Spacings.md,
+    right: -Spacings.md,
+    top: -TOP_GRADIENT_HEIGHT,
+    height: TOP_GRADIENT_HEIGHT,
   },
   inputBarInner: {
     flexDirection: 'row',
