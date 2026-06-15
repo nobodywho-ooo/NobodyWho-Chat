@@ -78,6 +78,9 @@
     },
     "chat": {
       "generationFailed": "Noget gik galt under genereringen af et svar."
+    },
+    "loadingScreen": {
+      "loadingModel": "Indlæser {{model}}…"
     }
   }
 }

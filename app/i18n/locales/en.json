@@ -78,6 +78,9 @@
     },
     "chat": {
       "generationFailed": "Something went wrong while generating a response."
+    },
+    "loadingScreen": {
+      "loadingModel": "Loading {{model}}…"
     }
   }
 }

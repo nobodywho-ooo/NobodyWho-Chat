@@ -70,6 +70,7 @@ interface ChatRootContextValue {
   status: SessionStatus;
   chatHistory: DisplayMessage[];
   conversationId: LoadedConversationId;
+  loadingMessage: string;
   onConversationCreated: (id: number) => void;
   onRetry: () => void;
 }
@@ -80,6 +81,7 @@ const defaultChatRootValue: ChatRootContextValue = {
   status: SessionStatus.Loading,
   chatHistory: [],
   conversationId: undefined,
+  loadingMessage: '',
   onConversationCreated: () => undefined,
   onRetry: () => undefined,
 };
@@ -110,7 +112,7 @@ const ChatRootScreen = () => {
       return <ErrorScreen onRetry={ctx.onRetry} />;
     case SessionStatus.Loading:
     default:
-      return <LoadingScreen />;
+      return <LoadingScreen message={ctx.loadingMessage} />;
   }
 };
 
@@ -272,6 +274,11 @@ export const ChatStackNavigator = () => {
     });
   }, [disposeChat, startSession, refreshChatHistory]);
 
+  const inUseModelName = models.find(m => m.id === modelIdInUse)?.modelName;
+  const loadingMessage = inUseModelName
+    ? t('screens.loadingScreen.loadingModel', { model: inUseModelName })
+    : t('common.loading');
+
   const chatRootValue = useMemo<ChatRootContextValue>(
     () => ({
       hasModels: models.length > 0,
@@ -279,6 +286,7 @@ export const ChatStackNavigator = () => {
       status,
       chatHistory,
       conversationId: loadedConversationId,
+      loadingMessage,
       onConversationCreated: handleConversationCreated,
       onRetry: startSession,
     }),
@@ -288,6 +296,7 @@ export const ChatStackNavigator = () => {
       status,
       chatHistory,
       loadedConversationId,
+      loadingMessage,
       handleConversationCreated,
       startSession,
     ],
