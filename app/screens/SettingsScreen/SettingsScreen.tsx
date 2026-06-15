@@ -3,7 +3,7 @@ import { Linking, ScrollView, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
-import { devLog } from 'helpers';
+import { log } from 'helpers';
 import { useStyled } from 'hooks';
 import { Button, ListItem, Text } from 'components';
 
@@ -24,7 +24,7 @@ export const SettingsScreen: React.FC = () => {
 
   const openURL = (url: string) =>
     Linking.openURL(url).catch(error =>
-      devLog('Failed to open URL', url, error),
+      log(`Failed to open URL ${url}`, error),
     );
 
   return (

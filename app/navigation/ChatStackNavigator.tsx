@@ -17,7 +17,7 @@ import {
   getMessagesByConversationId,
   getModelById,
 } from 'repositories';
-import { devLog, isIOS } from 'helpers';
+import { log, isIOS } from 'helpers';
 import { PlatformIcon } from 'components';
 import { useAppState, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
@@ -65,6 +65,7 @@ const toChatHistory = (messages: ChatMessage[]): DisplayMessage[] =>
   });
 
 interface ChatRootContextValue {
+  modelsLoading: boolean;
   hasModels: boolean;
   modelIdInUse: number | undefined;
   status: SessionStatus;
@@ -76,6 +77,7 @@ interface ChatRootContextValue {
 }
 
 const defaultChatRootValue: ChatRootContextValue = {
+  modelsLoading: true,
   hasModels: false,
   modelIdInUse: undefined,
   status: SessionStatus.Loading,
@@ -91,6 +93,10 @@ const ChatRootContext =
 
 const ChatRootScreen = () => {
   const ctx = useContext(ChatRootContext);
+
+  if (ctx.modelsLoading) {
+    return <LoadingScreen message={ctx.loadingMessage} />;
+  }
 
   if (!ctx.hasModels) {
     return <NoModelDownloadedScreen />;
@@ -119,7 +125,7 @@ const ChatRootScreen = () => {
 export const ChatStackNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const { models } = useModels();
+  const { models, loading: modelsLoading } = useModels();
   const { modelIdInUse } = useAppState();
   const { chat, createChat, disposeChat } = useAiService();
 
@@ -202,7 +208,7 @@ export const ChatStackNavigator = () => {
       }
     } catch (error) {
       if (isCurrent()) {
-        devLog('ChatStackNavigator session error', error);
+        log('ChatStackNavigator session error', error, { capture: true });
         setStatus(SessionStatus.Error);
       }
     }
@@ -228,7 +234,7 @@ export const ChatStackNavigator = () => {
       // A model switch can dispose our chat mid-load; since that takes seconds,
       // let its startSession own the status rather than flashing an error screen.
       if (chat.current === undefined) return;
-      devLog('ChatStackNavigator history refresh error', error);
+      log('ChatStackNavigator history refresh error', error, { capture: true });
       setStatus(SessionStatus.Error);
     }
   }, [chat, resetAndLoadChatHistory]);
@@ -281,6 +287,7 @@ export const ChatStackNavigator = () => {
 
   const chatRootValue = useMemo<ChatRootContextValue>(
     () => ({
+      modelsLoading,
       hasModels: models.length > 0,
       modelIdInUse,
       status,
@@ -291,6 +298,7 @@ export const ChatStackNavigator = () => {
       onRetry: startSession,
     }),
     [
+      modelsLoading,
       models.length,
       modelIdInUse,
       status,

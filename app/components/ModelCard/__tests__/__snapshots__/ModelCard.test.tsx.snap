@@ -116,7 +116,7 @@ exports[`renders correctly ModelCard 1`] = `
         }
       >
         <PlatformIcon
-          androidIconName="chat_bubble"
+          androidIconName="chat"
           color="#7c7c7c"
           iosIconName="text.bubble"
           size={12}
@@ -160,7 +160,7 @@ exports[`renders correctly ModelCard 1`] = `
           }
         >
           <PlatformIcon
-            androidIconName="storage"
+            androidIconName="hard_drive"
             color="#7c7c7c"
             iosIconName="internaldrive"
             size={12}
@@ -378,7 +378,7 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
         }
       >
         <PlatformIcon
-          androidIconName="chat_bubble"
+          androidIconName="chat"
           color="#7c7c7c"
           iosIconName="text.bubble"
           size={12}
@@ -422,7 +422,7 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
           }
         >
           <PlatformIcon
-            androidIconName="storage"
+            androidIconName="hard_drive"
             color="#7c7c7c"
             iosIconName="internaldrive"
             size={12}
@@ -634,7 +634,7 @@ exports[`renders correctly ModelCard when model is downloading 1`] = `
         }
       >
         <PlatformIcon
-          androidIconName="chat_bubble"
+          androidIconName="chat"
           color="#7c7c7c"
           iosIconName="text.bubble"
           size={12}
@@ -780,7 +780,7 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
         }
       >
         <PlatformIcon
-          androidIconName="chat_bubble"
+          androidIconName="chat"
           color="#7c7c7c"
           iosIconName="text.bubble"
           size={12}
@@ -824,7 +824,7 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
           }
         >
           <PlatformIcon
-            androidIconName="storage"
+            androidIconName="hard_drive"
             color="#7c7c7c"
             iosIconName="internaldrive"
             size={12}

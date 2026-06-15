@@ -3,7 +3,7 @@ import { rowToConversation } from 'repositories';
 import { useReactiveQuery } from './useReactiveQuery';
 
 export function useConversations() {
-  const conversations = useReactiveQuery<Conversation>({
+  const { rows: conversations } = useReactiveQuery<Conversation>({
     query: 'SELECT * FROM conversations ORDER BY last_used DESC, id DESC',
     tables: ['conversations'],
     map: rowToConversation,

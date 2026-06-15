@@ -71,3 +71,12 @@ yarn-error.log
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Sentry authentication tokens
+ios/sentry.properties
+android/sentry.properties
+sentry.properties
+
+# Environment files
+.env*
+!.env.example

@@ -10,7 +10,7 @@ import { DisplayMessage } from 'types';
 import { getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
 import { useAiService } from 'services';
-import { devLog, isIOS, formatThinkingBlocks, isAndroid } from 'helpers';
+import { log, isIOS, formatThinkingBlocks, isAndroid } from 'helpers';
 
 import { EmptyChat, InputBar } from './components';
 import styles from './ChatScreen.styles';
@@ -201,7 +201,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         ...metrics,
       });
     } catch (error) {
-      devLog('ChatScreen generation failed', error);
+      log('ChatScreen generation failed', error);
       const failure = t('screens.chat.generationFailed');
       setMessages(prev => {
         const next = [...prev];

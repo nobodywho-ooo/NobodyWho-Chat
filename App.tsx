@@ -1,14 +1,11 @@
 import 'i18n';
-import React, { useCallback } from 'react';
-import { useEffect, useState } from 'react';
-import { StatusBar } from 'react-native';
+import React, { useCallback, useEffect } from 'react';
+import { useState } from 'react';
+import { Platform, StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import {
-  NavigationContainer,
-  DefaultTheme,
-  DarkTheme,
-} from '@react-navigation/native';
+import { DefaultTheme, DarkTheme } from '@react-navigation/native';
+import * as Sentry from '@sentry/react-native';
 import { ThemeProvider, isDarkModeEnabled } from 'context';
 import {
   initDatabase,
@@ -18,11 +15,53 @@ import {
 } from 'database';
 import { getConversationById, getModelById, insertModel } from 'repositories';
 import { ModelPipeline } from 'types';
-import { devLog } from 'helpers';
+import { log } from 'helpers';
 import { useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
 import { DrawerNavigator } from 'navigation';
+
+Sentry.init({
+  dsn: 'https://5901cf2e433ebe444dd4dc9f8aebc790@o4511569171709952.ingest.de.sentry.io/4511569173217360',
+  sendDefaultPii: true,
+  tracesSampleRate: __DEV__ ? 1.0 : 1.0, // TODO: Reminder - Decrease later on for prod
+  profilesSampleRate: __DEV__ ? 0 : 1.0,
+  replaysOnErrorSampleRate: __DEV__ ? 0 : 1.0,
+  replaysSessionSampleRate: __DEV__ ? 0 : 1.0, // TODO: Reminder - Decrease later on for prod
+  enableLogs: true,
+  integrations: [
+    ...(__DEV__
+      ? []
+      : [
+          Sentry.mobileReplayIntegration({
+            maskAllText: true,
+            maskAllImages: true,
+          }),
+        ]),
+    Sentry.reactNavigationIntegration({
+      enableTimeToInitialDisplay: true,
+    }),
+  ],
+  enableNativeFramesTracking: true,
+  environment: __DEV__ ? 'development' : 'production',
+  debug: false,
+  beforeBreadcrumb(breadcrumb) {
+    // TODO: hot fix, delete when fix in future sentry version
+    // On Android the native bridge (sentry-java) deserializes the breadcrumb
+    // timestamp as a String, but React Native's toHashMap() converts the JS
+    // numeric (epoch seconds) timestamp into a Double, which throws
+    // "java.lang.Double cannot be cast to java.lang.String" and drops the
+    // breadcrumb. Send an ISO string instead — accepted by both Sentry ingest
+    // and the native deserializer. iOS reads it as a number, so leave it alone.
+    if (Platform.OS === 'android' && typeof breadcrumb.timestamp === 'number') {
+      // @ts-expect-error Sentry types timestamp as number; ISO8601 strings are valid for ingest.
+      breadcrumb.timestamp = new Date(
+        breadcrumb.timestamp * 1000,
+      ).toISOString();
+    }
+    return breadcrumb;
+  },
+});
 
 function AppContent() {
   const { colors } = useStyled();
@@ -43,9 +82,9 @@ function AppContent() {
         backgroundColor="transparent"
         translucent
       />
-      <NavigationContainer theme={navigationTheme}>
+      <Sentry.NavigationContainer theme={navigationTheme}>
         <DrawerNavigator />
-      </NavigationContainer>
+      </Sentry.NavigationContainer>
     </>
   );
 }
@@ -124,9 +163,10 @@ function AppLoader() {
 
       await dropStaleIdsInUse();
 
+      Sentry.appLoaded();
       setDbReady(true);
     } catch (error) {
-      devLog('App init failed', error);
+      log('App init failed', error, { capture: true });
       setDbError(true);
     }
   }, []);
@@ -145,7 +185,7 @@ function AppLoader() {
   );
 }
 
-export default function App() {
+export default Sentry.wrap(function App() {
   return (
     <GestureHandlerRootView>
       <SafeAreaProvider>
@@ -155,4 +195,4 @@ export default function App() {
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
-}
+});

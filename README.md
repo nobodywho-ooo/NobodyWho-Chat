@@ -19,7 +19,18 @@ Demonstrates the capabilities of **[NobodyWho](https://github.com/nobodywho-ooo/
 First, you will need to run `npm install` to install dependencies.
 For iOS, install pods with `cd ios && pod install && cd ..`
 
-### 2. Run the App
+### 2. Sentry
+
+Inside `android` and `ios` folder, create `sentry.properties` file and paste the following:
+
+```
+defaults.url=https://sentry.io/
+defaults.org=example-org
+defaults.project=example-project
+auth.token=sntrys_YOUR_TOKEN_HERE
+```
+
+### 3. Run the App
 
 ```sh
 # Android

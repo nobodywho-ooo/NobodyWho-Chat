@@ -12,7 +12,7 @@ beforeEach(() => mockUseReactiveQuery.mockReset());
 
 test('queries the models table and wraps the result', () => {
   const models = [{ id: 1 }, { id: 2 }];
-  mockUseReactiveQuery.mockReturnValue(models);
+  mockUseReactiveQuery.mockReturnValue({ rows: models, loading: false });
 
   const { result } = renderHook(() => useModels());
 
@@ -21,5 +21,5 @@ test('queries the models table and wraps the result', () => {
     tables: ['models'],
     map: rowToModel,
   });
-  expect(result.current).toEqual({ models });
+  expect(result.current).toEqual({ models, loading: false });
 });

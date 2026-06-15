@@ -13,7 +13,8 @@ import {
   Tool,
   SamplerConfig,
 } from 'react-native-nobodywho';
-import { devLog, getAssetPath } from 'helpers';
+import * as Sentry from '@sentry/react-native';
+import { log, getAssetPath } from 'helpers';
 import { Model, ModelPipeline } from 'types';
 
 export enum AiModelState {
@@ -139,7 +140,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         chatRef.current = chat;
         setState(s => ({ ...s, chatState: AiModelState.Ready }));
       } catch (error) {
-        devLog('AiService error', error);
+        log('AiService error', error, { capture: true });
         setState(s => ({ ...s, chatState: AiModelState.Error }));
         throw error;
       } finally {
@@ -169,7 +170,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         encoderRef.current = encoder;
         setState(s => ({ ...s, encoderState: AiModelState.Ready }));
       } catch (error) {
-        devLog('AiService error', error);
+        log('AiService error', error, { capture: true });
         setState(s => ({ ...s, encoderState: AiModelState.Error }));
       } finally {
         inFlight.current.encoder = false;
@@ -194,7 +195,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         crossEncoderRef.current = crossEncoder;
         setState(s => ({ ...s, crossEncoderState: AiModelState.Ready }));
       } catch (error) {
-        devLog('AiService error', error);
+        log('AiService error', error, { capture: true });
         setState(s => ({ ...s, crossEncoderState: AiModelState.Error }));
       } finally {
         inFlight.current.crossEncoder = false;
@@ -215,12 +216,14 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       // ends cleanly instead of the native context being torn out under it.
       instance?.stopGeneration();
     } catch (error) {
-      devLog('AiService disposeChat stopGeneration failed', error);
+      log('AiService disposeChat stopGeneration failed', error, {
+        capture: true,
+      });
     }
     try {
       instance?.destroy();
     } catch (error) {
-      devLog('AiService disposeChat destroy failed', error);
+      log('AiService disposeChat destroy failed', error);
     }
 
     setState(s => ({ ...s, chatState: AiModelState.NotLoaded }));
@@ -251,13 +254,13 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     try {
       chatInstance?.stopGeneration();
     } catch (error) {
-      devLog('AiService dispose stopGeneration failed', error);
+      log('AiService dispose stopGeneration failed', error, { capture: true });
     }
     for (const instance of instances) {
       try {
         instance?.destroy();
       } catch (error) {
-        devLog('AiService dispose destroy failed', error);
+        log('AiService dispose destroy failed', error, { capture: true });
       }
     }
 
@@ -296,6 +299,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
 export const useAiService = (): AiServiceContextValue => {
   const ctx = useContext(AiServiceContext);
   if (!ctx) {
+    Sentry.captureMessage('AiServiceContextValue not available');
     throw new Error('useAiService must be used within an AiServiceProvider');
   }
   return ctx;

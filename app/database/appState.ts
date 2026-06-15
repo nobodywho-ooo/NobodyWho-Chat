@@ -1,4 +1,4 @@
-import { devLog } from 'helpers';
+import { log } from 'helpers';
 import { getStorage } from './storage';
 
 const APP_STATE = 'appState';
@@ -50,7 +50,7 @@ export async function setAppState(patch: Partial<AppState>): Promise<void> {
     try {
       listener(next, prev);
     } catch (error) {
-      devLog('appState listener error', error);
+      log('appState listener error', error, { capture: true});
     }
   });
 }

@@ -1,6 +1,7 @@
 import { isIOS, isAndroid, getIOSVersion, isIOS26OrLater } from './platform';
 import { getAssetPath } from './assets';
-import { devLog } from './log';
+import { log } from './log';
+import { capitalize } from './string';
 import { safeJsonParse } from './json';
 import { getMarkdownStyle } from './markdown';
 import { formatThinkingBlocks, stripThinkingBlocks } from './thinking';
@@ -15,7 +16,8 @@ export {
   isAndroid,
   getIOSVersion,
   isIOS26OrLater,
-  devLog,
+  log,
+  capitalize,
   safeJsonParse,
   getMarkdownStyle,
   formatThinkingBlocks,

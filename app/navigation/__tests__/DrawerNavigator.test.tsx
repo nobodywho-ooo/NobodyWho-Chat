@@ -10,12 +10,12 @@ import { mockSetAppState } from 'jest/mock/database';
 import { mockDeleteConversation } from 'jest/mock/repositories';
 import { buildConversation } from 'jest/factories/conversation';
 import { buildModel } from 'jest/factories/model';
-import { devLog } from 'helpers';
+import { log } from 'helpers';
 import { MenuView } from '@react-native-menu/menu';
 
 import { DrawerNavigator } from '../DrawerNavigator';
 
-const mockDevLog = devLog as jest.Mock;
+const mockLog = log as jest.Mock;
 
 // Flattens the iOS divider sections (`displayInline` groups) and the flat
 // Android list to the underlying leaf actions.
@@ -30,14 +30,14 @@ beforeEach(() => {
   });
   mockSetAppState.mockClear();
   mockDeleteConversation.mockReset().mockResolvedValue(undefined);
-  mockDevLog.mockClear();
+  mockLog.mockClear();
 });
 
 test('shows the in-use conversation title and model name in the header', () => {
   const screen = render(<DrawerNavigator />);
 
   expect(screen.getByText('Conversation 5')).toBeTruthy();
-  expect(screen.getByText('Model 1')).toBeTruthy();
+  expect(screen.getByText('Model 1 (1B)')).toBeTruthy();
 });
 
 test('falls back to the default title when no conversation is in use', () => {
@@ -48,7 +48,7 @@ test('falls back to the default title when no conversation is in use', () => {
 
   const screen = render(<DrawerNavigator />);
 
-  expect(screen.getByText('navigation.newChat')).toBeTruthy();
+  expect(screen.getByText('Navigation.newChat')).toBeTruthy();
 });
 
 test('hides the header menu when no conversation is in use', () => {
@@ -116,5 +116,5 @@ test('Delete Chat logs and recovers when the deletion fails', async () => {
   // The chat is still cleared, and the failure is logged rather than thrown.
   expect(mockSetAppState).toHaveBeenCalledWith({ conversationIdInUse: undefined });
   expect(mockDeleteConversation).toHaveBeenCalledWith(5);
-  expect(mockDevLog).toHaveBeenCalled();
+  expect(mockLog).toHaveBeenCalled();
 });

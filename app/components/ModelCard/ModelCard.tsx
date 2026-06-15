@@ -20,7 +20,7 @@ const pipelineIcon: Record<
 > = {
   [ModelPipeline.textGeneration]: {
     iosIconName: 'text.bubble',
-    androidIconName: 'chat_bubble',
+    androidIconName: 'chat',
   },
   [ModelPipeline.imageToImage]: {
     iosIconName: 'photo',
@@ -149,7 +149,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
             <View style={styles.tagsContainer}>
               <Tag
                 iosIconName="internaldrive"
-                androidIconName="storage"
+                androidIconName="hard_drive"
                 label={`${modelSizeGB} GB`}
               />
               {thinking && (

@@ -1,6 +1,6 @@
 import { open, DB } from '@op-engineering/op-sqlite';
 import { ModelPipeline } from 'types';
-import { devLog } from '../helpers/log';
+import { log } from '../helpers/log';
 
 const DB_NAME = 'nobodywho.sqlite';
 
@@ -11,7 +11,7 @@ export function getDatabase(): DB {
     _db = open({ name: DB_NAME });
     _db.executeSync('PRAGMA foreign_keys = ON');
     _db.executeSync('PRAGMA journal_mode = WAL');
-    devLog('Database opened:', DB_NAME);
+    log('Database opened:', DB_NAME);
   }
   return _db;
 }
@@ -20,7 +20,7 @@ export function closeDatabase(): void {
   if (_db) {
     _db.close();
     _db = null;
-    devLog('Database closed');
+    log('Database closed');
   }
 }
 
@@ -81,6 +81,6 @@ export async function initDatabase(): Promise<void> {
       }
       await tx.execute(`PRAGMA user_version = ${v + 1}`);
     });
-    devLog('Database migrated to version', v + 1);
+    log('Database migrated to version', v + 1);
   }
 }

@@ -16,7 +16,7 @@ import { setAppState } from 'database';
 import { deleteConversation } from 'repositories';
 import { DrawerContentScreen } from 'screens';
 import { PlatformIcon, Text } from 'components';
-import { devLog, haptics, isIOS } from 'helpers';
+import { log, haptics, isIOS, capitalize } from 'helpers';
 import { useAppState, useConversations, useModels, useStyled } from 'hooks';
 
 import { ChatStackNavigator } from './ChatStackNavigator';
@@ -49,7 +49,7 @@ const ChatHeaderRight = () => {
         try {
           await deleteConversation(conversationIdInUse);
         } catch (error) {
-          devLog('Failed to delete conversation', error);
+          log('Failed to delete conversation', error, { capture: true });
         }
       }
     },
@@ -59,9 +59,12 @@ const ChatHeaderRight = () => {
   const newChatAction: MenuAction = {
     id: MENU_ACTION_NEW_CHAT,
     title: t('navigation.chatMenu.newChat'),
+    titleColor: colors.onSurface,
     imageColor: colors.onSurface,
     image: Platform.select({
       ios: 'plus.bubble',
+      // @react-native-menu/menu resolves Android images by drawable name; 'add_comment'
+      // is the Material vector drawable bundled at res/drawable/add_comment.xml.
       android: 'add_comment',
     }),
   };
@@ -118,12 +121,22 @@ const ChatHeaderTitle = ({ title }: { title: string }) => {
   const { modelIdInUse } = useAppState();
   const { models } = useModels();
 
-  const modelName = models.find(({ id }) => id === modelIdInUse)?.modelName;
+  const model = models.find(({ id }) => id === modelIdInUse);
+  const modelName = model?.modelName;
+  const parameterCountBillions = model?.parameterCountBillions;
+  let parameterCountLabel: string | undefined = '';
+
+  if (parameterCountBillions !== undefined) {
+    parameterCountLabel =
+      parameterCountBillions >= 1
+        ? `(${parameterCountBillions}B)`
+        : `(${Math.round(parameterCountBillions * 1000)}M)`;
+  }
 
   return (
     <View style={styles.titleContainer}>
       <Text variant="body1" bold numberOfLines={1}>
-        {title}
+        {capitalize(title)}
       </Text>
       {modelName ? (
         <Text
@@ -131,7 +144,7 @@ const ChatHeaderTitle = ({ title }: { title: string }) => {
           numberOfLines={1}
           style={{ color: colors.onSurfaceVariant }}
         >
-          {modelName}
+          {modelName} {parameterCountLabel}
         </Text>
       ) : null}
     </View>

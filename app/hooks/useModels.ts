@@ -3,11 +3,11 @@ import { rowToModel } from 'repositories';
 import { useReactiveQuery } from './useReactiveQuery';
 
 export function useModels() {
-  const models = useReactiveQuery<Model>({
+  const { rows: models, loading } = useReactiveQuery<Model>({
     query: 'SELECT * FROM models ORDER BY id',
     tables: ['models'],
     map: rowToModel,
   });
 
-  return { models };
+  return { models, loading };
 }

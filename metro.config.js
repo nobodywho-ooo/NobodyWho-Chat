@@ -1,6 +1,7 @@
 const path = require('path');
 const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
 const { bundleModeMetroConfig } = require('react-native-worklets/bundleMode');
+const { withSentryConfig } = require('@sentry/react-native/metro');
 
 /**
  * Metro configuration
@@ -42,4 +43,7 @@ config.resolver.assetExts = config.resolver.assetExts.filter(
 );
 config.resolver.sourceExts = [...config.resolver.sourceExts, 'svg'];
 
-module.exports = config;
+module.exports = withSentryConfig(config, {
+  includeWebReplay: false,
+  includeWebFeedback: false,
+});

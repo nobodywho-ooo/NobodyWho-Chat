@@ -12,7 +12,7 @@ beforeEach(() => mockUseReactiveQuery.mockReset());
 
 test('queries the conversations table and wraps the result', () => {
   const conversations = [{ id: 1 }, { id: 2 }];
-  mockUseReactiveQuery.mockReturnValue(conversations);
+  mockUseReactiveQuery.mockReturnValue({ rows: conversations, loading: false });
 
   const { result } = renderHook(() => useConversations());
 

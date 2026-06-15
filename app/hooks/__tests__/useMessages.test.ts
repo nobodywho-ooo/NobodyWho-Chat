@@ -12,7 +12,7 @@ beforeEach(() => mockUseReactiveQuery.mockReset());
 
 test('queries messages for the given conversation and wraps the result', () => {
   const messages = [{ id: 1 }, { id: 2 }];
-  mockUseReactiveQuery.mockReturnValue(messages);
+  mockUseReactiveQuery.mockReturnValue({ rows: messages, loading: false });
 
   const { result } = renderHook(() => useMessages(5));
 
@@ -28,7 +28,7 @@ test('queries messages for the given conversation and wraps the result', () => {
 });
 
 test('disables the query when no conversationId is provided', () => {
-  mockUseReactiveQuery.mockReturnValue([]);
+  mockUseReactiveQuery.mockReturnValue({ rows: [], loading: false });
 
   renderHook(() => useMessages(undefined));
 

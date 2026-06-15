@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Text } from 'components';
 import { setAppState } from 'database';
 import { useAppState, useConversations, useStyled } from 'hooks';
+import { capitalize } from 'helpers';
 import { Conversation } from 'types';
 
 import styles from './ConversationsList.styles';
@@ -47,7 +48,7 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
           numberOfLines={1}
           bold={item.id === conversationIdInUse}
         >
-          {item.title}
+          {capitalize(item.title)}
         </Text>
       </Pressable>
     ),

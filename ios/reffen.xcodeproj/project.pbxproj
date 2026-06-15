@@ -20,7 +20,7 @@
 		13B07F961A680F5B00A75B9A /* reffen.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = reffen.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = reffen/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = reffen/Info.plist; sourceTree = "<group>"; };
-		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = reffen/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = reffen/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-reffen.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-reffen.debug.xcconfig"; path = "Target Support Files/Pods-reffen/Pods-reffen.debug.xcconfig"; sourceTree = "<group>"; };
 		537049882FA1E57B00CFD0DB /* logo-nobodywho.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = "logo-nobodywho.icon"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-reffen.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-reffen.release.xcconfig"; path = "Target Support Files/Pods-reffen/Pods-reffen.release.xcconfig"; sourceTree = "<group>"; };
@@ -47,6 +47,7 @@
 		13B07FAE1A68108700A75B9A /* reffen */ = {
 			isa = PBXGroup;
 			children = (
+				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				537049882FA1E57B00CFD0DB /* logo-nobodywho.icon */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
@@ -54,7 +55,6 @@
 				C11B0A4D2CA45674006654E3 /* RTNClipboard.mm */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
-				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
 			);
 			name = reffen;
 			sourceTree = "<group>";
@@ -121,6 +121,7 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
+				53C2BF912FE01CE700924CCC /* Upload Debug Symbols to Sentry */,
 			);
 			buildRules = (
 			);
@@ -191,7 +192,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"\\\"$WITH_ENVIRONMENT\\\" \\\"$REACT_NATIVE_XCODE\\\"\"\n";
+			shellScript = "set -e\nWITH_ENVIRONMENT=\"../node_modules/react-native/scripts/xcode/with-environment.sh\"\nSENTRY_XCODE=\"../node_modules/@sentry/react-native/scripts/sentry-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $SENTRY_XCODE\"\n";
 		};
 		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -227,6 +228,24 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "if [ \"${CONFIGURATION}\" = \"Debug\" ]; then\n  ASSETS_DIR=\"${SRCROOT}/../assets\"\n  DEST_DIR=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}\"\n\n  if [ ! -d \"${ASSETS_DIR}\" ]; then\n    echo \"No assets directory found, skipping.\"\n    exit 0\n  fi\n\n  for SRC in \"${ASSETS_DIR}\"/*; do\n    [ -f \"${SRC}\" ] || continue\n    FILENAME=$(basename \"${SRC}\")\n    echo \"Copying ${FILENAME} to bundle...\"\n    cp \"${SRC}\" \"${DEST_DIR}/${FILENAME}\"\n  done\nelse\n  echo \"Skipping asset copy for ${CONFIGURATION} build.\"\nfi\n";
+		};
+		53C2BF912FE01CE700924CCC /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh ../node_modules/@sentry/react-native/scripts/sentry-xcode-debug-files.sh\n";
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;

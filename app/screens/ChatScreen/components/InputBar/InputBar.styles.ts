@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { Platform, StyleSheet } from 'react-native';
 import { Spacings } from 'style';
 
 export const INPUT_BAR_HEIGHT = 42;
@@ -30,7 +30,10 @@ export const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    paddingTop: -Spacings.xs,
+    paddingTop: Platform.select({
+      ios: -Spacings.xs,
+      android: 8,
+    }),
     fontSize: 16,
     maxHeight: 100,
     paddingRight: 6,

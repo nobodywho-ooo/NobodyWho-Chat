@@ -25,8 +25,29 @@ test('loads and maps the initial rows', async () => {
     }),
   );
 
-  await waitFor(() => expect(result.current).toEqual([10, 20]));
+  await waitFor(() => expect(result.current.rows).toEqual([10, 20]));
+  expect(result.current.loading).toBe(false);
   expect(db.execute).toHaveBeenCalledWith('SELECT * FROM t', []);
+});
+
+test('starts loading and clears once the initial load resolves', async () => {
+  let resolveInitial: (value: any) => void;
+  db.execute.mockReturnValue(
+    new Promise(resolve => {
+      resolveInitial = resolve;
+    }),
+  );
+
+  const { result } = renderHook(() =>
+    useReactiveQuery<number>({ query: 'Q', tables: ['t'], map: row => row.n }),
+  );
+
+  expect(result.current.loading).toBe(true);
+
+  await act(async () => resolveInitial!({ rows: [{ n: 1 }] }));
+
+  expect(result.current.loading).toBe(false);
+  expect(result.current.rows).toEqual([1]);
 });
 
 test('subscribes with the query, args and fireOn tables', async () => {
@@ -59,10 +80,11 @@ test('updates the result when the reactive callback fires', async () => {
   const { result } = renderHook(() =>
     useReactiveQuery<number>({ query: 'Q', tables: ['t'], map: row => row.n }),
   );
-  await waitFor(() => expect(result.current).toEqual([]));
+  await waitFor(() => expect(result.current.rows).toEqual([]));
 
   act(() => captured.callback({ rows: [{ n: 7 }, { n: 8 }] }));
-  expect(result.current).toEqual([7, 8]);
+  expect(result.current.rows).toEqual([7, 8]);
+  expect(result.current.loading).toBe(false);
 });
 
 test('when disabled, returns [] without querying or subscribing', () => {
@@ -75,7 +97,8 @@ test('when disabled, returns [] without querying or subscribing', () => {
     }),
   );
 
-  expect(result.current).toEqual([]);
+  expect(result.current.rows).toEqual([]);
+  expect(result.current.loading).toBe(false);
   expect(db.execute).not.toHaveBeenCalled();
   expect(db.reactiveExecute).not.toHaveBeenCalled();
 });
@@ -88,7 +111,8 @@ test('handles a failing initial load without throwing', async () => {
   );
   await act(async () => {});
 
-  expect(result.current).toEqual([]);
+  expect(result.current.rows).toEqual([]);
+  expect(result.current.loading).toBe(false);
 });
 
 test('discards a stale initial load that resolves after a reactive update', async () => {
@@ -113,7 +137,7 @@ test('discards a stale initial load that resolves after a reactive update', asyn
   // ...then the slower initial load resolves with stale rows.
   await act(async () => resolveInitial!({ rows: [{ n: 1 }] }));
 
-  expect(result.current).toEqual([7]);
+  expect(result.current.rows).toEqual([7]);
 });
 
 test('unsubscribes on unmount', async () => {

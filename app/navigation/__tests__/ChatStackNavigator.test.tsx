@@ -68,7 +68,7 @@ const mockInsertConversation = insertConversation as jest.Mock;
 const mockInsertMessage = insertMessage as jest.Mock;
 
 beforeEach(async () => {
-  mockUseModels.mockReturnValue({ models: [buildModel(0)] });
+  mockUseModels.mockReturnValue({ models: [buildModel(0)], loading: false });
   mockChatRef.current = undefined;
   mockCreateChat.mockClear();
   mockDisposeChat.mockClear();
@@ -91,13 +91,25 @@ beforeEach(async () => {
 });
 
 test('shows NoModelDownloadedScreen when no model is downloaded', () => {
-  mockUseModels.mockReturnValue({ models: [] });
+  mockUseModels.mockReturnValue({ models: [], loading: false });
 
   const screen = render(<ChatStackNavigator />);
 
   expect(
     screen.getByText('screens.noModelDownloaded.noModelAvailable'),
   ).toBeTruthy();
+});
+
+test('shows the loading screen while models are still loading', async () => {
+  // Even with a model in use, the no-model placeholders must not flash before
+  // the models query resolves.
+  mockUseModels.mockReturnValue({ models: [], loading: true });
+  await setAppState({ modelIdInUse: 0 });
+
+  const screen = render(<ChatStackNavigator />);
+
+  expect(screen.queryByText('screens.noModelDownloaded.noModelAvailable')).toBeNull();
+  expect(screen.queryByText('screens.noModelSelected.pleaseSelectAModel')).toBeNull();
 });
 
 test('shows NoModelSelectedScreen and starts no session when no model is in use', () => {

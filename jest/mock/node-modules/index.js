@@ -1,3 +1,19 @@
+// @sentry/react-native ships ESM that the RN jest preset does not transform, so
+// stub the bits the app uses (captureException, wrap, init, NavigationContainer...).
+jest.mock('@sentry/react-native', () => {
+  const mockReact = require('react');
+  return {
+    init: jest.fn(),
+    wrap: component => component,
+    captureException: jest.fn(),
+    appLoaded: jest.fn(),
+    mobileReplayIntegration: jest.fn(),
+    reactNavigationIntegration: jest.fn(),
+    NavigationContainer: ({ children }) =>
+      mockReact.createElement(mockReact.Fragment, null, children),
+  };
+});
+
 jest.mock("@react-native-menu/menu", () => {
   const mockReact = require('react');
   return {

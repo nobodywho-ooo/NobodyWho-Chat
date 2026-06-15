@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { StreamdownText } from 'react-native-streamdown';
-import { copyToClipboard, devLog, getMarkdownStyle, haptics } from 'helpers';
+import { copyToClipboard, log, getMarkdownStyle, haptics } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
 import { DisplayMessage } from 'types';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
@@ -49,7 +49,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
       haptics.selection();
       setCopied(true);
     } catch (error) {
-      devLog('MessageListItem copy error ', error);
+      log('MessageListItem copy error ', error);
     }
   }, [content]);
 
