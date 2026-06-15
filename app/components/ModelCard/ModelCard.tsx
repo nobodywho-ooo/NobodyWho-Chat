@@ -2,14 +2,51 @@ import React, { useCallback } from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { useStyled } from 'hooks';
 import { getFamilyIcon } from 'helpers';
-import { Model, pipelineLabel } from 'types';
-import { Text } from '../Text/Text';
+import { Model, ModelPipeline, pipelineLabel } from 'types';
+import { Text, fontSizes } from '../Text/Text';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
 import { Tag } from '../Tag/Tag';
 
 import styles from './ModelCard.styles';
 import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
+
+const pipelineIcon: Record<
+  ModelPipeline,
+  {
+    iosIconName: SFSymbolProps['name'];
+    androidIconName: MaterialSymbolProps['name'];
+  }
+> = {
+  [ModelPipeline.textGeneration]: {
+    iosIconName: 'text.bubble',
+    androidIconName: 'chat_bubble',
+  },
+  [ModelPipeline.imageToImage]: {
+    iosIconName: 'photo',
+    androidIconName: 'image',
+  },
+  [ModelPipeline.imageTextToText]: {
+    iosIconName: 'photo.on.rectangle',
+    androidIconName: 'photo_library',
+  },
+  [ModelPipeline.audioTextToText]: {
+    iosIconName: 'waveform',
+    androidIconName: 'graphic_eq',
+  },
+  [ModelPipeline.imageAudioTextToText]: {
+    iosIconName: 'square.grid.2x2',
+    androidIconName: 'dashboard',
+  },
+  [ModelPipeline.featureExtraction]: {
+    iosIconName: 'magnifyingglass',
+    androidIconName: 'search',
+  },
+  [ModelPipeline.textRanking]: {
+    iosIconName: 'list.number',
+    androidIconName: 'format_list_numbered',
+  },
+};
 
 interface ModelCardProps {
   style?: StyleProp<ViewStyle>;
@@ -40,7 +77,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
   } = model;
   const isDownloading = downloadProgress !== undefined;
 
-  const FamilyIcon = isSelected ? undefined : getFamilyIcon(family);
+  const FamilyIcon = getFamilyIcon(family);
   const showDownloadIcon = !isDownloaded && !isSelected;
 
   const handlePress = useCallback(() => {
@@ -54,6 +91,11 @@ export const ModelCard: React.FC<ModelCardProps> = ({
     ? 'downloading'
     : 'download';
 
+  const parameterCountLabel =
+    parameterCountBillions >= 1
+      ? `(${parameterCountBillions}B)`
+      : `(${Math.round(parameterCountBillions * 1000)}M)`;
+
   return (
     <Pressable
       onPress={handlePress}
@@ -61,34 +103,50 @@ export const ModelCard: React.FC<ModelCardProps> = ({
       accessibilityLabel={modelName}
       style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }, style]}
     >
-      <View style={[styles.container, { borderColor: colors.border }]}>
-        {isSelected && (
-          <PlatformIcon
-            iosIconName="checkmark.circle"
-            androidIconName="check_circle"
-            size={28}
-            color={colors.successSurface}
-          />
-        )}
+      <View
+        style={[
+          styles.container,
+          { borderColor: isSelected ? colors.onSurfaceVariant : colors.border },
+        ]}
+      >
         {FamilyIcon && (
           <FamilyIcon width={28} height={28} color={colors.onSurface} />
         )}
 
         <View style={styles.infoContainer}>
-          <Text bold>{modelName}</Text>
-          <Text style={[styles.pipeline, { color: colors.onSurfaceVariant }]}>
-            {pipelineLabel[pipeline]}
-          </Text>
+          <View style={styles.nameContainer}>
+            <Text
+              variant="h4"
+              bold
+              numberOfLines={1}
+              style={styles.modelContainer}
+            >
+              {modelName}
+            </Text>
+            <Text
+              variant="body1"
+              bold
+              style={{ color: colors.onSurfaceVariant }}
+            >
+              {parameterCountLabel}
+            </Text>
+          </View>
+          <View style={styles.pipelineContainer}>
+            <PlatformIcon
+              iosIconName={pipelineIcon[pipeline].iosIconName}
+              androidIconName={pipelineIcon[pipeline].androidIconName}
+              size={fontSizes.caption}
+              color={colors.onSurfaceVariant}
+            />
+            <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
+              {pipelineLabel[pipeline]}
+            </Text>
+          </View>
 
           {isDownloading ? (
             <ProgressBar progress={downloadProgress} />
           ) : (
             <View style={styles.tagsContainer}>
-              <Tag
-                iosIconName="square.stack.3d.up.fill"
-                androidIconName="layers"
-                label={`${parameterCountBillions}B`}
-              />
               <Tag
                 iosIconName="internaldrive"
                 androidIconName="storage"
@@ -108,6 +166,14 @@ export const ModelCard: React.FC<ModelCardProps> = ({
           )}
         </View>
 
+        {isSelected && (
+          <PlatformIcon
+            iosIconName="checkmark.circle.fill"
+            androidIconName="check_circle"
+            size={24}
+            color={colors.successSurface}
+          />
+        )}
         {showDownloadIcon && (
           <PlatformIcon
             iosIconName={downloadIosIcon}

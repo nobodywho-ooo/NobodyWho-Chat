@@ -15,8 +15,18 @@ export default StyleSheet.create({
     flex: 1,
     gap: Spacings.xs,
   },
-  pipeline: {
-    fontSize: 13,
+  nameContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.sm,
+  },
+  modelContainer: {
+    flexShrink: 1,
+  },
+  pipelineContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.xs,
   },
   tagsContainer: {
     marginTop: Spacings.xs,

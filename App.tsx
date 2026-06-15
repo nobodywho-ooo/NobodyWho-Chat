@@ -93,7 +93,7 @@ function AppLoader() {
         if ((await getModelById(0)) === undefined) {
           await insertModel({
             id: 0,
-            modelName: 'Qwen3-0.6B',
+            modelName: 'Qwen3',
             modelSizeGB: 0.5,
             parameterCountBillions: 0.6,
             author: 'Alibaba Cloud',
@@ -107,7 +107,7 @@ function AppLoader() {
           });
           await insertModel({
             id: 1,
-            modelName: 'Bonsai-1.7B',
+            modelName: 'Bonsai',
             modelSizeGB: 0.25,
             parameterCountBillions: 1.7,
             author: 'Prism ML',

@@ -3,7 +3,9 @@ import { Text as RNText, TextProps as RNTextProps } from 'react-native';
 import { useStyled } from 'hooks';
 import { TextVariant } from 'types';
 
-import { variantStyles } from './Text.styles';
+import { styles, variantStyles } from './Text.styles';
+
+export { fontSizes } from './Text.styles';
 
 interface TextProps extends RNTextProps {
   variant?: TextVariant;
@@ -25,8 +27,8 @@ export const Text: React.FC<TextProps> = ({
       style={[
         { color: colors.onSurface },
         variantStyles[variant],
-        bold && { fontWeight: '600' },
-        italic && { fontStyle: 'italic' },
+        bold && styles.bold,
+        italic && styles.italic,
         style,
       ]}
       {...props}

@@ -44,6 +44,10 @@ jest.mock('react-native-linear-gradient', () => ({
   default: 'LinearGradient',
 }));
 
+jest.mock('@shopify/flash-list', () => ({
+  FlashList: require('react-native').FlatList,
+}));
+
 export const mockFromPath = jest.fn();
 
 jest.mock('react-native-nobodywho', () => {

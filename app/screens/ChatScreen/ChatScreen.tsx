@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { FlatList, Keyboard, View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Message } from 'react-native-nobodywho';
+import { FlashList, FlashListRef } from '@shopify/flash-list';
 import { MessageListItem } from 'components';
 import { useStyled } from 'hooks';
 import { DisplayMessage } from 'types';
@@ -61,7 +62,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const [isStreaming, setIsStreaming] = useState(false);
   const { colors } = useStyled();
   const { chat } = useAiService();
-  const flatListRef = useRef<FlatList>(null);
+  const flatListRef = useRef<FlashListRef<DisplayMessage>>(null);
   const insets = useSafeAreaInsets();
   const isKeyboardVisible = keyboardHeight > 0;
 
@@ -234,7 +235,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       {messages.length === 0 ? (
         !isKeyboardVisible && <EmptyChat />
       ) : (
-        <FlatList
+        <FlashList
           ref={flatListRef}
           data={messages}
           style={styles.listContainer}

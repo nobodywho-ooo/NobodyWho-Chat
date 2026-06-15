@@ -73,25 +73,65 @@ exports[`renders correctly ModelCard 1`] = `
         }
       }
     >
-      <Text
-        bold={true}
-      >
-        Qwen3 4B Q4 K M
-      </Text>
-      <Text
+      <View
         style={
-          [
-            {
-              "fontSize": 13,
-            },
-            {
-              "color": "#7c7c7c",
-            },
-          ]
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 8,
+          }
         }
       >
-        Text generation
-      </Text>
+        <Text
+          bold={true}
+          numberOfLines={1}
+          style={
+            {
+              "flexShrink": 1,
+            }
+          }
+          variant="h4"
+        >
+          Qwen3 4B Q4 K M
+        </Text>
+        <Text
+          bold={true}
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body1"
+        >
+          (4B)
+        </Text>
+      </View>
+      <View
+        style={
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 4,
+          }
+        }
+      >
+        <PlatformIcon
+          androidIconName="chat_bubble"
+          color="#7c7c7c"
+          iosIconName="text.bubble"
+          size={12}
+        />
+        <Text
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body2"
+        >
+          Text generation
+        </Text>
+      </View>
       <View
         style={
           {
@@ -102,44 +142,6 @@ exports[`renders correctly ModelCard 1`] = `
           }
         }
       >
-        <View
-          style={
-            [
-              {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 2,
-              },
-              {
-                "backgroundColor": "#ebebeb",
-              },
-            ]
-          }
-        >
-          <PlatformIcon
-            androidIconName="layers"
-            color="#7c7c7c"
-            iosIconName="square.stack.3d.up.fill"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            4B
-          </Text>
-        </View>
         <View
           style={
             [
@@ -333,25 +335,65 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
         }
       }
     >
-      <Text
-        bold={true}
-      >
-        Qwen3 4B Q4 K M
-      </Text>
-      <Text
+      <View
         style={
-          [
-            {
-              "fontSize": 13,
-            },
-            {
-              "color": "#7c7c7c",
-            },
-          ]
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 8,
+          }
         }
       >
-        Text generation
-      </Text>
+        <Text
+          bold={true}
+          numberOfLines={1}
+          style={
+            {
+              "flexShrink": 1,
+            }
+          }
+          variant="h4"
+        >
+          Qwen3 4B Q4 K M
+        </Text>
+        <Text
+          bold={true}
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body1"
+        >
+          (4B)
+        </Text>
+      </View>
+      <View
+        style={
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 4,
+          }
+        }
+      >
+        <PlatformIcon
+          androidIconName="chat_bubble"
+          color="#7c7c7c"
+          iosIconName="text.bubble"
+          size={12}
+        />
+        <Text
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body2"
+        >
+          Text generation
+        </Text>
+      </View>
       <View
         style={
           {
@@ -362,44 +404,6 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
           }
         }
       >
-        <View
-          style={
-            [
-              {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 2,
-              },
-              {
-                "backgroundColor": "#ebebeb",
-              },
-            ]
-          }
-        >
-          <PlatformIcon
-            androidIconName="layers"
-            color="#7c7c7c"
-            iosIconName="square.stack.3d.up.fill"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            4B
-          </Text>
-        </View>
         <View
           style={
             [
@@ -587,25 +591,65 @@ exports[`renders correctly ModelCard when model is downloading 1`] = `
         }
       }
     >
-      <Text
-        bold={true}
-      >
-        Qwen3 4B Q4 K M
-      </Text>
-      <Text
+      <View
         style={
-          [
-            {
-              "fontSize": 13,
-            },
-            {
-              "color": "#7c7c7c",
-            },
-          ]
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 8,
+          }
         }
       >
-        Text generation
-      </Text>
+        <Text
+          bold={true}
+          numberOfLines={1}
+          style={
+            {
+              "flexShrink": 1,
+            }
+          }
+          variant="h4"
+        >
+          Qwen3 4B Q4 K M
+        </Text>
+        <Text
+          bold={true}
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body1"
+        >
+          (4B)
+        </Text>
+      </View>
+      <View
+        style={
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 4,
+          }
+        }
+      >
+        <PlatformIcon
+          androidIconName="chat_bubble"
+          color="#7c7c7c"
+          iosIconName="text.bubble"
+          size={12}
+        />
+        <Text
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body2"
+        >
+          Text generation
+        </Text>
+      </View>
       <ProgressBar
         progress={0.4}
       />
@@ -675,16 +719,15 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
           "padding": 12,
         },
         {
-          "borderColor": "#e1e1e1",
+          "borderColor": "#7c7c7c",
         },
       ]
     }
   >
-    <PlatformIcon
-      androidIconName="check_circle"
-      color="#2ec728"
-      iosIconName="checkmark.circle"
-      size={28}
+    <SvgMock
+      color="#000000"
+      height={28}
+      width={28}
     />
     <View
       style={
@@ -694,25 +737,65 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
         }
       }
     >
-      <Text
-        bold={true}
-      >
-        Qwen3 4B Q4 K M
-      </Text>
-      <Text
+      <View
         style={
-          [
-            {
-              "fontSize": 13,
-            },
-            {
-              "color": "#7c7c7c",
-            },
-          ]
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 8,
+          }
         }
       >
-        Text generation
-      </Text>
+        <Text
+          bold={true}
+          numberOfLines={1}
+          style={
+            {
+              "flexShrink": 1,
+            }
+          }
+          variant="h4"
+        >
+          Qwen3 4B Q4 K M
+        </Text>
+        <Text
+          bold={true}
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body1"
+        >
+          (4B)
+        </Text>
+      </View>
+      <View
+        style={
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 4,
+          }
+        }
+      >
+        <PlatformIcon
+          androidIconName="chat_bubble"
+          color="#7c7c7c"
+          iosIconName="text.bubble"
+          size={12}
+        />
+        <Text
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body2"
+        >
+          Text generation
+        </Text>
+      </View>
       <View
         style={
           {
@@ -723,44 +806,6 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
           }
         }
       >
-        <View
-          style={
-            [
-              {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 2,
-              },
-              {
-                "backgroundColor": "#ebebeb",
-              },
-            ]
-          }
-        >
-          <PlatformIcon
-            androidIconName="layers"
-            color="#7c7c7c"
-            iosIconName="square.stack.3d.up.fill"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            4B
-          </Text>
-        </View>
         <View
           style={
             [
@@ -871,6 +916,12 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
         </View>
       </View>
     </View>
+    <PlatformIcon
+      androidIconName="check_circle"
+      color="#2ec728"
+      iosIconName="checkmark.circle.fill"
+      size={24}
+    />
   </View>
 </View>
 `;
