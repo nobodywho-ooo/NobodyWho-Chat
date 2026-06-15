@@ -95,23 +95,25 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
               pressed && styles.copyButtonPressed,
             ]}
           >
-            <PlatformIcon
-              iosIconName={copied ? 'checkmark' : 'doc.on.doc'}
-              androidIconName={copied ? 'check' : 'content_copy'}
-              size={14}
-              color={accentColor}
-            />
             {!isStreaming && (
-              <Text
-                variant="caption"
-                style={[styles.copyLabel, { color: accentColor }]}
-              >
-                {t(
-                  copied
-                    ? 'components.messageListItem.copied'
-                    : 'components.messageListItem.copy',
-                )}
-              </Text>
+              <>
+                <PlatformIcon
+                  iosIconName={copied ? 'checkmark' : 'doc.on.doc'}
+                  androidIconName={copied ? 'check' : 'content_copy'}
+                  size={14}
+                  color={accentColor}
+                />
+                <Text
+                  variant="caption"
+                  style={[styles.copyLabel, { color: accentColor }]}
+                >
+                  {t(
+                    copied
+                      ? 'components.messageListItem.copied'
+                      : 'components.messageListItem.copy',
+                  )}
+                </Text>
+              </>
             )}
           </Pressable>
           {metrics.length > 0 && (
