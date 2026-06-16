@@ -33,6 +33,10 @@
     "conversationsList": {
       "recent": "Recent",
       "noConversations": "No conversation yet."
+    },
+    "modelCard": {
+      "languageCount_one": "{{count}} language",
+      "languageCount_other": "{{count}} languages"
     }
   },
   "screens": {
@@ -68,7 +72,7 @@
       "modelCount_one": "{{count}} model",
       "modelCount_other": "{{count}} models",
       "downloading": "Downloading...",
-      "availableToDownload": "Available to Download",
+      "availableToDownload": "Available to download",
       "errorCannotGetModelsAtTheMoment": "Cannot get the models at the moment",
       "youHaveDownloadedAllTheModels": "You have downloaded all the models."
     },

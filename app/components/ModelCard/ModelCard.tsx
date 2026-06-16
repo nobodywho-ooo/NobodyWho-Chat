@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
 import { getFamilyIcon } from 'helpers';
 import { Model, ModelPipeline, pipelineLabel } from 'types';
@@ -66,6 +67,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
   onPress,
 }) => {
   const { colors } = useStyled();
+  const { t } = useTranslation();
   const {
     name,
     parameterCountBillions,
@@ -157,7 +159,9 @@ export const ModelCard: React.FC<ModelCardProps> = ({
                 <Tag
                   iosIconName="globe"
                   androidIconName="language"
-                  label={`${languages.length}`}
+                  label={t('components.modelCard.languageCount', {
+                    count: languages.length,
+                  })}
                 />
               )}
               {thinking && (

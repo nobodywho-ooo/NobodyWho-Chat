@@ -109,18 +109,19 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         let chatModelPath: string;
         let projectionModelPath: string | undefined;
 
-        if (__DEV__) {
-          chatModelPath = await getAssetPath(`${model.name}.gguf`);
-        } else {
-          chatModelPath = model.parts.find(part => part.type === 'chat-model')
-            ?.url as string;
+        chatModelPath = model.parts.find(part => part.type === 'chat-model')
+          ?.url as string;
 
-          if (model.pipeline !== ModelPipeline.textGeneration) {
-            projectionModelPath = model.parts.find(
-              part => part.type === 'projection-model',
-            )?.url;
-          }
+        if (model.pipeline !== ModelPipeline.textGeneration) {
+          projectionModelPath = model.parts.find(
+            part => part.type === 'projection-model',
+          )?.url;
         }
+
+        // if (__DEV__) {
+        //   chatModelPath = await getAssetPath(`${model.name}.gguf`);
+        // }
+
         const chat = await Chat.fromPath({
           modelPath: chatModelPath,
           projectionModelPath,
@@ -140,7 +141,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         chatRef.current = chat;
         setState(s => ({ ...s, chatState: AiModelState.Ready }));
       } catch (error) {
-        log('AiService error', error, { capture: true });
+        log('AiService create chat', error, { capture: true });
         setState(s => ({ ...s, chatState: AiModelState.Error }));
         throw error;
       } finally {
@@ -170,7 +171,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         encoderRef.current = encoder;
         setState(s => ({ ...s, encoderState: AiModelState.Ready }));
       } catch (error) {
-        log('AiService error', error, { capture: true });
+        log('AiService createEncoder', error, { capture: true });
         setState(s => ({ ...s, encoderState: AiModelState.Error }));
       } finally {
         inFlight.current.encoder = false;
@@ -195,7 +196,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         crossEncoderRef.current = crossEncoder;
         setState(s => ({ ...s, crossEncoderState: AiModelState.Ready }));
       } catch (error) {
-        log('AiService error', error, { capture: true });
+        log('AiService createCrossEncoder', error, { capture: true });
         setState(s => ({ ...s, crossEncoderState: AiModelState.Error }));
       } finally {
         inFlight.current.crossEncoder = false;

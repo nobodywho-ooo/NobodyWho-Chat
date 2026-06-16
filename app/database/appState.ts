@@ -1,4 +1,4 @@
-import { log } from 'helpers';
+import { haptics, log } from 'helpers';
 import { getStorage } from './storage';
 
 const APP_STATE = 'appState';
@@ -49,6 +49,7 @@ export async function setAppState(patch: Partial<AppState>): Promise<void> {
   _listeners.forEach(listener => {
     try {
       listener(next, prev);
+      haptics.medium();
     } catch (error) {
       log('appState listener error', error, { capture: true});
     }

@@ -33,6 +33,10 @@
     "conversationsList": {
       "recent": "Seneste",
       "noConversations": "Ingen samtaler endnu."
+    },
+    "modelCard": {
+      "languageCount_one": "{{count}} sprog",
+      "languageCount_other": "{{count}} sprog"
     }
   },
   "screens": {

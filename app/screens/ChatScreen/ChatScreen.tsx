@@ -10,7 +10,7 @@ import { DisplayMessage } from 'types';
 import { getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
 import { useAiService } from 'services';
-import { log, isIOS, formatThinkingBlocks, isAndroid } from 'helpers';
+import { log, isIOS, formatThinkingBlocks, isAndroid, haptics } from 'helpers';
 
 import { EmptyChat, InputBar } from './components';
 import styles from './ChatScreen.styles';
@@ -118,6 +118,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       return;
     }
 
+    // TODO: check
     const userMessage: Message = {
       role: 'user',
       content: userInput,
@@ -142,6 +143,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       onConversationCreated(id);
     }
 
+    haptics.light();
     await insertMessage({
       conversationId: id,
       role: 'user',
@@ -200,6 +202,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         documentsPath: [],
         ...metrics,
       });
+      haptics.medium();
     } catch (error) {
       log('ChatScreen generation failed', error);
       const failure = t('screens.chat.generationFailed');

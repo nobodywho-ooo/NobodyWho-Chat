@@ -16,6 +16,7 @@ import {
   releaseModelDownload,
   updateModelDownloadParts,
 } from 'repositories';
+import { getAppState, setAppState } from 'database';
 import { Model, ModelDownload, ModelPart } from 'types';
 import { log } from 'helpers';
 
@@ -123,6 +124,14 @@ export const ModelsScreen: React.FC = () => {
         }),
       );
       await insertModel({ ...model, parts: downloadedParts });
+
+      if (getAppState().modelIdInUse === undefined) {
+        await setAppState({
+          modelIdInUse: model.id,
+          conversationIdInUse: undefined,
+        });
+      }
+
       await deleteModelDownload(model.id);
     } catch (error) {
       log('ModelsScreen runDownload', error);

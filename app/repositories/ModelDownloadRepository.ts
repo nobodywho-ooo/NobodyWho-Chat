@@ -54,13 +54,20 @@ export async function createModelDownload(model: Model): Promise<boolean> {
     ...part,
     progress: 0,
   }));
-  const result = await db.execute(
-    `INSERT INTO model_downloads (model_id, model, parts_progress)
-    VALUES (?, ?, ?)
-    ON CONFLICT(model_id) DO NOTHING`,
-    [model.id, JSON.stringify(model), JSON.stringify(partsProgress)],
-  );
-  return (result.rowsAffected ?? 0) > 0;
+  // A transaction (not a plain execute) so op-sqlite flushes reactive queries
+  // on commit — otherwise the new row never fires `useModelDownloads` and the
+  // Downloading section wouldn't appear.
+  let created = false;
+  await db.transaction(async tx => {
+    const result = await tx.execute(
+      `INSERT INTO model_downloads (model_id, model, parts_progress)
+      VALUES (?, ?, ?)
+      ON CONFLICT(model_id) DO NOTHING`,
+      [model.id, JSON.stringify(model), JSON.stringify(partsProgress)],
+    );
+    created = (result.rowsAffected ?? 0) > 0;
+  });
+  return created;
 }
 
 // Atomically acquires the live-process lock for a download: flips `running`
@@ -92,17 +99,20 @@ export async function clearRunningDownloads(): Promise<void> {
   await db.execute('UPDATE model_downloads SET running = 0');
 }
 
-// High-frequency write: a plain execute (auto-commit) rather than a transaction
-// to keep progress ticks cheap. Callers throttle how often this is called.
+// A transaction (not a plain execute) so op-sqlite flushes reactive queries on
+// commit — this is what advances the progress bar via `useModelDownloads`.
+// Callers throttle how often this runs (~1% steps) to keep it cheap.
 export async function updateModelDownloadParts(
   modelId: number,
   partsProgress: ModelDownloadPart[],
 ): Promise<void> {
   const db = getDatabase();
-  await db.execute(
-    'UPDATE model_downloads SET parts_progress = ? WHERE model_id = ?',
-    [JSON.stringify(partsProgress), modelId],
-  );
+  await db.transaction(async tx => {
+    await tx.execute(
+      'UPDATE model_downloads SET parts_progress = ? WHERE model_id = ?',
+      [JSON.stringify(partsProgress), modelId],
+    );
+  });
 }
 
 export async function getModelDownloads(): Promise<ModelDownload[]> {

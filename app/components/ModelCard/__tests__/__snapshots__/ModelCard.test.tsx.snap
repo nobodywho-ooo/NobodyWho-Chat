@@ -215,7 +215,7 @@ exports[`renders correctly ModelCard 1`] = `
               ]
             }
           >
-            4
+            components.modelCard.languageCount
           </Text>
         </View>
         <View
@@ -515,7 +515,7 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
               ]
             }
           >
-            4
+            components.modelCard.languageCount
           </Text>
         </View>
         <View
@@ -955,7 +955,7 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
               ]
             }
           >
-            4
+            components.modelCard.languageCount
           </Text>
         </View>
         <View
