@@ -13,7 +13,7 @@ const model = buildModel(1, {
     {
       url: 'file://model.gguf',
       fileName: 'model.gguf',
-      type: 'model',
+      type: 'chat-model',
       path: '',
     },
   ],
