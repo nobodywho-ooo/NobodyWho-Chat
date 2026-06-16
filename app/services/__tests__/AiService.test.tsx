@@ -9,12 +9,12 @@ import { AiServiceProvider, useAiService, AiModelState } from '../AiService';
 (globalThis as unknown as { __DEV__: boolean }).__DEV__ = false;
 
 const model = buildModel(1, {
-  downloadLinks: [
+  parts: [
     {
       url: 'file://model.gguf',
       fileName: 'model.gguf',
       type: 'model',
-      modelPath: '',
+      path: '',
     },
   ],
 });

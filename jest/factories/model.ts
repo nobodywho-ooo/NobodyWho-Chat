@@ -13,7 +13,7 @@ export const buildModel = (
   thinking: false,
   imageIngestion: false,
   audioIngestion: false,
-  downloadLinks: [],
+  parts: [],
   pipeline: ModelPipeline.textGeneration,
   tags: [],
   ...overrides,

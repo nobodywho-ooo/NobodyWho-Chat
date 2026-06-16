@@ -7,7 +7,8 @@ import { useAppState, useModels, useStyled } from 'hooks';
 import { filter, find, includes, map, pathEq, prop } from 'ramda';
 import { ErrorView, ListItem, ModelCard, Text } from 'components';
 import { insertModel } from 'repositories';
-import { Model } from 'types';
+import { Model, ModelPart } from 'types';
+import { log } from 'helpers';
 
 import styles from './ModelsScreen.styles';
 
@@ -70,35 +71,46 @@ export const ModelsScreen: React.FC = () => {
   const handleModelPress = useCallback(async (model: Model) => {
     console.log('Model pressed:', model);
 
-    // const downloadLinks = model.downloadLinks;
+    if (model.parts.length !== 0) {
+      try {
+        let parts: ModelPart[] = [];
 
-    // if (downloadLinks.length !== 0) {
-    //   for (let i = 0; i < downloadLinks.length; i++) {
-    //     const downloadLink = downloadLinks[i];
-    //     const modelPath = await downloadModel({
-    //       modelPath: downloadLink.url,
-    //       onDownloadProgress: (downloaded, total) => {
-    //         console.log(`downloaded ${downloaded}`);
-    //         console.log(`total ${total}`);
-    //       },
-    //     });
+        for (let i = 0; i < model.parts.length; i++) {
+          const part = model.parts[i];
+          const path = await downloadModel({
+            modelPath: part.url,
+            onDownloadProgress: (downloaded, total) => {
+              console.log(`downloaded ${downloaded}`);
+              console.log(`total ${total}`);
+            },
+          });
 
-    //     await insertModel({
-    //       id: 0,
-    //       name: 'Qwen3',
-    //       sizeGB: 0.5,
-    //       parameterCountBillions: 0.6,
-    //       author: 'Alibaba Cloud',
-    //       family: 'qwen3',
-    //       thinking: true,
-    //       imageIngestion: false,
-    //       audioIngestion: false,
-    //       downloadLinks: [],
-    //       pipeline: ModelPipeline.textGeneration,
-    //       tags: ['Smart'],
-    //     });
-    //   }
-    // }
+          parts.push({
+            url: part.url,
+            fileName: part.fileName,
+            type: part.type,
+            path,
+          });
+        }
+
+        await insertModel({
+          id: model.id,
+          name: model.name,
+          sizeGB: model.sizeGB,
+          parameterCountBillions: model.parameterCountBillions,
+          author: model.author,
+          family: model.family,
+          thinking: model.thinking,
+          imageIngestion: model.imageIngestion,
+          audioIngestion: model.audioIngestion,
+          parts: parts,
+          pipeline: model.pipeline,
+          tags: model.tags,
+        });
+      } catch (error) {
+        log(`ModelsScreen handleModelPress`, error);
+      }
+    }
   }, []);
 
   return (

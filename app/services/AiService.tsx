@@ -106,23 +106,23 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       try {
         const { model } = opts;
 
-        let modelPath: string;
+        let chatModelPath: string;
         let projectionModelPath: string | undefined;
 
         if (__DEV__) {
-          modelPath = await getAssetPath(`${model.name}.gguf`);
+          chatModelPath = await getAssetPath(`${model.name}.gguf`);
         } else {
-          modelPath = model.downloadLinks.find(link => link.type === 'model')
+          chatModelPath = model.parts.find(part => part.type === 'chat-model')
             ?.url as string;
 
           if (model.pipeline !== ModelPipeline.textGeneration) {
-            projectionModelPath = model.downloadLinks.find(
-              link => link.type === 'projection',
+            projectionModelPath = model.parts.find(
+              part => part.type === 'projection-model',
             )?.url;
           }
         }
         const chat = await Chat.fromPath({
-          modelPath,
+          modelPath: chatModelPath,
           projectionModelPath,
           useGpu: opts?.useGpu ?? true,
           tools: opts?.tools ?? [],

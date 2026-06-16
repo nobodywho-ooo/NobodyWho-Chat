@@ -22,7 +22,7 @@ const rawRow = {
   thinking: 1,
   image_ingestion: 0,
   audio_ingestion: 0,
-  download_links: '[]',
+  parts: '[]',
   pipeline: 'textGeneration',
   tags: '["x"]',
 };
@@ -43,7 +43,7 @@ describe('rowToModel', () => {
       thinking: true,
       imageIngestion: false,
       audioIngestion: false,
-      downloadLinks: [],
+      parts: [],
       pipeline: 'textGeneration',
       tags: ['x'],
     });
@@ -52,11 +52,11 @@ describe('rowToModel', () => {
   test('falls back to empty arrays on corrupt JSON columns', () => {
     const model = rowToModel({
       ...rawRow,
-      download_links: 'not json',
+      parts: 'not json',
       tags: undefined,
     });
 
-    expect(model.downloadLinks).toEqual([]);
+    expect(model.parts).toEqual([]);
     expect(model.tags).toEqual([]);
   });
 });

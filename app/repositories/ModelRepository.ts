@@ -1,6 +1,6 @@
 import { getDatabase } from 'database';
 import { safeJsonParse } from 'helpers';
-import { Model, ModelDownloadLink, ModelPipeline } from 'types';
+import { Model, ModelPart, ModelPipeline } from 'types';
 
 export function rowToModel(row: Record<string, any>): Model {
   return {
@@ -13,7 +13,7 @@ export function rowToModel(row: Record<string, any>): Model {
     thinking: !!(row.thinking as number),
     imageIngestion: !!(row.image_ingestion as number),
     audioIngestion: !!(row.audio_ingestion as number),
-    downloadLinks: safeJsonParse<ModelDownloadLink[]>(row.download_links, []),
+    parts: safeJsonParse<ModelPart[]>(row.parts, []),
     pipeline: row.pipeline as ModelPipeline,
     tags: safeJsonParse<string[]>(row.tags, []),
   };
@@ -41,7 +41,7 @@ export async function insertModel(model: Model): Promise<void> {
   await db.transaction(async tx => {
     await tx.execute(
       `INSERT INTO models
-        (id, name, size_gb, parameter_count_billions, author, family, thinking, image_ingestion, audio_ingestion, download_links, pipeline, tags)
+        (id, name, size_gb, parameter_count_billions, author, family, thinking, image_ingestion, audio_ingestion, parts, pipeline, tags)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name,
@@ -52,7 +52,7 @@ export async function insertModel(model: Model): Promise<void> {
         thinking = excluded.thinking,
         image_ingestion = excluded.image_ingestion,
         audio_ingestion = excluded.audio_ingestion,
-        download_links = excluded.download_links,
+        parts = excluded.parts,
         pipeline = excluded.pipeline,
         tags = excluded.tags`,
       [
@@ -65,7 +65,7 @@ export async function insertModel(model: Model): Promise<void> {
         model.thinking ? 1 : 0,
         model.imageIngestion ? 1 : 0,
         model.audioIngestion ? 1 : 0,
-        JSON.stringify(model.downloadLinks),
+        JSON.stringify(model.parts),
         model.pipeline,
         JSON.stringify(model.tags),
       ],

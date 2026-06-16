@@ -128,38 +128,38 @@ function AppLoader() {
       await hydrateAppState();
 
       // TODO: delete this if when model download is working
-      if (__DEV__) {
-        if ((await getModelById(0)) === undefined) {
-          await insertModel({
-            id: 0,
-            name: 'Qwen3',
-            sizeGB: 0.5,
-            parameterCountBillions: 0.6,
-            author: 'Alibaba Cloud',
-            family: 'qwen3',
-            thinking: true,
-            imageIngestion: false,
-            audioIngestion: false,
-            downloadLinks: [],
-            pipeline: ModelPipeline.textGeneration,
-            tags: ['Smart'],
-          });
-          await insertModel({
-            id: 1,
-            name: 'Bonsai',
-            sizeGB: 0.25,
-            parameterCountBillions: 1.7,
-            author: 'Prism ML',
-            family: 'bonsai',
-            thinking: false,
-            imageIngestion: false,
-            audioIngestion: false,
-            downloadLinks: [],
-            pipeline: ModelPipeline.textGeneration,
-            tags: ['Dense'],
-          });
-        }
-      }
+      // if (__DEV__) {
+      //   if ((await getModelById(0)) === undefined) {
+      //     await insertModel({
+      //       id: 0,
+      //       name: 'Qwen3',
+      //       sizeGB: 0.5,
+      //       parameterCountBillions: 0.6,
+      //       author: 'Alibaba Cloud',
+      //       family: 'qwen3',
+      //       thinking: true,
+      //       imageIngestion: false,
+      //       audioIngestion: false,
+      //       parts: [],
+      //       pipeline: ModelPipeline.textGeneration,
+      //       tags: ['Smart'],
+      //     });
+      //     await insertModel({
+      //       id: 1,
+      //       name: 'Bonsai',
+      //       sizeGB: 0.25,
+      //       parameterCountBillions: 1.7,
+      //       author: 'Prism ML',
+      //       family: 'bonsai',
+      //       thinking: false,
+      //       imageIngestion: false,
+      //       audioIngestion: false,
+      //       parts: [],
+      //       pipeline: ModelPipeline.textGeneration,
+      //       tags: ['Dense'],
+      //     });
+      //   }
+      // }
 
       await dropStaleIdsInUse();
 

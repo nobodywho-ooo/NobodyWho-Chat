@@ -1,8 +1,8 @@
-export interface ModelDownloadLink {
+export interface ModelPart {
   url: string;
   fileName: string;
-  type: string;
-  modelPath: string;
+  type: string; // values: chat-model | projection-model
+  path: string;
 }
 
 export interface Model {
@@ -15,7 +15,7 @@ export interface Model {
   thinking: boolean;
   imageIngestion: boolean;
   audioIngestion: boolean;
-  downloadLinks: ModelDownloadLink[];
+  parts: ModelPart[];
   pipeline: ModelPipeline;
   tags: string[];
 }
