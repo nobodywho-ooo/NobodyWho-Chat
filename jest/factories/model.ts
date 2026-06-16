@@ -16,5 +16,6 @@ export const buildModel = (
   parts: [],
   pipeline: ModelPipeline.textGeneration,
   tags: [],
+  languages: [],
   ...overrides,
 });

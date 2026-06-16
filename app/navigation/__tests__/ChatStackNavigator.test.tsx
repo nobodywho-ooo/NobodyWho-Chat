@@ -110,6 +110,10 @@ test('shows the loading screen while models are still loading', async () => {
 
   expect(screen.queryByText('screens.noModelDownloaded.noModelAvailable')).toBeNull();
   expect(screen.queryByText('screens.noModelSelected.pleaseSelectAModel')).toBeNull();
+
+  // A model is in use, so a session starts asynchronously; flush it so its
+  // state updates are wrapped in act and don't leak past the test.
+  await waitFor(() => expect(mockChatInstance.setChatHistory).toHaveBeenCalled());
 });
 
 test('shows NoModelSelectedScreen and starts no session when no model is in use', () => {

@@ -74,6 +74,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
     tags,
     family,
     thinking,
+    languages,
   } = model;
   const isDownloading = downloadProgress !== undefined;
 
@@ -152,6 +153,13 @@ export const ModelCard: React.FC<ModelCardProps> = ({
                 androidIconName="hard_drive"
                 label={`${sizeGB} GB`}
               />
+              {languages.length > 0 && (
+                <Tag
+                  iosIconName="globe"
+                  androidIconName="language"
+                  label={`${languages.length}`}
+                />
+              )}
               {thinking && (
                 <Tag
                   iosIconName="lightbulb"

@@ -13,7 +13,12 @@ import {
   getAppState,
   setAppState,
 } from 'database';
-import { getConversationById, getModelById, insertModel } from 'repositories';
+import {
+  clearRunningDownloads,
+  getConversationById,
+  getModelById,
+  insertModel,
+} from 'repositories';
 import { ModelPipeline } from 'types';
 import { log } from 'helpers';
 import { useStyled } from 'hooks';
@@ -125,6 +130,7 @@ function AppLoader() {
     setDbReady(false);
     try {
       await initDatabase();
+      await clearRunningDownloads();
       await hydrateAppState();
 
       // TODO: delete this if when model download is working

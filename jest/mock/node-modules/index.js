@@ -65,12 +65,14 @@ jest.mock('@shopify/flash-list', () => ({
 }));
 
 export const mockFromPath = jest.fn();
+export const mockDownloadModel = jest.fn(() => Promise.resolve('file://downloaded.gguf'));
 
 jest.mock('react-native-nobodywho', () => {
   return {
     Chat: { fromPath: (opts) => mockFromPath(opts) },
     Encoder: { fromPath: jest.fn() },
     CrossEncoder: { fromPath: jest.fn() },
+    downloadModel: (opts) => mockDownloadModel(opts),
     ChatMessage: jest.fn(),
     Role: {
       User: 0,

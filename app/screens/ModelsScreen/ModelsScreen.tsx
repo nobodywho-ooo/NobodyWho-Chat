@@ -1,40 +1,64 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView } from 'react-native';
+import { ActivityIndicator, AppState, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { downloadModel } from 'react-native-nobodywho';
-import { useAppState, useModels, useStyled } from 'hooks';
-import { filter, find, includes, map, pathEq, prop } from 'ramda';
+import { useAppState, useModelDownloads, useModels, useStyled } from 'hooks';
+import { find, map, pathEq, prop } from 'ramda';
 import { ErrorView, ListItem, ModelCard, Text } from 'components';
-import { insertModel } from 'repositories';
-import { Model, ModelPart } from 'types';
+import {
+  claimModelDownload,
+  createModelDownload,
+  deleteModelDownload,
+  getModelDownloads,
+  insertModel,
+  modelDownloadProgress,
+  releaseModelDownload,
+  updateModelDownloadParts,
+} from 'repositories';
+import { Model, ModelDownload, ModelPart } from 'types';
 import { log } from 'helpers';
 
 import styles from './ModelsScreen.styles';
 
+const DOWNLOAD_THROTTLE = 0.01; // 1% step
 const MODELS_URL =
   'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/backend.json';
-
-// Placeholder until the download flow lands.
-const MODEL_IDS_DOWNLOADING = [1];
 
 export const ModelsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const navigation = useNavigation();
   const { models: storedModels } = useModels();
+  const { downloads } = useModelDownloads();
   const { modelIdInUse } = useAppState();
   const [models, setModels] = useState<Model[]>([]);
-  const [modelsDownloading, setModelsDownloading] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
   const [hasFetch, setHasFetch] = useState(false);
-  const showModelsToDownload = !isLoading && !hasError && models.length > 0;
 
   const downloadedModelIds = useMemo(
     () => map(prop('id'), storedModels),
     [storedModels],
   );
+
+  const downloadingModelIds = useMemo(
+    () => downloads.map(download => download.model.id),
+    [downloads],
+  );
+
+  const availableModels = useMemo(
+    () =>
+      models.filter(
+        model =>
+          !downloadedModelIds.includes(model.id) &&
+          !downloadingModelIds.includes(model.id),
+      ),
+    [models, downloadedModelIds, downloadingModelIds],
+  );
+
+  const showModelsToDownload =
+    !isLoading && !hasError && availableModels.length > 0;
 
   const fetchModels = useCallback(async () => {
     setIsLoading(true);
@@ -42,22 +66,14 @@ export const ModelsScreen: React.FC = () => {
     try {
       const response = await fetch(MODELS_URL);
       const data: Model[] = await response.json();
-      const isAvailableToDownload = (model: Model) =>
-        !includes(model.id, [...MODEL_IDS_DOWNLOADING, ...downloadedModelIds]);
-
-      setModels(filter(isAvailableToDownload, data));
-
-      const isDownloading = (model: Model) =>
-        includes(model.id, MODEL_IDS_DOWNLOADING);
-
-      setModelsDownloading(filter(isDownloading, data));
+      setModels(data);
     } catch {
       setHasError(true);
     } finally {
       setIsLoading(false);
       setHasFetch(true);
     }
-  }, [downloadedModelIds]);
+  }, []);
 
   const currentModel = useMemo(
     () => find(pathEq(modelIdInUse, ['id']), storedModels),
@@ -68,50 +84,81 @@ export const ModelsScreen: React.FC = () => {
     fetchModels();
   }, [fetchModels]);
 
-  const handleModelPress = useCallback(async (model: Model) => {
-    console.log('Model pressed:', model);
+  const runDownload = useCallback(async (download: ModelDownload) => {
+    const { model } = download;
 
-    if (model.parts.length !== 0) {
-      try {
-        let parts: ModelPart[] = [];
+    const claimed = await claimModelDownload(model.id);
+    if (!claimed) return;
 
-        for (let i = 0; i < model.parts.length; i++) {
-          const part = model.parts[i];
-          const path = await downloadModel({
-            modelPath: part.url,
-            onDownloadProgress: (downloaded, total) => {
-              console.log(`downloaded ${downloaded}`);
-              console.log(`total ${total}`);
-            },
-          });
+    const partsProgress = download.partsProgress.map(part => ({ ...part }));
 
-          parts.push({
-            url: part.url,
-            fileName: part.fileName,
-            type: part.type,
-            path,
-          });
-        }
-
-        await insertModel({
-          id: model.id,
-          name: model.name,
-          sizeGB: model.sizeGB,
-          parameterCountBillions: model.parameterCountBillions,
-          author: model.author,
-          family: model.family,
-          thinking: model.thinking,
-          imageIngestion: model.imageIngestion,
-          audioIngestion: model.audioIngestion,
-          parts: parts,
-          pipeline: model.pipeline,
-          tags: model.tags,
+    try {
+      for (let i = 0; i < partsProgress.length; i++) {
+        const part = partsProgress[i];
+        const path = await downloadModel({
+          modelPath: part.url,
+          onDownloadProgress: (downloaded, total) => {
+            const progress = total > 0 ? downloaded / total : 0;
+            if (
+              progress - partsProgress[i].progress >= DOWNLOAD_THROTTLE ||
+              progress >= 1
+            ) {
+              partsProgress[i] = { ...partsProgress[i], progress };
+              updateModelDownloadParts(model.id, partsProgress).catch(() => {});
+            }
+          },
         });
-      } catch (error) {
-        log(`ModelsScreen handleModelPress`, error);
+
+        partsProgress[i] = { ...partsProgress[i], progress: 1, path };
+        await updateModelDownloadParts(model.id, partsProgress);
       }
+
+      const downloadedParts: ModelPart[] = partsProgress.map(
+        ({ url, fileName, type, path, sizeGB }) => ({
+          url,
+          fileName,
+          type,
+          path,
+          sizeGB,
+        }),
+      );
+      await insertModel({ ...model, parts: downloadedParts });
+      await deleteModelDownload(model.id);
+    } catch (error) {
+      log('ModelsScreen runDownload', error);
+      await releaseModelDownload(model.id);
     }
   }, []);
+
+  const handleModelPress = useCallback(
+    async (model: Model) => {
+      const created = await createModelDownload(model);
+      if (!created) return;
+
+      await runDownload({
+        model,
+        partsProgress: model.parts.map(part => ({ ...part, progress: 0 })),
+      });
+    },
+    [runDownload],
+  );
+
+  useEffect(() => {
+    const resumeDownloads = async () => {
+      try {
+        const pendingDownloads = await getModelDownloads();
+        pendingDownloads.forEach(download => runDownload(download));
+      } catch (error) {
+        log('ModelsScreen resumeDownloads', error);
+      }
+    };
+
+    resumeDownloads();
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') resumeDownloads();
+    });
+    return () => subscription.remove();
+  }, [runDownload]);
 
   return (
     <ScrollView
@@ -147,17 +194,16 @@ export const ModelsScreen: React.FC = () => {
           />
         </>
       )}
-      {modelsDownloading.length > 0 && (
+      {downloads.length > 0 && (
         <>
           <Text variant="h4" style={styles.header}>
             {t('screens.models.downloading')}
           </Text>
-          {modelsDownloading.map(model => (
+          {downloads.map(download => (
             <ModelCard
-              key={model.id}
-              model={model}
-              downloadProgress={0.4}
-              onPress={handleModelPress}
+              key={download.model.id}
+              model={download.model}
+              downloadProgress={modelDownloadProgress(download)}
             />
           ))}
         </>
@@ -179,15 +225,10 @@ export const ModelsScreen: React.FC = () => {
         />
       )}
       {showModelsToDownload &&
-        models.map(model => (
-          <ModelCard
-            key={model.id}
-            model={model}
-            downloadProgress={model.id === 1 ? 0.4 : undefined}
-            onPress={handleModelPress}
-          />
+        availableModels.map(model => (
+          <ModelCard key={model.id} model={model} onPress={handleModelPress} />
         ))}
-      {hasFetch && models.length === 0 && (
+      {hasFetch && availableModels.length === 0 && (
         <Text>{t('screens.models.youHaveDownloadedAllTheModels')}</Text>
       )}
     </ScrollView>

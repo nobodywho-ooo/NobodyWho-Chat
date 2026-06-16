@@ -198,6 +198,44 @@ exports[`renders correctly ModelCard 1`] = `
           }
         >
           <PlatformIcon
+            androidIconName="language"
+            color="#7c7c7c"
+            iosIconName="globe"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            4
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
             androidIconName="lightbulb"
             color="#7c7c7c"
             iosIconName="lightbulb"
@@ -440,6 +478,44 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
             }
           >
             2.5 GB
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="language"
+            color="#7c7c7c"
+            iosIconName="globe"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            4
           </Text>
         </View>
         <View
@@ -842,6 +918,44 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
             }
           >
             2.5 GB
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 2,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="language"
+            color="#7c7c7c"
+            iosIconName="globe"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+          >
+            4
           </Text>
         </View>
         <View

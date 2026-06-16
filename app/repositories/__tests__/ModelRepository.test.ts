@@ -25,6 +25,7 @@ const rawRow = {
   parts: '[]',
   pipeline: 'textGeneration',
   tags: '["x"]',
+  languages: '["English","French"]',
 };
 
 beforeEach(() => {
@@ -46,6 +47,7 @@ describe('rowToModel', () => {
       parts: [],
       pipeline: 'textGeneration',
       tags: ['x'],
+      languages: ['English', 'French'],
     });
   });
 
@@ -101,7 +103,7 @@ describe('insertModel', () => {
 
     expect(db.execute).toHaveBeenCalledWith(
       expect.stringContaining('ON CONFLICT(id) DO UPDATE'),
-      [3, 'Q', 1, 1, 'Author', 'Family', 1, 0, 0, '[]', 'textGeneration', '["fast"]'],
+      [3, 'Q', 1, 1, 'Author', 'Family', 1, 0, 0, '[]', 'textGeneration', '["fast"]', '[]'],
     );
     // Must NOT use INSERT OR REPLACE: with FKs on, REPLACE cascade-deletes the
     // model's conversations and messages.

@@ -45,7 +45,14 @@ const MIGRATIONS: string[][] = [
       audio_ingestion INTEGER DEFAULT 0,
       parts TEXT NOT NULL DEFAULT '[]',
       pipeline TEXT NOT NULL CHECK (pipeline IN (${PIPELINES})),
-      tags TEXT NOT NULL DEFAULT '[]'
+      tags TEXT NOT NULL DEFAULT '[]',
+      languages TEXT NOT NULL DEFAULT '[]'
+    )`,
+    `CREATE TABLE model_downloads (
+      model_id INTEGER PRIMARY KEY,
+      model TEXT NOT NULL,
+      parts_progress TEXT NOT NULL DEFAULT '[]',
+      running INTEGER NOT NULL DEFAULT 0
     )`,
     `CREATE TABLE conversations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

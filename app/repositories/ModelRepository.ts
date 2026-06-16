@@ -16,6 +16,7 @@ export function rowToModel(row: Record<string, any>): Model {
     parts: safeJsonParse<ModelPart[]>(row.parts, []),
     pipeline: row.pipeline as ModelPipeline,
     tags: safeJsonParse<string[]>(row.tags, []),
+    languages: safeJsonParse<string[]>(row.languages, []),
   };
 }
 
@@ -41,8 +42,8 @@ export async function insertModel(model: Model): Promise<void> {
   await db.transaction(async tx => {
     await tx.execute(
       `INSERT INTO models
-        (id, name, size_gb, parameter_count_billions, author, family, thinking, image_ingestion, audio_ingestion, parts, pipeline, tags)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, size_gb, parameter_count_billions, author, family, thinking, image_ingestion, audio_ingestion, parts, pipeline, tags, languages)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name,
         size_gb = excluded.size_gb,
@@ -54,7 +55,8 @@ export async function insertModel(model: Model): Promise<void> {
         audio_ingestion = excluded.audio_ingestion,
         parts = excluded.parts,
         pipeline = excluded.pipeline,
-        tags = excluded.tags`,
+        tags = excluded.tags,
+        languages = excluded.languages`,
       [
         model.id,
         model.name,
@@ -68,6 +70,7 @@ export async function insertModel(model: Model): Promise<void> {
         JSON.stringify(model.parts),
         model.pipeline,
         JSON.stringify(model.tags),
+        JSON.stringify(model.languages),
       ],
     );
   });

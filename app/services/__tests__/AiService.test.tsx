@@ -15,6 +15,7 @@ const model = buildModel(1, {
       fileName: 'model.gguf',
       type: 'chat-model',
       path: '',
+      sizeGB: 1,
     },
   ],
 });

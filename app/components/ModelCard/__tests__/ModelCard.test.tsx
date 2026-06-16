@@ -22,10 +22,12 @@ const mockModel: Model = {
       fileName: 'Qwen_Qwen3-4B-Q4_K_M.gguf',
       type: 'model',
       path: '',
+      sizeGB: 2.5,
     },
   ],
   pipeline: ModelPipeline.textGeneration,
   tags: ['Multilingual'],
+  languages: ['English', 'Arabic', 'Chinese', 'French'],
 };
 
 test('renders correctly ModelCard', () => {
