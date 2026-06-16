@@ -2,12 +2,13 @@ export interface ModelDownloadLink {
   url: string;
   fileName: string;
   type: string;
+  modelPath: string;
 }
 
 export interface Model {
   id: number;
-  modelName: string;
-  modelSizeGB: number;
+  name: string;
+  sizeGB: number;
   parameterCountBillions: number;
   author: string;
   family: string;

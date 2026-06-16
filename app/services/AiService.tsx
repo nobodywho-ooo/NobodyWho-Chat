@@ -110,7 +110,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         let projectionModelPath: string | undefined;
 
         if (__DEV__) {
-          modelPath = await getAssetPath(`${model.modelName}.gguf`);
+          modelPath = await getAssetPath(`${model.name}.gguf`);
         } else {
           modelPath = model.downloadLinks.find(link => link.type === 'model')
             ?.url as string;

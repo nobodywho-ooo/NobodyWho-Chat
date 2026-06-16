@@ -122,7 +122,7 @@ const ChatHeaderTitle = ({ title }: { title: string }) => {
   const { models } = useModels();
 
   const model = models.find(({ id }) => id === modelIdInUse);
-  const modelName = model?.modelName;
+  const modelName = model?.name;
   const parameterCountBillions = model?.parameterCountBillions;
   let parameterCountLabel: string | undefined = '';
 

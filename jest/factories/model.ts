@@ -5,8 +5,8 @@ export const buildModel = (
   overrides: Partial<Model> = {},
 ): Model => ({
   id,
-  modelName: `Model ${id}`,
-  modelSizeGB: 1,
+  name: `Model ${id}`,
+  sizeGB: 1,
   parameterCountBillions: 1,
   author: 'Author',
   family: 'Family',

@@ -280,7 +280,7 @@ export const ChatStackNavigator = () => {
     });
   }, [disposeChat, startSession, refreshChatHistory]);
 
-  const inUseModelName = models.find(m => m.id === modelIdInUse)?.modelName;
+  const inUseModelName = models.find(m => m.id === modelIdInUse)?.name;
   const loadingMessage = inUseModelName
     ? t('screens.loadingScreen.loadingModel', { model: inUseModelName })
     : t('common.loading');

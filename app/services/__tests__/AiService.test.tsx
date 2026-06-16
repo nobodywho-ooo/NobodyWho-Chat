@@ -10,7 +10,12 @@ import { AiServiceProvider, useAiService, AiModelState } from '../AiService';
 
 const model = buildModel(1, {
   downloadLinks: [
-    { url: 'file://model.gguf', fileName: 'model.gguf', type: 'model' },
+    {
+      url: 'file://model.gguf',
+      fileName: 'model.gguf',
+      type: 'model',
+      modelPath: '',
+    },
   ],
 });
 

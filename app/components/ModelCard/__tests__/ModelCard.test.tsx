@@ -8,8 +8,8 @@ jest.unmock('../ModelCard');
 
 const mockModel: Model = {
   id: 1,
-  modelName: 'Qwen3 4B Q4 K M',
-  modelSizeGB: 2.5,
+  name: 'Qwen3 4B Q4 K M',
+  sizeGB: 2.5,
   parameterCountBillions: 4,
   author: 'Qwen',
   family: 'Qwen3',
@@ -21,6 +21,7 @@ const mockModel: Model = {
       url: 'https://huggingface.co/NobodyWho/Qwen_Qwen3-4B-GGUF/resolve/main/Qwen_Qwen3-4B-Q4_K_M.gguf',
       fileName: 'Qwen_Qwen3-4B-Q4_K_M.gguf',
       type: 'model',
+      modelPath: '',
     },
   ],
   pipeline: ModelPipeline.textGeneration,

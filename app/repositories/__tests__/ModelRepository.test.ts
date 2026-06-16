@@ -14,8 +14,8 @@ const db = getDatabase() as any;
 
 const rawRow = {
   id: 1,
-  model_name: 'M',
-  model_size_gb: 0.5,
+  name: 'M',
+  size_gb: 0.5,
   parameter_count_billions: 0.6,
   author: 'A',
   family: 'F',
@@ -35,8 +35,8 @@ describe('rowToModel', () => {
   test('maps booleans from 0/1 and parses JSON columns', () => {
     expect(rowToModel(rawRow)).toEqual({
       id: 1,
-      modelName: 'M',
-      modelSizeGB: 0.5,
+      name: 'M',
+      sizeGB: 0.5,
       parameterCountBillions: 0.6,
       author: 'A',
       family: 'F',
@@ -76,7 +76,7 @@ describe('getModelById', () => {
   test('returns the mapped model when found', async () => {
     db.execute.mockResolvedValue({ rows: [rawRow] });
 
-    expect((await getModelById(1))?.modelName).toBe('M');
+    expect((await getModelById(1))?.name).toBe('M');
     expect(db.execute).toHaveBeenCalledWith(
       'SELECT * FROM models WHERE id = ?',
       [1],
@@ -92,7 +92,7 @@ describe('getModelById', () => {
 describe('insertModel', () => {
   test('upserts via ON CONFLICT and serializes booleans/JSON columns', async () => {
     const model = buildModel(3, {
-      modelName: 'Q',
+      name: 'Q',
       thinking: true,
       tags: ['fast'],
     });

@@ -2,9 +2,11 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
+import { downloadModel } from 'react-native-nobodywho';
 import { useAppState, useModels, useStyled } from 'hooks';
 import { filter, find, includes, map, pathEq, prop } from 'ramda';
 import { ErrorView, ListItem, ModelCard, Text } from 'components';
+import { insertModel } from 'repositories';
 import { Model } from 'types';
 
 import styles from './ModelsScreen.styles';
@@ -65,10 +67,38 @@ export const ModelsScreen: React.FC = () => {
     fetchModels();
   }, [fetchModels]);
 
-  const handleModelPress = useCallback((model: Model) => {
+  const handleModelPress = useCallback(async (model: Model) => {
     console.log('Model pressed:', model);
-    // Start download
-    // Update progress
+
+    // const downloadLinks = model.downloadLinks;
+
+    // if (downloadLinks.length !== 0) {
+    //   for (let i = 0; i < downloadLinks.length; i++) {
+    //     const downloadLink = downloadLinks[i];
+    //     const modelPath = await downloadModel({
+    //       modelPath: downloadLink.url,
+    //       onDownloadProgress: (downloaded, total) => {
+    //         console.log(`downloaded ${downloaded}`);
+    //         console.log(`total ${total}`);
+    //       },
+    //     });
+
+    //     await insertModel({
+    //       id: 0,
+    //       name: 'Qwen3',
+    //       sizeGB: 0.5,
+    //       parameterCountBillions: 0.6,
+    //       author: 'Alibaba Cloud',
+    //       family: 'qwen3',
+    //       thinking: true,
+    //       imageIngestion: false,
+    //       audioIngestion: false,
+    //       downloadLinks: [],
+    //       pipeline: ModelPipeline.textGeneration,
+    //       tags: ['Smart'],
+    //     });
+    //   }
+    // }
   }, []);
 
   return (

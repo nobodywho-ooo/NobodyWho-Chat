@@ -32,7 +32,7 @@
     "react-native-haptic-feedback": "^3.0.0",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-localize": "^3.7.0",
-    "react-native-nobodywho": "2.3.0",
+    "react-native-nobodywho": "^2.3.0",
     "react-native-reanimated": "^4.3.1",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-screens": "^4.25.2",

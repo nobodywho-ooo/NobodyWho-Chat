@@ -67,9 +67,9 @@ export const ModelCard: React.FC<ModelCardProps> = ({
 }) => {
   const { colors } = useStyled();
   const {
-    modelName,
+    name,
     parameterCountBillions,
-    modelSizeGB,
+    sizeGB,
     pipeline,
     tags,
     family,
@@ -100,7 +100,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
     <Pressable
       onPress={handlePress}
       accessibilityRole="button"
-      accessibilityLabel={modelName}
+      accessibilityLabel={name}
       style={({ pressed }) => [{ opacity: pressed ? 0.7 : 1 }, style]}
     >
       <View
@@ -121,7 +121,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
               numberOfLines={1}
               style={styles.modelContainer}
             >
-              {modelName}
+              {name}
             </Text>
             <Text
               variant="body1"
@@ -150,7 +150,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
               <Tag
                 iosIconName="internaldrive"
                 androidIconName="hard_drive"
-                label={`${modelSizeGB} GB`}
+                label={`${sizeGB} GB`}
               />
               {thinking && (
                 <Tag

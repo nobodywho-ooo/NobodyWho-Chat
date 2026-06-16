@@ -5,8 +5,8 @@ import { Model, ModelDownloadLink, ModelPipeline } from 'types';
 export function rowToModel(row: Record<string, any>): Model {
   return {
     id: row.id as number,
-    modelName: row.model_name as string,
-    modelSizeGB: row.model_size_gb as number,
+    name: row.name as string,
+    sizeGB: row.size_gb as number,
     parameterCountBillions: row.parameter_count_billions as number,
     author: row.author as string,
     family: row.family as string,
@@ -41,11 +41,11 @@ export async function insertModel(model: Model): Promise<void> {
   await db.transaction(async tx => {
     await tx.execute(
       `INSERT INTO models
-        (id, model_name, model_size_gb, parameter_count_billions, author, family, thinking, image_ingestion, audio_ingestion, download_links, pipeline, tags)
+        (id, name, size_gb, parameter_count_billions, author, family, thinking, image_ingestion, audio_ingestion, download_links, pipeline, tags)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
-        model_name = excluded.model_name,
-        model_size_gb = excluded.model_size_gb,
+        name = excluded.name,
+        size_gb = excluded.size_gb,
         parameter_count_billions = excluded.parameter_count_billions,
         author = excluded.author,
         family = excluded.family,
@@ -57,8 +57,8 @@ export async function insertModel(model: Model): Promise<void> {
         tags = excluded.tags`,
       [
         model.id,
-        model.modelName,
-        model.modelSizeGB,
+        model.name,
+        model.sizeGB,
         model.parameterCountBillions,
         model.author,
         model.family,

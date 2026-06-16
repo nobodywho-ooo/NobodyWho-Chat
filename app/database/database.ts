@@ -35,8 +35,8 @@ const MIGRATIONS: string[][] = [
   [
     `CREATE TABLE models (
       id INTEGER PRIMARY KEY,
-      model_name TEXT NOT NULL,
-      model_size_gb REAL NOT NULL,
+      name TEXT NOT NULL,
+      size_gb REAL NOT NULL,
       parameter_count_billions REAL NOT NULL,
       author TEXT NOT NULL,
       family TEXT NOT NULL,
