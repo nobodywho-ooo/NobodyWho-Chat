@@ -168,12 +168,20 @@ export const DrawerNavigator = () => {
   const { colors } = useStyled();
   const { conversationIdInUse } = useAppState();
   const { conversations } = useConversations();
+  const { models } = useModels();
 
   const insets = useSafeAreaInsets();
 
   const currentConversationTitle = conversations.find(
     ({ id }) => id === conversationIdInUse,
   )?.title;
+
+  let title: string | undefined =
+    currentConversationTitle ?? t('navigation.newChat');
+
+  if (models.length === 0) {
+    title = undefined;
+  }
 
   return (
     <Drawer.Navigator
@@ -205,7 +213,7 @@ export const DrawerNavigator = () => {
           return {
             headerShown: isIOS || isAtRoot,
             swipeEnabled: isIOS || isAtRoot,
-            title: currentConversationTitle ?? t('navigation.newChat'),
+            title: title,
             headerTitle: renderChatHeaderTitle,
             headerTitleContainerStyle: { marginHorizontal: 8 },
             headerRight:

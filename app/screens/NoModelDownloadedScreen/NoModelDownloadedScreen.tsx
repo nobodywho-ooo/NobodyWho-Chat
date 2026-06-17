@@ -22,8 +22,8 @@ export const NoModelDownloadedScreen: React.FC = () => {
       ]}
     >
       <PlatformIcon
-        iosIconName={'cpu'}
-        androidIconName={'memory'}
+        iosIconName="square.stack.3d.up.fill"
+        androidIconName="layers"
         size={50}
         color={colors.onSurfaceDisabled}
       />

@@ -18,9 +18,9 @@ exports[`renders correctly NoModelDownloadedScreen 1`] = `
   }
 >
   <PlatformIcon
-    androidIconName="memory"
+    androidIconName="layers"
     color="#c1c1c1"
-    iosIconName="cpu"
+    iosIconName="square.stack.3d.up.fill"
     size={50}
   />
   <Text
