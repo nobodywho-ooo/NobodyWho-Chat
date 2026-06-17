@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, View } from 'react-native';
+import { Keyboard, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Message } from 'react-native-nobodywho';
@@ -59,6 +59,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const [conversationId, setConversationId] = useState(initialConversationId);
   const [inputText, setInputText] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const [stableHeight, setStableHeight] = useState(0);
   const [isStreaming, setIsStreaming] = useState(false);
   const { colors } = useStyled();
   const { chat } = useAiService();
@@ -227,16 +229,38 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }
   };
 
-  const bottomOffset = isKeyboardVisible
-    ? keyboardHeight + (isAndroid ? insets.bottom : 0) + INPUT_BAR_PADDING
-    : insets.bottom + INPUT_BAR_PADDING;
+  let bottomOffset: number;
+  if (!isKeyboardVisible) {
+    bottomOffset = insets.bottom + INPUT_BAR_PADDING;
+  } else if (isAndroid) {
+    bottomOffset = INPUT_BAR_PADDING;
+  } else {
+    bottomOffset = keyboardHeight + INPUT_BAR_PADDING;
+  }
 
   const listPaddingBottom = bottomOffset + InputBar.height + INPUT_BAR_PADDING;
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.surface }]}>
+    <View
+      style={[styles.container, { backgroundColor: colors.surface }]}
+      onLayout={e => {
+        if (!isInputFocused && !isKeyboardVisible) {
+          setStableHeight(e.nativeEvent.layout.height);
+        }
+      }}
+    >
+      <Pressable
+        style={styles.dismissOverlay}
+        onPress={Keyboard.dismiss}
+        accessible={false}
+      />
       {messages.length === 0 ? (
-        !isKeyboardVisible && <EmptyChat />
+        !isInputFocused &&
+        stableHeight > 0 && (
+          <View style={[styles.emptyChatContainer, { height: stableHeight }]}>
+            <EmptyChat />
+          </View>
+        )
       ) : (
         <FlashList
           ref={flatListRef}
@@ -255,7 +279,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             />
           )}
           onContentSizeChange={scrollToEnd}
-          keyboardDismissMode="interactive"
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode={isAndroid ? 'on-drag' : 'interactive'}
         />
       )}
       <InputBar
@@ -264,6 +289,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         onChangeText={setInputText}
         onSend={handleSend}
         onStop={stopStreaming}
+        onFocus={() => setIsInputFocused(true)}
+        onBlur={() => setIsInputFocused(false)}
         style={{ paddingBottom: bottomOffset }}
       />
     </View>

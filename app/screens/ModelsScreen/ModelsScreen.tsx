@@ -195,8 +195,8 @@ export const ModelsScreen: React.FC = () => {
             subtitle={t('screens.models.modelCount', {
               count: downloadedModelIds.length,
             })}
-            iosIconName={'cpu'}
-            androidIconName={'memory'}
+            iosIconName={'arrow.down.circle.fill'}
+            androidIconName={'deployed_code_update'}
             iconBackgroundColor={colors.primary}
             // @ts-ignore
             onPress={() => navigation.navigate('DownloadedModelsScreen')}

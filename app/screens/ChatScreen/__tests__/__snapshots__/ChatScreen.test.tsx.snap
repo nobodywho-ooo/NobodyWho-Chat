@@ -2,6 +2,7 @@
 
 exports[`renders ChatScreen with existing messages 1`] = `
 <View
+  onLayout={[Function]}
   style={
     [
       {
@@ -14,6 +15,46 @@ exports[`renders ChatScreen with existing messages 1`] = `
     ]
   }
 >
+  <View
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={false}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "bottom": 0,
+        "left": 0,
+        "position": "absolute",
+        "right": 0,
+        "top": 0,
+      }
+    }
+  />
   <RCTScrollView
     contentContainerStyle={
       [
@@ -41,6 +82,7 @@ exports[`renders ChatScreen with existing messages 1`] = `
     getItemCount={[Function]}
     keyExtractor={[Function]}
     keyboardDismissMode="interactive"
+    keyboardShouldPersistTaps="handled"
     onContentSizeChange={[Function]}
     onLayout={[Function]}
     onMomentumScrollBegin={[Function]}
@@ -192,7 +234,9 @@ exports[`renders ChatScreen with existing messages 1`] = `
   </RCTScrollView>
   <InputBar
     isStreaming={false}
+    onBlur={[Function]}
     onChangeText={[Function]}
+    onFocus={[Function]}
     onSend={[Function]}
     onStop={[Function]}
     style={
@@ -207,6 +251,7 @@ exports[`renders ChatScreen with existing messages 1`] = `
 
 exports[`renders correctly empty ChatScreen 1`] = `
 <View
+  onLayout={[Function]}
   style={
     [
       {
@@ -220,39 +265,97 @@ exports[`renders correctly empty ChatScreen 1`] = `
   }
 >
   <View
-    style={
+    accessibilityState={
       {
-        "alignItems": "center",
-        "alignSelf": "center",
-        "flex": 1,
-        "justifyContent": "center",
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
       }
     }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={false}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      {
+        "bottom": 0,
+        "left": 0,
+        "position": "absolute",
+        "right": 0,
+        "top": 0,
+      }
+    }
+  />
+  <View
+    style={
+      [
+        {
+          "left": 0,
+          "position": "absolute",
+          "right": 0,
+          "top": 0,
+        },
+        {
+          "height": 812,
+        },
+      ]
+    }
   >
-    <PlatformIcon
-      androidIconName="chat_bubble"
-      color="#c1c1c1"
-      iosIconName="bubble.fill"
-      size={48}
-    />
-    <Text
+    <View
       style={
-        [
-          {
-            "paddingTop": 10,
-          },
-          {
-            "color": "#7c7c7c",
-          },
-        ]
+        {
+          "alignItems": "center",
+          "alignSelf": "center",
+          "flex": 1,
+          "justifyContent": "center",
+        }
       }
     >
-      components.emptyChat.startAChat
-    </Text>
+      <PlatformIcon
+        androidIconName="chat_bubble"
+        color="#c1c1c1"
+        iosIconName="bubble.fill"
+        size={48}
+      />
+      <Text
+        style={
+          [
+            {
+              "paddingTop": 10,
+            },
+            {
+              "color": "#7c7c7c",
+            },
+          ]
+        }
+      >
+        components.emptyChat.startAChat
+      </Text>
+    </View>
   </View>
   <InputBar
     isStreaming={false}
+    onBlur={[Function]}
     onChangeText={[Function]}
+    onFocus={[Function]}
     onSend={[Function]}
     onStop={[Function]}
     style={

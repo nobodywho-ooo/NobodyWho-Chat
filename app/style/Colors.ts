@@ -55,7 +55,7 @@ export const lightColors: NWColors = {
 export const darkColors: NWColors = {
   ctaContentPrimary: '#FFFFFF',
   ctaSurfacePrimary: '#628395',
-  ctaSurfacePrimaryDisabled: '#151e24',
+  ctaSurfacePrimaryDisabled: '#2e3234',
   ctaContentSecondary: '#000000',
   ctaSurfaceSecondary: '#FFFFFF',
   ctaContentOutline: '#FFFFFF',
@@ -73,7 +73,7 @@ export const darkColors: NWColors = {
   successSurface: '#2ec728',
   successContent: '#FFFFFF',
   border: '#404040',
-  shadow: 'rgba(244, 244, 244, 0.48)',
+  shadow: 'rgba(43, 43, 43, 0.48)',
   tabBarActive: '#628395',
   tabBarInactive: '#9e9e9e',
 };

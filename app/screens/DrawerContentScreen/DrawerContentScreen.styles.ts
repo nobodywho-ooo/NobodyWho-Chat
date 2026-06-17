@@ -29,7 +29,7 @@ export default StyleSheet.create({
     // TODO: height should be calculated
     height: 140,
   },
-  floatingButtonContainer: {
+  floatingButton: {
     position: 'absolute',
     bottom: Spacings.xxl,
     alignSelf: 'center',

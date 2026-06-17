@@ -30,6 +30,7 @@ test('pressing settings navigates to the SettingsScreen', () => {
 });
 
 test('pressing new chat clears the conversation in use and closes the drawer', () => {
+  mockUseModels.mockReturnValue({ models: [buildModel(1)] });
   const onCloseDrawer = jest.fn();
   const screen = render(<DrawerContentScreen onCloseDrawer={onCloseDrawer} />);
 
@@ -41,6 +42,16 @@ test('pressing new chat clears the conversation in use and closes the drawer', (
     conversationIdInUse: undefined,
   });
   expect(onCloseDrawer).toHaveBeenCalled();
+});
+
+test('hides the new chat button when no model is downloaded', () => {
+  mockUseModels.mockReturnValue({ models: [] });
+
+  const screen = render(<DrawerContentScreen onCloseDrawer={jest.fn()} />);
+
+  expect(
+    screen.UNSAFE_queryByProps({ title: 'screens.drawerContent.newChat' }),
+  ).toBeNull();
 });
 
 test('hides the change model button with fewer than 2 downloaded models', () => {

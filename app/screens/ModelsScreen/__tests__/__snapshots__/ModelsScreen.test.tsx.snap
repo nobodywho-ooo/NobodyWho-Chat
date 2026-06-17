@@ -20,7 +20,8 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
     <Text
       style={
         {
-          "marginVertical": 16,
+          "marginVertical": 12,
+          "paddingTop": 16,
         }
       }
       variant="h4"
@@ -112,7 +113,8 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
     <Text
       style={
         {
-          "marginVertical": 16,
+          "marginVertical": 12,
+          "paddingTop": 16,
         }
       }
       variant="h4"
@@ -120,9 +122,9 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
       screens.models.readyToUse
     </Text>
     <ListItem
-      androidIconName="memory"
+      androidIconName="deployed_code_update"
       iconBackgroundColor="#628395"
-      iosIconName="cpu"
+      iosIconName="arrow.down.circle.fill"
       onPress={[Function]}
       subtitle="screens.models.modelCount"
       title="screens.models.downloaded"
@@ -130,7 +132,8 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
     <Text
       style={
         {
-          "marginVertical": 16,
+          "marginVertical": 12,
+          "paddingTop": 16,
         }
       }
       variant="h4"
@@ -222,7 +225,8 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
     <Text
       style={
         {
-          "marginVertical": 16,
+          "marginVertical": 12,
+          "paddingTop": 16,
         }
       }
       variant="h4"
@@ -230,9 +234,9 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
       screens.models.readyToUse
     </Text>
     <ListItem
-      androidIconName="memory"
+      androidIconName="deployed_code_update"
       iconBackgroundColor="#628395"
-      iosIconName="cpu"
+      iosIconName="arrow.down.circle.fill"
       onPress={[Function]}
       subtitle="screens.models.modelCount"
       title="screens.models.downloaded"
@@ -240,7 +244,8 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
     <Text
       style={
         {
-          "marginVertical": 16,
+          "marginVertical": 12,
+          "paddingTop": 16,
         }
       }
       variant="h4"

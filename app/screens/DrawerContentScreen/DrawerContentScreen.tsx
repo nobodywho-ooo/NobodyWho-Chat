@@ -87,14 +87,15 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         style={styles.bottomGradient}
       />
 
-      <View style={styles.floatingButtonContainer}>
+      {models.length >= 1 && (
         <Button
           title={t('screens.drawerContent.newChat')}
           variant="secondary"
           icon={{ iosIconName: 'plus.bubble', androidIconName: 'add_comment' }}
           onPress={handleNewChatPress}
+          style={styles.floatingButton}
         />
-      </View>
+      )}
     </View>
   );
 };

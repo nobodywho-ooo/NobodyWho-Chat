@@ -4,10 +4,11 @@ import { Message } from 'react-native-nobodywho';
 
 import { MessageListItem } from 'components';
 import { AiServiceProvider } from 'services';
+import { fireContainerLayout } from 'jest/layout';
 import { ChatScreen } from '../ChatScreen';
 
 test('renders correctly empty ChatScreen', () => {
-  const tree = render(
+  const screen = render(
     <AiServiceProvider>
       <ChatScreen
         conversationId={undefined}
@@ -15,8 +16,10 @@ test('renders correctly empty ChatScreen', () => {
         onConversationCreated={jest.fn()}
       />
     </AiServiceProvider>,
-  ).toJSON();
-  expect(tree).toMatchSnapshot();
+  );
+  // The empty state only mounts once the container has measured its height.
+  fireContainerLayout(screen);
+  expect(screen.toJSON()).toMatchSnapshot();
 });
 
 test('renders ChatScreen with existing messages', () => {

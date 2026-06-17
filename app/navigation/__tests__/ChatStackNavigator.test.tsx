@@ -3,6 +3,7 @@ import { render, act, waitFor } from '@testing-library/react-native';
 
 import { mockUseModels } from 'jest/mock/hooks';
 import { buildModel } from 'jest/factories/model';
+import { fireContainerLayout } from 'jest/layout';
 import { getAppState, setAppState } from 'database';
 import { InputBar } from '../../screens/ChatScreen/components/InputBar/InputBar';
 import {
@@ -90,6 +91,15 @@ beforeEach(async () => {
   });
 });
 
+// The empty chat is gated on a measured container height; jsdom never lays out,
+// so wait for the chat screen to mount, fire its layout, then confirm the empty
+// state is visible.
+const showEmptyChat = (screen: ReturnType<typeof render>) =>
+  waitFor(() => {
+    fireContainerLayout(screen);
+    expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy();
+  });
+
 test('shows NoModelDownloadedScreen when no model is downloaded', () => {
   mockUseModels.mockReturnValue({ models: [], loading: false });
 
@@ -130,9 +140,7 @@ test('mounts the in-use model and shows the empty chat', async () => {
 
   const screen = render(<ChatStackNavigator />);
 
-  await waitFor(() =>
-    expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy(),
-  );
+  await showEmptyChat(screen);
   expect(mockCreateChat).toHaveBeenCalledWith({ model: buildModel(0) });
   expect(mockChatInstance.setChatHistory).toHaveBeenCalledWith([]);
 });
@@ -154,9 +162,7 @@ test('disposes and rebuilds the chat when the in-use model changes', async () =>
   mockGetModelById.mockImplementation(async (id: number) => buildModel(id));
 
   const screen = render(<ChatStackNavigator />);
-  await waitFor(() =>
-    expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy(),
-  );
+  await showEmptyChat(screen);
 
   await act(async () => {
     await setAppState({ modelIdInUse: 1, conversationIdInUse: undefined });
@@ -207,9 +213,7 @@ test('reloads only the history when the in-use conversation changes', async () =
   await setAppState({ modelIdInUse: 0 });
 
   const screen = render(<ChatStackNavigator />);
-  await waitFor(() =>
-    expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy(),
-  );
+  await showEmptyChat(screen);
 
   mockGetConversationById.mockResolvedValue({
     id: 5,
@@ -233,9 +237,7 @@ test('switching conversations keeps the chat screen mounted (no loading flash)',
   await setAppState({ modelIdInUse: 0 });
 
   const screen = render(<ChatStackNavigator />);
-  await waitFor(() =>
-    expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy(),
-  );
+  await showEmptyChat(screen);
 
   mockGetConversationById.mockResolvedValue({
     id: 5,
@@ -276,9 +278,7 @@ test('sending the first message persists in use without reloading the chat', asy
   await setAppState({ modelIdInUse: 0 });
 
   const screen = render(<ChatStackNavigator />);
-  await waitFor(() =>
-    expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy(),
-  );
+  await showEmptyChat(screen);
   // Only the initial empty load so far.
   expect(mockChatInstance.setChatHistory).toHaveBeenCalledTimes(1);
 
@@ -323,7 +323,5 @@ test('clearing the conversation after a load error reloads and recovers', async 
     await setAppState({ conversationIdInUse: undefined });
   });
 
-  await waitFor(() =>
-    expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy(),
-  );
+  await showEmptyChat(screen);
 });

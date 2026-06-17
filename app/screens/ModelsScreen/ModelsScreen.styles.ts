@@ -10,7 +10,8 @@ export default StyleSheet.create({
     marginBottom: Spacings.lg,
   },
   header: {
-    marginVertical: Spacings.lg,
+    paddingTop: Spacings.lg,
+    marginVertical: Spacings.md,
   },
   loader: {
     marginTop: Spacings.lg,

@@ -146,34 +146,5 @@ exports[`renders correctly DrawerContentScreen 1`] = `
       }
     }
   />
-  <View
-    style={
-      {
-        "alignSelf": "center",
-        "bottom": 32,
-        "elevation": 8,
-        "position": "absolute",
-        "shadowColor": "#000000",
-        "shadowOffset": {
-          "height": 4,
-          "width": 0,
-        },
-        "shadowOpacity": 0.4,
-        "shadowRadius": 8,
-      }
-    }
-  >
-    <Button
-      icon={
-        {
-          "androidIconName": "add_comment",
-          "iosIconName": "plus.bubble",
-        }
-      }
-      onPress={[Function]}
-      title="screens.drawerContent.newChat"
-      variant="secondary"
-    />
-  </View>
 </View>
 `;

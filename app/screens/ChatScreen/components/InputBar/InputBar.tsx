@@ -20,6 +20,8 @@ interface InputBarProps {
   onChangeText: (text: string) => void;
   onSend: () => void;
   onStop: () => void;
+  onFocus?: () => void;
+  onBlur?: () => void;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -29,6 +31,8 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   onChangeText,
   onSend,
   onStop,
+  onFocus,
+  onBlur,
   style,
 }) => {
   const { t } = useTranslation();
@@ -63,6 +67,8 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
           placeholderTextColor="#999"
           value={value}
           onChangeText={onChangeText}
+          onFocus={onFocus}
+          onBlur={onBlur}
           multiline
         />
         <InputBarAction
