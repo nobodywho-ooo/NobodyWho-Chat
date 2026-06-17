@@ -84,7 +84,8 @@
       "generationFailed": "Noget gik galt under genereringen af et svar."
     },
     "loadingScreen": {
-      "loadingModel": "Indlæser {{model}}…"
+      "loadingModel": "Indlæser {{model}}…",
+      "loadingApp": "Appen indlæses"
     }
   }
 }

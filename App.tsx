@@ -17,14 +17,13 @@ import {
   clearRunningDownloads,
   getConversationById,
   getModelById,
-  insertModel,
 } from 'repositories';
-import { ModelPipeline } from 'types';
 import { log } from 'helpers';
 import { useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
 import { DrawerNavigator } from 'navigation';
+import { useTranslation } from 'react-i18next';
 
 Sentry.init({
   dsn: 'https://5901cf2e433ebe444dd4dc9f8aebc790@o4511569171709952.ingest.de.sentry.io/4511569173217360',
@@ -124,6 +123,7 @@ async function dropStaleIdsInUse(): Promise<void> {
 function AppLoader() {
   const [dbReady, setDbReady] = useState(false);
   const [dbError, setDbError] = useState(false);
+  const { t } = useTranslation();
 
   const init = useCallback(async () => {
     setDbError(false);
@@ -182,7 +182,8 @@ function AppLoader() {
   }, [init]);
 
   if (dbError) return <ErrorScreen onRetry={init} />;
-  if (!dbReady) return <LoadingScreen />;
+  if (!dbReady)
+    return <LoadingScreen message={t('screens.loadingScreen.loadingApp')} />;
 
   return (
     <AiServiceProvider>

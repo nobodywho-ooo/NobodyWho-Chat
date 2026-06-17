@@ -13,11 +13,13 @@ NobodyWho Chat is designed to be private by default: your conversations run enti
 
 **Models.** When you choose to download a model, the App retrieves it from a third-party model provider. That request includes technical information (such as your IP address) which is handled by the provider under its own privacy policy.
 
-**Diagnostics.** The App does not include third-party analytics or advertising SDKs, and it does not track you across other apps or websites.
+**Crash reports.** The App uses [Sentry](https://sentry.io) to collect anonymous crash and error reports. If the App crashes or encounters an unexpected error, Sentry automatically sends a report containing technical information such as the device model, operating system version, app version, and a stack trace identifying where the error occurred. This data does not include your conversations, prompts, or any content you have entered into the App. Sentry processes this data on our behalf under a data-processing agreement and in accordance with its own [Privacy Policy](https://sentry.io/privacy/). You can review Sentry's data practices at sentry.io/privacy.
+
+**Analytics and advertising.** The App does not include advertising SDKs and does not track you across other apps or websites.
 
 ## 2. How We Use Information
 
-Because your conversations never leave your device, we do not use them for any purpose. Network requests are limited to downloading the models you explicitly request.
+Because your conversations never leave your device, we do not use them for any purpose. Crash report data is used solely to identify and fix bugs and improve the stability of the App. Network requests are limited to downloading the models you explicitly request and sending crash reports when an error occurs.
 
 ## 3. Data Storage and Security
 
@@ -25,7 +27,7 @@ Conversations, settings, and downloaded models are stored locally on your device
 
 ## 4. Data Sharing
 
-We do not sell or share your personal data. We do not have access to your conversation data and therefore cannot disclose it to anyone.
+We do not sell your personal data. We do not have access to your conversation data and therefore cannot disclose it to anyone. Anonymous crash report data is shared with Sentry, Inc. solely for the purpose of bug detection and app stability. No conversation content is included in these reports.
 
 ## 5. Children's Privacy
 
@@ -47,7 +49,7 @@ NobodyWho ApS
 CVR-nr. 46025350
 Email: contact@nobodywho.ooo
 
-_Last updated: 11 June 2026_
+_Last updated: 17 June 2026_
 `;
 
 export const PrivacyPolicyScreen: React.FC = () => {

@@ -8,7 +8,7 @@ import React, {
   useState,
 } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Pressable } from 'react-native';
+import { AppState, AppStateStatus, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { ChatMessage, DisplayMessage } from 'types';
 import { getAppState, setAppState, subscribeAppState } from 'database';
@@ -279,6 +279,27 @@ export const ChatStackNavigator = () => {
       }
     });
   }, [disposeChat, startSession, refreshChatHistory]);
+
+  const unloadedForBackground = useRef(false);
+  useEffect(() => {
+    const subscription = AppState.addEventListener(
+      'change',
+      (nextState: AppStateStatus) => {
+        if (nextState === 'background') {
+          if (getAppState().modelIdInUse !== undefined) {
+            disposeChat();
+            unloadedForBackground.current = true;
+          }
+        } else if (nextState === 'active' && unloadedForBackground.current) {
+          unloadedForBackground.current = false;
+          if (getAppState().modelIdInUse !== undefined) {
+            startSession();
+          }
+        }
+      },
+    );
+    return () => subscription.remove();
+  }, [disposeChat, startSession]);
 
   const inUseModelName = models.find(m => m.id === modelIdInUse)?.name;
   const loadingMessage = inUseModelName

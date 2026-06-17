@@ -1,4 +1,5 @@
 import React from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import { render, act, waitFor } from '@testing-library/react-native';
 
 import { mockUseModels } from 'jest/mock/hooks';
@@ -68,7 +69,16 @@ const mockGetMessagesByConversationId =
 const mockInsertConversation = insertConversation as jest.Mock;
 const mockInsertMessage = insertMessage as jest.Mock;
 
+// Captures the handler the navigator registers so tests can drive OS
+// background/foreground transitions directly.
+let appStateHandler: (state: AppStateStatus) => void = () => {};
+
 beforeEach(async () => {
+  appStateHandler = () => {};
+  jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, handler) => {
+    appStateHandler = handler as (state: AppStateStatus) => void;
+    return { remove: jest.fn() } as never;
+  });
   mockUseModels.mockReturnValue({ models: [buildModel(0)], loading: false });
   mockChatRef.current = undefined;
   mockCreateChat.mockClear();
@@ -324,4 +334,60 @@ test('clearing the conversation after a load error reloads and recovers', async 
   });
 
   await showEmptyChat(screen);
+});
+
+test('unloads the chat on background and rebuilds it on foreground', async () => {
+  await setAppState({ modelIdInUse: 0 });
+
+  const screen = render(<ChatStackNavigator />);
+  await showEmptyChat(screen);
+  expect(mockCreateChat).toHaveBeenCalledTimes(1);
+
+  // Backgrounding frees the native model.
+  await act(async () => {
+    appStateHandler('background');
+  });
+  expect(mockDisposeChat).toHaveBeenCalledTimes(1);
+
+  // Returning to the foreground rebuilds the model + history from scratch.
+  await act(async () => {
+    appStateHandler('active');
+  });
+  await waitFor(() => expect(mockCreateChat).toHaveBeenCalledTimes(2));
+});
+
+test('does not unload on the transient inactive state', async () => {
+  await setAppState({ modelIdInUse: 0 });
+
+  const screen = render(<ChatStackNavigator />);
+  await showEmptyChat(screen);
+
+  // iOS emits 'inactive' for Control Center / app switcher / Face ID — the
+  // model must stay resident, and a following 'active' must not rebuild it.
+  await act(async () => {
+    appStateHandler('inactive');
+  });
+  await act(async () => {
+    appStateHandler('active');
+  });
+
+  expect(mockDisposeChat).not.toHaveBeenCalled();
+  expect(mockCreateChat).toHaveBeenCalledTimes(1);
+});
+
+test('does not unload on background when no model is in use', async () => {
+  const screen = render(<ChatStackNavigator />);
+  expect(
+    screen.getByText('screens.noModelSelected.pleaseSelectAModel'),
+  ).toBeTruthy();
+
+  await act(async () => {
+    appStateHandler('background');
+  });
+  await act(async () => {
+    appStateHandler('active');
+  });
+
+  expect(mockDisposeChat).not.toHaveBeenCalled();
+  expect(mockCreateChat).not.toHaveBeenCalled();
 });
