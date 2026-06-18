@@ -43,6 +43,7 @@ const MIGRATIONS: string[][] = [
       thinking INTEGER DEFAULT 0,
       image_ingestion INTEGER DEFAULT 0,
       audio_ingestion INTEGER DEFAULT 0,
+      huggingface_url TEXT NOT NULL DEFAULT '',
       parts TEXT NOT NULL DEFAULT '[]',
       pipeline TEXT NOT NULL CHECK (pipeline IN (${PIPELINES})),
       tags TEXT NOT NULL DEFAULT '[]',

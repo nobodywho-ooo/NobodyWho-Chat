@@ -16,6 +16,7 @@ export interface Model {
   thinking: boolean;
   imageIngestion: boolean;
   audioIngestion: boolean;
+  huggingfaceUrl: string;
   parts: ModelPart[];
   pipeline: ModelPipeline;
   tags: string[];

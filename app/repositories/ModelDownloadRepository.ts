@@ -15,6 +15,7 @@ const EMPTY_MODEL: Model = {
   thinking: false,
   imageIngestion: false,
   audioIngestion: false,
+  huggingfaceUrl: '',
   parts: [],
   pipeline: ModelPipeline.textGeneration,
   tags: [],

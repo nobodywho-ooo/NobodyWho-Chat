@@ -16,6 +16,7 @@ const mockModel: Model = {
   thinking: true,
   imageIngestion: false,
   audioIngestion: false,
+  huggingfaceUrl: 'https://huggingface.co/Qwen/Qwen3-4B-GGUF',
   parts: [
     {
       url: 'https://huggingface.co/NobodyWho/Qwen_Qwen3-4B-GGUF/resolve/main/Qwen_Qwen3-4B-Q4_K_M.gguf',

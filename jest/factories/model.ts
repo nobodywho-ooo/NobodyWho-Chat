@@ -13,6 +13,7 @@ export const buildModel = (
   thinking: false,
   imageIngestion: false,
   audioIngestion: false,
+  huggingfaceUrl: `https://huggingface.co/test/model-${id}`,
   parts: [],
   pipeline: ModelPipeline.textGeneration,
   tags: [],
