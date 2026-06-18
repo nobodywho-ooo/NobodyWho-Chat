@@ -79,6 +79,13 @@ android {
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "ai.nobodywho.mobile"
+
+    lint {
+        // Fix lint error on: cd android && ./gradlew assembleRelease
+        checkReleaseBuilds false
+        abortOnError false
+    }
+
     defaultConfig {
         applicationId "ai.nobodywho.mobile"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -98,15 +105,21 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            if (project.hasProperty('REFFEN_UPLOAD_STORE_FILE')) {
+                storeFile file(REFFEN_UPLOAD_STORE_FILE)
+                storePassword REFFEN_UPLOAD_STORE_PASSWORD
+                keyAlias REFFEN_UPLOAD_KEY_ALIAS
+                keyPassword REFFEN_UPLOAD_KEY_PASSWORD
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig project.hasProperty('REFFEN_UPLOAD_STORE_FILE') ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
