@@ -198,8 +198,10 @@ export const ModelsScreen: React.FC = () => {
             iosIconName={'arrow.down.circle.fill'}
             androidIconName={'deployed_code_update'}
             iconBackgroundColor={colors.primary}
-            // @ts-ignore
-            onPress={() => navigation.navigate('DownloadedModelsScreen')}
+            onPress={() =>
+              // @ts-ignore
+              navigation.navigate('DownloadedModelsScreen', { canDelete: true })
+            }
           />
         </>
       )}

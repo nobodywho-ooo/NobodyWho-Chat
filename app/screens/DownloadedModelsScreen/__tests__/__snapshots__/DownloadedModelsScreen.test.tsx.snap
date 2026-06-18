@@ -20,10 +20,6 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
   >
     screens.downloadedModels.noModelDownloaded
   </Text>
-  <Button
-    onPress={[Function]}
-    title="screens.downloadedModels.downloadAModel"
-  />
 </View>
 `;
 
@@ -45,6 +41,7 @@ exports[`renders downloaded models with one selected 1`] = `
 >
   <View>
     <ModelCard
+      deleteMode={false}
       isDownloaded={true}
       isSelected={false}
       model={
@@ -67,6 +64,7 @@ exports[`renders downloaded models with one selected 1`] = `
       onPress={[Function]}
     />
     <ModelCard
+      deleteMode={false}
       isDownloaded={true}
       isSelected={true}
       model={

@@ -78,7 +78,9 @@
     },
     "downloadedModels": {
       "noModelDownloaded": "No model downloaded",
-      "downloadAModel": "Download a model"
+      "deleteConfirmTitle": "Delete model?",
+      "deleteConfirmMessage": "“{{model}}” and all its conversations will be permanently deleted. This cannot be undone.",
+      "delete": "Delete"
     },
     "chat": {
       "generationFailed": "Something went wrong while generating a response."

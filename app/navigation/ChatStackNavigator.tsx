@@ -381,11 +381,10 @@ export const ChatStackNavigator = () => {
         <Stack.Screen
           name="DownloadedModelsScreen"
           component={DownloadedModelsScreen}
-          options={({ navigation }) => ({
-            title: t('navigation.downloadModels'),
+          options={{
+            title: '',
             presentation: 'modal',
-            headerRight: () => renderCloseButton(navigation),
-          })}
+          }}
         />
         <Stack.Screen
           name="TermsScreen"

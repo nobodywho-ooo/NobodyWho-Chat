@@ -37,6 +37,7 @@ jest.mock('@dr.pogodin/react-native-fs', () => {
   return {
     copyFile: jest.fn(),
     exists: jest.fn(),
+    unlink: jest.fn(),
     copyFileAssets: jest.fn(),
     MainBundlePath: jest.fn(),
     DocumentDirectoryPath: jest.fn(),
@@ -164,11 +165,17 @@ jest.mock("@react-navigation/drawer", () => {
 
 export const mockNavigate = jest.fn();
 export const mockGoBack = jest.fn();
+export const mockSetOptions = jest.fn();
+export const mockUseRoute = jest.fn(() => ({}));
 
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({ navigate: mockNavigate, goBack: mockGoBack }),
+  useNavigation: () => ({
+    navigate: mockNavigate,
+    goBack: mockGoBack,
+    setOptions: mockSetOptions,
+  }),
   getFocusedRouteNameFromRoute: jest.fn(() => 'ChatScreen'),
-  useRoute: () => ({}),
+  useRoute: () => mockUseRoute(),
   SFSymbol: 'SFSymbol',
   MaterialSymbol: 'MaterialSymbol',
 }));

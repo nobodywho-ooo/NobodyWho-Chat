@@ -53,6 +53,7 @@ interface ModelCardProps {
   style?: StyleProp<ViewStyle>;
   isSelected?: boolean;
   isDownloaded?: boolean;
+  deleteMode?: boolean;
   model: Model;
   downloadProgress?: number;
   onPress?: (model: Model) => void;
@@ -62,6 +63,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
   style,
   isSelected,
   isDownloaded,
+  deleteMode,
   model,
   downloadProgress,
   onPress,
@@ -81,7 +83,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
   const isDownloading = downloadProgress !== undefined;
 
   const FamilyIcon = getFamilyIcon(family);
-  const showDownloadIcon = !isDownloaded && !isSelected;
+  const showDownloadIcon = !isDownloaded && !isSelected && !deleteMode;
 
   const handlePress = useCallback(() => {
     onPress?.(model);
@@ -178,7 +180,15 @@ export const ModelCard: React.FC<ModelCardProps> = ({
           )}
         </View>
 
-        {isSelected && (
+        {deleteMode && (
+          <PlatformIcon
+            iosIconName="trash"
+            androidIconName="delete"
+            size={24}
+            color={colors.dangerSurface}
+          />
+        )}
+        {!deleteMode && isSelected && (
           <PlatformIcon
             iosIconName="checkmark.circle.fill"
             androidIconName="check_circle"

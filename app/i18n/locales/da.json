@@ -78,7 +78,9 @@
     },
     "downloadedModels": {
       "noModelDownloaded": "Ingen model downloadet",
-      "downloadAModel": "Download en model"
+      "deleteConfirmTitle": "Slet model?",
+      "deleteConfirmMessage": "“{{model}}” og alle dens samtaler slettes permanent. Dette kan ikke fortrydes.",
+      "delete": "Slet"
     },
     "chat": {
       "generationFailed": "Noget gik galt under genereringen af et svar."

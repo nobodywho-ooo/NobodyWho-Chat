@@ -37,8 +37,9 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
   }, [navigation]);
 
   const handleChangeModelPress = useCallback(() => {
+    // Switching models only — deletion is disabled from this entry point.
     // @ts-ignore
-    navigation.navigate('DownloadedModelsScreen');
+    navigation.navigate('DownloadedModelsScreen', { canDelete: false });
   }, [navigation]);
 
   const handleNewChatPress = useCallback(() => {

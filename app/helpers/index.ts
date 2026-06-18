@@ -8,10 +8,12 @@ import { formatThinkingBlocks, stripThinkingBlocks } from './thinking';
 import { haptics } from './haptics';
 import { getFamilyIcon } from './familyIcon';
 import { copyToClipboard } from './clipboard';
+import { deleteModelFiles } from './modelFiles';
 
 export {
   getFamilyIcon,
   getAssetPath,
+  deleteModelFiles,
   isIOS,
   isAndroid,
   getIOSVersion,

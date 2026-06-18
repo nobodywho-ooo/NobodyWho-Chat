@@ -13,5 +13,11 @@ export default StyleSheet.create({
   },
   noModelContainerText: {
     paddingBottom: Spacings.lg,
-  }
+  },
+  headerActionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.xl,
+    paddingHorizontal: Spacings.lg,
+  },
 });

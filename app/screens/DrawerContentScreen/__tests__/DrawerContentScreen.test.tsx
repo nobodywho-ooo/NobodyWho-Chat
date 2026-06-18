@@ -71,5 +71,7 @@ test('pressing change model navigates to the DownloadedModelsScreen when 2+ mode
 
   fireEvent.press(screen.getByText('screens.drawerContent.changeModel'));
 
-  expect(mockNavigate).toHaveBeenCalledWith('DownloadedModelsScreen');
+  expect(mockNavigate).toHaveBeenCalledWith('DownloadedModelsScreen', {
+    canDelete: false,
+  });
 });
