@@ -57,7 +57,7 @@ These Terms are governed by the laws of Denmark, without regard to its conflict-
 
 NobodyWho ApS
 CVR-nr. 46025350
-Email: contact@nobodywho.ooo
+Email: info@nobodywho.ai
 
 _Last updated: 11 June 2026_
 `;

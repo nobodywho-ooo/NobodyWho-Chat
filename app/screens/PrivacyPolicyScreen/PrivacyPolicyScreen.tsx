@@ -47,7 +47,7 @@ If you have questions about this Privacy Policy, please contact:
 
 NobodyWho ApS
 CVR-nr. 46025350
-Email: contact@nobodywho.ooo
+Email: info@nobodywho.ai
 
 _Last updated: 17 June 2026_
 `;
