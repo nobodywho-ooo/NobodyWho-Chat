@@ -2,6 +2,8 @@ import React from 'react';
 import { Alert } from 'react-native';
 import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
 
+import { getDocumentPathsByModelId } from 'repositories';
+import { deleteMessageDocuments } from 'helpers';
 import { mockSetAppState } from 'jest/mock/database';
 import { mockUseAppState, mockUseModels } from 'jest/mock/hooks';
 import { mockGoBack, mockSetOptions, mockUseRoute } from 'jest/mock/node-modules';
@@ -16,6 +18,20 @@ const mockChat = { current: { stopGeneration: mockStopGeneration } };
 jest.mock('services', () => ({
   useAiService: () => ({ chat: mockChat }),
 }));
+
+// Deleting a model also clears any message attachments that belonged to its
+// conversations. Stub the lookup + delete so the cleanup wiring can be asserted
+// (the underlying query/fs behaviour is covered in their own unit tests).
+jest.mock('repositories', () => ({
+  ...jest.requireActual('repositories'),
+  getDocumentPathsByModelId: jest.fn(),
+}));
+jest.mock('helpers', () => ({
+  ...jest.requireActual('helpers'),
+  deleteMessageDocuments: jest.fn(),
+}));
+const mockGetDocumentPaths = getDocumentPathsByModelId as jest.Mock;
+const mockDeleteMessageDocuments = deleteMessageDocuments as jest.Mock;
 
 const headerToggle = () => {
   const headerRight = mockSetOptions.mock.calls.at(-1)![0].headerRight;
@@ -34,6 +50,8 @@ beforeEach(() => {
   mockStopGeneration.mockClear();
   mockGoBack.mockClear();
   mockChat.current = { stopGeneration: mockStopGeneration };
+  mockGetDocumentPaths.mockReset().mockResolvedValue([]);
+  mockDeleteMessageDocuments.mockReset().mockResolvedValue(undefined);
 });
 
 test('renders correctly ModelsScreen when empty', () => {
@@ -84,6 +102,7 @@ test('delete mode: confirming the alert deletes the in-use model and clears it f
   const models = [buildModel(1), buildModel(2)];
   mockUseModels.mockReturnValue({ models });
   mockUseAppState.mockReturnValue({ modelIdInUse: 2 });
+  mockGetDocumentPaths.mockResolvedValue(['a.png', 'b.mp3']);
 
   const screen = render(<DownloadedModelsScreen />);
 
@@ -113,6 +132,11 @@ test('delete mode: confirming the alert deletes the in-use model and clears it f
       conversationIdInUse: undefined,
     }),
   );
+
+  // The deleted model's attachment files are looked up and cleaned up too, so
+  // they don't outlive the conversations that referenced them.
+  expect(mockGetDocumentPaths).toHaveBeenCalledWith(2);
+  expect(mockDeleteMessageDocuments).toHaveBeenCalledWith(['a.png', 'b.mp3']);
   alertSpy.mockRestore();
 });
 

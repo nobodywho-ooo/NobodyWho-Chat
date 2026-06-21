@@ -77,11 +77,11 @@ test('the prompt re-requests permission when it can still be asked', () => {
   // The mount effect already fired one request; isolate the button press.
   mockRequestPermission.mockClear();
 
-  act(() =>
-    screen
-      .UNSAFE_getByProps({ title: 'components.cameraCapture.grant' })
-      .props.onPress(),
-  );
+  // The handler only calls the (mocked) permission request — no React state
+  // update — so it is invoked directly rather than through act().
+  screen
+    .UNSAFE_getByProps({ title: 'components.cameraCapture.grant' })
+    .props.onPress();
 
   expect(mockRequestPermission).toHaveBeenCalledTimes(1);
 });
@@ -97,11 +97,9 @@ test('the prompt opens system settings when permission is permanently denied', (
   // settings instead.
   expect(mockRequestPermission).not.toHaveBeenCalled();
 
-  act(() =>
-    screen
-      .UNSAFE_getByProps({ title: 'components.cameraCapture.openSettings' })
-      .props.onPress(),
-  );
+  screen
+    .UNSAFE_getByProps({ title: 'components.cameraCapture.openSettings' })
+    .props.onPress();
 
   expect(openSettingsSpy).toHaveBeenCalled();
   openSettingsSpy.mockRestore();
