@@ -110,31 +110,39 @@ exports[`renders ChatScreen with existing messages 1`] = `
       >
         <View
           style={
-            [
-              {
-                "alignSelf": "flex-end",
-                "borderRadius": 16,
-                "marginVertical": 12,
-                "maxWidth": "90%",
-                "paddingHorizontal": 16,
-                "paddingVertical": 12,
-              },
-              {
-                "backgroundColor": "#ebebeb",
-              },
-            ]
+            {
+              "alignItems": "flex-end",
+              "alignSelf": "flex-end",
+              "marginVertical": 12,
+              "maxWidth": "90%",
+            }
           }
         >
-          <Text
+          <View
             style={
-              {
-                "fontSize": 15,
-                "lineHeight": 22,
-              }
+              [
+                {
+                  "borderRadius": 16,
+                  "paddingHorizontal": 16,
+                  "paddingVertical": 12,
+                },
+                {
+                  "backgroundColor": "#ebebeb",
+                },
+              ]
             }
           >
-            Hello there
-          </Text>
+            <Text
+              style={
+                {
+                  "fontSize": 15,
+                  "lineHeight": 22,
+                }
+              }
+            >
+              Hello there
+            </Text>
+          </View>
         </View>
       </View>
       <View
@@ -233,12 +241,18 @@ exports[`renders ChatScreen with existing messages 1`] = `
     </View>
   </RCTScrollView>
   <InputBar
+    hasAudio={false}
     isStreaming={false}
+    onAttachAudio={[Function]}
+    onAttachCamera={[Function]}
+    onAttachImage={[Function]}
     onBlur={[Function]}
     onChangeText={[Function]}
     onFocus={[Function]}
     onSend={[Function]}
     onStop={[Function]}
+    showAudioAttach={false}
+    showImageAttach={false}
     style={
       {
         "paddingBottom": NaN,
@@ -352,12 +366,18 @@ exports[`renders correctly empty ChatScreen 1`] = `
     </View>
   </View>
   <InputBar
+    hasAudio={false}
     isStreaming={false}
+    onAttachAudio={[Function]}
+    onAttachCamera={[Function]}
+    onAttachImage={[Function]}
     onBlur={[Function]}
     onChangeText={[Function]}
     onFocus={[Function]}
     onSend={[Function]}
     onStop={[Function]}
+    showAudioAttach={false}
+    showImageAttach={false}
     style={
       {
         "paddingBottom": NaN,

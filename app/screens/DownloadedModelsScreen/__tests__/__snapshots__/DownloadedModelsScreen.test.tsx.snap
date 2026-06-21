@@ -46,12 +46,10 @@ exports[`renders downloaded models with one selected 1`] = `
       isSelected={false}
       model={
         {
-          "audioIngestion": false,
           "author": "Author",
           "family": "Family",
           "huggingfaceUrl": "https://huggingface.co/test/model-1",
           "id": 1,
-          "imageIngestion": false,
           "languages": [],
           "name": "Model 1",
           "parameterCountBillions": 1,
@@ -70,12 +68,10 @@ exports[`renders downloaded models with one selected 1`] = `
       isSelected={true}
       model={
         {
-          "audioIngestion": false,
           "author": "Author",
           "family": "Family",
           "huggingfaceUrl": "https://huggingface.co/test/model-2",
           "id": 2,
-          "imageIngestion": false,
           "languages": [],
           "name": "Model 2",
           "parameterCountBillions": 1,

@@ -11,8 +11,6 @@ export const buildModel = (
   author: 'Author',
   family: 'Family',
   thinking: false,
-  imageIngestion: false,
-  audioIngestion: false,
   huggingfaceUrl: `https://huggingface.co/test/model-${id}`,
   parts: [],
   pipeline: ModelPipeline.textGeneration,

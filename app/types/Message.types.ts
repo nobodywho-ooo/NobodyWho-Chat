@@ -14,4 +14,5 @@ export interface ChatMessage {
 export type DisplayMessage = Message & {
   tokensPerSecond?: number;
   timeToFirstToken?: number;
+  documentsPath?: string[];
 };

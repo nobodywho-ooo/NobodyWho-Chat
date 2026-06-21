@@ -4,10 +4,18 @@ import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
 
 import { mockSetAppState } from 'jest/mock/database';
 import { mockUseAppState, mockUseModels } from 'jest/mock/hooks';
-import { mockSetOptions, mockUseRoute } from 'jest/mock/node-modules';
+import { mockGoBack, mockSetOptions, mockUseRoute } from 'jest/mock/node-modules';
 import { buildModel } from 'jest/factories/model';
 
 import { DownloadedModelsScreen } from '../DownloadedModelsScreen';
+
+// The screen stops any in-flight generation before switching models; expose the
+// chat ref so that can be asserted.
+const mockStopGeneration = jest.fn();
+const mockChat = { current: { stopGeneration: mockStopGeneration } };
+jest.mock('services', () => ({
+  useAiService: () => ({ chat: mockChat }),
+}));
 
 const headerToggle = () => {
   const headerRight = mockSetOptions.mock.calls.at(-1)![0].headerRight;
@@ -23,6 +31,9 @@ beforeEach(() => {
   mockUseRoute.mockReturnValue({ params: { canDelete: true } });
   mockSetAppState.mockClear();
   mockSetOptions.mockClear();
+  mockStopGeneration.mockClear();
+  mockGoBack.mockClear();
+  mockChat.current = { stopGeneration: mockStopGeneration };
 });
 
 test('renders correctly ModelsScreen when empty', () => {
@@ -46,10 +57,26 @@ test('pressing a model puts it in use, clear the conversation', () => {
   const screen = render(<DownloadedModelsScreen />);
   fireEvent.press(screen.UNSAFE_getByProps({ model: models[1] }), models[1]);
 
+  // Streaming is stopped before the model switch tears down the chat.
+  expect(mockStopGeneration).toHaveBeenCalled();
   expect(mockSetAppState).toHaveBeenCalledWith({
     modelIdInUse: 2,
     conversationIdInUse: undefined,
   });
+  // The screen dismisses itself so the user returns to the chat.
+  expect(mockGoBack).toHaveBeenCalled();
+});
+
+test('pressing the already-in-use model does nothing (no switch, no dismiss)', () => {
+  const models = [buildModel(1), buildModel(2)];
+  mockUseModels.mockReturnValue({ models });
+  mockUseAppState.mockReturnValue({ modelIdInUse: 2 });
+
+  const screen = render(<DownloadedModelsScreen />);
+  fireEvent.press(screen.UNSAFE_getByProps({ model: models[1] }), models[1]);
+
+  expect(mockSetAppState).not.toHaveBeenCalled();
+  expect(mockGoBack).not.toHaveBeenCalled();
 });
 
 test('delete mode: confirming the alert deletes the in-use model and clears it from use', async () => {

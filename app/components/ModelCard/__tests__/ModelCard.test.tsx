@@ -14,8 +14,6 @@ const mockModel: Model = {
   author: 'Qwen',
   family: 'Qwen3',
   thinking: true,
-  imageIngestion: false,
-  audioIngestion: false,
   huggingfaceUrl: 'https://huggingface.co/Qwen/Qwen3-4B-GGUF',
   parts: [
     {

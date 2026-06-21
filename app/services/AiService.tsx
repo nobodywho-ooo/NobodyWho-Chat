@@ -15,7 +15,7 @@ import {
 } from 'react-native-nobodywho';
 import * as Sentry from '@sentry/react-native';
 import { log, getAssetPath } from 'helpers';
-import { Model, ModelPipeline } from 'types';
+import { ChatPipeline, Model, ModelPipeline, toChatPipeline } from 'types';
 
 export enum AiModelState {
   NotLoaded = 'notLoaded',
@@ -31,6 +31,7 @@ enum ModelName {
 
 interface AiServiceState {
   chatState: AiModelState;
+  chatPipeline: ChatPipeline;
   encoderState: AiModelState;
   crossEncoderState: AiModelState;
 }
@@ -66,6 +67,7 @@ const AiServiceContext = createContext<AiServiceContextValue | undefined>(
 
 const _initialState: AiServiceState = {
   chatState: AiModelState.NotLoaded,
+  chatPipeline: ModelPipeline.textGeneration,
   encoderState: AiModelState.NotLoaded,
   crossEncoderState: AiModelState.NotLoaded,
 };
@@ -75,9 +77,10 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [state, setState] = useState<AiServiceState>(_initialState);
 
-  // Guard to prevent duplicate loading of the same model. For e.g if createChat is called twice quickly
+  // Guard to prevent duplicate loading of the embedding/reranker models — e.g.
+  // if createEncoder is called twice quickly. Chat loads are serialized through
+  // chatLoadRef instead (see createChat).
   const inFlight = useRef({
-    chat: false,
     encoder: false,
     crossEncoder: false,
   });
@@ -90,6 +93,17 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   // passed must discard its instance instead of resurrecting a disposed chat.
   const chatGeneration = useRef(0);
 
+  // The in-flight chat load (undefined when idle), so the next createChat can
+  // serialize behind it. Chat.fromPath has no cancellation, and disposeChat
+  // can't tear down a load that hasn't returned its instance yet — so without
+  // serializing, switching models mid-load would run two heavy llama.cpp loads
+  // at once. That deadlocks (or OOMs) the native backend, and the app then
+  // hangs on "Loading…" forever — even across restarts, since the same model
+  // stays persisted as in use. Chaining each load onto the previous one
+  // guarantees only one fromPath runs at a time, so a superseded load fully
+  // releases the backend before the next begins.
+  const chatLoadRef = useRef<Promise<unknown> | undefined>(undefined);
+
   const createChat = useCallback(
     async (opts: {
       model: Model;
@@ -99,24 +113,34 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       sampler?: SamplerConfig;
       contextSize?: number;
     }) => {
-      if (inFlight.current.chat || chatRef.current) return;
-      inFlight.current.chat = true;
+      if (chatRef.current) return;
+
       const generation = chatGeneration.current;
-      setState(s => ({ ...s, chatState: AiModelState.Loading }));
-      try {
+      const previousLoad = chatLoadRef.current;
+
+      const load = (async () => {
+        // Wait for any in-flight load to fully settle (and release the native
+        // backend) before touching it again. When idle there's nothing to wait
+        // for, so the first load reaches fromPath in the same tick.
+        if (previousLoad) await previousLoad;
+
+        // A dispose or a newer load superseded us while we waited — bail before
+        // starting an unwanted load. A sibling load of the same model that
+        // already produced a chat is reused rather than loaded a second time.
+        if (generation !== chatGeneration.current || chatRef.current) return;
+
+        setState(s => ({ ...s, chatState: AiModelState.Loading }));
+
         const { model } = opts;
 
-        let chatModelPath: string;
-        let projectionModelPath: string | undefined;
+        const chatModelPath = model.parts.find(
+          part => part.type === 'chat-model',
+        )?.url as string;
 
-        chatModelPath = model.parts.find(part => part.type === 'chat-model')
-          ?.url as string;
-
-        if (model.pipeline !== ModelPipeline.textGeneration) {
-          projectionModelPath = model.parts.find(
-            part => part.type === 'projection-model',
-          )?.url;
-        }
+        const projectionModelPath =
+          model.pipeline !== ModelPipeline.textGeneration
+            ? model.parts.find(part => part.type === 'projection-model')?.url
+            : undefined;
 
         // if (__DEV__) {
         //   chatModelPath = await getAssetPath(`${model.name}.gguf`);
@@ -139,17 +163,28 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         chatRef.current = chat;
-        setState(s => ({ ...s, chatState: AiModelState.Ready }));
+        setState(s => ({
+          ...s,
+          chatState: AiModelState.Ready,
+          chatPipeline: toChatPipeline(model.pipeline),
+        }));
+      })();
+
+      // Publish this load so the next createChat serializes behind it. The
+      // stored handle swallows rejections so one failed load can't reject the
+      // next load's `await previousLoad`.
+      chatLoadRef.current = load.catch(() => undefined);
+
+      try {
+        await load;
       } catch (error) {
         log('AiService create chat', error, { capture: true });
-        setState(s => ({ ...s, chatState: AiModelState.Error }));
-        throw error;
-      } finally {
-        // A dispose during the load already handed the in-flight slot to the
-        // next createChat — only the owning generation may release it.
+        // Only the generation that still owns the chat may surface the error; a
+        // superseded load must not flip a newer load's state to Error.
         if (generation === chatGeneration.current) {
-          inFlight.current.chat = false;
+          setState(s => ({ ...s, chatState: AiModelState.Error }));
         }
+        throw error;
       }
     },
     [],
@@ -209,7 +244,6 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     chatGeneration.current += 1;
     const instance = chatRef.current;
     chatRef.current = undefined;
-    inFlight.current.chat = false;
 
     try {
       // Stop any in-flight generation before freeing the context, so a stream
@@ -227,7 +261,11 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       log('AiService disposeChat destroy failed', error);
     }
 
-    setState(s => ({ ...s, chatState: AiModelState.NotLoaded }));
+    setState(s => ({
+      ...s,
+      chatState: AiModelState.NotLoaded,
+      chatPipeline: ModelPipeline.textGeneration,
+    }));
   }, []);
 
   const dispose = useCallback(() => {
@@ -246,8 +284,9 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     crossEncoderRef.current = undefined;
 
     // Reset in-flight flags so a subsequent createX() isn't silently skipped
-    // if dispose ran while a load was pending.
-    inFlight.current.chat = false;
+    // if dispose ran while a load was pending. (Chat serializes via chatLoadRef
+    // and needs no flag — a pending chat load settles and self-discards via the
+    // bumped generation above.)
     inFlight.current.encoder = false;
     inFlight.current.crossEncoder = false;
 

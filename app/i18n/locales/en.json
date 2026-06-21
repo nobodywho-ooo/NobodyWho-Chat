@@ -24,11 +24,29 @@
       "startAChat": "Start a chat"
     },
     "inputBar": {
-      "placeholder": "Ask something..."
+      "placeholder": "Ask something...",
+      "attach": "Attach files",
+      "closeAttach": "Close attachments",
+      "attachImage": "Attach image",
+      "attachAudio": "Attach audio",
+      "attachCamera": "Take a photo",
+      "photo": "Photo",
+      "camera": "Camera",
+      "audio": "Audio"
+    },
+    "cameraCapture": {
+      "permission": "Camera access is needed to take a photo.",
+      "grant": "Allow camera access",
+      "openSettings": "Open settings",
+      "close": "Close"
     },
     "messageListItem": {
       "copy": "Copy",
-      "copied": "Copied"
+      "copied": "Copied",
+      "playAudio": "Play audio",
+      "pauseAudio": "Pause audio",
+      "viewImage": "View image",
+      "closeImage": "Close image"
     },
     "conversationsList": {
       "recent": "Recent",

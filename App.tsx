@@ -2,6 +2,7 @@ import 'i18n';
 import React, { useCallback, useEffect } from 'react';
 import { useState } from 'react';
 import { Platform, StatusBar } from 'react-native';
+import { setAudioModeAsync } from 'expo-audio';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
@@ -128,6 +129,11 @@ function AppLoader() {
   const init = useCallback(async () => {
     setDbError(false);
     setDbReady(false);
+
+    setAudioModeAsync({ playsInSilentMode: true }).catch(error =>
+      log('AppLoader setAudioModeAsync failed', error),
+    );
+
     try {
       await initDatabase();
       await clearRunningDownloads();

@@ -9,9 +9,10 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAppState, useModels, useStyled } from 'hooks';
 import { setAppState } from 'database';
-import { deleteModel } from 'repositories';
-import { deleteModelFiles, isIOS, log } from 'helpers';
+import { deleteModel, getDocumentPathsByModelId } from 'repositories';
+import { deleteMessageDocuments, deleteModelFiles, isIOS, log } from 'helpers';
 import { ModelCard, PlatformIcon, Text } from 'components';
+import { useAiService } from 'services';
 import { Model } from 'types';
 
 import styles from './DownloadedModelsScreen.styles';
@@ -21,6 +22,7 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { colors } = useStyled();
   const { models } = useModels();
   const { modelIdInUse } = useAppState();
+  const { chat } = useAiService();
   const navigation = useNavigation();
   const route = useRoute();
   const [deleteMode, setDeleteMode] = useState(false);
@@ -38,12 +40,15 @@ export const DownloadedModelsScreen: React.FC = () => {
   const handleDeleteModel = useCallback(
     async (model: Model) => {
       try {
+        const documentPaths = await getDocumentPathsByModelId(model.id);
+
         const filesDeleted = await deleteModelFiles(model);
         if (!filesDeleted) {
           throw new Error('files not deleted');
         }
 
         await deleteModel(model.id);
+        await deleteMessageDocuments(documentPaths);
 
         if (modelIdInUse === model.id) {
           await setAppState({
@@ -85,14 +90,19 @@ export const DownloadedModelsScreen: React.FC = () => {
         return;
       } else {
         if (modelIdInUse !== model.id) {
+          // Stop any in-flight generation before the model switch tears down
+          // the current chat, so a live stream ends cleanly rather than being
+          // cut off mid-token as the backend is swapped out.
+          chat.current?.stopGeneration();
           setAppState({
             modelIdInUse: model.id,
             conversationIdInUse: undefined,
           });
+          navigation.goBack();
         }
       }
     },
-    [deleteMode, confirmDeleteModel, modelIdInUse],
+    [deleteMode, confirmDeleteModel, modelIdInUse, chat, navigation],
   );
 
   const renderHeaderRight = useCallback(() => {

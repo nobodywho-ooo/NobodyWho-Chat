@@ -37,5 +37,23 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     maxHeight: 100,
     paddingRight: 6,
-  }
+  },
+  attachContainer: {
+    marginRight: Spacings.sm,
+  },
+  attachOptions: {
+    flex: 1,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    columnGap: Spacings.md,
+    rowGap: Spacings.sm,
+  },
+  attachOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  attachLabel: {
+    marginLeft: Spacings.xs,
+  },
 });
