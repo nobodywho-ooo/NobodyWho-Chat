@@ -9,7 +9,7 @@ export const styles = StyleSheet.create({
   camera: {
     flex: 1,
   },
-  permission: {
+  permissionContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
@@ -24,7 +24,7 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     left: Spacings.lg,
   },
-  controls: {
+  controlsContainer: {
     position: 'absolute',
     left: 0,
     right: 0,
@@ -40,7 +40,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  shutterInner: {
+  shutterContainer: {
     width: 56,
     height: 56,
     borderRadius: 28,

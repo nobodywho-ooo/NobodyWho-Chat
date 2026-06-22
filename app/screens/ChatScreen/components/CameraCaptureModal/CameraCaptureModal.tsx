@@ -62,7 +62,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
         {granted ? (
           <CameraView ref={cameraRef} style={styles.camera} facing="back" />
         ) : (
-          <View style={styles.permission}>
+          <View style={styles.permissionContainer}>
             <Text variant="body1" style={styles.permissionText}>
               {t('components.cameraCapture.permission')}
             </Text>
@@ -95,7 +95,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
         {granted && (
           <View
             style={[
-              styles.controls,
+              styles.controlsContainer,
               { paddingBottom: insets.bottom + Spacings.xl },
             ]}
           >
@@ -105,7 +105,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
               accessibilityLabel={t('components.inputBar.attachCamera')}
               style={styles.shutter}
             >
-              <View style={styles.shutterInner} />
+              <View style={styles.shutterContainer} />
             </Pressable>
           </View>
         )}
