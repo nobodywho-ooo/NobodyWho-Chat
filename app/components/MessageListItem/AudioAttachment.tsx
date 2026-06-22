@@ -1,13 +1,12 @@
 import React, { useCallback, useEffect } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { log, messageDocumentUri } from 'helpers';
 import { useStyled } from 'hooks';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { Waveform } from './Waveform';
-
-import styles from './MessageListItem.styles';
+import { Spacings } from 'style';
 
 interface AudioAttachmentProps {
   path: string;
@@ -49,7 +48,7 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({ path }) => {
   return (
     <View
       style={[
-        styles.audioRow,
+        styles.containter,
         { backgroundColor: colors.surface, borderColor: colors.border },
       ]}
     >
@@ -79,3 +78,25 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({ path }) => {
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  containter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: Spacings.sm,
+    paddingHorizontal: Spacings.md,
+    paddingVertical: Spacings.sm,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  audioPlayButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  audioPlayButtonPressed: {
+    opacity: 0.6,
+  },
+});

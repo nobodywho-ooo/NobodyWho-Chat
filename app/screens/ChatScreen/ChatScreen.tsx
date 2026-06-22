@@ -261,6 +261,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
     const imagePath = ingestsImage ? attachedDocuments?.imagePath : undefined;
     const audioPath = ingestsAudio ? attachedDocuments?.audioPath : undefined;
+
     const documentsPath = [imagePath, audioPath].filter(
       (path): path is string => typeof path === 'string',
     );

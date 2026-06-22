@@ -5,9 +5,22 @@ import { buildModel } from 'jest/factories/model';
 import { mockFromPath } from 'jest/mock/node-modules';
 import { ModelPipeline } from 'types';
 
-import { AiServiceProvider, useAiService, AiModelState } from '../AiService';
+import {
+  AiServiceProvider,
+  useAiService,
+  AiModelState,
+  TEARDOWN_SETTLE_MS,
+} from '../AiService';
 
 (globalThis as unknown as { __DEV__: boolean }).__DEV__ = false;
+
+// chat teardown is deferred onto the load chain (destroy + a settle delay), so
+// tests flush microtasks to observe the destroy, and wait out the settle when
+// asserting that the next load only starts afterwards.
+const flushMicrotasks = () =>
+  new Promise<void>(resolve => setImmediate(() => resolve()));
+const waitForTeardownSettle = () =>
+  new Promise<void>(resolve => setTimeout(resolve, TEARDOWN_SETTLE_MS + 50));
 
 const model = buildModel(1, {
   parts: [
@@ -131,11 +144,16 @@ test('disposeChat destroys the current chat instance', async () => {
     await result.current.createChat({ model });
   });
 
+  // The ref/state clear synchronously; the native destroy is deferred onto the
+  // load chain, so flush microtasks before asserting it ran.
   act(() => result.current.disposeChat());
-
-  expect(chat.destroy).toHaveBeenCalledTimes(1);
   expect(result.current.chat.current).toBeUndefined();
   expect(result.current.chatState).toBe(AiModelState.NotLoaded);
+
+  await act(async () => {
+    await flushMicrotasks();
+  });
+  expect(chat.destroy).toHaveBeenCalledTimes(1);
 });
 
 test('disposeChat stops generation before destroying the chat', async () => {
@@ -151,6 +169,9 @@ test('disposeChat stops generation before destroying the chat', async () => {
   });
 
   act(() => result.current.disposeChat());
+  await act(async () => {
+    await flushMicrotasks();
+  });
 
   // Order matters: an in-flight stream must be stopped before its context is freed.
   expect(order).toEqual(['stop', 'destroy']);
@@ -170,14 +191,18 @@ test('disposeChat clears the chat even when destroy throws, so a reload works', 
     await result.current.createChat({ model });
   });
 
+  // The ref is cleared synchronously despite the (deferred) destroy throwing.
   act(() => result.current.disposeChat());
-
-  // The ref is cleared despite the throw (no zombie instance left behind).
-  expect(chat.destroy).toHaveBeenCalledTimes(1);
   expect(result.current.chat.current).toBeUndefined();
   expect(result.current.chatState).toBe(AiModelState.NotLoaded);
 
-  // ...so the next createChat isn't blocked by a stale ref and loads cleanly.
+  await act(async () => {
+    await flushMicrotasks();
+  });
+  expect(chat.destroy).toHaveBeenCalledTimes(1);
+
+  // ...and a throwing teardown can't wedge the chain, so the next createChat
+  // still loads cleanly (after waiting out the teardown settle).
   const next = { destroy: jest.fn() };
   mockFromPath.mockResolvedValueOnce(next);
   await act(async () => {
@@ -220,8 +245,6 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
   mockFromPath.mockImplementation(
     () => new Promise(resolve => resolvers.push(resolve)),
   );
-  const flushMicrotasks = () =>
-    new Promise<void>(resolve => setImmediate(() => resolve()));
 
   const partFor = (file: string) => [
     {
@@ -260,14 +283,22 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
   });
   expect(mockFromPath).toHaveBeenCalledTimes(1);
 
-  // A finishes; superseded, its instance is discarded — and only now does B's
-  // load start, so the two loads never overlap.
+  // A finishes; superseded, its instance is discarded immediately. But it must
+  // also let its teardown settle before releasing the chain, so B's load does
+  // not start in the same tick (no overlap with A's native release).
   const chatA = { destroy: jest.fn() };
   await act(async () => {
     resolvers[0](chatA);
     await flushMicrotasks();
   });
   expect(chatA.destroy).toHaveBeenCalledTimes(1);
+  expect(mockFromPath).toHaveBeenCalledTimes(1);
+
+  // Only after the teardown settle does B's load actually allocate.
+  await act(async () => {
+    await waitForTeardownSettle();
+    await flushMicrotasks();
+  });
   expect(mockFromPath).toHaveBeenCalledTimes(2);
   expect(mockFromPath).toHaveBeenLastCalledWith(
     expect.objectContaining({ modelPath: 'file://b.gguf' }),
@@ -279,6 +310,44 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
     resolvers[1](chatB);
     await loadB;
   });
+  expect(result.current.chat.current).toBe(chatB);
+  expect(result.current.chatState).toBe(AiModelState.Ready);
+});
+
+test('a reload waits for the previous chat teardown to settle before allocating', async () => {
+  // The crash this guards against: a dispose (e.g. on backgrounding) followed by
+  // a reload (on returning) overlapping the old context's native release with
+  // the new one's Metal allocation. The new load must wait out the teardown.
+  const chatA = { stopGeneration: jest.fn(), destroy: jest.fn() };
+  const chatB = { destroy: jest.fn() };
+  mockFromPath.mockResolvedValueOnce(chatA).mockResolvedValueOnce(chatB);
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  await act(async () => {
+    await result.current.createChat({ model });
+  });
+  expect(result.current.chat.current).toBe(chatA);
+
+  // Dispose enqueues an async teardown, then a reload starts immediately.
+  act(() => result.current.disposeChat());
+  let reload: Promise<void> | undefined;
+  act(() => {
+    reload = result.current.createChat({ model });
+  });
+
+  // Teardown destroys the old chat, but the new context must not allocate yet.
+  await act(async () => {
+    await flushMicrotasks();
+  });
+  expect(chatA.destroy).toHaveBeenCalledTimes(1);
+  expect(mockFromPath).toHaveBeenCalledTimes(1);
+
+  // Only after the settle does the reload allocate the new context.
+  await act(async () => {
+    await waitForTeardownSettle();
+    await reload;
+  });
+  expect(mockFromPath).toHaveBeenCalledTimes(2);
   expect(result.current.chat.current).toBe(chatB);
   expect(result.current.chatState).toBe(AiModelState.Ready);
 });

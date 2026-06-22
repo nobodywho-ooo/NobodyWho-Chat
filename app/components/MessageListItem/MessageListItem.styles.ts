@@ -76,24 +76,5 @@ export default StyleSheet.create({
   },
   loadingIndicator: {
     alignSelf: 'flex-start',
-  },
-  audioRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    columnGap: Spacings.sm,
-    paddingHorizontal: Spacings.md,
-    paddingVertical: Spacings.sm,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  audioPlayButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  audioPlayButtonPressed: {
-    opacity: 0.6,
-  },
+  }
 });

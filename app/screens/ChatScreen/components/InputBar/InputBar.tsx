@@ -90,12 +90,17 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
     { backgroundColor: colors.surface },
   ];
 
-  const renderAttachButton = (
-    icon: React.ComponentProps<typeof IconButton>['icon'],
-    active: boolean,
-    onPress: (() => void) | undefined,
-    accessibilityLabel: string,
-  ) => (
+  const renderAttachButton = ({
+    icon,
+    active,
+    onPress,
+    accessibilityLabel,
+  }: {
+    icon: React.ComponentProps<typeof IconButton>['icon'];
+    active: boolean;
+    onPress: (() => void) | undefined;
+    accessibilityLabel: string;
+  }) => (
     <View style={styles.attachContainer}>
       <IconButton
         icon={icon}
@@ -110,13 +115,19 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
     </View>
   );
 
-  const renderAttachOption = (
-    icon: React.ComponentProps<typeof IconButton>['icon'],
-    label: string,
-    active: boolean,
-    onPress: (() => void) | undefined,
-    accessibilityLabel: string,
-  ) => (
+  const renderAttachOption = ({
+    icon,
+    label,
+    active,
+    onPress,
+    accessibilityLabel,
+  }: {
+    icon: React.ComponentProps<typeof IconButton>['icon'];
+    label: string;
+    active: boolean;
+    onPress: (() => void) | undefined;
+    accessibilityLabel: string;
+  }) => (
     <View style={styles.attachOption}>
       <IconButton
         icon={icon}
@@ -148,46 +159,54 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
       />
       <View style={[styles.inputBarInner, extraStyle]}>
         {showToggle &&
-          renderAttachButton(
-            expanded
+          renderAttachButton({
+            icon: expanded
               ? { iosIconName: 'xmark', androidIconName: 'close' }
               : hasAttachment
                 ? { iosIconName: 'paperclip', androidIconName: 'attach_file' }
                 : { iosIconName: 'plus', androidIconName: 'add' },
-            !expanded && hasAttachment,
-            () => setAttachExpanded(prev => !prev),
-            t(
+            active: !expanded && hasAttachment,
+            onPress: () => setAttachExpanded(prev => !prev),
+            accessibilityLabel: t(
               expanded
                 ? 'components.inputBar.closeAttach'
                 : 'components.inputBar.attach',
             ),
-          )}
+          })}
+        {expanded && (
+          <Text
+            variant="body2"
+            style={[styles.attachLabel, { color: colors.onSurface }]}
+          >
+            {t('components.inputBar.close')}
+          </Text>
+        )}
         {expanded ? (
           <View style={styles.attachOptions}>
             {showPhoto &&
-              renderAttachOption(
-                { iosIconName: 'photo', androidIconName: 'image' },
-                t('components.inputBar.photo'),
-                imageSource === 'photo',
-                onAttachImage,
-                t('components.inputBar.attachImage'),
-              )}
+              renderAttachOption({
+                icon: { iosIconName: 'photo', androidIconName: 'image' },
+                label: t('components.inputBar.photo'),
+                active: imageSource === 'photo',
+                onPress: onAttachImage,
+                accessibilityLabel: t('components.inputBar.attachImage'),
+              })}
             {showCamera &&
-              renderAttachOption(
-                { iosIconName: 'camera', androidIconName: 'photo_camera' },
-                t('components.inputBar.camera'),
-                imageSource === 'camera',
-                onAttachCamera,
-                t('components.inputBar.attachCamera'),
-              )}
+              renderAttachOption({
+                icon: { iosIconName: 'camera', androidIconName: 'photo_camera' },
+                label: t('components.inputBar.camera'),
+                active: imageSource === 'camera',
+                onPress: onAttachCamera,
+                accessibilityLabel: t('components.inputBar.attachCamera'),
+              })}
             {showAudioAttach &&
-              renderAttachOption(
-                { iosIconName: 'waveform', androidIconName: 'music_note' },
-                t('components.inputBar.audio'),
-                hasAudio,
-                onAttachAudio,
-                t('components.inputBar.attachAudio'),
-              )}
+              renderAttachOption({
+                icon: { iosIconName: 'waveform', androidIconName: 'music_note' },
+                label: t('components.inputBar.audio'),
+                active: hasAudio,
+                onPress: onAttachAudio,
+                accessibilityLabel: t('components.inputBar.attachAudio'),
+              })}
           </View>
         ) : (
           <>

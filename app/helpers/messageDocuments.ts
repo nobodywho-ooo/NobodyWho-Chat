@@ -88,7 +88,7 @@ const AUDIO_EXTENSIONS = [
 export const messageDocumentKind = (path: string): MessageDocumentKind => {
   const dot = path.lastIndexOf('.');
   if (dot === -1) {
-    return 'file';
+    return 'file'; // no extension
   }
   const ext = path.slice(dot + 1).toLowerCase();
   if (IMAGE_EXTENSIONS.includes(ext)) {

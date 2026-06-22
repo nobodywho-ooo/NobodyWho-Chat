@@ -14,7 +14,7 @@ import {
   SamplerConfig,
 } from 'react-native-nobodywho';
 import * as Sentry from '@sentry/react-native';
-import { log, getAssetPath } from 'helpers';
+import { log, getAssetPath, sleep } from 'helpers';
 import { ChatPipeline, Model, ModelPipeline, toChatPipeline } from 'types';
 
 export enum AiModelState {
@@ -72,6 +72,16 @@ const _initialState: AiServiceState = {
   crossEncoderState: AiModelState.NotLoaded,
 };
 
+// chat.destroy() is fire-and-forget: it signals the native worker thread but
+// returns before the llama_context / Metal buffers are actually freed, with no
+// completion signal to await. So after a teardown we yield the event loop and
+// wait this long before the next Chat.fromPath allocates — otherwise the new
+// context starts reserving Metal buffers while the old one is still releasing
+// them, which on multimodal models (large footprint) makes a buffer allocation
+// return NULL and crashes inside ggml-metal. Heuristic, not a real wait; bump
+// it if field crashes persist.
+export const TEARDOWN_SETTLE_MS = 350;
+
 export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -103,6 +113,31 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   // guarantees only one fromPath runs at a time, so a superseded load fully
   // releases the backend before the next begins.
   const chatLoadRef = useRef<Promise<unknown> | undefined>(undefined);
+
+  // Run a chat teardown serialized on the same chain as loads, so the next
+  // createChat's `await previousLoad` also waits out the teardown + settle
+  // delay before allocating a new context. Without this, a dispose (e.g. on
+  // backgrounding) followed by a reload (on returning) overlaps the old
+  // context's native release with the new one's Metal allocation.
+  const enqueueTeardown = useCallback((teardown: () => void) => {
+    const previous = chatLoadRef.current;
+    const barrier = (async () => {
+      // Serialize behind any in-flight load before touching the backend.
+      if (previous) await previous;
+      try {
+        teardown();
+      } catch (error) {
+        log('AiService teardown failed', error, { capture: true });
+      }
+      // Give the worker thread time to free the llama_context / GPU buffers
+      // before the next fromPath allocates (destroy() exposes no done signal).
+      await sleep(TEARDOWN_SETTLE_MS);
+    })();
+    // Publish so the next createChat (or teardown) serializes behind us; swallow
+    // rejections so one failure can't reject the next `await previousLoad`.
+    chatLoadRef.current = barrier.catch(() => undefined);
+    return barrier;
+  }, []);
 
   const createChat = useCallback(
     async (opts: {
@@ -158,7 +193,17 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
 
         if (generation !== chatGeneration.current) {
           // Disposed while loading; a newer chat may already be in flight.
-          chat.destroy();
+          try {
+            chat.destroy();
+          } catch (error) {
+            log('AiService superseded chat destroy failed', error, {
+              capture: true,
+            });
+          }
+          // This IIFE owns chatLoadRef, so we can't enqueueTeardown (self-wait).
+          // The newer load already awaits this IIFE via `await previousLoad`, so
+          // settling here delays its fromPath until our GPU buffers are freed.
+          await sleep(TEARDOWN_SETTLE_MS);
           return;
         }
 
@@ -245,20 +290,20 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     const instance = chatRef.current;
     chatRef.current = undefined;
 
-    try {
-      // Stop any in-flight generation before freeing the context, so a stream
-      // still being consumed (e.g. ChatScreen mid-send during a model switch)
-      // ends cleanly instead of the native context being torn out under it.
-      instance?.stopGeneration();
-    } catch (error) {
-      log('AiService disposeChat stopGeneration failed', error, {
-        capture: true,
+    if (instance) {
+      enqueueTeardown(() => {
+        try {
+          // Stop any in-flight generation before freeing the context, so a
+          // stream still being consumed (e.g. ChatScreen mid-send during a
+          // model switch) ends cleanly instead of the context being torn out.
+          instance.stopGeneration();
+        } catch (error) {
+          log('AiService disposeChat stopGeneration failed', error, {
+            capture: true,
+          });
+        }
+        instance.destroy();
       });
-    }
-    try {
-      instance?.destroy();
-    } catch (error) {
-      log('AiService disposeChat destroy failed', error);
     }
 
     setState(s => ({
@@ -266,7 +311,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       chatState: AiModelState.NotLoaded,
       chatPipeline: ModelPipeline.textGeneration,
     }));
-  }, []);
+  }, [enqueueTeardown]);
 
   const dispose = useCallback(() => {
     chatGeneration.current += 1;
@@ -274,11 +319,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     // instance that blocks the next createX(); destroy each independently so one
     // failure doesn't skip the others.
     const chatInstance = chatRef.current;
-    const instances = [
-      chatInstance,
-      encoderRef.current,
-      crossEncoderRef.current,
-    ];
+    const otherInstances = [encoderRef.current, crossEncoderRef.current];
     chatRef.current = undefined;
     encoderRef.current = undefined;
     crossEncoderRef.current = undefined;
@@ -290,13 +331,23 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     inFlight.current.encoder = false;
     inFlight.current.crossEncoder = false;
 
-    // Only Chat streams, so stop its generation before freeing the context.
-    try {
-      chatInstance?.stopGeneration();
-    } catch (error) {
-      log('AiService dispose stopGeneration failed', error, { capture: true });
+    // Only the Chat can overlap a future chat load, so route its teardown
+    // through the load chain (stop generation first, since only Chat streams).
+    // Encoder/crossEncoder are guarded by their own inFlight flags, so destroy
+    // them inline.
+    if (chatInstance) {
+      enqueueTeardown(() => {
+        try {
+          chatInstance.stopGeneration();
+        } catch (error) {
+          log('AiService dispose stopGeneration failed', error, {
+            capture: true,
+          });
+        }
+        chatInstance.destroy();
+      });
     }
-    for (const instance of instances) {
+    for (const instance of otherInstances) {
       try {
         instance?.destroy();
       } catch (error) {
@@ -305,7 +356,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     }
 
     setState(_initialState);
-  }, []);
+  }, [enqueueTeardown]);
 
   const value = useMemo<AiServiceContextValue>(
     () => ({

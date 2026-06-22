@@ -1,8 +1,6 @@
 import React from 'react';
 import Svg, { Rect } from 'react-native-svg';
 
-// Static bar heights (0..1) shaped to read as an audio waveform. Deterministic
-// so the rendered shape stays stable across renders and snapshots.
 const BAR_HEIGHTS = [
   0.3, 0.55, 0.8, 0.45, 1, 0.6, 0.35, 0.7, 0.5, 0.9, 0.4, 0.65, 0.85, 0.5, 0.3,
   0.6, 0.75, 0.4,
@@ -10,7 +8,6 @@ const BAR_HEIGHTS = [
 
 const BAR_WIDTH = 3;
 const BAR_GAP = 2;
-// Floor so the quietest bars still read as bars rather than dots.
 const MIN_BAR = 0.18;
 
 interface WaveformProps {

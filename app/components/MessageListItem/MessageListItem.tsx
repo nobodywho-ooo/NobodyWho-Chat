@@ -51,6 +51,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
     const images: string[] = [];
     const audios: string[] = [];
     const files: string[] = [];
+
     documentsPath.forEach(path => {
       const kind = messageDocumentKind(path);
       if (kind === 'image') {

@@ -224,7 +224,6 @@ test('injects restored assistant messages with an empty toolCalls array', async 
       role: 'assistant',
       content: '<think>reasoning</think>answer',
       toolCalls: [],
-      documentsPath: [],
     },
   ]);
 });
