@@ -20,7 +20,7 @@ export const styles = StyleSheet.create({
     top: -TOP_GRADIENT_HEIGHT,
     height: TOP_GRADIENT_HEIGHT,
   },
-  inputBarInner: {
+  inputBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     borderRadius: 16,
@@ -56,4 +56,7 @@ export const styles = StyleSheet.create({
   attachLabel: {
     marginLeft: Spacings.xs,
   },
+  closeLabel: {
+    marginRight: Spacings.sm,
+  }
 });

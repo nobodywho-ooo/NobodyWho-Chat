@@ -64,11 +64,8 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   const showPhoto = showImageAttach && imageSource !== 'camera';
   const showCamera = showImageAttach && imageSource !== 'photo';
 
-  // Collapse the tray as soon as an attachment is added (in either modality),
-  // dropping the user straight back to the text field. Tracking the previous
-  // values means adding a second modality still collapses, while deselecting
-  // leaves the tray open so another can be picked.
   const prevAttachments = useRef({ hasImage, hasAudio });
+
   useEffect(() => {
     const addedImage = hasImage && !prevAttachments.current.hasImage;
     const addedAudio = hasAudio && !prevAttachments.current.hasAudio;
@@ -157,7 +154,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
         end={{ x: 0, y: 1 }}
         style={styles.topGradient}
       />
-      <View style={[styles.inputBarInner, extraStyle]}>
+      <View style={[styles.inputBarContainer, extraStyle]}>
         {showToggle &&
           renderAttachButton({
             icon: expanded
@@ -176,7 +173,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
         {expanded && (
           <Text
             variant="body2"
-            style={[styles.attachLabel, { color: colors.onSurface }]}
+            style={[styles.closeLabel, { color: colors.onSurface }]}
           >
             {t('components.inputBar.close')}
           </Text>
@@ -193,7 +190,10 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
               })}
             {showCamera &&
               renderAttachOption({
-                icon: { iosIconName: 'camera', androidIconName: 'photo_camera' },
+                icon: {
+                  iosIconName: 'camera',
+                  androidIconName: 'photo_camera',
+                },
                 label: t('components.inputBar.camera'),
                 active: imageSource === 'camera',
                 onPress: onAttachCamera,
@@ -201,7 +201,10 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
               })}
             {showAudioAttach &&
               renderAttachOption({
-                icon: { iosIconName: 'waveform', androidIconName: 'music_note' },
+                icon: {
+                  iosIconName: 'waveform',
+                  androidIconName: 'music_note',
+                },
                 label: t('components.inputBar.audio'),
                 active: hasAudio,
                 onPress: onAttachAudio,
