@@ -1,7 +1,12 @@
 import React from 'react';
+import { Alert } from 'react-native';
 import { render, act } from '@testing-library/react-native';
 
-import { mockUseAppState, mockUseModels } from 'jest/mock/hooks';
+import {
+  mockUseAppState,
+  mockUseModelDownloads,
+  mockUseModels,
+} from 'jest/mock/hooks';
 import { mockFetchResolve, mockFetchReject } from 'jest/mock/network';
 import { mockGetTotalMemory } from 'jest/mock/node-modules';
 import { buildModel } from 'jest/factories/model';
@@ -21,6 +26,8 @@ const part = (type: string, sizeGB: number) => ({
 beforeEach(() => {
   mockUseModels.mockReturnValue({ models: [] });
   mockUseAppState.mockReturnValue({});
+  // Reset between tests so a download set in one test doesn't leak into the next.
+  mockUseModelDownloads.mockReturnValue({ downloads: [], loading: false });
   mockFetchResolve([]);
   mockGetTotalMemory.mockResolvedValue(8 * GB);
 });
@@ -44,6 +51,36 @@ test('0 models to download (network failure), 1 model downloaded and 1 in use', 
   const screen = render(<ModelsScreen />);
   await act(async () => {});
   expect(screen.toJSON()).toMatchSnapshot();
+});
+
+test('pressing a model that is downloading explains it is in progress', async () => {
+  const downloading = buildModel(30, { parts: [part('chat-model', 1)] });
+  mockUseModelDownloads.mockReturnValue({
+    downloads: [
+      {
+        model: downloading,
+        partsProgress: downloading.parts.map(p => ({ ...p, progress: 0.5 })),
+      },
+    ],
+    loading: false,
+  });
+  const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+
+  const screen = render(<ModelsScreen />);
+  await act(async () => {});
+
+  // The downloading card carries a downloadProgress; pressing it shows the
+  // "download in progress" guidance rather than starting a second download.
+  const card = screen
+    .UNSAFE_getAllByType('ModelCard' as never)
+    .find(node => node.props.downloadProgress !== undefined);
+  act(() => card?.props.onPress(downloading));
+
+  expect(alertSpy).toHaveBeenCalledWith(
+    'screens.models.downloadInProgressTitle',
+    'screens.models.downloadInProgressMessage',
+  );
+  alertSpy.mockRestore();
 });
 
 test('hides models that need more RAM than the device has', async () => {

@@ -33,7 +33,8 @@
       "attachCamera": "Take a photo",
       "photo": "Photo",
       "camera": "Camera",
-      "audio": "Audio"
+      "audio": "Audio",
+      "unselect": "Unselect"
     },
     "cameraCapture": {
       "permission": "Camera access is needed to take a photo.",
@@ -93,7 +94,11 @@
       "downloading": "Downloading...",
       "availableToDownload": "Available to download",
       "errorCannotGetModelsAtTheMoment": "Cannot get the models at the moment",
-      "youHaveDownloadedAllTheModels": "You have downloaded all the models."
+      "youHaveDownloadedAllTheModels": "You have downloaded all the models.",
+      "chooseModelTitle": "Choosing the Right Model",
+      "chooseModelMessage": "Model sizes are defined by their parameter count (e.g., 0.6B, 1,2B...). While bigger models are often smarter, they demand more resources and slow down performance. Therefore, if you don’t have a recent phone, start with a smaller model to ensure smooth performance.",
+      "downloadInProgressTitle": "Download in progress",
+      "downloadInProgressMessage": "Ensure you have a stable internet connection and wait a moment. If the download seems stuck after 10 seconds, restart the app, we’ll automatically resume it."
     },
     "downloadedModels": {
       "noModelDownloaded": "No model downloaded",

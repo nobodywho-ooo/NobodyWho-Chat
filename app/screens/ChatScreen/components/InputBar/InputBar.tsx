@@ -1,5 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, TextInput, Pressable, StyleProp, ViewStyle } from 'react-native';
+import {
+  View,
+  TextInput,
+  Pressable,
+  StyleProp,
+  ViewStyle,
+  Keyboard,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { useStyled } from 'hooks';
@@ -74,6 +81,19 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
     }
     prevAttachments.current = { hasImage, hasAudio };
   }, [hasImage, hasAudio]);
+
+  const toggleAttach = () => {
+    // Dismiss the keyboard as we open the tray, while the TextInput is still
+    // mounted to receive the blur. If we waited until after the re-render (the
+    // tray replaces the TextInput), there'd be no focused input left to blur,
+    // and on Android the orphaned soft keyboard lingers and reconfigures — a
+    // number row appears, growing it past the height ChatScreen measured, so it
+    // covers the input bar. There's nothing to type into while the tray is open.
+    if (!attachExpanded) {
+      Keyboard.dismiss();
+    }
+    setAttachExpanded(prev => !prev);
+  };
 
   const extraStyle = {
     backgroundColor: colors.surface,
@@ -163,7 +183,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
                 ? { iosIconName: 'paperclip', androidIconName: 'attach_file' }
                 : { iosIconName: 'plus', androidIconName: 'add' },
             active: !expanded && hasAttachment,
-            onPress: () => setAttachExpanded(prev => !prev),
+            onPress: toggleAttach,
             accessibilityLabel: t(
               expanded
                 ? 'components.inputBar.closeAttach'
@@ -183,7 +203,9 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
             {showPhoto &&
               renderAttachOption({
                 icon: { iosIconName: 'photo', androidIconName: 'image' },
-                label: t('components.inputBar.photo'),
+                label: hasAttachment
+                  ? t('components.inputBar.unselect')
+                  : t('components.inputBar.photo'),
                 active: imageSource === 'photo',
                 onPress: onAttachImage,
                 accessibilityLabel: t('components.inputBar.attachImage'),
@@ -194,7 +216,9 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
                   iosIconName: 'camera',
                   androidIconName: 'photo_camera',
                 },
-                label: t('components.inputBar.camera'),
+                label: hasAttachment
+                  ? t('components.inputBar.unselect')
+                  : t('components.inputBar.camera'),
                 active: imageSource === 'camera',
                 onPress: onAttachCamera,
                 accessibilityLabel: t('components.inputBar.attachCamera'),
@@ -205,7 +229,9 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
                   iosIconName: 'waveform',
                   androidIconName: 'music_note',
                 },
-                label: t('components.inputBar.audio'),
+                label: hasAttachment
+                  ? t('components.inputBar.unselect')
+                  : t('components.inputBar.audio'),
                 active: hasAudio,
                 onPress: onAttachAudio,
                 accessibilityLabel: t('components.inputBar.attachAudio'),

@@ -159,6 +159,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
           systemPrompt: opts?.systemPrompt,
           sampler: opts?.sampler,
           contextSize: opts?.contextSize,
+          templateVariables: { enable_thinking: model.thinking },
         });
 
         if (generation !== chatGeneration.current) {

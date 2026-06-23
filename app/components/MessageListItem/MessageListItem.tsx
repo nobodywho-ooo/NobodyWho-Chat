@@ -11,6 +11,7 @@ import {
   messageDocumentKind,
   messageDocumentName,
   messageDocumentUri,
+  stripThinkingBlocks,
 } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
 import { DisplayMessage } from 'types';
@@ -130,7 +131,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
 
   const handleCopy = useCallback(() => {
     try {
-      copyToClipboard(content);
+      copyToClipboard(stripThinkingBlocks(content));
       haptics.selection();
       setCopied(true);
     } catch (error) {

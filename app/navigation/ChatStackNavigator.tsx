@@ -17,7 +17,7 @@ import {
   getMessagesByConversationId,
   getModelById,
 } from 'repositories';
-import { log, isIOS } from 'helpers';
+import { log, isIOS, isExternalPickerActive } from 'helpers';
 import { PlatformIcon } from 'components';
 import { useAppState, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
@@ -293,6 +293,9 @@ export const ChatStackNavigator = () => {
       'change',
       (nextState: AppStateStatus) => {
         if (nextState === 'background') {
+          if (isExternalPickerActive()) {
+            return;
+          }
           if (getAppState().modelIdInUse !== undefined) {
             disposeChat();
             unloadedForBackground.current = true;

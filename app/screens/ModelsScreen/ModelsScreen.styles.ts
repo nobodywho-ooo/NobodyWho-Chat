@@ -13,6 +13,13 @@ export default StyleSheet.create({
     paddingTop: Spacings.lg,
     marginVertical: Spacings.md,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.sm,
+    paddingTop: Spacings.lg,
+    marginVertical: Spacings.md,
+  },
   loader: {
     marginTop: Spacings.lg,
   },

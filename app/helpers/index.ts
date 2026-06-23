@@ -18,6 +18,7 @@ import {
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,
+  isExternalPickerActive,
 } from './mediaPicker';
 import {
   deleteMessageDocuments,
@@ -36,6 +37,7 @@ export {
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,
+  isExternalPickerActive,
   deleteMessageDocuments,
   messageDocumentName,
   messageDocumentKind,

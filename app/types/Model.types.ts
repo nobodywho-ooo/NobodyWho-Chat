@@ -19,6 +19,7 @@ export interface Model {
   pipeline: ModelPipeline;
   tags: string[];
   languages: string[];
+  supportedFileFormat: string[];
 }
 
 // A model part plus how far its download has got — everything needed to compute

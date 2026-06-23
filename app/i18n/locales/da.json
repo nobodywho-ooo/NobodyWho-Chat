@@ -33,7 +33,8 @@
       "attachCamera": "Tag et billede",
       "photo": "Foto",
       "camera": "Kamera",
-      "audio": "Lyd"
+      "audio": "Lyd",
+      "unselect": "Fravælg"
     },
     "cameraCapture": {
       "permission": "Kameraadgang er nødvendig for at tage et billede.",
@@ -93,7 +94,11 @@
       "downloading": "Downloader...",
       "availableToDownload": "Tilgængelig til download",
       "errorCannotGetModelsAtTheMoment": "Kan ikke hente modellerne i øjeblikket",
-      "youHaveDownloadedAllTheModels": "Du har downloadet alle modellerne."
+      "youHaveDownloadedAllTheModels": "Du har downloadet alle modellerne.",
+      "chooseModelTitle": "Vælg den rigtige model",
+      "chooseModelMessage": "Modellers størrelse defineres ud fra deres antal parametre (f.eks. 0,6B, 1,2B ...). Større modeller er ofte klogere, men de kræver flere ressourcer og gør ydelsen langsommere. Hvis du ikke har en ny telefon, bør du derfor starte med en mindre model for at sikre en jævn ydelse.",
+      "downloadInProgressTitle": "Download i gang",
+      "downloadInProgressMessage": "Sørg for, at du har en stabil internetforbindelse, og vent et øjeblik. Hvis downloadet ser ud til at sidde fast efter 10 sekunder, så genstart appen — vi genoptager downloadet automatisk."
     },
     "downloadedModels": {
       "noModelDownloaded": "Ingen model downloadet",

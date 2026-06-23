@@ -67,6 +67,15 @@ jest.mock('repositories', () => ({
   insertMessage: jest.fn(),
 }));
 
+// Drive whether one of our own system pickers (photo library / document picker)
+// is on screen, so a test can assert the navigator distinguishes that from a
+// real background. Everything else in 'helpers' stays real.
+let mockExternalPickerActive = false;
+jest.mock('helpers', () => ({
+  ...jest.requireActual('helpers'),
+  isExternalPickerActive: () => mockExternalPickerActive,
+}));
+
 const mockGetModelById = getModelById as jest.Mock;
 const mockGetConversationById = getConversationById as jest.Mock;
 const mockGetMessagesByConversationId =
@@ -79,6 +88,7 @@ const mockInsertMessage = insertMessage as jest.Mock;
 let appStateHandler: (state: AppStateStatus) => void = () => {};
 
 beforeEach(async () => {
+  mockExternalPickerActive = false;
   appStateHandler = () => {};
   jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, handler) => {
     appStateHandler = handler as (state: AppStateStatus) => void;
@@ -363,6 +373,30 @@ test('unloads the chat on background and rebuilds it on foreground', async () =>
     appStateHandler('active');
   });
   await waitFor(() => expect(mockCreateChat).toHaveBeenCalledTimes(2));
+});
+
+test('keeps the model resident when our own picker backgrounds the app', async () => {
+  await setAppState({ modelIdInUse: 0 });
+
+  const screen = render(<ChatStackNavigator />);
+  await showEmptyChat(screen);
+  expect(mockCreateChat).toHaveBeenCalledTimes(1);
+
+  // Opening the photo library / document picker pauses our Activity, which RN
+  // reports as 'background' — but the model must stay loaded so the composing
+  // ChatScreen (its text + attachment) survives the round trip.
+  mockExternalPickerActive = true;
+  await act(async () => {
+    appStateHandler('background');
+  });
+  expect(mockDisposeChat).not.toHaveBeenCalled();
+
+  // Returning from the picker must not rebuild the model either.
+  mockExternalPickerActive = false;
+  await act(async () => {
+    appStateHandler('active');
+  });
+  expect(mockCreateChat).toHaveBeenCalledTimes(1);
 });
 
 test('does not unload on the transient inactive state', async () => {

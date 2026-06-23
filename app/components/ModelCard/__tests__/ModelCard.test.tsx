@@ -27,6 +27,7 @@ const mockModel: Model = {
   pipeline: ModelPipeline.textGeneration,
   tags: ['Multilingual'],
   languages: ['English', 'Arabic', 'Chinese', 'French'],
+  supportedFileFormat: [],
 };
 
 test('renders correctly ModelCard', () => {

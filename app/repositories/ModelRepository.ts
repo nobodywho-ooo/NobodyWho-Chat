@@ -16,6 +16,7 @@ export function rowToModel(row: Record<string, any>): Model {
     pipeline: row.pipeline as ModelPipeline,
     tags: safeJsonParse<string[]>(row.tags, []),
     languages: safeJsonParse<string[]>(row.languages, []),
+    supportedFileFormat: safeJsonParse<string[]>(row.supported_file_format, []),
   };
 }
 
@@ -41,8 +42,8 @@ export async function insertModel(model: Model): Promise<void> {
   await db.transaction(async tx => {
     await tx.execute(
       `INSERT INTO models
-        (id, name, size_gb, parameter_count_billions, author, family, thinking, huggingface_url, parts, pipeline, tags, languages)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, size_gb, parameter_count_billions, author, family, thinking, huggingface_url, parts, pipeline, tags, languages, supported_file_format)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name,
         size_gb = excluded.size_gb,
@@ -54,7 +55,8 @@ export async function insertModel(model: Model): Promise<void> {
         parts = excluded.parts,
         pipeline = excluded.pipeline,
         tags = excluded.tags,
-        languages = excluded.languages`,
+        languages = excluded.languages,
+        supported_file_format = excluded.supported_file_format`,
       [
         model.id,
         model.name,
@@ -68,6 +70,7 @@ export async function insertModel(model: Model): Promise<void> {
         model.pipeline,
         JSON.stringify(model.tags),
         JSON.stringify(model.languages),
+        JSON.stringify(model.supportedFileFormat ?? []),
       ],
     );
   });

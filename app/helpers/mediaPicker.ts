@@ -40,19 +40,35 @@ const prepareImage = async (
   return saved.uri;
 };
 
-export const pickImageToMessageDocuments = async (): Promise<string | null> => {
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ['images'],
-    quality: 1,
-  });
-  if (result.canceled || result.assets.length === 0) {
-    return null;
+let externalPickerDepth = 0;
+
+// A system picker we launched (photo library / document picker) pauses
+// our Activity and surfaces as 'background', but the model must stay alive
+export const isExternalPickerActive = (): boolean => externalPickerDepth > 0;
+
+const withExternalPicker = async <T>(run: () => Promise<T>): Promise<T> => {
+  externalPickerDepth += 1;
+  try {
+    return await run();
+  } finally {
+    externalPickerDepth = Math.max(0, externalPickerDepth - 1);
   }
-  const asset = result.assets[0];
-  const uri = await prepareImage(asset.uri, asset.width, asset.height);
-  const name = toJpegName(asset.fileName ?? fileNameFromUri(asset.uri));
-  return copyToMessageDocuments(uri, name);
 };
+
+export const pickImageToMessageDocuments = async (): Promise<string | null> =>
+  withExternalPicker(async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 1,
+    });
+    if (result.canceled || result.assets.length === 0) {
+      return null;
+    }
+    const asset = result.assets[0];
+    const uri = await prepareImage(asset.uri, asset.width, asset.height);
+    const name = toJpegName(asset.fileName ?? fileNameFromUri(asset.uri));
+    return copyToMessageDocuments(uri, name);
+  });
 
 export const captureImageToMessageDocuments = async (capture: {
   uri: string;
@@ -64,15 +80,16 @@ export const captureImageToMessageDocuments = async (capture: {
   return copyToMessageDocuments(uri, name);
 };
 
-export const pickAudioToMessageDocuments = async (): Promise<string | null> => {
-  const result = await DocumentPicker.getDocumentAsync({
-    type: ['audio/mpeg', 'audio/wav', 'audio/x-wav'],
-    copyToCacheDirectory: true,
-    multiple: false,
+export const pickAudioToMessageDocuments = async (): Promise<string | null> =>
+  withExternalPicker(async () => {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['audio/mpeg', 'audio/wav', 'audio/x-wav'],
+      copyToCacheDirectory: true,
+      multiple: false,
+    });
+    if (result.canceled || result.assets.length === 0) {
+      return null;
+    }
+    const asset = result.assets[0];
+    return copyToMessageDocuments(asset.uri, asset.name);
   });
-  if (result.canceled || result.assets.length === 0) {
-    return null;
-  }
-  const asset = result.assets[0];
-  return copyToMessageDocuments(asset.uri, asset.name);
-};

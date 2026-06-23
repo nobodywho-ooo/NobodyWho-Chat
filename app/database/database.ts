@@ -71,6 +71,7 @@ const MIGRATIONS: string[][] = [
       tokens_per_second REAL,
       time_to_first_token REAL,
       documents_path TEXT NOT NULL DEFAULT '[]',
+      supported_file_format TEXT NOT NULL DEFAULT '[]',
       FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
     )`,
     `CREATE INDEX idx_messages_conversation_id ON messages(conversation_id)`,

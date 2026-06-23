@@ -18,6 +18,7 @@ const EMPTY_MODEL: Model = {
   pipeline: ModelPipeline.textGeneration,
   tags: [],
   languages: [],
+  supportedFileFormat: [],
 };
 
 export function rowToModelDownload(row: Record<string, any>): ModelDownload {

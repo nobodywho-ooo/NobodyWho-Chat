@@ -17,17 +17,64 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
   }
 >
   <View>
-    <Text
+    <View
       style={
         {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 8,
           "marginVertical": 12,
           "paddingTop": 16,
         }
       }
-      variant="h4"
     >
-      screens.models.availableToDownload
-    </Text>
+      <Text
+        variant="h4"
+      >
+        screens.models.availableToDownload
+      </Text>
+      <View
+        accessibilityLabel="screens.models.chooseModelTitle"
+        accessibilityRole="button"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={8}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+      >
+        <PlatformIcon
+          androidIconName="info"
+          color="#628395"
+          iosIconName="info.circle"
+          size={20}
+        />
+      </View>
+    </View>
     <View
       style={
         {
@@ -56,9 +103,13 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
         title="common.retry"
       />
     </View>
-    <Text>
-      screens.models.youHaveDownloadedAllTheModels
-    </Text>
+    <View
+      style={
+        {
+          "height": NaN,
+        }
+      }
+    />
   </View>
 </RCTScrollView>
 `;
@@ -104,6 +155,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
           "parts": [],
           "pipeline": "textGeneration",
           "sizeGB": 1,
+          "supportedFileFormat": [],
           "tags": [],
           "thinking": false,
         }
@@ -128,17 +180,64 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
       subtitle="screens.models.modelCount"
       title="screens.models.downloaded"
     />
-    <Text
+    <View
       style={
         {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 8,
           "marginVertical": 12,
           "paddingTop": 16,
         }
       }
-      variant="h4"
     >
-      screens.models.availableToDownload
-    </Text>
+      <Text
+        variant="h4"
+      >
+        screens.models.availableToDownload
+      </Text>
+      <View
+        accessibilityLabel="screens.models.chooseModelTitle"
+        accessibilityRole="button"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={8}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+      >
+        <PlatformIcon
+          androidIconName="info"
+          color="#628395"
+          iosIconName="info.circle"
+          size={20}
+        />
+      </View>
+    </View>
     <View
       style={
         {
@@ -167,9 +266,13 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
         title="common.retry"
       />
     </View>
-    <Text>
-      screens.models.youHaveDownloadedAllTheModels
-    </Text>
+    <View
+      style={
+        {
+          "height": NaN,
+        }
+      }
+    />
   </View>
 </RCTScrollView>
 `;
@@ -215,6 +318,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
           "parts": [],
           "pipeline": "textGeneration",
           "sizeGB": 1,
+          "supportedFileFormat": [],
           "tags": [],
           "thinking": false,
         }
@@ -239,17 +343,64 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
       subtitle="screens.models.modelCount"
       title="screens.models.downloaded"
     />
-    <Text
+    <View
       style={
         {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 8,
           "marginVertical": 12,
           "paddingTop": 16,
         }
       }
-      variant="h4"
     >
-      screens.models.availableToDownload
-    </Text>
+      <Text
+        variant="h4"
+      >
+        screens.models.availableToDownload
+      </Text>
+      <View
+        accessibilityLabel="screens.models.chooseModelTitle"
+        accessibilityRole="button"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={8}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+      >
+        <PlatformIcon
+          androidIconName="info"
+          color="#628395"
+          iosIconName="info.circle"
+          size={20}
+        />
+      </View>
+    </View>
     <ModelCard
       model={
         {
@@ -263,6 +414,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
           "parts": [],
           "pipeline": "textGeneration",
           "sizeGB": 1,
+          "supportedFileFormat": [],
           "tags": [],
           "thinking": false,
         }
@@ -282,11 +434,19 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
           "parts": [],
           "pipeline": "textGeneration",
           "sizeGB": 1,
+          "supportedFileFormat": [],
           "tags": [],
           "thinking": false,
         }
       }
       onPress={[Function]}
+    />
+    <View
+      style={
+        {
+          "height": NaN,
+        }
+      }
     />
   </View>
 </RCTScrollView>

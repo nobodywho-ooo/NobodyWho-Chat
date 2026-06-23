@@ -1,11 +1,18 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, AppState, ScrollView, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  AppState,
+  Pressable,
+  ScrollView,
+  View,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { downloadModel } from 'react-native-nobodywho';
 import { useAppState, useModelDownloads, useModels, useStyled } from 'hooks';
 import { find, map, pathEq, prop } from 'ramda';
-import { ErrorView, ListItem, ModelCard, Text } from 'components';
+import { ErrorView, ListItem, ModelCard, PlatformIcon, Text } from 'components';
 import {
   claimModelDownload,
   createModelDownload,
@@ -82,6 +89,24 @@ export const ModelsScreen: React.FC = () => {
   const currentModel = useMemo(
     () => find(pathEq(modelIdInUse, ['id']), storedModels),
     [modelIdInUse, storedModels],
+  );
+
+  const showModelInfo = useCallback(
+    () =>
+      Alert.alert(
+        t('screens.models.chooseModelTitle'),
+        t('screens.models.chooseModelMessage'),
+      ),
+    [t],
+  );
+
+  const showDownloadInProgress = useCallback(
+    () =>
+      Alert.alert(
+        t('screens.models.downloadInProgressTitle'),
+        t('screens.models.downloadInProgressMessage'),
+      ),
+    [t],
   );
 
   useEffect(() => {
@@ -222,14 +247,28 @@ export const ModelsScreen: React.FC = () => {
               key={download.model.id}
               model={download.model}
               downloadProgress={modelDownloadProgress(download)}
+              onPress={showDownloadInProgress}
             />
           ))}
         </>
       )}
 
-      <Text variant="h4" style={styles.header}>
-        {t('screens.models.availableToDownload')}
-      </Text>
+      <View style={styles.headerContainer}>
+        <Text variant="h4">{t('screens.models.availableToDownload')}</Text>
+        <Pressable
+          onPress={showModelInfo}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={t('screens.models.chooseModelTitle')}
+        >
+          <PlatformIcon
+            iosIconName="info.circle"
+            androidIconName="info"
+            size={20}
+            color={colors.primary}
+          />
+        </Pressable>
+      </View>
       {isLoading && (
         <ActivityIndicator
           style={styles.loader}

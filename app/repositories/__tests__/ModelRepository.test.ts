@@ -46,6 +46,7 @@ describe('rowToModel', () => {
       pipeline: 'textGeneration',
       tags: ['x'],
       languages: ['English', 'French'],
+      supportedFileFormat: [],
     });
   });
 
@@ -58,6 +59,22 @@ describe('rowToModel', () => {
 
     expect(model.parts).toEqual([]);
     expect(model.tags).toEqual([]);
+  });
+
+  test('parses supported_file_format when present', () => {
+    const model = rowToModel({
+      ...rawRow,
+      supported_file_format: '["pdf","png"]',
+    });
+
+    expect(model.supportedFileFormat).toEqual(['pdf', 'png']);
+  });
+
+  test('defaults supportedFileFormat to [] when the column is null/missing', () => {
+    expect(rowToModel(rawRow).supportedFileFormat).toEqual([]);
+    expect(
+      rowToModel({ ...rawRow, supported_file_format: null }).supportedFileFormat,
+    ).toEqual([]);
   });
 });
 
@@ -101,12 +118,21 @@ describe('insertModel', () => {
 
     expect(db.execute).toHaveBeenCalledWith(
       expect.stringContaining('ON CONFLICT(id) DO UPDATE'),
-      [3, 'Q', 1, 1, 'Author', 'Family', 1, 'https://huggingface.co/test/model-3', '[]', 'textGeneration', '["fast"]', '[]'],
+      [3, 'Q', 1, 1, 'Author', 'Family', 1, 'https://huggingface.co/test/model-3', '[]', 'textGeneration', '["fast"]', '[]', '[]'],
     );
     // Must NOT use INSERT OR REPLACE: with FKs on, REPLACE cascade-deletes the
     // model's conversations and messages.
     const [sql] = db.execute.mock.calls[0];
     expect(sql).not.toContain('OR REPLACE');
+  });
+
+  test('serializes supportedFileFormat when defined', async () => {
+    const model = buildModel(4, { supportedFileFormat: ['pdf'] });
+
+    await insertModel(model);
+
+    const params = db.execute.mock.calls[0][1] as unknown[];
+    expect(params[params.length - 1]).toBe('["pdf"]');
   });
 });
 
