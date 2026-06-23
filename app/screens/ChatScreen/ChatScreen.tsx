@@ -2,17 +2,34 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Message } from 'react-native-nobodywho';
+import { Message, Prompt } from 'react-native-nobodywho';
 import { FlashList, FlashListRef } from '@shopify/flash-list';
 import { MessageListItem } from 'components';
 import { useStyled } from 'hooks';
-import { DisplayMessage } from 'types';
+import {
+  DisplayMessage,
+  pipelineIngestsAudio,
+  pipelineIngestsImage,
+} from 'types';
 import { getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
 import { useAiService } from 'services';
-import { log, isIOS, formatThinkingBlocks, isAndroid, haptics } from 'helpers';
+import {
+  log,
+  isIOS,
+  formatThinkingBlocks,
+  isAndroid,
+  haptics,
+  captureImageToMessageDocuments,
+  deleteMessageDocuments,
+  pickAudioToMessageDocuments,
+  pickImageToMessageDocuments,
+  resolveMessageDocumentPath,
+} from 'helpers';
 
-import { EmptyChat, InputBar } from './components';
+import { CameraCaptureModal, EmptyChat, InputBar } from './components';
+import { CapturedPhoto } from './components/CameraCaptureModal/CameraCaptureModal';
+import { ImageAttachSource } from './components/InputBar/InputBar';
 import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
@@ -47,6 +64,17 @@ interface ChatScreenProps {
   onConversationCreated: (conversationId: number) => void;
 }
 
+interface AttachedDocuments {
+  imagePath?: string;
+  imageSource?: ImageAttachSource;
+  audioPath?: string;
+}
+
+const pendingDocumentPaths = (documents: AttachedDocuments | null): string[] =>
+  [documents?.imagePath, documents?.audioPath].filter(
+    (path): path is string => typeof path === 'string',
+  );
+
 export const ChatScreen: React.FC<ChatScreenProps> = ({
   conversationId: initialConversationId,
   messages: initialMessages,
@@ -62,15 +90,29 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [stableHeight, setStableHeight] = useState(0);
   const [isStreaming, setIsStreaming] = useState(false);
+  const [attachedDocuments, setAttachedDocuments] =
+    useState<AttachedDocuments | null>(null);
+  const [cameraVisible, setCameraVisible] = useState(false);
   const { colors } = useStyled();
-  const { chat } = useAiService();
+  const { chat, chatPipeline } = useAiService();
   const flatListRef = useRef<FlashListRef<DisplayMessage>>(null);
   const insets = useSafeAreaInsets();
   const isKeyboardVisible = keyboardHeight > 0;
 
+  const ingestsImage = pipelineIngestsImage(chatPipeline);
+  const ingestsAudio = pipelineIngestsAudio(chatPipeline);
+
+  const attachedDocumentsRef = useRef(attachedDocuments);
+  attachedDocumentsRef.current = attachedDocuments;
+
   useEffect(() => {
     setMessages(formatMessages(initialMessages));
     setConversationId(initialConversationId);
+    const orphans = pendingDocumentPaths(attachedDocumentsRef.current);
+    if (orphans.length > 0) {
+      deleteMessageDocuments(orphans);
+      setAttachedDocuments(null);
+    }
   }, [initialMessages, initialConversationId]);
 
   // Don't let a generation keep streaming into a screen that is gone.
@@ -82,6 +124,15 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       chat.current?.stopGeneration();
     };
   }, [chat]);
+
+  useEffect(() => {
+    return () => {
+      const orphans = pendingDocumentPaths(attachedDocumentsRef.current);
+      if (orphans.length > 0) {
+        deleteMessageDocuments(orphans);
+      }
+    };
+  }, []);
 
   const scrollToEnd = useCallback((_width: number, contentHeight: number) => {
     flatListRef.current?.scrollToOffset({
@@ -105,25 +156,121 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     };
   }, []);
 
+  const clearAttachedImage = () => {
+    const imagePath = attachedDocuments?.imagePath;
+    if (imagePath) {
+      deleteMessageDocuments([imagePath]);
+    }
+    setAttachedDocuments(prev =>
+      prev ? { ...prev, imagePath: undefined, imageSource: undefined } : prev,
+    );
+  };
+
+  const handleAttachImage = async () => {
+    if (!ingestsImage) {
+      return;
+    }
+
+    if (attachedDocuments?.imagePath) {
+      clearAttachedImage();
+      return;
+    }
+
+    try {
+      const imagePath = await pickImageToMessageDocuments();
+      if (imagePath) {
+        setAttachedDocuments(prev => ({
+          ...prev,
+          imagePath,
+          imageSource: 'photo',
+        }));
+        haptics.light();
+      }
+    } catch (error) {
+      log('ChatScreen attach image failed', error, { capture: true });
+    }
+  };
+
+  const handleAttachCamera = () => {
+    if (!ingestsImage) {
+      return;
+    }
+
+    if (attachedDocuments?.imagePath) {
+      clearAttachedImage();
+      return;
+    }
+
+    Keyboard.dismiss();
+    setCameraVisible(true);
+  };
+
+  const handleCapturePhoto = async (photo: CapturedPhoto) => {
+    setCameraVisible(false);
+
+    try {
+      const imagePath = await captureImageToMessageDocuments(photo);
+      setAttachedDocuments(prev => ({
+        ...prev,
+        imagePath,
+        imageSource: 'camera',
+      }));
+      haptics.light();
+    } catch (error) {
+      log('ChatScreen capture image failed', error, { capture: true });
+    }
+  };
+
+  const handleAttachAudio = async () => {
+    if (!ingestsAudio) {
+      return;
+    }
+
+    if (attachedDocuments?.audioPath) {
+      deleteMessageDocuments([attachedDocuments.audioPath]);
+      setAttachedDocuments(prev =>
+        prev ? { ...prev, audioPath: undefined } : prev,
+      );
+      return;
+    }
+
+    try {
+      const audioPath = await pickAudioToMessageDocuments();
+      if (audioPath) {
+        setAttachedDocuments(prev => ({ ...prev, audioPath }));
+        haptics.light();
+      }
+    } catch (error) {
+      log('ChatScreen attach audio failed', error, { capture: true });
+    }
+  };
+
   const handleSend = async () => {
     const userInput = inputText.trim();
     if (!userInput || isStreaming) return;
 
-    if (chat.current === undefined) {
+    const activeChat = chat.current;
+    if (activeChat === undefined) {
       return;
     }
-
-    const activeChat = chat.current;
 
     const { modelIdInUse } = getAppState();
     if (modelIdInUse === undefined) {
       return;
     }
 
+    const imagePath = ingestsImage ? attachedDocuments?.imagePath : undefined;
+    const audioPath = ingestsAudio ? attachedDocuments?.audioPath : undefined;
+
+    const documentsPath = [imagePath, audioPath].filter(
+      (path): path is string => typeof path === 'string',
+    );
+
     // TODO: check
-    const userMessage: Message = {
+    const userMessage: DisplayMessage = {
       role: 'user',
       content: userInput,
+      documentsPath,
     };
     const initialAssistantMessage: Message = {
       role: 'assistant',
@@ -132,6 +279,15 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
     setMessages(prev => [...prev, userMessage, initialAssistantMessage]);
     setInputText('');
+
+    const sentPaths = new Set(documentsPath);
+    const orphans = pendingDocumentPaths(attachedDocuments).filter(
+      path => !sentPaths.has(path),
+    );
+    if (orphans.length > 0) {
+      deleteMessageDocuments(orphans);
+    }
+    setAttachedDocuments(null);
     Keyboard.dismiss();
     setIsStreaming(true);
 
@@ -150,7 +306,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       conversationId: id,
       role: 'user',
       content: userInput,
-      documentsPath: [],
+      documentsPath,
     });
 
     const startedAt = Date.now();
@@ -158,7 +314,19 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     let tokenCount = 0;
     let accumulated = '';
     try {
-      const streamResult = activeChat.ask(userInput);
+      const askInput =
+        imagePath || audioPath
+          ? new Prompt([
+              Prompt.Text(userInput),
+              ...(imagePath
+                ? [Prompt.Image(resolveMessageDocumentPath(imagePath))]
+                : []),
+              ...(audioPath
+                ? [Prompt.Audio(resolveMessageDocumentPath(audioPath))]
+                : []),
+            ])
+          : userInput;
+      const streamResult = activeChat.ask(askInput);
 
       for await (const token of streamResult) {
         if (chat.current !== activeChat) break;
@@ -224,9 +392,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   };
 
   const stopStreaming = () => {
-    if (chat.current !== undefined) {
-      chat.current.stopGeneration();
-    }
+    chat.current?.stopGeneration();
   };
 
   let bottomOffset: number;
@@ -286,6 +452,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       <InputBar
         value={inputText}
         isStreaming={isStreaming}
+        showImageAttach={ingestsImage}
+        showAudioAttach={ingestsAudio}
+        imageSource={attachedDocuments?.imageSource}
+        hasAudio={!!attachedDocuments?.audioPath}
+        onAttachImage={handleAttachImage}
+        onAttachCamera={handleAttachCamera}
+        onAttachAudio={handleAttachAudio}
         onChangeText={setInputText}
         onSend={handleSend}
         onStop={stopStreaming}
@@ -293,6 +466,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         onBlur={() => setIsInputFocused(false)}
         style={{ paddingBottom: bottomOffset }}
       />
+      {ingestsImage && (
+        <CameraCaptureModal
+          visible={cameraVisible}
+          onClose={() => setCameraVisible(false)}
+          onCapture={handleCapturePhoto}
+        />
+      )}
     </View>
   );
 };

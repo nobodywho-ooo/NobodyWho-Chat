@@ -14,8 +14,6 @@ export interface Model {
   author: string;
   family: string;
   thinking: boolean;
-  imageIngestion: boolean;
-  audioIngestion: boolean;
   huggingfaceUrl: string;
   parts: ModelPart[];
   pipeline: ModelPipeline;
@@ -57,3 +55,28 @@ export const pipelineLabel: Record<ModelPipeline, string> = {
   [ModelPipeline.featureExtraction]: 'Feature extraction',
   [ModelPipeline.textRanking]: 'Text ranking',
 };
+
+export type ChatPipeline =
+  | ModelPipeline.textGeneration
+  | ModelPipeline.imageTextToText
+  | ModelPipeline.audioTextToText
+  | ModelPipeline.imageAudioTextToText;
+
+export const toChatPipeline = (pipeline: ModelPipeline): ChatPipeline => {
+  switch (pipeline) {
+    case ModelPipeline.imageTextToText:
+    case ModelPipeline.audioTextToText:
+    case ModelPipeline.imageAudioTextToText:
+      return pipeline;
+    default:
+      return ModelPipeline.textGeneration;
+  }
+};
+
+export const pipelineIngestsImage = (pipeline: ChatPipeline): boolean =>
+  pipeline === ModelPipeline.imageTextToText ||
+  pipeline === ModelPipeline.imageAudioTextToText;
+
+export const pipelineIngestsAudio = (pipeline: ChatPipeline): boolean =>
+  pipeline === ModelPipeline.audioTextToText ||
+  pipeline === ModelPipeline.imageAudioTextToText;

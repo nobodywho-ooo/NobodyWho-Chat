@@ -3,11 +3,14 @@ import { Spacings } from 'style';
 
 export default StyleSheet.create({
   userContainer: {
-    paddingHorizontal: Spacings.lg,
-    paddingVertical: Spacings.md,
     marginVertical: Spacings.md,
     maxWidth: '90%',
     alignSelf: 'flex-end',
+    alignItems: 'flex-end',
+  },
+  userBubbleContainer: {
+    paddingHorizontal: Spacings.lg,
+    paddingVertical: Spacings.md,
     borderRadius: 16,
   },
   assistantContainer: {
@@ -44,4 +47,34 @@ export default StyleSheet.create({
     lineHeight: 16,
     includeFontPadding: false,
   },
+  attachmentsContainer: {
+    marginBottom: Spacings.sm,
+    rowGap: Spacings.sm,
+    alignItems: 'flex-start',
+  },
+  attachmentName: {
+    lineHeight: 16,
+  },
+  imagesContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: Spacings.sm,
+    rowGap: Spacings.sm,
+    alignItems: 'flex-start',
+  },
+  audioContainer: {
+    rowGap: Spacings.sm,
+    alignSelf: 'stretch',
+  },
+  imageAttachment: {
+    height: 60,
+    width: 80,
+    borderRadius: 8,
+  },
+  imagePressed: {
+    opacity: 0.6,
+  },
+  loadingIndicator: {
+    alignSelf: 'flex-start',
+  }
 });

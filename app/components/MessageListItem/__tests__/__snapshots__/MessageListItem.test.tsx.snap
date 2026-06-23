@@ -93,30 +93,38 @@ exports[`renders correctly MessageListItem for assistant 1`] = `
 exports[`renders correctly MessageListItem for user 1`] = `
 <View
   style={
-    [
-      {
-        "alignSelf": "flex-end",
-        "borderRadius": 16,
-        "marginVertical": 12,
-        "maxWidth": "90%",
-        "paddingHorizontal": 16,
-        "paddingVertical": 12,
-      },
-      {
-        "backgroundColor": "#ebebeb",
-      },
-    ]
+    {
+      "alignItems": "flex-end",
+      "alignSelf": "flex-end",
+      "marginVertical": 12,
+      "maxWidth": "90%",
+    }
   }
 >
-  <Text
+  <View
     style={
-      {
-        "fontSize": 15,
-        "lineHeight": 22,
-      }
+      [
+        {
+          "borderRadius": 16,
+          "paddingHorizontal": 16,
+          "paddingVertical": 12,
+        },
+        {
+          "backgroundColor": "#ebebeb",
+        },
+      ]
     }
   >
-    Is the water wet?
-  </Text>
+    <Text
+      style={
+        {
+          "fontSize": 15,
+          "lineHeight": 22,
+        }
+      }
+    >
+      Is the water wet?
+    </Text>
+  </View>
 </View>
 `;

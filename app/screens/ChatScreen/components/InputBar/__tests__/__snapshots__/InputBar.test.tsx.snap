@@ -340,3 +340,129 @@ exports[`renders correctly InputBar with value 1`] = `
   </View>
 </View>
 `;
+
+exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
+<View
+  style={
+    [
+      {
+        "bottom": 0,
+        "left": 0,
+        "paddingHorizontal": 12,
+        "paddingTop": 4,
+        "position": "absolute",
+        "right": 0,
+      },
+      undefined,
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <LinearGradient
+    colors={
+      [
+        "rgba(255, 255, 255, 0)",
+        "rgba(255, 255, 255, 0.9)",
+      ]
+    }
+    end={
+      {
+        "x": 0,
+        "y": 1,
+      }
+    }
+    pointerEvents="none"
+    start={
+      {
+        "x": 0,
+        "y": 0,
+      }
+    }
+    style={
+      {
+        "height": 10,
+        "left": -12,
+        "position": "absolute",
+        "right": -12,
+        "top": -10,
+      }
+    }
+  />
+  <View
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 16,
+          "flexDirection": "row",
+          "minHeight": 42,
+          "paddingHorizontal": 16,
+          "paddingVertical": 8,
+        },
+        {
+          "backgroundColor": "#FFFFFF",
+          "borderColor": "#e1e1e1",
+          "borderWidth": 1,
+        },
+      ]
+    }
+  >
+    <View
+      style={
+        {
+          "marginRight": 8,
+        }
+      }
+    >
+      <IconButton
+        accessibilityLabel="components.inputBar.attach"
+        backgroundColor="#ebebeb"
+        color="#000000"
+        icon={
+          {
+            "androidIconName": "add",
+            "iosIconName": "plus",
+          }
+        }
+        onPress={[Function]}
+        size={20}
+      />
+    </View>
+    <TextInput
+      multiline={true}
+      onChangeText={[Function]}
+      placeholder="components.inputBar.placeholder"
+      placeholderTextColor="#999"
+      style={
+        [
+          {
+            "flex": 1,
+            "fontSize": 16,
+            "maxHeight": 100,
+            "paddingRight": 6,
+            "paddingTop": -4,
+          },
+          {
+            "color": "#000000",
+          },
+        ]
+      }
+      value=""
+    />
+    <IconButton
+      backgroundColor="#b0c1cb"
+      color="#FFFFFF"
+      icon={
+        {
+          "androidIconName": "arrow_upward",
+          "iosIconName": "arrow.up",
+        }
+      }
+      onPress={[Function]}
+      size={20}
+    />
+  </View>
+</View>
+`;

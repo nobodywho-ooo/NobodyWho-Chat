@@ -9,11 +9,32 @@ import { haptics } from './haptics';
 import { getFamilyIcon } from './familyIcon';
 import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
+import { sleep } from './async';
+import {
+  captureImageToMessageDocuments,
+  pickAudioToMessageDocuments,
+  pickImageToMessageDocuments,
+} from './mediaPicker';
+import {
+  deleteMessageDocuments,
+  messageDocumentName,
+  messageDocumentKind,
+  messageDocumentUri,
+  resolveMessageDocumentPath,
+} from './messageDocuments';
 
 export {
   getFamilyIcon,
   getAssetPath,
   deleteModelFiles,
+  captureImageToMessageDocuments,
+  pickAudioToMessageDocuments,
+  pickImageToMessageDocuments,
+  deleteMessageDocuments,
+  messageDocumentName,
+  messageDocumentKind,
+  messageDocumentUri,
+  resolveMessageDocumentPath,
   isIOS,
   isAndroid,
   getIOSVersion,
@@ -26,4 +47,5 @@ export {
   stripThinkingBlocks,
   haptics,
   copyToClipboard,
+  sleep,
 };

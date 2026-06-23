@@ -1,10 +1,22 @@
 import React from 'react';
 import { render, act } from '@testing-library/react-native';
+import { Prompt } from 'react-native-nobodywho';
+import { exists, unlink } from '@dr.pogodin/react-native-fs';
 
 import { InputBar } from '../components/InputBar/InputBar';
+import { CameraCaptureModal } from '../components/CameraCaptureModal/CameraCaptureModal';
 import { insertConversation, insertMessage } from 'repositories';
+import { ModelPipeline } from 'types';
+import {
+  mockGetDocumentAsync,
+  mockImageSaveAsync,
+  mockLaunchImageLibraryAsync,
+} from 'jest/mock/node-modules';
 
 import { ChatScreen } from '../ChatScreen';
+
+const mockExists = exists as jest.Mock;
+const mockUnlink = unlink as jest.Mock;
 
 // ChatScreen reads only getAppState() from the store and `chat` from the
 // service; mock both so handleSend can run without the real model/db.
@@ -18,9 +30,16 @@ const mockChat = {
   setChatHistory: jest.fn(),
 };
 // Stable ref (like the real AiService) so a test can swap chat.current mid-stream.
-const mockChatRef: { current: typeof mockChat | undefined } = { current: mockChat };
+const mockChatRef: { current: typeof mockChat | undefined } = {
+  current: mockChat,
+};
+// Drives which modalities ChatScreen offers for the loaded model.
+let mockChatPipeline: ModelPipeline = ModelPipeline.textGeneration;
 jest.mock('services', () => ({
-  useAiService: () => ({ chat: mockChatRef }),
+  useAiService: () => ({
+    chat: mockChatRef,
+    chatPipeline: mockChatPipeline,
+  }),
 }));
 
 jest.mock('repositories', () => ({
@@ -40,8 +59,22 @@ const stream = async function* () {
 beforeEach(() => {
   mockChatRef.current = mockChat;
   mockChat.ask.mockReset().mockImplementation(() => stream());
+  mockChatPipeline = ModelPipeline.textGeneration;
+  mockLaunchImageLibraryAsync.mockReset().mockResolvedValue({
+    canceled: false,
+    assets: [{ uri: 'file:///tmp/IMG_0001.jpg', fileName: 'IMG_0001.jpg' }],
+  });
+  mockGetDocumentAsync.mockReset().mockResolvedValue({
+    canceled: false,
+    assets: [{ uri: 'file:///tmp/clip.mp3', name: 'clip.mp3' }],
+  });
+  mockImageSaveAsync.mockReset().mockResolvedValue({
+    uri: 'file:///tmp/IMG_0111.png',
+  });
   mockInsertConversation.mockReset().mockResolvedValue(42);
   mockInsertMessage.mockReset().mockResolvedValue(1);
+  mockExists.mockReset();
+  mockUnlink.mockReset();
 });
 
 const send = async (
@@ -176,6 +209,276 @@ test('records tokens/sec and time-to-first-token on the assistant message', asyn
       timeToFirstToken: expect.any(Number),
     }),
   );
+});
+
+test('a vision/hearing send attaches a picked image + audio as a Prompt', async () => {
+  // An image+audio model is loaded, so both attach buttons are offered.
+  mockChatPipeline = ModelPipeline.imageAudioTextToText;
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  // Pick an image and an audio file (pickers mocked), then send.
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+  });
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onAttachAudio();
+  });
+  await send(screen, 'what is this');
+
+  // The chat received a Prompt of text + image + audio parts, each pointing at
+  // the persisted copy (under message-documents) with its extension preserved.
+  expect(mockChat.ask).toHaveBeenCalledTimes(1);
+  const promptArg = mockChat.ask.mock.calls[0][0];
+  expect(promptArg).toBeInstanceOf(Prompt);
+  expect(promptArg.parts).toEqual([
+    { kind: 'text', content: 'what is this' },
+    { kind: 'image', path: expect.stringContaining('IMG_0001') },
+    { kind: 'audio', path: expect.stringContaining('clip') },
+  ]);
+
+  // The persisted user message records both document paths.
+  const userCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'user');
+  expect(userCall?.[0].documentsPath).toEqual([
+    expect.stringContaining('IMG_0001'),
+    expect.stringContaining('clip'),
+  ]);
+});
+
+test('audio-only document picker restricts to audio MIME types', async () => {
+  mockChatPipeline = ModelPipeline.audioTextToText;
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onAttachAudio();
+  });
+  await send(screen, 'what do you hear');
+
+  // The picker was constrained to audio files.
+  expect(mockGetDocumentAsync).toHaveBeenCalledWith(
+    expect.objectContaining({
+      type: ['audio/mpeg', 'audio/wav', 'audio/x-wav'],
+    }),
+  );
+
+  // The Prompt carries text + audio only — no image part.
+  const promptArg = mockChat.ask.mock.calls[0][0];
+  expect(promptArg).toBeInstanceOf(Prompt);
+  expect(promptArg.parts).toEqual([
+    { kind: 'text', content: 'what do you hear' },
+    { kind: 'audio', path: expect.stringContaining('clip') },
+  ]);
+
+  // Only the audio path is persisted.
+  const userCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'user');
+  expect(userCall?.[0].documentsPath).toEqual([
+    expect.stringContaining('clip'),
+  ]);
+});
+
+test('an imported image is re-encoded to a compressed JPEG before attaching', async () => {
+  mockChatPipeline = ModelPipeline.imageTextToText;
+  mockLaunchImageLibraryAsync.mockResolvedValue({
+    canceled: false,
+    assets: [
+      {
+        uri: 'file:///tmp/IMG_0111.heic',
+        fileName: 'IMG_0111.heic',
+        mimeType: 'image/heic',
+      },
+    ],
+  });
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+  });
+  await send(screen, 'what is this');
+
+  // Every image is re-encoded to a compressed JPEG (which also transcodes HEIC,
+  // a format the loader can't decode), so the attached path is the .jpg, never
+  // the .heic.
+  expect(mockImageSaveAsync).toHaveBeenCalledWith(
+    expect.objectContaining({ format: 'jpeg' }),
+  );
+  const promptArg = mockChat.ask.mock.calls[0][0];
+  expect(promptArg.parts[1]).toEqual({
+    kind: 'image',
+    path: expect.stringContaining('.jpg'),
+  });
+  expect(promptArg.parts[1].path).not.toContain('.heic');
+});
+
+test('a photo captured from the camera is downscaled and attached as an image', async () => {
+  mockChatPipeline = ModelPipeline.imageTextToText;
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  // Simulate the camera sheet returning a large captured photo.
+  await act(async () => {
+    await screen.UNSAFE_getByType(CameraCaptureModal as never).props.onCapture({
+      uri: 'file:///tmp/CAPTURE_123.jpg',
+      width: 4000,
+      height: 3000,
+    });
+  });
+  await send(screen, 'what is this');
+
+  // It was re-encoded to a compressed JPEG (and resized, since it exceeded the
+  // cap) and sent as an image part pointing at the persisted copy.
+  expect(mockImageSaveAsync).toHaveBeenCalledWith(
+    expect.objectContaining({ format: 'jpeg' }),
+  );
+  const promptArg = mockChat.ask.mock.calls[0][0];
+  expect(promptArg).toBeInstanceOf(Prompt);
+  expect(promptArg.parts).toEqual([
+    { kind: 'text', content: 'what is this' },
+    { kind: 'image', path: expect.stringContaining('CAPTURE_123') },
+  ]);
+});
+
+test('deselecting an attached image deletes its unsent copy from disk', async () => {
+  mockChatPipeline = ModelPipeline.imageTextToText;
+  mockExists.mockResolvedValue(true); // the message-documents dir + copy exist
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+  const bar = () => screen.UNSAFE_getByType(InputBar as never);
+
+  // Attach (copies into message-documents), then tap again to deselect.
+  await act(async () => {
+    await bar().props.onAttachImage();
+  });
+  await act(async () => {
+    await bar().props.onAttachImage();
+  });
+
+  // The orphaned copy (named from the picked IMG_0001) is unlinked, and nothing
+  // is sent when the user then sends a plain-text message.
+  expect(mockUnlink).toHaveBeenCalledWith(expect.stringContaining('IMG_0001'));
+  await send(screen, 'never mind');
+  expect(mockChat.ask).toHaveBeenCalledWith('never mind');
+});
+
+test('an unsent attachment is deleted when the screen unmounts', async () => {
+  mockChatPipeline = ModelPipeline.imageTextToText;
+  mockExists.mockResolvedValue(true);
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+  });
+  await act(async () => {
+    screen.unmount();
+  });
+
+  expect(mockUnlink).toHaveBeenCalledWith(expect.stringContaining('IMG_0001'));
+});
+
+test('a sent attachment is NOT deleted on unmount (the message owns it)', async () => {
+  mockChatPipeline = ModelPipeline.imageTextToText;
+  mockExists.mockResolvedValue(true);
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+  });
+  await send(screen, 'what is this');
+  mockUnlink.mockClear();
+  await act(async () => {
+    screen.unmount();
+  });
+
+  // The image was sent (persisted into the message), so its copy survives.
+  expect(mockUnlink).not.toHaveBeenCalled();
+});
+
+test('cancelling the image picker attaches nothing', async () => {
+  mockChatPipeline = ModelPipeline.imageTextToText;
+  mockLaunchImageLibraryAsync.mockResolvedValue({ canceled: true, assets: null });
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+  });
+  await send(screen, 'hello');
+
+  // A bare string prompt and no document paths persisted.
+  expect(mockChat.ask).toHaveBeenCalledWith('hello');
+  const userCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'user');
+  expect(userCall?.[0].documentsPath).toEqual([]);
+});
+
+test('a plain text send carries no documents even when multimodal is ready', async () => {
+  // Multimodal model loaded, but the user never tapped attach.
+  mockChatPipeline = ModelPipeline.imageAudioTextToText;
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'just text');
+
+  // A bare string prompt, not a Prompt, and no document paths persisted.
+  expect(mockChat.ask).toHaveBeenCalledWith('just text');
+  const userCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'user');
+  expect(userCall?.[0].documentsPath).toEqual([]);
 });
 
 test('a model swap mid-stream stops streaming without persisting the assistant', async () => {

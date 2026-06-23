@@ -57,10 +57,17 @@ const toChatHistory = (messages: ChatMessage[]): DisplayMessage[] =>
           timeToFirstToken: message.timeToFirstToken,
         };
       case 'system':
-        return { role: 'system', content: message.content };
+        return {
+          role: 'system',
+          content: message.content,
+        };
       case 'user':
       default:
-        return { role: 'user', content: message.content };
+        return {
+          role: 'user',
+          content: message.content,
+          documentsPath: message.documentsPath,
+        };
     }
   });
 

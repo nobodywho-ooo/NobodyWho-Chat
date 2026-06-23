@@ -38,11 +38,124 @@ jest.mock('@dr.pogodin/react-native-fs', () => {
     copyFile: jest.fn(),
     exists: jest.fn(),
     unlink: jest.fn(),
+    mkdir: jest.fn(),
     copyFileAssets: jest.fn(),
     MainBundlePath: jest.fn(),
-    DocumentDirectoryPath: jest.fn(),
+    DocumentDirectoryPath: '/mock-documents',
   };
 });
+
+export const mockLaunchImageLibraryAsync = jest.fn();
+export const mockGetDocumentAsync = jest.fn();
+export const mockImageSaveAsync = jest.fn();
+
+jest.mock('expo-image-picker', () => ({
+  launchImageLibraryAsync: opts => mockLaunchImageLibraryAsync(opts),
+}));
+
+jest.mock('expo-document-picker', () => ({
+  getDocumentAsync: opts => mockGetDocumentAsync(opts),
+}));
+
+jest.mock('expo-image-manipulator', () => ({
+  SaveFormat: { PNG: 'png', JPEG: 'jpeg' },
+  ImageManipulator: {
+    manipulate: () => {
+      const context = {
+        resize: () => context,
+        renderAsync: async () => ({
+          saveAsync: opts => mockImageSaveAsync(opts),
+        }),
+      };
+      return context;
+    },
+  },
+}));
+
+jest.mock('expo-camera', () => {
+  const React = require('react');
+  return {
+    CameraView: React.forwardRef(() => null),
+    useCameraPermissions: () => [{ granted: true, canAskAgain: true }, jest.fn()],
+  };
+});
+
+// Stateful stand-in for expo-audio: useAudioPlayer holds a stable player whose
+// play()/pause() flip a piece of React state, and useAudioPlayerStatus reflects
+// it. Both hooks run in the same component, so toggling drives a real re-render
+// and tests can assert on the play/pause button flipping.
+jest.mock('expo-audio', () => {
+  const mockReact = require('react');
+  return {
+    useAudioPlayer: () => {
+      const [playing, setPlaying] = mockReact.useState(false);
+      const ref = mockReact.useRef(null);
+      if (!ref.current) {
+        ref.current = {
+          play: () => setPlaying(true),
+          pause: () => setPlaying(false),
+          seekTo: jest.fn(),
+        };
+      }
+      ref.current.playing = playing;
+      return ref.current;
+    },
+    useAudioPlayerStatus: player => ({
+      playing: player.playing,
+      didJustFinish: false,
+    }),
+  };
+});
+
+// react-native-gesture-handler's native module isn't available under Jest, and
+// the real entrypoint calls TurboModuleRegistry.getEnforcing on import. Stub the
+// pieces FullScreenImageModal uses: a chainable Gesture.Pan builder and
+// pass-through GestureDetector / GestureHandlerRootView wrappers.
+jest.mock('react-native-gesture-handler', () => {
+  const mockReact = require('react');
+  const chainableGesture = () => {
+    const gesture = {
+      onUpdate: () => gesture,
+      onEnd: () => gesture,
+      onStart: () => gesture,
+      onBegin: () => gesture,
+    };
+    return gesture;
+  };
+  return {
+    Gesture: { Pan: chainableGesture, Tap: chainableGesture },
+    GestureDetector: ({ children }) =>
+      mockReact.createElement(mockReact.Fragment, null, children),
+    GestureHandlerRootView: ({ children }) =>
+      mockReact.createElement(mockReact.Fragment, null, children),
+  };
+});
+
+// react-native-reanimated needs its worklet runtime, which isn't present under
+// Jest. Map Animated.View/Image to plain RN components (so accessibility props
+// pass through) and stub the hooks/helpers FullScreenImageModal calls.
+jest.mock('react-native-reanimated', () => {
+  const ReactNative = require('react-native');
+  return {
+    __esModule: true,
+    default: {
+      View: ReactNative.View,
+      Image: ReactNative.Image,
+    },
+    useSharedValue: initial => ({ value: initial }),
+    useAnimatedStyle: () => ({}),
+    withTiming: value => value,
+    interpolate: value => value,
+    runOnJS: fn => fn,
+  };
+});
+
+// react-native-worklets ships ESM that Jest can't load, and its native worklet
+// runtime is absent. FullScreenImageModal only uses scheduleOnRN to hop a
+// gesture callback back to JS, so stub it as a synchronous pass-through.
+jest.mock('react-native-worklets', () => ({
+  scheduleOnRN: (fn, ...args) => fn(...args),
+}));
 
 jest.mock('react-native-enriched-markdown', () => {
   return {
@@ -69,10 +182,27 @@ export const mockFromPath = jest.fn();
 export const mockDownloadModel = jest.fn(() => Promise.resolve('file://downloaded.gguf'));
 
 jest.mock('react-native-nobodywho', () => {
+  // Lightweight stand-in for the multimodal Prompt: records its parts so tests
+  // can assert what was sent without the native FFI.
+  class Prompt {
+    constructor(parts) {
+      this.parts = parts;
+    }
+    static Text(content) {
+      return { kind: 'text', content };
+    }
+    static Image(path) {
+      return { kind: 'image', path };
+    }
+    static Audio(path) {
+      return { kind: 'audio', path };
+    }
+  }
   return {
     Chat: { fromPath: (opts) => mockFromPath(opts) },
     Encoder: { fromPath: jest.fn() },
     CrossEncoder: { fromPath: jest.fn() },
+    Prompt,
     downloadModel: (opts) => mockDownloadModel(opts),
     ChatMessage: jest.fn(),
     Role: {

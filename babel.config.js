@@ -1,6 +1,12 @@
-module.exports = {
-  presets: ['module:@react-native/babel-preset'],
-  plugins: [
+module.exports = api => {
+  // The worklets plugin's bundleMode emits ESM (import/export) that Jest's
+  // CommonJS transform can't parse. Disable it under test — gestures/animations
+  // are mocked there, so bundleMode buys nothing.
+  const isTest = api.env('test');
+
+  return {
+    presets: ['module:@react-native/babel-preset'],
+    plugins: [
     [
       'module-resolver',
       {
@@ -28,9 +34,10 @@ module.exports = {
     [
       'react-native-worklets/plugin',
       {
-        bundleMode: true,
+        bundleMode: !isTest,
         workletizableModules: ['remend'],
       },
     ],
-  ],
+    ],
+  };
 };

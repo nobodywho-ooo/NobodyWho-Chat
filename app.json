@@ -1,4 +1,7 @@
 {
   "name": "reffen",
-  "displayName": "NobodyWho"
+  "displayName": "NobodyWho",
+  "plugins": [
+    "expo-audio"
+  ]
 }

@@ -2,6 +2,7 @@ import 'i18n';
 import React, { useCallback, useEffect } from 'react';
 import { useState } from 'react';
 import { Platform, StatusBar } from 'react-native';
+import { setAudioModeAsync } from 'expo-audio';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
@@ -128,45 +129,15 @@ function AppLoader() {
   const init = useCallback(async () => {
     setDbError(false);
     setDbReady(false);
+
+    setAudioModeAsync({ playsInSilentMode: true }).catch(error =>
+      log('AppLoader setAudioModeAsync failed', error),
+    );
+
     try {
       await initDatabase();
       await clearRunningDownloads();
       await hydrateAppState();
-
-      // TODO: delete this if when model download is working
-      // if (__DEV__) {
-      //   if ((await getModelById(0)) === undefined) {
-      //     await insertModel({
-      //       id: 0,
-      //       name: 'Qwen3',
-      //       sizeGB: 0.5,
-      //       parameterCountBillions: 0.6,
-      //       author: 'Alibaba Cloud',
-      //       family: 'qwen3',
-      //       thinking: true,
-      //       imageIngestion: false,
-      //       audioIngestion: false,
-      //       parts: [],
-      //       pipeline: ModelPipeline.textGeneration,
-      //       tags: ['Smart'],
-      //     });
-      //     await insertModel({
-      //       id: 1,
-      //       name: 'Bonsai',
-      //       sizeGB: 0.25,
-      //       parameterCountBillions: 1.7,
-      //       author: 'Prism ML',
-      //       family: 'bonsai',
-      //       thinking: false,
-      //       imageIngestion: false,
-      //       audioIngestion: false,
-      //       parts: [],
-      //       pipeline: ModelPipeline.textGeneration,
-      //       tags: ['Dense'],
-      //     });
-      //   }
-      // }
-
       await dropStaleIdsInUse();
 
       Sentry.appLoaded();

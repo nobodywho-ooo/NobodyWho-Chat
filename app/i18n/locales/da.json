@@ -24,11 +24,30 @@
       "startAChat": "Start en chat"
     },
     "inputBar": {
-      "placeholder": "Spørg om noget..."
+      "placeholder": "Spørg om noget...",
+      "attach": "Vedhæft filer",
+      "close": "Luk",
+      "closeAttach": "Luk vedhæftninger",
+      "attachImage": "Vedhæft billede",
+      "attachAudio": "Vedhæft lyd",
+      "attachCamera": "Tag et billede",
+      "photo": "Foto",
+      "camera": "Kamera",
+      "audio": "Lyd"
+    },
+    "cameraCapture": {
+      "permission": "Kameraadgang er nødvendig for at tage et billede.",
+      "grant": "Tillad kameraadgang",
+      "openSettings": "Åbn indstillinger",
+      "close": "Luk"
     },
     "messageListItem": {
       "copy": "Kopiér",
-      "copied": "Kopieret"
+      "copied": "Kopieret",
+      "playAudio": "Afspil lyd",
+      "pauseAudio": "Sæt lyd på pause",
+      "viewImage": "Vis billede",
+      "closeImage": "Luk billede"
     },
     "conversationsList": {
       "recent": "Seneste",

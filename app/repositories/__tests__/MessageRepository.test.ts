@@ -3,6 +3,7 @@ import { getDatabase } from 'database';
 import {
   rowToMessage,
   getMessagesByConversationId,
+  getDocumentPathsByModelId,
   insertMessage,
   deleteMessagesByConversationId,
 } from '../MessageRepository';
@@ -75,6 +76,31 @@ describe('getMessagesByConversationId', () => {
     );
     expect(messages[0].conversationId).toBe(2);
     expect(messages[0].documentsPath).toEqual([]);
+  });
+});
+
+describe('getDocumentPathsByModelId', () => {
+  test('joins through conversations and flattens every documents_path', async () => {
+    db.execute.mockResolvedValue({
+      rows: [
+        { documents_path: '["/a.png","/b.mp3"]' },
+        { documents_path: '[]' },
+        { documents_path: '["/c.png"]' },
+      ],
+    });
+
+    const paths = await getDocumentPathsByModelId(3);
+
+    expect(db.execute).toHaveBeenCalledWith(
+      expect.stringContaining('JOIN conversations'),
+      [3],
+    );
+    expect(paths).toEqual(['/a.png', '/b.mp3', '/c.png']);
+  });
+
+  test('returns an empty list when the model has no documents', async () => {
+    db.execute.mockResolvedValue({ rows: [] });
+    expect(await getDocumentPathsByModelId(9)).toEqual([]);
   });
 });
 

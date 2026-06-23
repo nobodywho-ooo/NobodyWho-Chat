@@ -26,6 +26,21 @@ export async function getMessagesByConversationId(
   return result.rows.map(rowToMessage);
 }
 
+export async function getDocumentPathsByModelId(
+  modelId: number,
+): Promise<string[]> {
+  const db = getDatabase();
+  const result = await db.execute(
+    `SELECT m.documents_path FROM messages m
+     JOIN conversations c ON c.id = m.conversation_id
+     WHERE c.model_id = ?`,
+    [modelId],
+  );
+  return result.rows.flatMap(row =>
+    safeJsonParse<string[]>(row.documents_path, []),
+  );
+}
+
 export async function insertMessage(
   message: Omit<ChatMessage, 'id' | 'timestamp'>,
 ): Promise<number> {

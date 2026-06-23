@@ -13,8 +13,6 @@ const EMPTY_MODEL: Model = {
   author: '',
   family: '',
   thinking: false,
-  imageIngestion: false,
-  audioIngestion: false,
   huggingfaceUrl: '',
   parts: [],
   pipeline: ModelPipeline.textGeneration,

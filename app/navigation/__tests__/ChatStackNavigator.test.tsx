@@ -4,6 +4,7 @@ import { render, act, waitFor } from '@testing-library/react-native';
 
 import { mockUseModels } from 'jest/mock/hooks';
 import { buildModel } from 'jest/factories/model';
+import { ModelPipeline } from 'types';
 import { fireContainerLayout } from 'jest/layout';
 import { getAppState, setAppState } from 'database';
 import { InputBar } from '../../screens/ChatScreen/components/InputBar/InputBar';
@@ -45,10 +46,14 @@ const mockCreateChat = jest.fn(async () => {
 const mockDisposeChat = jest.fn(() => {
   mockChatRef.current = undefined;
 });
+// These suites only exercise text models; mock-prefixed so the jest.mock
+// factory may reference it (out-of-scope enums are rejected otherwise).
+const mockChatPipeline = ModelPipeline.textGeneration;
 
 jest.mock('services', () => ({
   useAiService: () => ({
     chat: mockChatRef,
+    chatPipeline: mockChatPipeline,
     createChat: mockCreateChat,
     disposeChat: mockDisposeChat,
   }),
@@ -212,10 +217,14 @@ test('injects restored assistant messages with an empty toolCalls array', async 
       mockChatInstance.setChatHistory.mock.calls.length - 1
     ][0];
   expect(injected).toEqual([
-    { role: 'user', content: 'hi' },
+    { role: 'user', content: 'hi', documentsPath: [] },
     // Raw content (incl. <think>) is injected; toolCalls present so the FFI
     // converter doesn't receive null.
-    { role: 'assistant', content: '<think>reasoning</think>answer', toolCalls: [] },
+    {
+      role: 'assistant',
+      content: '<think>reasoning</think>answer',
+      toolCalls: [],
+    },
   ]);
 });
 

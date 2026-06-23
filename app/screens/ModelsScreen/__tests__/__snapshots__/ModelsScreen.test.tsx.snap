@@ -94,12 +94,10 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
       isSelected={true}
       model={
         {
-          "audioIngestion": false,
           "author": "Author",
           "family": "Family",
           "huggingfaceUrl": "https://huggingface.co/test/model-10",
           "id": 10,
-          "imageIngestion": false,
           "languages": [],
           "name": "Model 10",
           "parameterCountBillions": 1,
@@ -207,12 +205,10 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
       isSelected={true}
       model={
         {
-          "audioIngestion": false,
           "author": "Author",
           "family": "Family",
           "huggingfaceUrl": "https://huggingface.co/test/model-10",
           "id": 10,
-          "imageIngestion": false,
           "languages": [],
           "name": "Model 10",
           "parameterCountBillions": 1,
@@ -257,12 +253,10 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
     <ModelCard
       model={
         {
-          "audioIngestion": false,
           "author": "Author",
           "family": "Family",
           "huggingfaceUrl": "https://huggingface.co/test/model-20",
           "id": 20,
-          "imageIngestion": false,
           "languages": [],
           "name": "Model 20",
           "parameterCountBillions": 1,
@@ -278,12 +272,10 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
     <ModelCard
       model={
         {
-          "audioIngestion": false,
           "author": "Author",
           "family": "Family",
           "huggingfaceUrl": "https://huggingface.co/test/model-21",
           "id": 21,
-          "imageIngestion": false,
           "languages": [],
           "name": "Model 21",
           "parameterCountBillions": 1,
