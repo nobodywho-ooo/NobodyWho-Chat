@@ -65,3 +65,23 @@ Watchman cleanup
 ```sh
 make clean
 ```
+
+### 4. Build the App
+
+Build Android
+
+```sh
+make android-apk
+```
+
+Install apk on android
+
+```sh
+adb install android/app/build/outputs/apk/release/app-release.apk
+```
+
+```sh
+make android-aab
+```
+
+For iOS, run prod scheme on Xcode.

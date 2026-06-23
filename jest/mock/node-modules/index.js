@@ -28,9 +28,12 @@ jest.mock("react-native-haptic-feedback", () => {
   };
 });
 
+export const mockGetTotalMemory = jest.fn(() => Promise.resolve(8 * 1024 ** 3));
+
 jest.mock('react-native-device-info', () => ({
   getVersion: jest.fn(() => '1.0.0'),
   getBuildNumber: jest.fn(() => '1'),
+  getTotalMemory: () => mockGetTotalMemory(),
 }));
 
 jest.mock('@dr.pogodin/react-native-fs', () => {

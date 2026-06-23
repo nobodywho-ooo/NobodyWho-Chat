@@ -9,6 +9,10 @@ import { haptics } from './haptics';
 import { getFamilyIcon } from './familyIcon';
 import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
+import {
+  filterModelsByDeviceMemory,
+  modelRequiredMemoryGB,
+} from './deviceMemory';
 import { sleep } from './async';
 import {
   captureImageToMessageDocuments,
@@ -27,6 +31,8 @@ export {
   getFamilyIcon,
   getAssetPath,
   deleteModelFiles,
+  filterModelsByDeviceMemory,
+  modelRequiredMemoryGB,
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, AppState, ScrollView } from 'react-native';
+import { ActivityIndicator, AppState, ScrollView, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { downloadModel } from 'react-native-nobodywho';
@@ -18,9 +18,11 @@ import {
 } from 'repositories';
 import { getAppState, setAppState } from 'database';
 import { Model, ModelDownload, ModelPart } from 'types';
-import { log } from 'helpers';
+import { filterModelsByDeviceMemory, log } from 'helpers';
 
 import styles from './ModelsScreen.styles';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Spacings } from 'style';
 
 const DOWNLOAD_THROTTLE = 0.01; // 1% step
 const MODELS_URL =
@@ -30,6 +32,7 @@ export const ModelsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
   const { models: storedModels } = useModels();
   const { downloads } = useModelDownloads();
   const { modelIdInUse } = useAppState();
@@ -67,7 +70,7 @@ export const ModelsScreen: React.FC = () => {
     try {
       const response = await fetch(MODELS_URL);
       const data: Model[] = await response.json();
-      setModels(data);
+      setModels(await filterModelsByDeviceMemory(data));
     } catch {
       setHasError(true);
     } finally {
@@ -142,7 +145,9 @@ export const ModelsScreen: React.FC = () => {
   const handleModelPress = useCallback(
     async (model: Model) => {
       const created = await createModelDownload(model);
-      if (!created) return;
+      if (!created) {
+        return;
+      }
 
       await runDownload({
         model,
@@ -164,7 +169,9 @@ export const ModelsScreen: React.FC = () => {
 
     resumeDownloads();
     const subscription = AppState.addEventListener('change', state => {
-      if (state === 'active') resumeDownloads();
+      if (state === 'active') {
+        resumeDownloads();
+      }
     });
     return () => subscription.remove();
   }, [runDownload]);
@@ -239,7 +246,8 @@ export const ModelsScreen: React.FC = () => {
         availableModels.map(model => (
           <ModelCard key={model.id} model={model} onPress={handleModelPress} />
         ))}
-      {hasFetch && availableModels.length === 0 && (
+      <View style={{ height: insets.bottom + Spacings.lg }} />
+      {hasFetch && !hasError && availableModels.length === 0 && (
         <Text>{t('screens.models.youHaveDownloadedAllTheModels')}</Text>
       )}
     </ScrollView>

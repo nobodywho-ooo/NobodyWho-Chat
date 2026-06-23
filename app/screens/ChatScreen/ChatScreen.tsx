@@ -399,7 +399,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   if (!isKeyboardVisible) {
     bottomOffset = insets.bottom + INPUT_BAR_PADDING;
   } else if (isAndroid) {
-    bottomOffset = INPUT_BAR_PADDING;
+    bottomOffset = keyboardHeight + INPUT_BAR_PADDING + insets.bottom;
   } else {
     bottomOffset = keyboardHeight + INPUT_BAR_PADDING;
   }

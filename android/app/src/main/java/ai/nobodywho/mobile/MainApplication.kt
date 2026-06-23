@@ -22,6 +22,10 @@ class MainApplication : Application(), ReactApplication {
           // add(MyReactNativePackage())
           add(ClipboardPackage())
         },
+      // This is a bare React Native app (community CLI + Metro), not an Expo
+      // app, so the dev server has no `.expo/.virtual-metro-entry`. Use the
+      // standard `index` entry, matching iOS (jsBundleURL forBundleRoot "index").
+      jsMainModulePath = "index",
     )
   }
 
