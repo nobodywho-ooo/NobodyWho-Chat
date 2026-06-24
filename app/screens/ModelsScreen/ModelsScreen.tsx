@@ -33,7 +33,7 @@ import { Spacings } from 'style';
 
 const DOWNLOAD_THROTTLE = 0.01; // 1% step
 const MODELS_URL =
-  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/backend-dev.json';
+  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/backend.json';
 
 export const ModelsScreen: React.FC = () => {
   const { t } = useTranslation();
