@@ -11,6 +11,7 @@ import { useModels } from 'hooks';
 import { Theme } from 'types';
 
 import styles from './DrawerContentScreen.styles';
+import { useAiService } from 'services';
 
 interface DrawerContentScreenProps {
   onCloseDrawer: () => void;
@@ -28,19 +29,22 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
   const navigation = useNavigation();
   const { models } = useModels();
   const theme = useTheme();
+  const { chat } = useAiService();
 
   const closeDrawer = onCloseDrawer;
 
   const handleSettingsPress = useCallback(() => {
+    chat.current?.stopGeneration();
     // @ts-ignore
     navigation.navigate('SettingsScreen');
-  }, [navigation]);
+  }, [navigation, chat]);
 
   const handleChangeModelPress = useCallback(() => {
+    chat.current?.stopGeneration();
     // Switching models only — deletion is disabled from this entry point.
     // @ts-ignore
     navigation.navigate('DownloadedModelsScreen', { canDelete: false });
-  }, [navigation]);
+  }, [navigation, chat]);
 
   const handleNewChatPress = useCallback(() => {
     setAppState({ conversationIdInUse: undefined });

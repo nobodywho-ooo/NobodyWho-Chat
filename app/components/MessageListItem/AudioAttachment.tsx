@@ -38,12 +38,14 @@ export const AudioAttachment: React.FC<AudioAttachmentProps> = ({ path }) => {
   useEffect(() => {
     return () => {
       try {
-        player.pause();
+        if (isPlaying) {
+          player.pause();
+        }
       } catch (error) {
         log('AudioAttachment unmount pause', error);
       }
     };
-  }, [player]);
+  }, [player, isPlaying]);
 
   return (
     <View

@@ -21,6 +21,7 @@ import { useAppState, useConversations, useModels, useStyled } from 'hooks';
 
 import { ChatStackNavigator } from './ChatStackNavigator';
 import { Spacings } from 'style';
+import { useAiService } from 'services';
 
 const Drawer = createDrawerNavigator();
 const ICON_SIZE = 22;
@@ -32,9 +33,12 @@ const ChatHeaderRight = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { conversationIdInUse } = useAppState();
+  const { chat } = useAiService();
 
   const handleMenuAction = React.useCallback(
     async ({ nativeEvent }: NativeActionEvent) => {
+      chat.current?.stopGeneration();
+
       if (nativeEvent.event === MENU_ACTION_NEW_CHAT) {
         setAppState({ conversationIdInUse: undefined });
         return;
@@ -53,7 +57,7 @@ const ChatHeaderRight = () => {
         }
       }
     },
-    [conversationIdInUse],
+    [conversationIdInUse, chat],
   );
 
   const newChatAction: MenuAction = {

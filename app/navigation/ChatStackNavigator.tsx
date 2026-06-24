@@ -368,7 +368,8 @@ export const ChatStackNavigator = () => {
         <Stack.Screen
           name="ChatScreen"
           component={ChatRootScreen}
-          options={{ headerShown: false }}
+          // inactiveBehavior prevents expo-audio from crashing
+          options={{ headerShown: false, inactiveBehavior: 'none' }}
         />
         <Stack.Screen
           name="SettingsScreen"
