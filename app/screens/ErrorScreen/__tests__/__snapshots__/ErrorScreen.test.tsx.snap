@@ -23,10 +23,14 @@ exports[`renders correctly ErrorScreen 1`] = `
   />
   <View
     style={
-      {
-        "alignItems": "center",
-        "paddingVertical": 32,
-      }
+      [
+        {
+          "paddingVertical": 32,
+        },
+        {
+          "alignItems": "center",
+        },
+      ]
     }
   >
     <Text

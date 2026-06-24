@@ -77,10 +77,14 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
     </View>
     <View
       style={
-        {
-          "alignItems": "center",
-          "paddingVertical": 32,
-        }
+        [
+          {
+            "paddingVertical": 12,
+          },
+          {
+            "alignItems": "flex-start",
+          },
+        ]
       }
     >
       <Text
@@ -240,10 +244,14 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
     </View>
     <View
       style={
-        {
-          "alignItems": "center",
-          "paddingVertical": 32,
-        }
+        [
+          {
+            "paddingVertical": 12,
+          },
+          {
+            "alignItems": "flex-start",
+          },
+        ]
       }
     >
       <Text

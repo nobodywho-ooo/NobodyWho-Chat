@@ -279,6 +279,8 @@ export const ModelsScreen: React.FC = () => {
         <ErrorView
           message={t('screens.models.errorCannotGetModelsAtTheMoment')}
           onRetry={fetchModels}
+          paddingVertical={Spacings.md}
+          alignLeft
         />
       )}
       {showModelsToDownload &&

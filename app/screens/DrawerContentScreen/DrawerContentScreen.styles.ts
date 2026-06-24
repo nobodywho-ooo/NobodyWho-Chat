@@ -28,6 +28,7 @@ export default StyleSheet.create({
     bottom: 0,
     // TODO: height should be calculated
     height: 140,
+    borderRadius: Spacings.xxxl,
   },
   floatingButton: {
     position: 'absolute',
