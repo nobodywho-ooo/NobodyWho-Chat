@@ -1,19 +1,34 @@
-const quoteLines = (text: string): string =>
-  text
-    .trim()
-    .split('\n')
-    .map(line => `> ${line}`)
-    .join('\n');
+const THINK_OPEN = '<think>';
+const THINK_CLOSE = '</think>';
 
-export const formatThinkingBlocks = (text: string): string => {
-  return text
-    .replace(
-      /<think>([\s\S]*?)<\/think>/g,
-      (_match, content: string) => quoteLines(content) + '\n\n',
-    )
-    .replace(/<think>([\s\S]*)$/g, (_match, content: string) =>
-      quoteLines(content),
-    );
+export interface ParsedThinking {
+  thinking: string | null;
+  rest: string;
+  isThinkingComplete: boolean;
+}
+
+export const parseThinking = (content: string): ParsedThinking => {
+  const leading = content.trimStart();
+  if (!leading.startsWith(THINK_OPEN)) {
+    return { thinking: null, rest: content, isThinkingComplete: true };
+  }
+
+  const afterOpen = leading.slice(THINK_OPEN.length);
+  const closeIndex = afterOpen.indexOf(THINK_CLOSE);
+
+  if (closeIndex === -1) {
+    return {
+      thinking: afterOpen.trimStart(),
+      rest: '',
+      isThinkingComplete: false,
+    };
+  }
+
+  return {
+    thinking: afterOpen.slice(0, closeIndex).trim(),
+    rest: afterOpen.slice(closeIndex + THINK_CLOSE.length).trimStart(),
+    isThinkingComplete: true,
+  };
 };
 
 export const stripThinkingBlocks = (text: string): string =>

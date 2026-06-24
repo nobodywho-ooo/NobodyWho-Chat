@@ -48,7 +48,12 @@
       "playAudio": "Afspil lyd",
       "pauseAudio": "Sæt lyd på pause",
       "viewImage": "Vis billede",
-      "closeImage": "Luk billede"
+      "closeImage": "Luk billede",
+      "thinking": "Tænker…",
+      "thought": "Tanker",
+      "viewThinking": "Se ræsonnement",
+      "closeThinking": "Luk",
+      "thinkingTitle": "Ræsonnement"
     },
     "conversationsList": {
       "recent": "Seneste",

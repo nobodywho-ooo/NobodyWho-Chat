@@ -48,7 +48,12 @@
       "playAudio": "Play audio",
       "pauseAudio": "Pause audio",
       "viewImage": "View image",
-      "closeImage": "Close image"
+      "closeImage": "Close image",
+      "thinking": "Thinking…",
+      "thought": "Thoughts",
+      "viewThinking": "View reasoning",
+      "closeThinking": "Close",
+      "thinkingTitle": "Reasoning"
     },
     "conversationsList": {
       "recent": "Recent",

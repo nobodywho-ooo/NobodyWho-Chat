@@ -247,3 +247,74 @@ test('pauses a playing audio attachment on a second press', async () => {
     await findByLabelText('components.messageListItem.playAudio'),
   ).toBeTruthy();
 });
+
+test('renders a thinking block when the message starts with <think>', () => {
+  const message: Message = {
+    role: 'assistant',
+    content: '<think>weighing options</think>Here is the answer',
+  };
+  const { getByLabelText } = render(<MessageListItem message={message} />);
+  expect(
+    getByLabelText('components.messageListItem.viewThinking'),
+  ).toBeTruthy();
+});
+
+test('does not render a thinking block for a normal assistant message', () => {
+  const message: Message = { role: 'assistant', content: 'just an answer' };
+  const { queryByLabelText } = render(<MessageListItem message={message} />);
+  expect(
+    queryByLabelText('components.messageListItem.viewThinking'),
+  ).toBeNull();
+});
+
+test('labels the thinking block as in-progress while the reasoning streams', () => {
+  // An unclosed <think> means the model is still reasoning.
+  const message: Message = { role: 'assistant', content: '<think>still going' };
+  const { getByText } = render(
+    <MessageListItem message={message} isStreaming />,
+  );
+  expect(getByText('components.messageListItem.thinking')).toBeTruthy();
+});
+
+test('opens the thinking modal when the thinking block is pressed', () => {
+  const message: Message = {
+    role: 'assistant',
+    content: '<think>weighing options</think>answer',
+  };
+  const { getByLabelText, queryByLabelText } = render(
+    <MessageListItem message={message} />,
+  );
+  expect(
+    queryByLabelText('components.messageListItem.closeThinking'),
+  ).toBeNull();
+
+  fireEvent.press(getByLabelText('components.messageListItem.viewThinking'));
+
+  expect(
+    getByLabelText('components.messageListItem.closeThinking'),
+  ).toBeTruthy();
+});
+
+test('renders the answer after </think>, separate from the reasoning', () => {
+  const message: Message = {
+    role: 'assistant',
+    content: '<think>done reasoning</think>the final answer',
+  };
+  render(<MessageListItem message={message} isStreaming />);
+  const markdowns = (StreamdownText as unknown as jest.Mock).mock.calls.map(
+    ([props]) => props.markdown,
+  );
+  // The reasoning and the answer render as two separate pieces.
+  expect(markdowns).toContain('done reasoning');
+  expect(markdowns).toContain('the final answer');
+});
+
+test('copies only the answer, stripping the reasoning', () => {
+  const message: Message = {
+    role: 'assistant',
+    content: '<think>secret reasoning</think>the answer',
+  };
+  const { getByLabelText } = render(<MessageListItem message={message} />);
+  fireEvent.press(getByLabelText('components.messageListItem.copy'));
+  expect(copyToClipboard).toHaveBeenCalledWith('the answer');
+});

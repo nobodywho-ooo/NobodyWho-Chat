@@ -44,7 +44,7 @@ test('renders ChatScreen with existing messages', () => {
   expect(toJSON()).toMatchSnapshot();
 });
 
-test('formats <think> blocks in initial assistant messages', () => {
+test('passes raw <think> blocks through to MessageListItem', () => {
   const messages: Message[] = [
     { role: 'user', content: 'hi' },
     { role: 'assistant', content: '<think>reasoning</think>answer', toolCalls: [] },
@@ -61,8 +61,9 @@ test('formats <think> blocks in initial assistant messages', () => {
   );
 
   const items = screen.UNSAFE_getAllByType(MessageListItem);
-  // Reasoning is blockquoted for display; the raw <think> tags are gone.
-  expect(items[1].props.message.content).toBe('> reasoning\n\nanswer');
+  // The raw <think> tags are kept; MessageListItem renders the reasoning in a
+  // dedicated ThinkingBlock rather than ChatScreen pre-formatting it.
+  expect(items[1].props.message.content).toBe('<think>reasoning</think>answer');
   // The user message passes through untouched.
   expect(items[0].props.message.content).toBe('hi');
 });

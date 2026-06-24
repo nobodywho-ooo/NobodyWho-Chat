@@ -17,11 +17,11 @@ import { useAiService } from 'services';
 import {
   log,
   isIOS,
-  formatThinkingBlocks,
   isAndroid,
   haptics,
   captureImageToMessageDocuments,
   deleteMessageDocuments,
+  parseThinking,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,
   resolveMessageDocumentPath,
@@ -33,16 +33,6 @@ import { ImageAttachSource } from './components/InputBar/InputBar';
 import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
-
-// Persisted assistant messages keep their raw <think>…</think> blocks; render
-// them the same way live streaming does (see handleSend) so a reloaded
-// conversation looks identical to one being streamed.
-const formatMessages = (messages: DisplayMessage[]): DisplayMessage[] =>
-  messages.map(message =>
-    message.role === 'assistant'
-      ? { ...message, content: formatThinkingBlocks(message.content) }
-      : message,
-  );
 
 const computeGenerationMetrics = (
   startedAt: number,
@@ -81,9 +71,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   onConversationCreated,
 }) => {
   const { t } = useTranslation();
-  const [messages, setMessages] = useState<DisplayMessage[]>(() =>
-    formatMessages(initialMessages),
-  );
+  const [messages, setMessages] = useState<DisplayMessage[]>(initialMessages);
   const [conversationId, setConversationId] = useState(initialConversationId);
   const [inputText, setInputText] = useState('');
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -106,7 +94,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   attachedDocumentsRef.current = attachedDocuments;
 
   useEffect(() => {
-    setMessages(formatMessages(initialMessages));
+    setMessages(initialMessages);
     setConversationId(initialConversationId);
     const orphans = pendingDocumentPaths(attachedDocumentsRef.current);
     if (orphans.length > 0) {
@@ -313,6 +301,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     let firstTokenAt: number | undefined;
     let tokenCount = 0;
     let accumulated = '';
+    let scrolledToThinking = false;
+
     try {
       const askInput =
         imagePath || audioPath
@@ -337,10 +327,20 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           const next = [...prev];
           next[next.length - 1] = {
             role: 'assistant',
-            content: formatThinkingBlocks(accumulated),
+            content: accumulated,
           };
           return next;
         });
+
+        if (
+          !scrolledToThinking &&
+          parseThinking(accumulated).thinking !== null
+        ) {
+          scrolledToThinking = true;
+          requestAnimationFrame(() =>
+            flatListRef.current?.scrollToEnd({ animated: true }),
+          );
+        }
       }
 
       if (chat.current !== activeChat) {
@@ -359,7 +359,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         const next = [...prev];
         next[next.length - 1] = {
           role: 'assistant',
-          content: formatThinkingBlocks(accumulated),
+          content: accumulated,
           ...metrics,
         };
         return next;
@@ -380,9 +380,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         const next = [...prev];
         next[next.length - 1] = {
           role: 'assistant',
-          content: accumulated
-            ? `${formatThinkingBlocks(accumulated)}\n\n${failure}`
-            : failure,
+          content: accumulated ? `${accumulated}\n\n${failure}` : failure,
         };
         return next;
       });

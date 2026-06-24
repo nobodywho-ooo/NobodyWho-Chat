@@ -4,7 +4,7 @@ import { log } from './log';
 import { capitalize } from './string';
 import { safeJsonParse } from './json';
 import { getMarkdownStyle } from './markdown';
-import { formatThinkingBlocks, stripThinkingBlocks } from './thinking';
+import { parseThinking, stripThinkingBlocks } from './thinking';
 import { haptics } from './haptics';
 import { getFamilyIcon } from './familyIcon';
 import { copyToClipboard } from './clipboard';
@@ -51,7 +51,7 @@ export {
   capitalize,
   safeJsonParse,
   getMarkdownStyle,
-  formatThinkingBlocks,
+  parseThinking,
   stripThinkingBlocks,
   haptics,
   copyToClipboard,

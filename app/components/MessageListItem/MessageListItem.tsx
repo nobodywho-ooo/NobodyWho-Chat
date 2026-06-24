@@ -11,12 +11,15 @@ import {
   messageDocumentKind,
   messageDocumentName,
   messageDocumentUri,
+  parseThinking,
   stripThinkingBlocks,
 } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
 import { DisplayMessage } from 'types';
 import { AudioAttachment } from './AudioAttachment';
 import { FullScreenImageModal } from './FullScreenImageModal';
+import { ThinkingBlock } from './ThinkingBlock';
+import { ThinkingModal } from './ThinkingModal';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { Text } from '../Text/Text';
 
@@ -42,6 +45,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
   const { isDarkMode } = useThemeMode();
   const [copied, setCopied] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+  const [thinkingOpen, setThinkingOpen] = useState(false);
   const documentsPath = message.documentsPath ?? [];
 
   const renderAttachedFiles = () => {
@@ -121,6 +125,11 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
     [isDarkMode, colors.onSurface],
   );
 
+  const { thinking, rest, isThinkingComplete } = useMemo(
+    () => parseThinking(content),
+    [content],
+  );
+
   useEffect(() => {
     if (!copied) {
       return;
@@ -167,6 +176,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
 
   const accentColor = copied ? colors.primary : colors.onSurfaceVariant;
   const isAwaitingResponse = isStreaming && content.length === 0;
+  const isThinkingActive = isStreaming && !isThinkingComplete;
 
   return (
     <View style={styles.assistantContainer}>
@@ -176,18 +186,30 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
           color={colors.primary}
           style={styles.loadingIndicator}
         />
-      ) : isStreaming ? (
-        <StreamdownText
-          containerStyle={styles.streamdownContainer}
-          markdown={content}
-          markdownStyle={markdownStyle}
-        />
       ) : (
-        <EnrichedMarkdownText
-          containerStyle={styles.streamdownContainer}
-          markdown={content}
-          markdownStyle={markdownStyle}
-        />
+        <>
+          {thinking !== null && (
+            <ThinkingBlock
+              thinking={thinking}
+              active={isThinkingActive}
+              onPress={() => setThinkingOpen(true)}
+            />
+          )}
+          {rest.length > 0 &&
+            (isStreaming ? (
+              <StreamdownText
+                containerStyle={styles.streamdownContainer}
+                markdown={rest}
+                markdownStyle={markdownStyle}
+              />
+            ) : (
+              <EnrichedMarkdownText
+                containerStyle={styles.streamdownContainer}
+                markdown={rest}
+                markdownStyle={markdownStyle}
+              />
+            ))}
+        </>
       )}
       {content.length > 0 && (
         <View style={styles.footerContainer}>
@@ -231,6 +253,13 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
             </Text>
           )}
         </View>
+      )}
+      {thinking !== null && (
+        <ThinkingModal
+          thinking={thinkingOpen ? thinking : null}
+          active={isThinkingActive}
+          onClose={() => setThinkingOpen(false)}
+        />
       )}
     </View>
   );

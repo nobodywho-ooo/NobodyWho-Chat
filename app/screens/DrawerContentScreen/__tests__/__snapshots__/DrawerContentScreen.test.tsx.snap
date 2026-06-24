@@ -138,6 +138,7 @@ exports[`renders correctly DrawerContentScreen 1`] = `
     }
     style={
       {
+        "borderRadius": 48,
         "bottom": 0,
         "height": 140,
         "left": 0,

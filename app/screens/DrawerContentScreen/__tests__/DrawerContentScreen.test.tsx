@@ -5,6 +5,7 @@ import { mockSetAppState } from 'jest/mock/database';
 import { mockNavigate } from 'jest/mock/node-modules';
 import { mockUseModels } from 'jest/mock/hooks';
 import { buildModel } from 'jest/factories/model';
+import { AiServiceProvider } from 'services';
 
 import { DrawerContentScreen } from '../DrawerContentScreen';
 
@@ -16,13 +17,19 @@ beforeEach(() => {
 
 test('renders correctly DrawerContentScreen', () => {
   const tree = render(
-    <DrawerContentScreen onCloseDrawer={() => {}} />,
+    <AiServiceProvider>
+      <DrawerContentScreen onCloseDrawer={() => {}} />
+    </AiServiceProvider>,
   ).toJSON();
   expect(tree).toMatchSnapshot();
 });
 
 test('pressing settings navigates to the SettingsScreen', () => {
-  const screen = render(<DrawerContentScreen onCloseDrawer={jest.fn()} />);
+  const screen = render(
+    <AiServiceProvider>
+      <DrawerContentScreen onCloseDrawer={jest.fn()} />
+    </AiServiceProvider>,
+  );
 
   fireEvent.press(screen.getByText('screens.drawerContent.settings'));
 
@@ -32,7 +39,11 @@ test('pressing settings navigates to the SettingsScreen', () => {
 test('pressing new chat clears the conversation in use and closes the drawer', () => {
   mockUseModels.mockReturnValue({ models: [buildModel(1)] });
   const onCloseDrawer = jest.fn();
-  const screen = render(<DrawerContentScreen onCloseDrawer={onCloseDrawer} />);
+  const screen = render(
+    <AiServiceProvider>
+      <DrawerContentScreen onCloseDrawer={onCloseDrawer} />
+    </AiServiceProvider>,
+  );
 
   fireEvent.press(
     screen.UNSAFE_getByProps({ title: 'screens.drawerContent.newChat' }),
@@ -47,7 +58,11 @@ test('pressing new chat clears the conversation in use and closes the drawer', (
 test('hides the new chat button when no model is downloaded', () => {
   mockUseModels.mockReturnValue({ models: [] });
 
-  const screen = render(<DrawerContentScreen onCloseDrawer={jest.fn()} />);
+  const screen = render(
+    <AiServiceProvider>
+      <DrawerContentScreen onCloseDrawer={jest.fn()} />
+    </AiServiceProvider>,
+  );
 
   expect(
     screen.UNSAFE_queryByProps({ title: 'screens.drawerContent.newChat' }),
@@ -57,7 +72,11 @@ test('hides the new chat button when no model is downloaded', () => {
 test('hides the change model button with fewer than 2 downloaded models', () => {
   mockUseModels.mockReturnValue({ models: [buildModel(1)] });
 
-  const screen = render(<DrawerContentScreen onCloseDrawer={jest.fn()} />);
+  const screen = render(
+    <AiServiceProvider>
+      <DrawerContentScreen onCloseDrawer={jest.fn()} />
+    </AiServiceProvider>,
+  );
 
   expect(
     screen.queryByText('screens.drawerContent.changeModel'),
@@ -67,7 +86,11 @@ test('hides the change model button with fewer than 2 downloaded models', () => 
 test('pressing change model navigates to the DownloadedModelsScreen when 2+ models are downloaded', () => {
   mockUseModels.mockReturnValue({ models: [buildModel(1), buildModel(2)] });
 
-  const screen = render(<DrawerContentScreen onCloseDrawer={jest.fn()} />);
+  const screen = render(
+    <AiServiceProvider>
+      <DrawerContentScreen onCloseDrawer={jest.fn()} />
+    </AiServiceProvider>,
+  );
 
   fireEvent.press(screen.getByText('screens.drawerContent.changeModel'));
 
