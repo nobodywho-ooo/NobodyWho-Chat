@@ -1,0 +1,105 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ToolCallBlock matches the snapshot 1`] = `
+<View
+  accessibilityLabel="components.messageListItem.viewToolCalls"
+  accessibilityRole="button"
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": undefined,
+      "expanded": undefined,
+      "selected": undefined,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={true}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "alignSelf": "stretch",
+        "borderRadius": 12,
+        "borderWidth": 1,
+        "marginBottom": 12,
+        "paddingHorizontal": 12,
+        "paddingVertical": 8,
+        "rowGap": 4,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+        "borderColor": "#e1e1e1",
+      },
+      false,
+    ]
+  }
+>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "columnGap": 4,
+        "flexDirection": "row",
+      }
+    }
+  >
+    <PlatformIcon
+      androidIconName="build"
+      color="#7c7c7c"
+      iosIconName="wrench.and.screwdriver"
+      size={14}
+    />
+    <Text
+      style={
+        [
+          {
+            "includeFontPadding": false,
+          },
+          {
+            "color": "#7c7c7c",
+          },
+        ]
+      }
+      variant="caption"
+    >
+      get_weather
+    </Text>
+  </View>
+  <Text
+    numberOfLines={1}
+    style={
+      [
+        {
+          "fontSize": 13,
+          "includeFontPadding": false,
+          "lineHeight": 18,
+        },
+        {
+          "color": "#000000",
+        },
+      ]
+    }
+    variant="caption"
+  >
+    city: "Paris"
+  </Text>
+</View>
+`;

@@ -117,7 +117,8 @@
       "delete": "Slet"
     },
     "chat": {
-      "generationFailed": "Noget gik galt under genereringen af et svar."
+      "generationFailed": "Noget gik galt under genereringen af et svar.",
+      "generationStopped": "Generering stoppet."
     },
     "loadingScreen": {
       "loadingModel": "Indlæser {{model}}…",

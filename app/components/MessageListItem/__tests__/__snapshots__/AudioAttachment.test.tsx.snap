@@ -1,0 +1,230 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`matches the snapshot 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "borderRadius": 12,
+        "borderWidth": 1,
+        "columnGap": 8,
+        "flexDirection": "row",
+        "paddingHorizontal": 12,
+        "paddingVertical": 8,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+        "borderColor": "#e1e1e1",
+      },
+    ]
+  }
+>
+  <View
+    accessibilityLabel="components.messageListItem.playAudio"
+    accessibilityRole="button"
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    hitSlop={8}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 16,
+          "height": 32,
+          "justifyContent": "center",
+          "width": 32,
+        },
+        {
+          "backgroundColor": "#628395",
+        },
+        false,
+      ]
+    }
+  >
+    <PlatformIcon
+      androidIconName="play_arrow"
+      color="#FFFFFF"
+      iosIconName="play.fill"
+      size={16}
+    />
+  </View>
+  <Svg
+    height={24}
+    viewBox="0 0 88 24"
+    width={88}
+  >
+    <Rect
+      fill="#7c7c7c"
+      height={7.199999999999999}
+      rx={1.5}
+      width={3}
+      x={0}
+      y={8.4}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={13.200000000000001}
+      rx={1.5}
+      width={3}
+      x={5}
+      y={5.3999999999999995}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={19.200000000000003}
+      rx={1.5}
+      width={3}
+      x={10}
+      y={2.3999999999999986}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={10.8}
+      rx={1.5}
+      width={3}
+      x={15}
+      y={6.6}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={24}
+      rx={1.5}
+      width={3}
+      x={20}
+      y={0}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={14.399999999999999}
+      rx={1.5}
+      width={3}
+      x={25}
+      y={4.800000000000001}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={8.399999999999999}
+      rx={1.5}
+      width={3}
+      x={30}
+      y={7.800000000000001}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={16.799999999999997}
+      rx={1.5}
+      width={3}
+      x={35}
+      y={3.6000000000000014}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={12}
+      rx={1.5}
+      width={3}
+      x={40}
+      y={6}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={21.6}
+      rx={1.5}
+      width={3}
+      x={45}
+      y={1.1999999999999993}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={9.600000000000001}
+      rx={1.5}
+      width={3}
+      x={50}
+      y={7.199999999999999}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={15.600000000000001}
+      rx={1.5}
+      width={3}
+      x={55}
+      y={4.199999999999999}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={20.4}
+      rx={1.5}
+      width={3}
+      x={60}
+      y={1.8000000000000007}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={12}
+      rx={1.5}
+      width={3}
+      x={65}
+      y={6}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={7.199999999999999}
+      rx={1.5}
+      width={3}
+      x={70}
+      y={8.4}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={14.399999999999999}
+      rx={1.5}
+      width={3}
+      x={75}
+      y={4.800000000000001}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={18}
+      rx={1.5}
+      width={3}
+      x={80}
+      y={3}
+    />
+    <Rect
+      fill="#7c7c7c"
+      height={9.600000000000001}
+      rx={1.5}
+      width={3}
+      x={85}
+      y={7.199999999999999}
+    />
+  </Svg>
+</View>
+`;

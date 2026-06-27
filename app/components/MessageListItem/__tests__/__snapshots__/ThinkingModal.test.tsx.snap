@@ -1,0 +1,150 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`matches the snapshot when open 1`] = `
+<Modal
+  animationType="fade"
+  onRequestClose={[MockFunction]}
+  statusBarTranslucent={true}
+  transparent={true}
+  visible={true}
+>
+  <View
+    style={
+      [
+        {
+          "backgroundColor": "#000",
+          "bottom": 0,
+          "left": 0,
+          "position": "absolute",
+          "right": 0,
+          "top": 0,
+        },
+        {},
+      ]
+    }
+  />
+  <View
+    style={
+      [
+        {
+          "flex": 1,
+        },
+        {
+          "backgroundColor": "#FFFFFF",
+          "paddingTop": undefined,
+        },
+        {},
+      ]
+    }
+  >
+    <View
+      style={
+        {
+          "paddingHorizontal": 16,
+        }
+      }
+    >
+      <View
+        style={
+          [
+            {
+              "alignSelf": "center",
+              "borderRadius": 2,
+              "height": 4,
+              "marginTop": 8,
+              "width": 36,
+            },
+            {
+              "backgroundColor": "#e1e1e1",
+            },
+          ]
+        }
+      />
+      <View
+        style={
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "justifyContent": "space-between",
+            "paddingVertical": 12,
+          }
+        }
+      >
+        <Text
+          bold={true}
+          style={
+            {
+              "flex": 1,
+            }
+          }
+          variant="body1"
+        >
+          components.messageListItem.thinkingTitle
+        </Text>
+        <View
+          accessibilityLabel="components.messageListItem.closeThinking"
+          accessibilityRole="button"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={8}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+        >
+          <PlatformIcon
+            androidIconName="close"
+            color="#000000"
+            iosIconName="xmark"
+            size={22}
+          />
+        </View>
+      </View>
+    </View>
+    <RCTScrollView
+      contentContainerStyle={
+        [
+          {
+            "paddingHorizontal": 16,
+            "paddingTop": 8,
+          },
+          {
+            "paddingBottom": NaN,
+          },
+        ]
+      }
+      showsVerticalScrollIndicator={true}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    >
+      <View />
+    </RCTScrollView>
+  </View>
+</Modal>
+`;

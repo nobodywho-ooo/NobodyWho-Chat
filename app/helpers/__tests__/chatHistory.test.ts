@@ -75,15 +75,12 @@ describe('toModelHistory (nobodywho context)', () => {
     ).toEqual([{ role: 'assistant', content: 'hi', toolCalls: [] }]);
   });
 
-  test('passes user and system messages through unchanged', () => {
+  test('passes user messages through and drops UI-only system notices', () => {
     expect(
       toModelHistory([
         { ...base, role: 'user', content: 'hello', documentsPath: ['/a.png'] },
-        { ...base, role: 'system', content: 'You are helpful.' },
+        { ...base, role: 'system', content: 'Generation stopped.' },
       ]),
-    ).toEqual([
-      { role: 'user', content: 'hello', documentsPath: ['/a.png'] },
-      { role: 'system', content: 'You are helpful.' },
-    ]);
+    ).toEqual([{ role: 'user', content: 'hello', documentsPath: ['/a.png'] }]);
   });
 });

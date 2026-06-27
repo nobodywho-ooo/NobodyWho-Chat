@@ -6,6 +6,7 @@ import {
   celsiusToFahrenheit,
   fahrenheitToCelsius,
   fetchWeather,
+  fetchWikipedia,
   buildChatTools,
   subscribeToolInvocations,
 } from '../tools';
@@ -38,12 +39,13 @@ describe('unit conversions', () => {
 });
 
 describe('buildChatTools', () => {
-  test('builds the weather + converter tools', () => {
+  test('builds the weather, wikipedia, and converter tools', () => {
     const names = (buildChatTools() as unknown as MockTool[]).map(
       t => t.opts.name,
     );
     expect(names).toEqual([
       'get_weather',
+      'search_wikipedia',
       'convert_length',
       'convert_temperature',
     ]);
@@ -144,5 +146,64 @@ describe('fetchWeather', () => {
     const result = JSON.parse(await fetchWeather('Paris'));
 
     expect(result.error).toBe('Impossible to fetch weather info at the moment.');
+  });
+});
+
+describe('fetchWikipedia', () => {
+  test('searches for the article then returns its summary', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        json: async () => ({
+          query: { search: [{ title: 'Eiffel Tower' }] },
+        }),
+      })
+      .mockResolvedValueOnce({
+        json: async () => ({
+          title: 'Eiffel Tower',
+          description: 'Tower in Paris, France',
+          extract: 'The Eiffel Tower is a wrought-iron lattice tower.',
+          content_urls: {
+            desktop: { page: 'https://en.wikipedia.org/wiki/Eiffel_Tower' },
+          },
+        }),
+      });
+    (globalThis as any).fetch = fetchMock;
+
+    const result = JSON.parse(await fetchWikipedia('eiffel tower'));
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][0]).toContain('list=search');
+    expect(fetchMock.mock.calls[1][0]).toContain(
+      '/page/summary/Eiffel%20Tower',
+    );
+    expect(result).toEqual({
+      title: 'Eiffel Tower',
+      description: 'Tower in Paris, France',
+      extract: 'The Eiffel Tower is a wrought-iron lattice tower.',
+      url: 'https://en.wikipedia.org/wiki/Eiffel_Tower',
+    });
+  });
+
+  test('returns an error payload when nothing matches', async () => {
+    (globalThis as any).fetch = jest
+      .fn()
+      .mockResolvedValue({ json: async () => ({ query: { search: [] } }) });
+
+    const result = JSON.parse(await fetchWikipedia('asdfqwerzxcv'));
+
+    expect(result.error).toContain('asdfqwerzxcv');
+  });
+
+  test('returns a friendly error when the request fails or times out', async () => {
+    (globalThis as any).fetch = jest
+      .fn()
+      .mockRejectedValue(new Error('network down'));
+
+    const result = JSON.parse(await fetchWikipedia('Albert Einstein'));
+
+    expect(result.error).toBe(
+      'Impossible to fetch Wikipedia info at the moment.',
+    );
   });
 });

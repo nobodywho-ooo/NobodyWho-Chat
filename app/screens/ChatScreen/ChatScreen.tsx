@@ -85,6 +85,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const { colors } = useStyled();
   const { chat, chatPipeline } = useAiService();
   const flatListRef = useRef<FlashListRef<DisplayMessage>>(null);
+  const stopRequestedRef = useRef(false);
   const insets = useSafeAreaInsets();
   const isKeyboardVisible = keyboardHeight > 0;
 
@@ -278,6 +279,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     }
     setAttachedDocuments(null);
     Keyboard.dismiss();
+    stopRequestedRef.current = false;
     setIsStreaming(true);
 
     const isNewConversation = conversationId === undefined;
@@ -328,6 +330,34 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       renderAssistant();
     });
 
+    const persistAssistant = async (metrics?: {
+      tokensPerSecond?: number;
+      timeToFirstToken?: number;
+    }) => {
+      if (accumulated.length === 0) {
+        setMessages(prev => prev.slice(0, -1));
+        return;
+      }
+      await insertMessage({
+        conversationId: id,
+        role: 'assistant',
+        content: accumulated,
+        documentsPath: [],
+        toolInvocations: turnToolCalls,
+        ...metrics,
+      });
+    };
+
+    const persistSystemMessage = async (content: string) => {
+      setMessages(prev => [...prev, { role: 'system', content }]);
+      await insertMessage({
+        conversationId: id,
+        role: 'system',
+        content,
+        documentsPath: [],
+      });
+    };
+
     try {
       const askInput =
         imagePath || audioPath
@@ -372,27 +402,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       );
 
       renderAssistant(metrics);
+      await persistAssistant(metrics);
 
-      await insertMessage({
-        conversationId: id,
-        role: 'assistant',
-        content: accumulated,
-        documentsPath: [],
-        toolInvocations: turnToolCalls,
-        ...metrics,
-      });
+      if (stopRequestedRef.current) {
+        await persistSystemMessage(t('screens.chat.generationStopped'));
+      }
       haptics.medium();
     } catch (error) {
       log('ChatScreen generation failed', error);
-      const failure = t('screens.chat.generationFailed');
-      setMessages(prev => {
-        const next = [...prev];
-        next[next.length - 1] = {
-          role: 'assistant',
-          content: accumulated ? `${accumulated}\n\n${failure}` : failure,
-        };
-        return next;
-      });
+      await persistAssistant();
+      await persistSystemMessage(t('screens.chat.generationFailed'));
     } finally {
       unsubscribe();
       setIsStreaming(false);
@@ -400,6 +419,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   };
 
   const stopStreaming = () => {
+    stopRequestedRef.current = true;
     chat.current?.stopGeneration();
   };
 

@@ -57,7 +57,7 @@ export const ToolCallBlock: React.FC<ToolCallBlockProps> = ({
         <Text
           variant="caption"
           numberOfLines={1}
-          style={[styles.previewLine, { color: colors.onSurfaceVariant }]}
+          style={[styles.previewLine, { color: colors.onSurface }]}
         >
           {summary}
         </Text>

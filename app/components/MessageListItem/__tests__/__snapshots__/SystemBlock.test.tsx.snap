@@ -1,0 +1,69 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`matches the snapshot 1`] = `
+<View
+  style={
+    [
+      {
+        "alignSelf": "stretch",
+        "borderRadius": 12,
+        "borderWidth": 1,
+        "paddingHorizontal": 12,
+        "paddingVertical": 8,
+        "rowGap": 4,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+        "borderColor": "#e1e1e1",
+      },
+    ]
+  }
+>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "columnGap": 4,
+        "flexDirection": "row",
+      }
+    }
+  >
+    <PlatformIcon
+      androidIconName="settings"
+      color="#7c7c7c"
+      iosIconName="gearshape"
+      size={14}
+    />
+    <Text
+      style={
+        [
+          {
+            "includeFontPadding": false,
+          },
+          {
+            "color": "#7c7c7c",
+          },
+        ]
+      }
+      variant="caption"
+    >
+      components.messageListItem.system
+    </Text>
+  </View>
+  <Text
+    style={
+      [
+        {
+          "fontSize": 13,
+          "lineHeight": 18,
+        },
+        {
+          "color": "#7c7c7c",
+        },
+      ]
+    }
+  >
+    You are a helpful assistant.
+  </Text>
+</View>
+`;

@@ -117,7 +117,8 @@
       "delete": "Delete"
     },
     "chat": {
-      "generationFailed": "Something went wrong while generating a response."
+      "generationFailed": "Something went wrong while generating a response.",
+      "generationStopped": "Generation stopped."
     },
     "loadingScreen": {
       "loadingModel": "Loading {{model}}…",

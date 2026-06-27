@@ -37,7 +37,7 @@ export const SystemBlock: React.FC<SystemBlockProps> = ({ content }) => {
           {t('components.messageListItem.system')}
         </Text>
       </View>
-      <Text style={[styles.content, { color: colors.onSurfaceVariant }]}>
+      <Text style={[styles.content, { color: colors.onSurface }]}>
         {content}
       </Text>
     </View>

@@ -509,3 +509,55 @@ test('a model swap mid-stream stops streaming without persisting the assistant',
   expect(roles).toContain('user');
   expect(roles).not.toContain('assistant');
 });
+
+test('stopping mid-stream persists the partial answer and a "stopped" system message', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+  // The user taps Stop right after the first token streams in.
+  mockChat.ask.mockImplementation(() =>
+    (async function* () {
+      yield 'partial';
+      screen.UNSAFE_getByType(InputBar as never).props.onStop();
+    })(),
+  );
+
+  await send(screen, 'hi');
+
+  const roles = mockInsertMessage.mock.calls.map(([m]) => m.role);
+  expect(roles).toEqual(['user', 'assistant', 'system']);
+  const systemCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'system');
+  expect(systemCall?.[0]).toMatchObject({
+    role: 'system',
+    content: 'screens.chat.generationStopped',
+  });
+});
+
+test('a generation error persists the partial answer and a "failed" system message', async () => {
+  mockChat.ask.mockImplementation(() =>
+    (async function* () {
+      yield 'partial';
+      throw new Error('boom');
+    })(),
+  );
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  const systemCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'system');
+  expect(systemCall?.[0]).toMatchObject({
+    role: 'system',
+    content: 'screens.chat.generationFailed',
+  });
+});

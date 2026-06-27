@@ -38,6 +38,9 @@ export const toChatHistory = (messages: ChatMessage[]): DisplayMessage[] =>
 //
 // `toolCalls` must be present on every assistant message (even empty) or
 // setChatHistory crashes — an assistant with no invocations maps to `[]`.
+//
+// `system` rows are UI-only notices (generation stopped/failed), never part of
+// the model's context — they are dropped here.
 export const toModelHistory = (messages: ChatMessage[]): DisplayMessage[] =>
   messages.flatMap((message): DisplayMessage[] => {
     switch (message.role) {
@@ -68,7 +71,7 @@ export const toModelHistory = (messages: ChatMessage[]): DisplayMessage[] =>
         ];
       }
       case 'system':
-        return [{ role: 'system', content: message.content }];
+        return [];
       case 'user':
       default:
         return [

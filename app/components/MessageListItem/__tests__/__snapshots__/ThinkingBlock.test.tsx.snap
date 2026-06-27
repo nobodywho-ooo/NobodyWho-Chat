@@ -1,0 +1,138 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`matches the snapshot 1`] = `
+<View
+  accessibilityLabel="components.messageListItem.viewThinking"
+  accessibilityRole="button"
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": undefined,
+      "expanded": undefined,
+      "selected": undefined,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={true}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "alignSelf": "stretch",
+        "borderRadius": 12,
+        "borderWidth": 1,
+        "marginBottom": 12,
+        "paddingHorizontal": 12,
+        "paddingVertical": 8,
+        "rowGap": 4,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+        "borderColor": "#e1e1e1",
+      },
+      false,
+    ]
+  }
+>
+  <View
+    style={
+      {
+        "alignItems": "center",
+        "columnGap": 4,
+        "flexDirection": "row",
+      }
+    }
+  >
+    <PlatformIcon
+      androidIconName="psychology"
+      color="#7c7c7c"
+      iosIconName="brain"
+      size={14}
+    />
+    <Text
+      style={
+        [
+          {
+            "includeFontPadding": false,
+          },
+          {
+            "color": "#7c7c7c",
+          },
+        ]
+      }
+      variant="caption"
+    >
+      components.messageListItem.thought
+    </Text>
+  </View>
+  <View
+    style={
+      {
+        "position": "relative",
+      }
+    }
+  >
+    <LinearGradient
+      colors={
+        [
+          "#FFFFFF",
+          "#FFFFFF00",
+        ]
+      }
+      end={
+        {
+          "x": 0,
+          "y": 1,
+        }
+      }
+      pointerEvents="none"
+      start={
+        {
+          "x": 0,
+          "y": 0,
+        }
+      }
+      style={
+        {
+          "height": 20,
+          "left": 0,
+          "position": "absolute",
+          "right": 0,
+          "top": 0,
+          "zIndex": 1,
+        }
+      }
+    />
+    <RCTScrollView
+      onContentSizeChange={[Function]}
+      pointerEvents="none"
+      showsVerticalScrollIndicator={false}
+      style={
+        {
+          "height": 80,
+        }
+      }
+    >
+      <View />
+    </RCTScrollView>
+  </View>
+</View>
+`;

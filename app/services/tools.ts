@@ -154,6 +154,59 @@ export const fetchWeather = async (city: string): Promise<string> => {
   }
 };
 
+// --- Wikipedia -------------------------------------------------------------
+// Keyless: search for the best-matching article, then fetch its REST summary
+// (the lead extract). Good for geography, history, people, companies, science
+// and general knowledge. Same 5s deadline + friendly-error contract as weather.
+
+const WIKIPEDIA_HEADERS = { 'User-Agent': 'Reffen/1.0 (https://nobodywho.ai)' };
+
+export const fetchWikipedia = async (query: string): Promise<string> => {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(
+      query,
+    )}&srlimit=1&format=json&origin=*`;
+    const searchResponse = await fetch(searchUrl, {
+      signal: controller.signal,
+      headers: WIKIPEDIA_HEADERS,
+    });
+    const search = await searchResponse.json();
+    const title = search?.query?.search?.[0]?.title;
+
+    if (!title) {
+      return JSON.stringify({
+        error: `No Wikipedia article found for "${query}".`,
+      });
+    }
+
+    const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(
+      title,
+    )}`;
+    const summaryResponse = await fetch(summaryUrl, {
+      signal: controller.signal,
+      headers: WIKIPEDIA_HEADERS,
+    });
+    const summary = await summaryResponse.json();
+
+    return JSON.stringify({
+      title: summary?.title ?? title,
+      description: summary?.description,
+      extract: summary?.extract,
+      url: summary?.content_urls?.desktop?.page,
+    });
+  } catch (error) {
+    log('fetchWikipedia failed', error);
+    return JSON.stringify({
+      error: 'Impossible to fetch Wikipedia info at the moment.',
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
 // --- Tool definitions ------------------------------------------------------
 
 // Built lazily per chat (not at module load): constructing a Tool starts a
@@ -174,6 +227,20 @@ export const buildChatTools = (): Tool[] => [
       },
     ],
     call: (city: string) => fetchWeather(city),
+  }),
+  defineTool({
+    name: 'search_wikipedia',
+    description:
+      'Look up factual background on Wikipedia — geography and places, history and events, people (public figures, scientists, celebrities), companies and organizations, science, and other general-knowledge topics. Use it to ground an answer in encyclopedic facts when the question is about a specific real-world entity or you are unsure.',
+    parameters: [
+      {
+        name: 'query',
+        type: 'string',
+        description:
+          'The topic or entity to look up, e.g. "Eiffel Tower", "Albert Einstein", or "Apple Inc".',
+      },
+    ],
+    call: (query: string) => fetchWikipedia(query),
   }),
   defineTool({
     name: 'convert_length',
