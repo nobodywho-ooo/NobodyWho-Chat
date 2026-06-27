@@ -27,6 +27,7 @@ import {
   messageDocumentUri,
   resolveMessageDocumentPath,
 } from './messageDocuments';
+import { toChatHistory, toModelHistory } from './chatHistory';
 
 export {
   getFamilyIcon,
@@ -56,4 +57,6 @@ export {
   haptics,
   copyToClipboard,
   sleep,
+  toChatHistory,
+  toModelHistory,
 };

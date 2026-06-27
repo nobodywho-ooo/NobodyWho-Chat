@@ -41,6 +41,7 @@ const MIGRATIONS: string[][] = [
       author TEXT NOT NULL,
       family TEXT NOT NULL,
       thinking INTEGER DEFAULT 0,
+      tool_calling INTEGER DEFAULT 0,
       huggingface_url TEXT NOT NULL DEFAULT '',
       parts TEXT NOT NULL DEFAULT '[]',
       pipeline TEXT NOT NULL CHECK (pipeline IN (${PIPELINES})),
@@ -70,6 +71,7 @@ const MIGRATIONS: string[][] = [
       tokens_per_second REAL,
       time_to_first_token REAL,
       documents_path TEXT NOT NULL DEFAULT '[]',
+      tool_invocations TEXT NOT NULL DEFAULT '[]',
       FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE
     )`,
     `CREATE INDEX idx_messages_conversation_id ON messages(conversation_id)`,

@@ -14,6 +14,7 @@ export interface Model {
   author: string;
   family: string;
   thinking: boolean;
+  toolCalling: boolean;
   huggingfaceUrl: string;
   parts: ModelPart[];
   pipeline: ModelPipeline;

@@ -18,8 +18,11 @@ import { useStyled, useThemeMode } from 'hooks';
 import { DisplayMessage } from 'types';
 import { AudioAttachment } from './AudioAttachment';
 import { FullScreenImageModal } from './FullScreenImageModal';
+import { SystemBlock } from './SystemBlock';
 import { ThinkingBlock } from './ThinkingBlock';
 import { ThinkingModal } from './ThinkingModal';
+import { ToolCallBlock } from './ToolCallBlock';
+import { ToolCallModal } from './ToolCallModal';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { Text } from '../Text/Text';
 
@@ -46,7 +49,9 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
   const [copied, setCopied] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [thinkingOpen, setThinkingOpen] = useState(false);
+  const [openToolIndex, setOpenToolIndex] = useState<number | null>(null);
   const documentsPath = message.documentsPath ?? [];
+  const toolInvocations = message.toolInvocations ?? [];
 
   const renderAttachedFiles = () => {
     if (documentsPath.length === 0) {
@@ -164,105 +169,131 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
         )}
       </View>
     );
-  }
+  } else if (role === 'assistant') {
+    const metrics: string[] = [];
+    if (typeof tokensPerSecond === 'number') {
+      metrics.push(`${tokensPerSecond.toFixed(1)} tok/s`);
+    }
+    if (typeof timeToFirstToken === 'number') {
+      metrics.push(formatTimeToFirstToken(timeToFirstToken));
+    }
 
-  const metrics: string[] = [];
-  if (typeof tokensPerSecond === 'number') {
-    metrics.push(`${tokensPerSecond.toFixed(1)} tok/s`);
-  }
-  if (typeof timeToFirstToken === 'number') {
-    metrics.push(formatTimeToFirstToken(timeToFirstToken));
-  }
+    const accentColor = copied ? colors.primary : colors.onSurfaceVariant;
+    const isAwaitingResponse =
+      isStreaming && content.length === 0 && toolInvocations.length === 0;
+    const isThinkingActive = isStreaming && !isThinkingComplete;
 
-  const accentColor = copied ? colors.primary : colors.onSurfaceVariant;
-  const isAwaitingResponse = isStreaming && content.length === 0;
-  const isThinkingActive = isStreaming && !isThinkingComplete;
-
-  return (
-    <View style={styles.assistantContainer}>
-      {isAwaitingResponse ? (
-        <ActivityIndicator
-          size="small"
-          color={colors.primary}
-          style={styles.loadingIndicator}
-        />
-      ) : (
-        <>
-          {thinking !== null && (
-            <ThinkingBlock
-              thinking={thinking}
-              active={isThinkingActive}
-              onPress={() => setThinkingOpen(true)}
-            />
-          )}
-          {rest.length > 0 &&
-            (isStreaming ? (
-              <StreamdownText
-                containerStyle={styles.streamdownContainer}
-                markdown={rest}
-                markdownStyle={markdownStyle}
+    return (
+      <View style={styles.assistantContainer}>
+        {isAwaitingResponse ? (
+          <ActivityIndicator
+            size="small"
+            color={colors.primary}
+            style={styles.loadingIndicator}
+          />
+        ) : (
+          <>
+            {thinking !== null && (
+              <ThinkingBlock
+                thinking={thinking}
+                active={isThinkingActive}
+                onPress={() => setThinkingOpen(true)}
               />
-            ) : (
-              <EnrichedMarkdownText
-                containerStyle={styles.streamdownContainer}
-                markdown={rest}
-                markdownStyle={markdownStyle}
+            )}
+            {toolInvocations.map((invocation, index) => (
+              <ToolCallBlock
+                key={`${invocation.name}-${index}`}
+                name={invocation.name}
+                arguments={invocation.arguments}
+                onPress={() => setOpenToolIndex(index)}
               />
             ))}
-        </>
-      )}
-      {content.length > 0 && (
-        <View style={styles.footerContainer}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={t('components.messageListItem.copy')}
-            hitSlop={8}
-            onPress={handleCopy}
-            style={({ pressed }) => [
-              styles.copyButton,
-              pressed && styles.copyButtonPressed,
-            ]}
-          >
-            {!isStreaming && (
-              <>
-                <PlatformIcon
-                  iosIconName={copied ? 'checkmark' : 'doc.on.doc'}
-                  androidIconName={copied ? 'check' : 'content_copy'}
-                  size={14}
-                  color={accentColor}
+            {rest.length > 0 &&
+              (isStreaming ? (
+                <StreamdownText
+                  containerStyle={styles.streamdownContainer}
+                  markdown={rest}
+                  markdownStyle={markdownStyle}
                 />
-                <Text
-                  variant="caption"
-                  style={[styles.copyLabel, { color: accentColor }]}
-                >
-                  {t(
-                    copied
-                      ? 'components.messageListItem.copied'
-                      : 'components.messageListItem.copy',
-                  )}
-                </Text>
-              </>
-            )}
-          </Pressable>
-          {metrics.length > 0 && (
-            <Text
-              variant="caption"
-              style={[styles.metricsText, { color: colors.onSurfaceVariant }]}
+              ) : (
+                <EnrichedMarkdownText
+                  containerStyle={styles.streamdownContainer}
+                  markdown={rest}
+                  markdownStyle={markdownStyle}
+                />
+              ))}
+          </>
+        )}
+        {content.length > 0 && (
+          <View style={styles.footerContainer}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('components.messageListItem.copy')}
+              hitSlop={8}
+              onPress={handleCopy}
+              style={({ pressed }) => [
+                styles.copyButton,
+                pressed && styles.copyButtonPressed,
+              ]}
             >
-              {metrics.join(' · ')}
-            </Text>
-          )}
-        </View>
-      )}
-      {thinking !== null && (
-        <ThinkingModal
-          thinking={thinkingOpen ? thinking : null}
-          active={isThinkingActive}
-          onClose={() => setThinkingOpen(false)}
-        />
-      )}
-    </View>
-  );
+              {!isStreaming && (
+                <>
+                  <PlatformIcon
+                    iosIconName={copied ? 'checkmark' : 'doc.on.doc'}
+                    androidIconName={copied ? 'check' : 'content_copy'}
+                    size={14}
+                    color={accentColor}
+                  />
+                  <Text
+                    variant="caption"
+                    style={[styles.copyLabel, { color: accentColor }]}
+                  >
+                    {t(
+                      copied
+                        ? 'components.messageListItem.copied'
+                        : 'components.messageListItem.copy',
+                    )}
+                  </Text>
+                </>
+              )}
+            </Pressable>
+            {metrics.length > 0 && (
+              <Text
+                variant="caption"
+                style={[styles.metricsText, { color: colors.onSurfaceVariant }]}
+              >
+                {metrics.join(' · ')}
+              </Text>
+            )}
+          </View>
+        )}
+        {thinking !== null && (
+          <ThinkingModal
+            thinking={thinkingOpen ? thinking : null}
+            active={isThinkingActive}
+            onClose={() => setThinkingOpen(false)}
+          />
+        )}
+        {openToolIndex !== null && toolInvocations[openToolIndex] && (
+          <ToolCallModal
+            name={toolInvocations[openToolIndex].name}
+            arguments={toolInvocations[openToolIndex].arguments}
+            result={toolInvocations[openToolIndex].result}
+            visible
+            onClose={() => setOpenToolIndex(null)}
+          />
+        )}
+      </View>
+    );
+  } else if (role === 'system') {
+    return (
+      <View style={styles.assistantContainer}>
+        <SystemBlock content={content} />
+      </View>
+    );
+  }
+
+  return null;
 };
 
 export { MessageListItem };

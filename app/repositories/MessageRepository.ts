@@ -1,6 +1,6 @@
 import { getDatabase } from 'database';
 import { safeJsonParse } from 'helpers';
-import { ChatMessage } from 'types';
+import { ChatMessage, ToolInvocation } from 'types';
 
 export function rowToMessage(row: Record<string, any>): ChatMessage {
   return {
@@ -12,6 +12,7 @@ export function rowToMessage(row: Record<string, any>): ChatMessage {
     tokensPerSecond: row.tokens_per_second as number | undefined,
     timeToFirstToken: row.time_to_first_token as number | undefined,
     documentsPath: safeJsonParse<string[]>(row.documents_path, []),
+    toolInvocations: safeJsonParse<ToolInvocation[]>(row.tool_invocations, []),
   };
 }
 
@@ -48,8 +49,8 @@ export async function insertMessage(
   let insertId = 0;
   await db.transaction(async tx => {
     const result = await tx.execute(
-      `INSERT INTO messages (conversation_id, role, content, tokens_per_second, time_to_first_token, documents_path)
-      VALUES (?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO messages (conversation_id, role, content, tokens_per_second, time_to_first_token, documents_path, tool_invocations)
+      VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
         message.conversationId,
         message.role,
@@ -57,6 +58,7 @@ export async function insertMessage(
         message.tokensPerSecond ?? null,
         message.timeToFirstToken ?? null,
         JSON.stringify(message.documentsPath),
+        JSON.stringify(message.toolInvocations ?? []),
       ],
     );
     insertId = result.insertId!;

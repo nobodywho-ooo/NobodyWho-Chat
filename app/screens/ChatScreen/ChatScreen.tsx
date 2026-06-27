@@ -8,12 +8,13 @@ import { MessageListItem } from 'components';
 import { useStyled } from 'hooks';
 import {
   DisplayMessage,
+  ToolInvocation,
   pipelineIngestsAudio,
   pipelineIngestsImage,
 } from 'types';
 import { getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
-import { useAiService } from 'services';
+import { useAiService, subscribeToolInvocations } from 'services';
 import {
   log,
   isIOS,
@@ -302,6 +303,30 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     let tokenCount = 0;
     let accumulated = '';
     let scrolledToThinking = false;
+    const turnToolCalls: ToolInvocation[] = [];
+
+    const renderAssistant = (extra?: {
+      tokensPerSecond?: number;
+      timeToFirstToken?: number;
+    }) => {
+      setMessages(prev => {
+        const next = [...prev];
+        next[next.length - 1] = {
+          role: 'assistant',
+          content: accumulated,
+          ...(turnToolCalls.length > 0
+            ? { toolInvocations: [...turnToolCalls] }
+            : {}),
+          ...extra,
+        };
+        return next;
+      });
+    };
+
+    const unsubscribe = subscribeToolInvocations(invocation => {
+      turnToolCalls.push(invocation);
+      renderAssistant();
+    });
 
     try {
       const askInput =
@@ -323,14 +348,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         if (firstTokenAt === undefined) firstTokenAt = Date.now();
         tokenCount += 1;
         accumulated += token;
-        setMessages(prev => {
-          const next = [...prev];
-          next[next.length - 1] = {
-            role: 'assistant',
-            content: accumulated,
-          };
-          return next;
-        });
+        renderAssistant();
 
         if (
           !scrolledToThinking &&
@@ -353,23 +371,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         tokenCount,
       );
 
-      // Re-stamp the just-finished assistant message with its metrics so
-      // MessageListItem can render them beneath the streamed content.
-      setMessages(prev => {
-        const next = [...prev];
-        next[next.length - 1] = {
-          role: 'assistant',
-          content: accumulated,
-          ...metrics,
-        };
-        return next;
-      });
+      renderAssistant(metrics);
 
       await insertMessage({
         conversationId: id,
         role: 'assistant',
         content: accumulated,
         documentsPath: [],
+        toolInvocations: turnToolCalls,
         ...metrics,
       });
       haptics.medium();
@@ -385,6 +394,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         return next;
       });
     } finally {
+      unsubscribe();
       setIsStreaming(false);
     }
   };

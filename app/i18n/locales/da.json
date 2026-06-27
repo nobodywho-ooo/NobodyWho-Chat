@@ -53,7 +53,12 @@
       "thought": "Tanker",
       "viewThinking": "Se ræsonnement",
       "closeThinking": "Luk",
-      "thinkingTitle": "Ræsonnement"
+      "thinkingTitle": "Ræsonnement",
+      "viewToolCalls": "Se værktøjskald",
+      "closeToolCalls": "Luk",
+      "toolArguments": "Argumenter",
+      "toolResult": "Resultat",
+      "system": "System"
     },
     "conversationsList": {
       "recent": "Seneste",

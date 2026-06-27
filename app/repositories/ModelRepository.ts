@@ -11,6 +11,7 @@ export function rowToModel(row: Record<string, any>): Model {
     author: row.author as string,
     family: row.family as string,
     thinking: !!(row.thinking as number),
+    toolCalling: !!(row.tool_calling as number),
     huggingfaceUrl: (row.huggingface_url as string) ?? '',
     parts: safeJsonParse<ModelPart[]>(row.parts, []),
     pipeline: row.pipeline as ModelPipeline,
@@ -42,8 +43,8 @@ export async function insertModel(model: Model): Promise<void> {
   await db.transaction(async tx => {
     await tx.execute(
       `INSERT INTO models
-        (id, name, size_gb, parameter_count_billions, author, family, thinking, huggingface_url, parts, pipeline, tags, languages, supported_file_format)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, name, size_gb, parameter_count_billions, author, family, thinking, tool_calling, huggingface_url, parts, pipeline, tags, languages, supported_file_format)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(id) DO UPDATE SET
         name = excluded.name,
         size_gb = excluded.size_gb,
@@ -51,6 +52,7 @@ export async function insertModel(model: Model): Promise<void> {
         author = excluded.author,
         family = excluded.family,
         thinking = excluded.thinking,
+        tool_calling = excluded.tool_calling,
         huggingface_url = excluded.huggingface_url,
         parts = excluded.parts,
         pipeline = excluded.pipeline,
@@ -65,6 +67,7 @@ export async function insertModel(model: Model): Promise<void> {
         model.author,
         model.family,
         model.thinking ? 1 : 0,
+        model.toolCalling ? 1 : 0,
         model.huggingfaceUrl,
         JSON.stringify(model.parts),
         model.pipeline,

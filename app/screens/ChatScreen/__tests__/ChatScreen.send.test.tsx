@@ -28,6 +28,7 @@ const mockChat = {
   ask: jest.fn(),
   stopGeneration: jest.fn(),
   setChatHistory: jest.fn(),
+  getChatHistory: jest.fn().mockResolvedValue([]),
 };
 // Stable ref (like the real AiService) so a test can swap chat.current mid-stream.
 const mockChatRef: { current: typeof mockChat | undefined } = {
@@ -40,6 +41,7 @@ jest.mock('services', () => ({
     chat: mockChatRef,
     chatPipeline: mockChatPipeline,
   }),
+  subscribeToolInvocations: jest.fn(() => jest.fn()),
 }));
 
 jest.mock('repositories', () => ({

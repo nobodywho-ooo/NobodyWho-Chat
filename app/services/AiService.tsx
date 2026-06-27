@@ -6,10 +6,11 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Chat, Tool, SamplerConfig } from 'react-native-nobodywho';
+import { Chat, SamplerConfig } from 'react-native-nobodywho';
 import * as Sentry from '@sentry/react-native';
 import { log, sleep } from 'helpers';
 import { ChatPipeline, Model, ModelPipeline, toChatPipeline } from 'types';
+import { buildChatTools } from './tools';
 
 export enum AiModelState {
   NotLoaded = 'notLoaded',
@@ -29,7 +30,6 @@ interface AiServiceContextValue extends AiServiceState {
   createChat: (opts: {
     model: Model;
     useGpu?: boolean;
-    tools?: Tool[];
     systemPrompt?: string;
     sampler?: SamplerConfig;
     contextSize?: number;
@@ -111,7 +111,6 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     async (opts: {
       model: Model;
       useGpu?: boolean;
-      tools?: Tool[];
       systemPrompt?: string;
       sampler?: SamplerConfig;
       contextSize?: number;
@@ -155,7 +154,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
           modelPath: chatModelPath,
           projectionModelPath,
           useGpu: opts?.useGpu ?? true,
-          tools: opts?.tools ?? [],
+          tools: model.toolCalling ? buildChatTools() : undefined,
           systemPrompt: opts?.systemPrompt,
           sampler: opts?.sampler,
           contextSize: opts?.contextSize,

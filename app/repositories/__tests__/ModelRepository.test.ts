@@ -20,6 +20,7 @@ const rawRow = {
   author: 'A',
   family: 'F',
   thinking: 1,
+  tool_calling: 1,
   huggingface_url: 'https://huggingface.co/M',
   parts: '[]',
   pipeline: 'textGeneration',
@@ -41,6 +42,7 @@ describe('rowToModel', () => {
       author: 'A',
       family: 'F',
       thinking: true,
+      toolCalling: true,
       huggingfaceUrl: 'https://huggingface.co/M',
       parts: [],
       pipeline: 'textGeneration',
@@ -118,7 +120,7 @@ describe('insertModel', () => {
 
     expect(db.execute).toHaveBeenCalledWith(
       expect.stringContaining('ON CONFLICT(id) DO UPDATE'),
-      [3, 'Q', 1, 1, 'Author', 'Family', 1, 'https://huggingface.co/test/model-3', '[]', 'textGeneration', '["fast"]', '[]', '[]'],
+      [3, 'Q', 1, 1, 'Author', 'Family', 1, 0, 'https://huggingface.co/test/model-3', '[]', 'textGeneration', '["fast"]', '[]', '[]'],
     );
     // Must NOT use INSERT OR REPLACE: with FKs on, REPLACE cascade-deletes the
     // model's conversations and messages.

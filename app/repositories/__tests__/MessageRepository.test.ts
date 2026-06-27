@@ -36,6 +36,7 @@ describe('rowToMessage', () => {
       tokensPerSecond: 5,
       timeToFirstToken: 1,
       documentsPath: ['/x'],
+      toolInvocations: [],
     });
   });
 
@@ -50,6 +51,27 @@ describe('rowToMessage', () => {
     });
 
     expect(message.documentsPath).toEqual([]);
+  });
+
+  test('parses tool_invocations JSON on an assistant message', () => {
+    const message = rowToMessage({
+      id: 3,
+      timestamp: 't',
+      conversation_id: 2,
+      role: 'assistant',
+      content: 'It is 12°C in Paris.',
+      documents_path: '[]',
+      tool_invocations:
+        '[{"name":"get_weather","arguments":{"city":"Paris"},"result":"{\\"temperatureCelsius\\":12}"}]',
+    });
+
+    expect(message.toolInvocations).toEqual([
+      {
+        name: 'get_weather',
+        arguments: { city: 'Paris' },
+        result: '{"temperatureCelsius":12}',
+      },
+    ]);
   });
 });
 
@@ -117,7 +139,7 @@ describe('insertMessage', () => {
 
     expect(db.execute).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO messages'),
-      [2, 'user', 'hi', null, null, '["/a"]'],
+      [2, 'user', 'hi', null, null, '["/a"]', '[]'],
     );
     expect(id).toBe(11);
   });
@@ -157,7 +179,31 @@ describe('insertMessage', () => {
       9,
       3,
       '[]',
+      '[]',
     ]);
+  });
+
+  test('serializes the assistant tool invocations', async () => {
+    db.execute.mockResolvedValue({ insertId: 13, rows: [] });
+
+    await insertMessage({
+      conversationId: 2,
+      role: 'assistant',
+      content: 'It is 12°C in Paris.',
+      documentsPath: [],
+      toolInvocations: [
+        {
+          name: 'get_weather',
+          arguments: { city: 'Paris' },
+          result: '{"temperatureCelsius":12}',
+        },
+      ],
+    });
+
+    const params = db.execute.mock.calls[0][1] as unknown[];
+    expect(params[params.length - 1]).toBe(
+      '[{"name":"get_weather","arguments":{"city":"Paris"},"result":"{\\"temperatureCelsius\\":12}"}]',
+    );
   });
 });
 

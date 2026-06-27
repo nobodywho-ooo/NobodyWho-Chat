@@ -53,7 +53,12 @@
       "thought": "Thoughts",
       "viewThinking": "View reasoning",
       "closeThinking": "Close",
-      "thinkingTitle": "Reasoning"
+      "thinkingTitle": "Reasoning",
+      "viewToolCalls": "View tool call",
+      "closeToolCalls": "Close",
+      "toolArguments": "Arguments",
+      "toolResult": "Result",
+      "system": "System"
     },
     "conversationsList": {
       "recent": "Recent",

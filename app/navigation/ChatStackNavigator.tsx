@@ -10,14 +10,20 @@ import React, {
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AppState, AppStateStatus, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { ChatMessage, DisplayMessage } from 'types';
+import { DisplayMessage } from 'types';
 import { getAppState, setAppState, subscribeAppState } from 'database';
 import {
   getConversationById,
   getMessagesByConversationId,
   getModelById,
 } from 'repositories';
-import { log, isIOS, isExternalPickerActive } from 'helpers';
+import {
+  log,
+  isIOS,
+  isExternalPickerActive,
+  toChatHistory,
+  toModelHistory,
+} from 'helpers';
 import { PlatformIcon } from 'components';
 import { useAppState, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
@@ -43,33 +49,6 @@ enum SessionStatus {
 }
 
 type LoadedConversationId = number | undefined;
-
-const toChatHistory = (messages: ChatMessage[]): DisplayMessage[] =>
-  messages.map((message): DisplayMessage => {
-    switch (message.role) {
-      case 'assistant':
-        // TODO: fix in NW - toolCalls needs to be provided otherwise setChatHistory crash
-        return {
-          role: 'assistant',
-          content: message.content,
-          toolCalls: [],
-          tokensPerSecond: message.tokensPerSecond,
-          timeToFirstToken: message.timeToFirstToken,
-        };
-      case 'system':
-        return {
-          role: 'system',
-          content: message.content,
-        };
-      case 'user':
-      default:
-        return {
-          role: 'user',
-          content: message.content,
-          documentsPath: message.documentsPath,
-        };
-    }
-  });
 
 interface ChatRootContextValue {
   modelsLoading: boolean;
@@ -188,11 +167,10 @@ export const ChatStackNavigator = () => {
     }
 
     const messages = await getMessagesByConversationId(conversationIdInUse);
-    const history = toChatHistory(messages);
 
-    await chat.current.setChatHistory(history);
+    await chat.current.setChatHistory(toModelHistory(messages));
 
-    setChatHistory(history);
+    setChatHistory(toChatHistory(messages));
     setLoadedConversationId(conversationIdInUse);
   }, [chat]);
 

@@ -162,6 +162,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
           "supportedFileFormat": [],
           "tags": [],
           "thinking": false,
+          "toolCalling": false,
         }
       }
     />
@@ -329,6 +330,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
           "supportedFileFormat": [],
           "tags": [],
           "thinking": false,
+          "toolCalling": false,
         }
       }
     />
@@ -425,6 +427,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
           "supportedFileFormat": [],
           "tags": [],
           "thinking": false,
+          "toolCalling": false,
         }
       }
       onPress={[Function]}
@@ -445,6 +448,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
           "supportedFileFormat": [],
           "tags": [],
           "thinking": false,
+          "toolCalling": false,
         }
       }
       onPress={[Function]}

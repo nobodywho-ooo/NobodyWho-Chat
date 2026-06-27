@@ -34,6 +34,7 @@ jest.mock('@react-navigation/native-stack', () => {
 
 const mockChatInstance = {
   setChatHistory: jest.fn(async (_history: unknown[] = []) => {}),
+  getChatHistory: jest.fn(async () => []),
   stopGeneration: jest.fn(),
   ask: jest.fn(),
 };
@@ -57,6 +58,7 @@ jest.mock('services', () => ({
     createChat: mockCreateChat,
     disposeChat: mockDisposeChat,
   }),
+  subscribeToolInvocations: jest.fn(() => jest.fn()),
 }));
 
 jest.mock('repositories', () => ({

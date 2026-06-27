@@ -202,11 +202,19 @@ jest.mock('react-native-nobodywho', () => {
       return { kind: 'audio', path };
     }
   }
+  // Records its options so a test can assert how a tool was defined, without
+  // the native polling loop the real Tool starts in its constructor.
+  class Tool {
+    constructor(opts) {
+      this.opts = opts;
+    }
+  }
   return {
     Chat: { fromPath: (opts) => mockFromPath(opts) },
     Encoder: { fromPath: jest.fn() },
     CrossEncoder: { fromPath: jest.fn() },
     Prompt,
+    Tool,
     downloadModel: (opts) => mockDownloadModel(opts),
     ChatMessage: jest.fn(),
     Role: {
