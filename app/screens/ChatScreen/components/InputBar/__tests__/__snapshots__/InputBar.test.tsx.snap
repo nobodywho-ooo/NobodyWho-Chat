@@ -68,6 +68,15 @@ exports[`renders correctly InputBar 1`] = `
       ]
     }
   >
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "alignSelf": "flex-start",
+          "flexDirection": "row",
+        }
+      }
+    />
     <TextInput
       multiline={true}
       onChangeText={[Function]}
@@ -173,6 +182,15 @@ exports[`renders correctly InputBar when streaming 1`] = `
       ]
     }
   >
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "alignSelf": "flex-start",
+          "flexDirection": "row",
+        }
+      }
+    />
     <TextInput
       multiline={true}
       onChangeText={[Function]}
@@ -304,6 +322,15 @@ exports[`renders correctly InputBar with value 1`] = `
       ]
     }
   >
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "alignSelf": "flex-start",
+          "flexDirection": "row",
+        }
+      }
+    />
     <TextInput
       multiline={true}
       onChangeText={[Function]}
@@ -412,23 +439,33 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
     <View
       style={
         {
-          "marginRight": 8,
+          "alignItems": "center",
+          "alignSelf": "flex-start",
+          "flexDirection": "row",
         }
       }
     >
-      <IconButton
-        accessibilityLabel="components.inputBar.attach"
-        backgroundColor="#ebebeb"
-        color="#000000"
-        icon={
+      <View
+        style={
           {
-            "androidIconName": "add",
-            "iosIconName": "plus",
+            "marginRight": 8,
           }
         }
-        onPress={[Function]}
-        size={20}
-      />
+      >
+        <IconButton
+          accessibilityLabel="components.inputBar.attach"
+          backgroundColor="#ebebeb"
+          color="#000000"
+          icon={
+            {
+              "androidIconName": "add",
+              "iosIconName": "plus",
+            }
+          }
+          onPress={[Function]}
+          size={20}
+        />
+      </View>
     </View>
     <TextInput
       multiline={true}
