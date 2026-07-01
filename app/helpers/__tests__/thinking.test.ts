@@ -20,6 +20,18 @@ describe('stripThinkingBlocks', () => {
   test('leaves content without think blocks untouched', () => {
     expect(stripThinkingBlocks('just an answer')).toBe('just an answer');
   });
+
+  test('removes a complete Gemma channel block', () => {
+    expect(
+      stripThinkingBlocks('<|channel>thought reasoning here<channel|>The answer'),
+    ).toBe('The answer');
+  });
+
+  test('removes an unclosed trailing Gemma channel block', () => {
+    expect(stripThinkingBlocks('answer<|channel>thought still thinking')).toBe(
+      'answer',
+    );
+  });
 });
 
 describe('parseThinking', () => {
@@ -62,5 +74,34 @@ describe('parseThinking', () => {
     expect(result.thinking).toBe('round one\n\nround two');
     expect(result.rest).toBe('');
     expect(result.isThinkingComplete).toBe(false);
+  });
+
+  test('splits a Gemma channel block from the answer', () => {
+    expect(
+      parseThinking('<|channel>thought reasoning<channel|>The answer'),
+    ).toEqual({
+      thinking: 'reasoning',
+      rest: 'The answer',
+      isThinkingComplete: true,
+    });
+  });
+
+  test('streams a still-open Gemma channel block as active', () => {
+    expect(parseThinking('<|channel>thought still going')).toEqual({
+      thinking: 'still going',
+      rest: '',
+      isThinkingComplete: false,
+    });
+  });
+
+  test('folds a real multi-paragraph Gemma answer, keeping only the story', () => {
+    const content =
+      '<|channel>thought\nThinking Process:\n1. Analyze the request.\n2. Draft it.<channel|>## The Cartographer\n\nElara lived on the edge of a forgotten town.';
+    const result = parseThinking(content);
+    expect(result.isThinkingComplete).toBe(true);
+    expect(result.thinking).toContain('Thinking Process');
+    expect(result.rest).toBe(
+      '## The Cartographer\n\nElara lived on the edge of a forgotten town.',
+    );
   });
 });

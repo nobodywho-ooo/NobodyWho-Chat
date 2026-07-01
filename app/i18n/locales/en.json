@@ -107,8 +107,9 @@
       "youHaveDownloadedAllTheModels": "You have downloaded all the models.",
       "chooseModelTitle": "Choosing the Right Model",
       "chooseModelMessage": "Model sizes are defined by their parameter count (e.g., 0.6B, 1,2B...). While bigger models are often smarter, they demand more resources and slow down performance. Therefore, if you don’t have a recent phone, start with a smaller model to ensure smooth performance.",
-      "downloadInProgressTitle": "Download in progress",
-      "downloadInProgressMessage": "Ensure you have a stable internet connection and wait a moment. If the download seems stuck after 10 seconds, restart the app, we’ll automatically resume it."
+      "stopDownloadTitle": "Stop this download?",
+      "stopDownloadMessage": "The download will be cancelled and its progress discarded. You can start it again at any time.",
+      "stopDownload": "Stop download"
     },
     "downloadedModels": {
       "noModelDownloaded": "No model downloaded",

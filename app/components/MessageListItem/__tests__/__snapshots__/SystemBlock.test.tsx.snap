@@ -58,7 +58,7 @@ exports[`matches the snapshot 1`] = `
           "lineHeight": 18,
         },
         {
-          "color": "#7c7c7c",
+          "color": "#000000",
         },
       ]
     }

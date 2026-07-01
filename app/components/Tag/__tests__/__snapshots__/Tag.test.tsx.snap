@@ -10,7 +10,7 @@ exports[`Tag renders a label with an icon 1`] = `
         "flexDirection": "row",
         "gap": 2,
         "paddingHorizontal": 8,
-        "paddingVertical": 2,
+        "paddingVertical": 4,
       },
       {
         "backgroundColor": "#ebebeb",
@@ -29,6 +29,7 @@ exports[`Tag renders a label with an icon 1`] = `
       [
         {
           "fontSize": 12,
+          "marginLeft": 2,
         },
         {
           "color": "#7c7c7c",
@@ -51,7 +52,7 @@ exports[`Tag renders a label without an icon 1`] = `
         "flexDirection": "row",
         "gap": 2,
         "paddingHorizontal": 8,
-        "paddingVertical": 2,
+        "paddingVertical": 4,
       },
       {
         "backgroundColor": "#ebebeb",
@@ -64,6 +65,7 @@ exports[`Tag renders a label without an icon 1`] = `
       [
         {
           "fontSize": 12,
+          "marginLeft": 2,
         },
         {
           "color": "#7c7c7c",
@@ -86,7 +88,7 @@ exports[`Tag renders no icon when only one platform icon name is provided 1`] = 
         "flexDirection": "row",
         "gap": 2,
         "paddingHorizontal": 8,
-        "paddingVertical": 2,
+        "paddingVertical": 4,
       },
       {
         "backgroundColor": "#ebebeb",
@@ -99,6 +101,7 @@ exports[`Tag renders no icon when only one platform icon name is provided 1`] = 
       [
         {
           "fontSize": 12,
+          "marginLeft": 2,
         },
         {
           "color": "#7c7c7c",

@@ -143,9 +143,18 @@ export const ModelCard: React.FC<ModelCardProps> = ({
               size={fontSizes.caption}
               color={colors.onSurfaceVariant}
             />
-            <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
+            <Text
+              variant="body2"
+              numberOfLines={1}
+              style={[styles.pipelineLabel, { color: colors.onSurfaceVariant }]}
+            >
               {pipelineLabel[pipeline]}
             </Text>
+            {isDownloading && (
+              <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
+                {`${Math.round(downloadProgress * 100)}%`}
+              </Text>
+            )}
           </View>
 
           {isDownloading ? (

@@ -20,10 +20,17 @@ export const Tag: React.FC<TagProps> = ({
 }) => {
   const { colors } = useStyled();
 
+  const textColor =
+    label === 'Recommended'
+      ? colors.ctaContentPrimary
+      : colors.onSurfaceVariant;
+  const backgroundColor =
+    label === 'Recommended'
+      ? colors.ctaSurfacePrimaryDisabled
+      : colors.surfaceContainer;
+
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.surfaceContainer }]}
-    >
+    <View style={[styles.container, { backgroundColor: backgroundColor }]}>
       {iosIconName && androidIconName && (
         <PlatformIcon
           iosIconName={iosIconName}
@@ -32,9 +39,7 @@ export const Tag: React.FC<TagProps> = ({
           color={colors.onSurfaceVariant}
         />
       )}
-      <Text style={[styles.text, { color: colors.onSurfaceVariant }]}>
-        {label}
-      </Text>
+      <Text style={[styles.text, { color: textColor }]}>{label}</Text>
     </View>
   );
 };

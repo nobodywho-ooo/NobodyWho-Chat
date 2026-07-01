@@ -7,6 +7,7 @@ import {
   fahrenheitToCelsius,
   fetchWeather,
   fetchWikipedia,
+  fetchStockQuote,
   buildChatTools,
   subscribeToolInvocations,
 } from '../tools';
@@ -46,6 +47,7 @@ describe('buildChatTools', () => {
     expect(names).toEqual([
       'get_weather',
       'search_wikipedia',
+      'get_stock_quote',
       'convert_length',
       'convert_temperature',
     ]);
@@ -205,5 +207,109 @@ describe('fetchWikipedia', () => {
     expect(result.error).toBe(
       'Impossible to fetch Wikipedia info at the moment.',
     );
+  });
+});
+
+describe('fetchStockQuote', () => {
+  test('resolves the ticker then returns market data with computed change', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        json: async () => ({
+          quotes: [
+            { symbol: 'AAPL', longname: 'Apple Inc.', marketCap: 3_000_000_000_000 },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        json: async () => ({
+          chart: {
+            result: [
+              {
+                meta: {
+                  regularMarketPrice: 195,
+                  chartPreviousClose: 190,
+                  regularMarketDayHigh: 196,
+                  regularMarketDayLow: 192,
+                  fiftyTwoWeekHigh: 199,
+                  fiftyTwoWeekLow: 164,
+                  regularMarketVolume: 50_000_000,
+                  currency: 'USD',
+                  fullExchangeName: 'NasdaqGS',
+                },
+              },
+            ],
+          },
+        }),
+      });
+    (globalThis as any).fetch = fetchMock;
+
+    const result = JSON.parse(await fetchStockQuote('Apple'));
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0][0]).toContain('/finance/search?q=Apple');
+    expect(fetchMock.mock.calls[1][0]).toContain('/finance/chart/AAPL');
+    expect(result).toEqual({
+      symbol: 'AAPL',
+      name: 'Apple Inc.',
+      exchange: 'NasdaqGS',
+      currency: 'USD',
+      price: 195,
+      previousClose: 190,
+      change: 5,
+      changePercent: 2.63,
+      dayHigh: 196,
+      dayLow: 192,
+      fiftyTwoWeekHigh: 199,
+      fiftyTwoWeekLow: 164,
+      volume: 50_000_000,
+      marketCap: 3_000_000_000_000,
+    });
+  });
+
+  test('prefers an equity/ETF over other fuzzy search hits', async () => {
+    const fetchMock = jest
+      .fn()
+      .mockResolvedValueOnce({
+        json: async () => ({
+          quotes: [
+            { symbol: 'AAPL250620C00200000', quoteType: 'OPTION' },
+            { symbol: 'AAPL', quoteType: 'EQUITY', longname: 'Apple Inc.' },
+          ],
+        }),
+      })
+      .mockResolvedValueOnce({
+        json: async () => ({
+          chart: {
+            result: [{ meta: { regularMarketPrice: 195, currency: 'USD' } }],
+          },
+        }),
+      });
+    (globalThis as any).fetch = fetchMock;
+
+    const result = JSON.parse(await fetchStockQuote('Apple'));
+
+    expect(fetchMock.mock.calls[1][0]).toContain('/finance/chart/AAPL');
+    expect(result.symbol).toBe('AAPL');
+  });
+
+  test('returns an error payload when no ticker matches', async () => {
+    (globalThis as any).fetch = jest
+      .fn()
+      .mockResolvedValue({ json: async () => ({ quotes: [] }) });
+
+    const result = JSON.parse(await fetchStockQuote('asdfqwerzxcv'));
+
+    expect(result.error).toContain('asdfqwerzxcv');
+  });
+
+  test('returns a friendly error when the request fails or times out', async () => {
+    (globalThis as any).fetch = jest
+      .fn()
+      .mockRejectedValue(new Error('network down'));
+
+    const result = JSON.parse(await fetchStockQuote('AAPL'));
+
+    expect(result.error).toBe('Impossible to fetch stock info at the moment.');
   });
 });

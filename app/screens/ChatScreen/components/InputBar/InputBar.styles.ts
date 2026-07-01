@@ -39,7 +39,12 @@ export const styles = StyleSheet.create({
     paddingRight: 6,
   },
   attachContainer: {
-    marginRight: Spacings.sm,
+    marginRight: Spacings.sm
+  },
+  attachMainContainer: {
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    alignItems: 'center'
   },
   attachOptions: {
     flex: 1,

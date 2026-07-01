@@ -14,17 +14,16 @@ import {
   getAppState,
   setAppState,
 } from 'database';
-import {
-  clearRunningDownloads,
-  getConversationById,
-  getModelById,
-} from 'repositories';
+import { getConversationById, getModelById } from 'repositories';
 import { log } from 'helpers';
 import { useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
 import { DrawerNavigator } from 'navigation';
 import { useTranslation } from 'react-i18next';
+
+const unWantedError =
+  'Cannot create devtools websocket connections in embedded environments.';
 
 Sentry.init({
   dsn: 'https://5901cf2e433ebe444dd4dc9f8aebc790@o4511569171709952.ingest.de.sentry.io/4511569173217360',
@@ -50,6 +49,16 @@ Sentry.init({
   enableNativeFramesTracking: true,
   environment: __DEV__ ? 'development' : 'production',
   debug: false,
+  beforeSend(event, hint) {
+    // Dev-only noise: Expo's async-require throws this when the JS bundle is embedded rather than served by Metro
+    const originalException = hint?.originalException as Error | undefined;
+    const message = originalException?.message ?? event.message ?? '';
+
+    if (message.includes(unWantedError)) {
+      return null;
+    }
+    return event;
+  },
   beforeBreadcrumb(breadcrumb) {
     // TODO: hot fix, delete when fix in future sentry version
     // On Android the native bridge (sentry-java) deserializes the breadcrumb
@@ -136,7 +145,6 @@ function AppLoader() {
 
     try {
       await initDatabase();
-      await clearRunningDownloads();
       await hydrateAppState();
       await dropStaleIdsInUse();
 

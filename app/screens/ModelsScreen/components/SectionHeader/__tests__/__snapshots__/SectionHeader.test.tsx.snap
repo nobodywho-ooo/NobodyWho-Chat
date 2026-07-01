@@ -1,0 +1,28 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly SectionHeader 1`] = `
+<Text
+  style={
+    {
+      "marginVertical": 12,
+      "paddingTop": 16,
+    }
+  }
+  variant="h4"
+>
+  My section
+</Text>
+`;
+
+exports[`renders correctly SectionHeader when first (no top spacing) 1`] = `
+<Text
+  style={
+    {
+      "marginBottom": 16,
+    }
+  }
+  variant="h4"
+>
+  My section
+</Text>
+`;

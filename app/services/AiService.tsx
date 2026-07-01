@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import { Chat, SamplerConfig } from 'react-native-nobodywho';
 import * as Sentry from '@sentry/react-native';
-import { log, sleep } from 'helpers';
+import { downloadedPartPath, log, sleep } from 'helpers';
 import { ChatPipeline, Model, ModelPipeline, toChatPipeline } from 'types';
 import { buildChatTools } from './tools';
 
@@ -55,7 +55,9 @@ const _initialState: AiServiceState = {
 // them, which on multimodal models (large footprint) makes a buffer allocation
 // return NULL and crashes inside ggml-metal. Heuristic, not a real wait; bump
 // it if field crashes persist.
-export const TEARDOWN_SETTLE_MS = 350;
+export const TEARDOWN_SETTLE_MS = 500;
+
+export const MULTIMODAL_CONTEXT_SIZE = 2048;
 
 export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -141,23 +143,51 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
 
         const { model } = opts;
 
-        const chatModelPath = model.parts.find(
-          part => part.type === 'chat-model',
-        )?.url as string;
+        const chatPart = model.parts.find(part => part.type === 'chat-model');
+        const chatModelPath = chatPart
+          ? downloadedPartPath(chatPart.fileName)
+          : null;
 
-        const projectionModelPath =
+        if (!chatModelPath) {
+          throw new Error(
+            `AiService: chat-model file missing for model ${model.id} (${model.name}) — re-download required`,
+          );
+        }
+
+        const projectionPart =
           model.pipeline !== ModelPipeline.textGeneration
-            ? model.parts.find(part => part.type === 'projection-model')?.url
+            ? model.parts.find(part => part.type === 'projection-model')
             : undefined;
+
+        const projectionModelPath = projectionPart
+          ? (downloadedPartPath(projectionPart.fileName) ?? undefined)
+          : undefined;
+
+        if (projectionPart && !projectionModelPath) {
+          throw new Error(
+            `AiService: projection-model file missing for model ${model.id} (${model.name}) — re-download required`,
+          );
+        }
+
+        const tools =
+          model.toolCalling && model.pipeline === ModelPipeline.textGeneration
+            ? buildChatTools()
+            : undefined;
+
+        const contextSize =
+          opts?.contextSize ??
+          (projectionModelPath !== undefined
+            ? MULTIMODAL_CONTEXT_SIZE
+            : undefined);
 
         const chat = await Chat.fromPath({
           modelPath: chatModelPath,
           projectionModelPath,
           useGpu: opts?.useGpu ?? true,
-          tools: model.toolCalling ? buildChatTools() : undefined,
+          tools,
           systemPrompt: opts?.systemPrompt,
           sampler: opts?.sampler,
-          contextSize: opts?.contextSize,
+          contextSize,
           templateVariables: { enable_thinking: model.thinking },
         });
 

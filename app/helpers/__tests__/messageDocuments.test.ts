@@ -1,4 +1,4 @@
-import { exists, unlink } from '@dr.pogodin/react-native-fs';
+import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
 
 import {
   deleteMessageDocuments,
@@ -8,8 +8,8 @@ import {
   resolveMessageDocumentPath,
 } from '../messageDocuments';
 
-const mockExists = exists as jest.Mock;
-const mockUnlink = unlink as jest.Mock;
+const mockGetInfo = getInfoAsync as jest.Mock;
+const mockDelete = deleteAsync as jest.Mock;
 
 const DIR = '/mock-documents/message-documents';
 
@@ -84,30 +84,34 @@ describe('messageDocumentUri', () => {
 
 describe('deleteMessageDocuments', () => {
   beforeEach(() => {
-    mockExists.mockReset();
-    mockUnlink.mockReset();
+    mockGetInfo.mockReset();
+    mockDelete.mockReset();
   });
 
-  test('unlinks each stored name, resolved against the current dir', async () => {
-    mockExists.mockResolvedValue(true);
+  test('deletes each stored name, resolved against the current dir', async () => {
+    mockGetInfo.mockResolvedValue({ exists: true });
 
     await deleteMessageDocuments(['a.png', 'b.mp3']);
 
-    expect(mockUnlink).toHaveBeenCalledWith(`${DIR}/a.png`);
-    expect(mockUnlink).toHaveBeenCalledWith(`${DIR}/b.mp3`);
+    expect(mockDelete).toHaveBeenCalledWith(`file://${DIR}/a.png`, {
+      idempotent: true,
+    });
+    expect(mockDelete).toHaveBeenCalledWith(`file://${DIR}/b.mp3`, {
+      idempotent: true,
+    });
   });
 
   test('skips paths that no longer exist', async () => {
-    mockExists.mockResolvedValue(false);
+    mockGetInfo.mockResolvedValue({ exists: false });
 
     await deleteMessageDocuments(['missing.png']);
 
-    expect(mockUnlink).not.toHaveBeenCalled();
+    expect(mockDelete).not.toHaveBeenCalled();
   });
 
-  test('is best-effort: a failing unlink never rejects', async () => {
-    mockExists.mockResolvedValue(true);
-    mockUnlink.mockRejectedValue(new Error('boom'));
+  test('is best-effort: a failing delete never rejects', async () => {
+    mockGetInfo.mockResolvedValue({ exists: true });
+    mockDelete.mockRejectedValue(new Error('boom'));
 
     await expect(deleteMessageDocuments(['a.png'])).resolves.toBeUndefined();
   });

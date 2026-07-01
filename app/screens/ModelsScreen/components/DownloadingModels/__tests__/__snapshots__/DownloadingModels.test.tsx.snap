@@ -1,0 +1,91 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly DownloadingModels 1`] = `
+[
+  <Text
+    style={
+      {
+        "marginVertical": 12,
+        "paddingTop": 16,
+      }
+    }
+    variant="h4"
+  >
+    screens.models.downloading
+  </Text>,
+  <ModelCard
+    downloadProgress={0.25}
+    model={
+      {
+        "author": "Author",
+        "family": "Family",
+        "huggingfaceUrl": "https://huggingface.co/test/model-1",
+        "id": 1,
+        "languages": [],
+        "name": "Model 1",
+        "parameterCountBillions": 1,
+        "parts": [
+          {
+            "fileName": "1.gguf",
+            "path": "",
+            "sizeGB": 1,
+            "type": "model",
+            "url": "https://example.com/1.gguf",
+          },
+        ],
+        "pipeline": "textGeneration",
+        "sizeGB": 1,
+        "supportedFileFormat": [],
+        "tags": [],
+        "thinking": false,
+        "toolCalling": false,
+      }
+    }
+    onPress={[MockFunction]}
+  />,
+  <ModelCard
+    downloadProgress={0.75}
+    model={
+      {
+        "author": "Author",
+        "family": "Family",
+        "huggingfaceUrl": "https://huggingface.co/test/model-2",
+        "id": 2,
+        "languages": [],
+        "name": "Model 2",
+        "parameterCountBillions": 1,
+        "parts": [
+          {
+            "fileName": "2.gguf",
+            "path": "",
+            "sizeGB": 1,
+            "type": "model",
+            "url": "https://example.com/2.gguf",
+          },
+        ],
+        "pipeline": "textGeneration",
+        "sizeGB": 1,
+        "supportedFileFormat": [],
+        "tags": [],
+        "thinking": false,
+        "toolCalling": false,
+      }
+    }
+    onPress={[MockFunction]}
+  />,
+]
+`;
+
+exports[`renders correctly DownloadingModels with no active downloads 1`] = `
+<Text
+  style={
+    {
+      "marginVertical": 12,
+      "paddingTop": 16,
+    }
+  }
+  variant="h4"
+>
+  screens.models.downloading
+</Text>
+`;

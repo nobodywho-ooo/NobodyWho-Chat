@@ -34,4 +34,7 @@ export default StyleSheet.create({
     flexWrap: 'wrap',
     gap: Spacings.xs,
   },
+  pipelineLabel: {
+    flex: 1,
+  },
 });

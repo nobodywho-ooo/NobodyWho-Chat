@@ -1,0 +1,48 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly DownloadedModelsLink 1`] = `
+[
+  <Text
+    style={
+      {
+        "marginBottom": 16,
+      }
+    }
+    variant="h4"
+  >
+    screens.models.readyToUse
+  </Text>,
+  <ListItem
+    androidIconName="deployed_code_update"
+    iconBackgroundColor="#628395"
+    iosIconName="arrow.down.circle.fill"
+    onPress={[MockFunction]}
+    subtitle="screens.models.modelCount"
+    title="screens.models.downloaded"
+  />,
+]
+`;
+
+exports[`renders correctly DownloadedModelsLink when not first 1`] = `
+[
+  <Text
+    style={
+      {
+        "marginVertical": 12,
+        "paddingTop": 16,
+      }
+    }
+    variant="h4"
+  >
+    screens.models.readyToUse
+  </Text>,
+  <ListItem
+    androidIconName="deployed_code_update"
+    iconBackgroundColor="#628395"
+    iosIconName="arrow.down.circle.fill"
+    onPress={[MockFunction]}
+    subtitle="screens.models.modelCount"
+    title="screens.models.downloaded"
+  />,
+]
+`;

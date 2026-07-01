@@ -37,16 +37,71 @@ jest.mock('react-native-device-info', () => ({
   getTotalMemory: () => mockGetTotalMemory(),
 }));
 
-jest.mock('@dr.pogodin/react-native-fs', () => {
-  return {
-    copyFile: jest.fn(),
-    exists: jest.fn(),
-    unlink: jest.fn(),
-    mkdir: jest.fn(),
-    copyFileAssets: jest.fn(),
-    MainBundlePath: jest.fn(),
-    DocumentDirectoryPath: '/mock-documents',
+// Legacy function API used by the file helpers (modelFiles, messageDocuments).
+// documentDirectory is a file:// URI with a trailing slash, matching real expo.
+jest.mock('expo-file-system/legacy', () => ({
+  getInfoAsync: jest.fn(async () => ({ exists: false })),
+  deleteAsync: jest.fn(),
+  copyAsync: jest.fn(),
+  makeDirectoryAsync: jest.fn(),
+  documentDirectory: 'file:///mock-documents/',
+  cacheDirectory: 'file:///mock-cache/',
+}));
+
+// New class API used by the model download service (File/Directory/Paths).
+jest.mock('expo-file-system', () => {
+  // Join path segments with single slashes at the boundaries, preserving the
+  // scheme's leading `file:///` (don't collapse it).
+  const join = segs =>
+    segs
+      .map(s => (typeof s === 'string' ? s : s && s.uri ? s.uri : ''))
+      .filter(Boolean)
+      .reduce((acc, part) =>
+        acc ? `${acc.replace(/\/+$/, '')}/${part.replace(/^\/+/, '')}` : part,
+      );
+  class File {
+    constructor(...segs) {
+      this.uri = join(segs);
+    }
+    // A constructed File for a model part is treated as present by default;
+    // flip File.mockExists to false to exercise the missing-file path.
+    get exists() {
+      return File.mockExists;
+    }
+    delete() {}
+    open() {
+      return {
+        readBytes: () => ({ length: 0 }),
+        writeBytes: () => {},
+        close: () => {},
+      };
+    }
+  }
+  File.mockExists = true;
+  File.downloadFileAsync = jest.fn(
+    async (_url, dest) => new File(dest && dest.uri ? dest.uri : ''),
+  );
+  class Directory {
+    constructor(...segs) {
+      this.uri = join(segs);
+    }
+    get exists() {
+      return true;
+    }
+    create() {}
+  }
+  const Paths = {
+    document: { uri: 'file:///mock-documents/' },
+    cache: { uri: 'file:///mock-cache/' },
   };
+  const FileMode = {
+    ReadWrite: 'rw',
+    ReadOnly: 'r',
+    WriteOnly: 'w',
+    Append: 'wa',
+    Truncate: 'wt',
+  };
+  return { File, Directory, Paths, FileMode };
 });
 
 export const mockLaunchImageLibraryAsync = jest.fn();

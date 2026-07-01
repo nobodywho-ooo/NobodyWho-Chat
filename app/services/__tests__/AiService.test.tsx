@@ -9,6 +9,7 @@ import {
   AiServiceProvider,
   useAiService,
   AiModelState,
+  MULTIMODAL_CONTEXT_SIZE,
   TEARDOWN_SETTLE_MS,
 } from '../AiService';
 
@@ -25,10 +26,10 @@ const waitForTeardownSettle = () =>
 const model = buildModel(1, {
   parts: [
     {
-      url: 'file://model.gguf',
+      url: 'https://example.com/model.gguf',
       fileName: 'model.gguf',
       type: 'chat-model',
-      path: '',
+      path: '/models/model.gguf',
       sizeGB: 1,
     },
   ],
@@ -52,7 +53,7 @@ test('createChat loads the model and exposes the chat', async () => {
   });
 
   expect(mockFromPath).toHaveBeenCalledWith(
-    expect.objectContaining({ modelPath: 'file://model.gguf' }),
+    expect.objectContaining({ modelPath: '/mock-documents/models/model.gguf' }),
   );
   expect(result.current.chatState).toBe(AiModelState.Ready);
   expect(result.current.chat.current).toBe(chat);
@@ -65,17 +66,17 @@ test('createChat wires the projection model and reports the chat pipeline', asyn
     pipeline: ModelPipeline.imageAudioTextToText,
     parts: [
       {
-        url: 'file://model.gguf',
+        url: 'https://example.com/model.gguf',
         fileName: 'model.gguf',
         type: 'chat-model',
-        path: '',
+        path: '/models/model.gguf',
         sizeGB: 1,
       },
       {
-        url: 'file://mmproj.gguf',
+        url: 'https://example.com/mmproj.gguf',
         fileName: 'mmproj.gguf',
         type: 'projection-model',
-        path: '',
+        path: '/models/mmproj.gguf',
         sizeGB: 1,
       },
     ],
@@ -90,8 +91,10 @@ test('createChat wires the projection model and reports the chat pipeline', asyn
 
   expect(mockFromPath).toHaveBeenCalledWith(
     expect.objectContaining({
-      modelPath: 'file://model.gguf',
-      projectionModelPath: 'file://mmproj.gguf',
+      modelPath: '/mock-documents/models/model.gguf',
+      projectionModelPath: '/mock-documents/models/mmproj.gguf',
+      // Multimodal loads are bounded to keep the Metal allocation small.
+      contextSize: MULTIMODAL_CONTEXT_SIZE,
     }),
   );
   expect(result.current.chatPipeline).toBe(ModelPipeline.imageAudioTextToText);
@@ -134,6 +137,32 @@ test('createChat sets the error state and rethrows on failure', async () => {
 
   expect(result.current.chatState).toBe(AiModelState.Error);
   expect(result.current.chat.current).toBeUndefined();
+});
+
+test('createChat fails loudly when the model file is missing on disk', async () => {
+  // A persisted absolute path can go stale (the iOS container UUID changes on
+  // every install), so the part file may be absent at load time. The chat must
+  // never get handed a path that collapses to the models directory — it must
+  // surface a clear error instead.
+  const { File } = jest.requireMock('expo-file-system');
+  const chat = { destroy: jest.fn() };
+  mockFromPath.mockResolvedValue(chat);
+  File.mockExists = false;
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  try {
+    await act(async () => {
+      await expect(result.current.createChat({ model })).rejects.toThrow(
+        /chat-model file missing/,
+      );
+    });
+
+    // Never reached the native loader with a bogus (directory) path.
+    expect(mockFromPath).not.toHaveBeenCalled();
+    expect(result.current.chatState).toBe(AiModelState.Error);
+  } finally {
+    File.mockExists = true;
+  }
 });
 
 test('disposeChat destroys the current chat instance', async () => {
@@ -248,10 +277,10 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
 
   const partFor = (file: string) => [
     {
-      url: `file://${file}`,
+      url: `https://example.com/${file}`,
       fileName: file,
       type: 'chat-model' as const,
-      path: '',
+      path: `/models/${file}`,
       sizeGB: 1,
     },
   ];
@@ -266,7 +295,7 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
   });
   expect(mockFromPath).toHaveBeenCalledTimes(1);
   expect(mockFromPath).toHaveBeenLastCalledWith(
-    expect.objectContaining({ modelPath: 'file://a.gguf' }),
+    expect.objectContaining({ modelPath: '/mock-documents/models/a.gguf' }),
   );
 
   // Switch to B (dispose + create) while A is still loading.
@@ -301,7 +330,7 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
   });
   expect(mockFromPath).toHaveBeenCalledTimes(2);
   expect(mockFromPath).toHaveBeenLastCalledWith(
-    expect.objectContaining({ modelPath: 'file://b.gguf' }),
+    expect.objectContaining({ modelPath: '/mock-documents/models/b.gguf' }),
   );
 
   // B becomes the live chat.

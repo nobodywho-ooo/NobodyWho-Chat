@@ -8,9 +8,10 @@ export default StyleSheet.create({
     gap: Spacings.xxs,
     borderRadius: 6,
     paddingHorizontal: Spacings.sm,
-    paddingVertical: Spacings.xxs,
+    paddingVertical: Spacings.xs,
   },
   text: {
+    marginLeft: Spacings.xxs,
     fontSize: 12,
   },
 });
