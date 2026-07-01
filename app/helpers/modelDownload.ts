@@ -29,6 +29,11 @@ const CHUNK_BYTES = 16 * 1024 * 1024;
 // multi-GB download doesn't jank the UI.
 const APPEND_SLICE_BYTES = 4 * 1024 * 1024;
 
+// A HEAD request should return promptly; if it hangs (dead connection, captive
+// portal) the whole download stalls before the first byte, since the fetch
+// otherwise only ends when the caller aborts. Bound it independently.
+const META_TIMEOUT_MS = 15_000;
+
 const modelsDirectory = (): Directory => new Directory(Paths.document, MODELS_DIR_NAME);
 
 const ensureModelsDirectory = (): Directory => {
@@ -69,14 +74,6 @@ const appendFile = async (
   }
 };
 
-// The current absolute plain path for a part file, recomputed against the live
-// documents/models dir. Use this at LOAD time instead of a stored absolute
-// path: on iOS the sandbox container UUID (and therefore the absolute path)
-// changes on every install/update, but the file name does not. Returns the
-// path whether or not the file currently exists.
-export const modelPartPath = (fileName: string): string =>
-  toPlainPath(new File(modelsDirectory(), fileName).uri);
-
 // The plain filesystem path of an already fully-downloaded part, or null if it
 // is not present. Used to skip parts that completed on a previous attempt.
 export const downloadedPartPath = (fileName: string): string | null => {
@@ -94,23 +91,42 @@ interface RemoteMeta {
   validator: string | undefined;
 }
 
-// A HEAD request tells us the total size
+// A HEAD request tells us the total size, range support and validator. Aborts
+// on either the caller's signal (user stopped the download) or META_TIMEOUT_MS
+// (the HEAD hung), whichever fires first.
 const fetchRemoteMeta = async (
   url: string,
   signal: AbortSignal,
 ): Promise<RemoteMeta> => {
-  const res = await fetch(url, { method: 'HEAD', signal });
-  const length = Number(res.headers.get('content-length'));
-  const acceptsRanges = (res.headers.get('accept-ranges') ?? '')
-    .toLowerCase()
-    .includes('bytes');
-  const validator =
-    res.headers.get('etag') ?? res.headers.get('last-modified') ?? undefined;
-  return {
-    total: Number.isFinite(length) && length > 0 ? length : undefined,
-    acceptsRanges,
-    validator,
-  };
+  const controller = new AbortController();
+  const onAbort = () => controller.abort();
+  if (signal.aborted) {
+    controller.abort();
+  } else {
+    signal.addEventListener('abort', onAbort);
+  }
+  const timeout = setTimeout(() => controller.abort(), META_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(url, {
+      method: 'HEAD',
+      signal: controller.signal,
+    });
+    const length = Number(res.headers.get('content-length'));
+    const acceptsRanges = (res.headers.get('accept-ranges') ?? '')
+      .toLowerCase()
+      .includes('bytes');
+    const validator =
+      res.headers.get('etag') ?? res.headers.get('last-modified') ?? undefined;
+    return {
+      total: Number.isFinite(length) && length > 0 ? length : undefined,
+      acceptsRanges,
+      validator,
+    };
+  } finally {
+    clearTimeout(timeout);
+    signal.removeEventListener('abort', onAbort);
+  }
 };
 
 // Used when the server won't do ranges (or won't report a size), so there is
@@ -234,9 +250,26 @@ export const downloadModelPart = async (
       });
 
       // The server must honor the range: the chunk should be exactly the window
-      // we asked for. If it isn't (range ignored, short read), don't append the
-      // wrong bytes — surface it so the loop stops and the `.partial` is kept.
+      // we asked for. If it isn't, don't append the wrong bytes.
       if (chunk.size !== expected) {
+        // A server can advertise `Accept-Ranges: bytes` yet ignore the Range
+        // header and return the full body (chunk === whole file). Ranged resume
+        // is impossible against it, and re-requesting the same window would loop
+        // forever, so restart cleanly as a single whole-file download. The
+        // outer `finally` clears the leftover `.chunk` afterwards.
+        if (chunk.size === total) {
+          return await downloadWholeFile(
+            url,
+            fileName,
+            finalFile,
+            partial,
+            validatorFile,
+            signal,
+            onProgress,
+          );
+        }
+        // Genuine short read / corrupt chunk — surface it so the loop stops and
+        // the `.partial` is kept for a later resume.
         throw new Error(
           `downloadModelPart: ranged chunk for ${fileName} was ${chunk.size} bytes, expected ${expected}`,
         );

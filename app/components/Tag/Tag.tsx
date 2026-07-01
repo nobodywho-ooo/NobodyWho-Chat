@@ -26,7 +26,7 @@ export const Tag: React.FC<TagProps> = ({
       : colors.onSurfaceVariant;
   const backgroundColor =
     label === 'Recommended'
-      ? colors.ctaSurfacePrimary
+      ? colors.ctaSurfacePrimaryDisabled
       : colors.surfaceContainer;
 
   return (

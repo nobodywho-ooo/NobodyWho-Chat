@@ -175,29 +175,31 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
         style={styles.topGradient}
       />
       <View style={[styles.inputBarContainer, extraStyle]}>
-        {showToggle &&
-          renderAttachButton({
-            icon: expanded
-              ? { iosIconName: 'xmark', androidIconName: 'close' }
-              : hasAttachment
-                ? { iosIconName: 'paperclip', androidIconName: 'attach_file' }
-                : { iosIconName: 'plus', androidIconName: 'add' },
-            active: !expanded && hasAttachment,
-            onPress: toggleAttach,
-            accessibilityLabel: t(
-              expanded
-                ? 'components.inputBar.closeAttach'
-                : 'components.inputBar.attach',
-            ),
-          })}
-        {expanded && (
-          <Text
-            variant="body2"
-            style={[styles.closeLabel, { color: colors.onSurface }]}
-          >
-            {t('components.inputBar.close')}
-          </Text>
-        )}
+        <View style={styles.attachMainContainer}>
+          {showToggle &&
+            renderAttachButton({
+              icon: expanded
+                ? { iosIconName: 'xmark', androidIconName: 'close' }
+                : hasAttachment
+                  ? { iosIconName: 'paperclip', androidIconName: 'attach_file' }
+                  : { iosIconName: 'plus', androidIconName: 'add' },
+              active: !expanded && hasAttachment,
+              onPress: toggleAttach,
+              accessibilityLabel: t(
+                expanded
+                  ? 'components.inputBar.closeAttach'
+                  : 'components.inputBar.attach',
+              ),
+            })}
+          {expanded && (
+            <Text
+              variant="body2"
+              style={[styles.closeLabel, { color: colors.onSurface }]}
+            >
+              {t('components.inputBar.close')}
+            </Text>
+          )}
+        </View>
         {expanded ? (
           <View style={styles.attachOptions}>
             {showPhoto &&

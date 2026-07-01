@@ -52,8 +52,7 @@ const MIGRATIONS: string[][] = [
     `CREATE TABLE model_downloads (
       model_id INTEGER PRIMARY KEY,
       model TEXT NOT NULL,
-      parts_progress TEXT NOT NULL DEFAULT '[]',
-      running INTEGER NOT NULL DEFAULT 0
+      parts_progress TEXT NOT NULL DEFAULT '[]'
     )`,
     `CREATE TABLE conversations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

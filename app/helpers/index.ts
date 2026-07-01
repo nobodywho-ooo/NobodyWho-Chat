@@ -12,7 +12,6 @@ import {
   downloadModelPart,
   downloadedPartPath,
   deleteModelPartFiles,
-  modelPartPath,
 } from './modelDownload';
 import { toFileUri, toPlainPath } from './fileUri';
 import {
@@ -41,7 +40,6 @@ export {
   downloadModelPart,
   downloadedPartPath,
   deleteModelPartFiles,
-  modelPartPath,
   toFileUri,
   toPlainPath,
   filterModelsByDeviceMemory,

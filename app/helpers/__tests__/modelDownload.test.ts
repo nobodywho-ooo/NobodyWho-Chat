@@ -122,10 +122,15 @@ const downloadFileAsync = efs.File.downloadFileAsync as jest.Mock;
 const setupRemote = ({
   total,
   honorsRanges = true,
+  advertisesRanges = honorsRanges,
   etag = '"v1"',
 }: {
   total: number;
+  // Whether the actual GET honors the Range header (writes just the window).
   honorsRanges?: boolean;
+  // Whether the HEAD advertises `Accept-Ranges: bytes`. Defaults to honorsRanges;
+  // set it apart to model a server that claims ranges but then ignores them.
+  advertisesRanges?: boolean;
   etag?: string | null;
 }) => {
   (globalThis as any).fetch = jest.fn(async (_url: string, opts: any) => {
@@ -134,7 +139,7 @@ const setupRemote = ({
     }
     const headers = new Map<string, string>([
       ['content-length', String(total)],
-      ['accept-ranges', honorsRanges ? 'bytes' : 'none'],
+      ['accept-ranges', advertisesRanges ? 'bytes' : 'none'],
     ]);
     if (etag) headers.set('etag', etag);
     return { headers: { get: (k: string) => headers.get(k.toLowerCase()) ?? null } };
@@ -277,6 +282,63 @@ test('falls back to a single download when the server has no range support', asy
   expect(downloadFileAsync.mock.calls[0][2].headers).toBeUndefined();
   expect(sizes.has(`${MODELS}/chat-model.gguf.partial`)).toBe(false);
   expect(sizes.get(`${MODELS}/chat-model.gguf`)).toBe(total);
+});
+
+test('recovers when the server advertises ranges but then ignores them', async () => {
+  const total = 40 * MB;
+  // HEAD says `Accept-Ranges: bytes`, but the GET returns the whole body.
+  setupRemote({ total, honorsRanges: false, advertisesRanges: true });
+
+  const path = await downloadModelPart(
+    'https://x/chat-model.gguf',
+    'chat-model.gguf',
+    noSignal(),
+    () => {},
+  );
+
+  expect(path).toBe('/docs/models/chat-model.gguf');
+  // The first ranged request came back as the whole file, so instead of looping
+  // forever on the ignored range it restarts as a single whole-file download:
+  // one ranged attempt, then one range-less download into `.partial`.
+  expect(downloadFileAsync).toHaveBeenCalledTimes(2);
+  expect(downloadFileAsync.mock.calls[0][2].headers.Range).toBe(
+    `bytes=0-${16 * MB - 1}`,
+  );
+  expect(downloadFileAsync.mock.calls[1][2].headers).toBeUndefined();
+  expect(destUris[destUris.length - 1]).toBe(`${MODELS}/chat-model.gguf.partial`);
+  expect(sizes.get(`${MODELS}/chat-model.gguf`)).toBe(total);
+  // Scaffolding is cleaned up on the recovery path too.
+  expect(sizes.has(`${MODELS}/chat-model.gguf.partial`)).toBe(false);
+  expect(sizes.has(`${MODELS}/chat-model.gguf.chunk`)).toBe(false);
+});
+
+test('aborts a hung HEAD request after the timeout instead of stalling', async () => {
+  jest.useFakeTimers();
+  // A HEAD that never responds on its own — it only settles when its signal
+  // aborts, so the download can only proceed if the timeout fires.
+  (globalThis as any).fetch = jest.fn(
+    (_url: string, opts: any) =>
+      new Promise((_resolve, reject) => {
+        opts.signal.addEventListener('abort', () =>
+          reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })),
+        );
+      }),
+  );
+
+  const promise = downloadModelPart(
+    'https://x/chat-model.gguf',
+    'chat-model.gguf',
+    noSignal(),
+    () => {},
+  );
+  const assertion = expect(promise).rejects.toThrow();
+
+  await jest.advanceTimersByTimeAsync(15_000);
+  await assertion;
+
+  // No bytes were ever written — it bailed at the HEAD.
+  expect(downloadFileAsync).not.toHaveBeenCalled();
+  jest.useRealTimers();
 });
 
 test('returns immediately when the file is already installed', async () => {

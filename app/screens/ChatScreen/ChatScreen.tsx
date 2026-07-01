@@ -338,6 +338,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         setMessages(prev => prev.slice(0, -1));
         return;
       }
+      log(accumulated);
       await insertMessage({
         conversationId: id,
         role: 'assistant',
