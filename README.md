@@ -5,7 +5,7 @@
 
 # NobodyWho Chat
 
-NobodyWho Chat is a fully offline, private AI assistant that runs entirely on your device. Every conversation happens locally — no data leaves your phone, no internet connection is required, and there are no accounts, subscriptions, or hidden costs.
+NobodyWho Chat is a fully offline, private AI assistant that runs entirely on your device. Every conversation happens locally: no data leaves your phone, no internet connection is required, and there are no accounts, subscriptions, or hidden costs.
 
 It's built with **[NobodyWho](https://github.com/nobodywho-ooo/nobodywho)**, a library designed to run LLMs locally and efficiently on any device.
 
