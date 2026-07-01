@@ -1,0 +1,37 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly InUseModel 1`] = `
+[
+  <Text
+    style={
+      {
+        "marginBottom": 16,
+      }
+    }
+    variant="h4"
+  >
+    screens.models.inUse
+  </Text>,
+  <ModelCard
+    isSelected={true}
+    model={
+      {
+        "author": "Author",
+        "family": "Family",
+        "huggingfaceUrl": "https://huggingface.co/test/model-1",
+        "id": 1,
+        "languages": [],
+        "name": "Model 1",
+        "parameterCountBillions": 1,
+        "parts": [],
+        "pipeline": "textGeneration",
+        "sizeGB": 1,
+        "supportedFileFormat": [],
+        "tags": [],
+        "thinking": false,
+        "toolCalling": false,
+      }
+    }
+  />,
+]
+`;

@@ -1,4 +1,4 @@
-import { Directory, File, Paths } from 'expo-file-system';
+import { Directory, File, FileMode, Paths } from 'expo-file-system';
 
 import { toPlainPath } from './fileUri';
 
@@ -20,6 +20,15 @@ const VALIDATOR_SUFFIX = '.etag';
 // overhead; 16 MiB balances the two, and keeps the transient `.chunk`
 const CHUNK_BYTES = 16 * 1024 * 1024;
 
+// How much of a chunk we move into `.partial` per read/write when appending.
+// `downloadFileAsync` can only write a whole file, so a completed chunk has to
+// be copied onto the end of `.partial`. Doing that as one 16 MiB `bytesSync()` +
+// synchronous `write()` blocks the JS thread and holds the whole chunk in JS
+// memory. Streaming it in bounded slices through file handles keeps peak memory
+// at one slice and lets the loop yield to the event loop between slices, so a
+// multi-GB download doesn't jank the UI.
+const APPEND_SLICE_BYTES = 4 * 1024 * 1024;
+
 const modelsDirectory = (): Directory => new Directory(Paths.document, MODELS_DIR_NAME);
 
 const ensureModelsDirectory = (): Directory => {
@@ -33,6 +42,30 @@ const ensureModelsDirectory = (): Directory => {
 const deleteIfExists = (file: File): void => {
   if (file.exists) {
     file.delete();
+  }
+};
+
+// Appends `length` bytes from `src` onto the end of `dest`, streaming
+// APPEND_SLICE_BYTES at a time so we never buffer the whole (up to CHUNK_BYTES)
+// window in JS memory or block the JS thread on one giant read/write. `length`
+// is the caller's already-validated chunk size, so the loop is bounded — no
+// read-until-EOF. Yields between slices to keep the UI responsive.
+const appendFile = async (
+  src: File,
+  dest: File,
+  length: number,
+): Promise<void> => {
+  const reader = src.open(FileMode.ReadOnly);
+  const writer = dest.open(FileMode.Append);
+  try {
+    for (let copied = 0; copied < length; copied += APPEND_SLICE_BYTES) {
+      // readBytes returns the remainder when fewer than a full slice are left.
+      writer.writeBytes(reader.readBytes(APPEND_SLICE_BYTES));
+      await Promise.resolve();
+    }
+  } finally {
+    reader.close();
+    writer.close();
   }
 };
 
@@ -80,9 +113,15 @@ const fetchRemoteMeta = async (
   };
 };
 
-// Used when the server won't do ranges (or won't report a size), so there is nothing to resume
+// Used when the server won't do ranges (or won't report a size), so there is
+// nothing to resume. Downloads into `.partial` and only renames it to the final
+// name once the transfer completes — the same atomic publish the chunked path
+// uses. Writing straight to the final file would (on Android, where a failed
+// `downloadFileAsync` leaves a partial file behind) leave a truncated file that
+// the next run's `finalFile.exists` check would mistake for a finished download.
 const downloadWholeFile = async (
   url: string,
+  fileName: string,
   finalFile: File,
   partial: File,
   validatorFile: File,
@@ -91,13 +130,14 @@ const downloadWholeFile = async (
 ): Promise<string> => {
   deleteIfExists(partial);
   deleteIfExists(validatorFile);
-  const file = await File.downloadFileAsync(url, finalFile, {
+  await File.downloadFileAsync(url, partial, {
     idempotent: true,
     signal,
     onProgress: ({ bytesWritten, totalBytes }) =>
       onProgress(bytesWritten, totalBytes),
   });
-  return toPlainPath(file.uri);
+  partial.rename(fileName);
+  return toPlainPath(finalFile.uri);
 };
 
 export const downloadModelPart = async (
@@ -124,6 +164,7 @@ export const downloadModelPart = async (
   if (!meta.acceptsRanges || meta.total === undefined) {
     return downloadWholeFile(
       url,
+      fileName,
       finalFile,
       partial,
       validatorFile,
@@ -201,7 +242,7 @@ export const downloadModelPart = async (
         );
       }
 
-      partial.write(chunk.bytesSync(), { append: true });
+      await appendFile(chunk, partial, expected);
       offset += expected;
       onProgress(offset, total);
     }

@@ -22,6 +22,9 @@ import { AiServiceProvider } from 'services';
 import { DrawerNavigator } from 'navigation';
 import { useTranslation } from 'react-i18next';
 
+const unWantedError =
+  'Cannot create devtools websocket connections in embedded environments.';
+
 Sentry.init({
   dsn: 'https://5901cf2e433ebe444dd4dc9f8aebc790@o4511569171709952.ingest.de.sentry.io/4511569173217360',
   sendDefaultPii: true,
@@ -50,7 +53,8 @@ Sentry.init({
     // Dev-only noise: Expo's async-require throws this when the JS bundle is embedded rather than served by Metro
     const originalException = hint?.originalException as Error | undefined;
     const message = originalException?.message ?? event.message ?? '';
-    if (message.includes('Cannot create devtools websocket connections')) {
+
+    if (message.includes(unWantedError)) {
       return null;
     }
     return event;

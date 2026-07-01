@@ -1,6 +1,4 @@
 const MB = 1024 * 1024;
-// Must match CHUNK_BYTES in modelDownload.ts.
-const CHUNK = 16 * MB;
 const MODELS = 'file:///docs/models';
 
 // A stateful in-memory expo-file-system mock (overrides the shared jest setup
@@ -51,6 +49,25 @@ jest.mock('expo-file-system', () => {
     bytesSync() {
       return { length: sizes.get(this.uri) ?? 0 };
     }
+    // A minimal file handle: reads advance a cursor over the tracked byte size
+    // and return an object whose only observed field is `.length`; writes grow
+    // the destination. Enough to model the streamed chunk -> partial append.
+    open() {
+      const uri = this.uri;
+      let cursor = 0;
+      return {
+        readBytes(length: number) {
+          const size = sizes.get(uri) ?? 0;
+          const n = Math.max(0, Math.min(length, size - cursor));
+          cursor += n;
+          return { length: n };
+        },
+        writeBytes(bytes: { length: number }) {
+          sizes.set(uri, (sizes.get(uri) ?? 0) + bytes.length);
+        },
+        close() {},
+      };
+    }
     rename(newName: string) {
       const dir = this.uri.slice(0, this.uri.lastIndexOf('/'));
       const dest = `${dir}/${newName}`;
@@ -77,7 +94,15 @@ jest.mock('expo-file-system', () => {
 
   const Paths = { document: { uri: 'file:///docs/' } };
 
-  return { File, Directory, Paths, __sizes: sizes, __texts: texts };
+  const FileMode = {
+    ReadWrite: 'rw',
+    ReadOnly: 'r',
+    WriteOnly: 'w',
+    Append: 'wa',
+    Truncate: 'wt',
+  };
+
+  return { File, Directory, Paths, FileMode, __sizes: sizes, __texts: texts };
 });
 
 import {
@@ -117,6 +142,10 @@ const setupRemote = ({
 
   downloadFileAsync.mockImplementation(
     async (_url: string, dest: any, options: any) => {
+      // Capture the destination URI now: the caller may `rename()` this same
+      // File object afterwards, which would mutate `.uri` out from under a
+      // later `mock.calls[…].uri` read.
+      destUris.push(dest.uri);
       if (options?.signal?.aborted) {
         throw Object.assign(new Error('Aborted'), { name: 'AbortError' });
       }
@@ -140,11 +169,16 @@ const rangesRequested = () =>
     .map(call => call[2]?.headers?.Range)
     .filter(Boolean);
 
+// Destination URIs captured at download time (see setupRemote), before any
+// subsequent rename() mutates the File object's `.uri`.
+const destUris: string[] = [];
+
 const noSignal = () => new AbortController().signal;
 
 beforeEach(() => {
   sizes.clear();
   texts.clear();
+  destUris.length = 0;
   downloadFileAsync.mockReset();
 });
 
@@ -236,9 +270,12 @@ test('falls back to a single download when the server has no range support', asy
 
   expect(path).toBe('/docs/models/chat-model.gguf');
   expect(downloadFileAsync).toHaveBeenCalledTimes(1);
-  // One shot straight to the final file, no Range header.
-  expect(downloadFileAsync.mock.calls[0][1].uri).toBe(`${MODELS}/chat-model.gguf`);
+  // One shot with no Range header — but written to `.partial` first, then
+  // renamed to the final name, so a failed transfer can never leave a truncated
+  // file that looks complete.
+  expect(destUris[0]).toBe(`${MODELS}/chat-model.gguf.partial`);
   expect(downloadFileAsync.mock.calls[0][2].headers).toBeUndefined();
+  expect(sizes.has(`${MODELS}/chat-model.gguf.partial`)).toBe(false);
   expect(sizes.get(`${MODELS}/chat-model.gguf`)).toBe(total);
 });
 

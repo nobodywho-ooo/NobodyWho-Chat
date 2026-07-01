@@ -69,6 +69,13 @@ jest.mock('expo-file-system', () => {
       return File.mockExists;
     }
     delete() {}
+    open() {
+      return {
+        readBytes: () => ({ length: 0 }),
+        writeBytes: () => {},
+        close: () => {},
+      };
+    }
   }
   File.mockExists = true;
   File.downloadFileAsync = jest.fn(
@@ -87,7 +94,14 @@ jest.mock('expo-file-system', () => {
     document: { uri: 'file:///mock-documents/' },
     cache: { uri: 'file:///mock-cache/' },
   };
-  return { File, Directory, Paths };
+  const FileMode = {
+    ReadWrite: 'rw',
+    ReadOnly: 'r',
+    WriteOnly: 'w',
+    Append: 'wa',
+    Truncate: 'wt',
+  };
+  return { File, Directory, Paths, FileMode };
 });
 
 export const mockLaunchImageLibraryAsync = jest.fn();

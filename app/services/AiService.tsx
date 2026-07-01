@@ -184,7 +184,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
           modelPath: chatModelPath,
           projectionModelPath,
           useGpu: opts?.useGpu ?? true,
-          tools: tools,
+          tools,
           systemPrompt: opts?.systemPrompt,
           sampler: opts?.sampler,
           contextSize,
