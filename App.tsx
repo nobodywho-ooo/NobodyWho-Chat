@@ -14,11 +14,7 @@ import {
   getAppState,
   setAppState,
 } from 'database';
-import {
-  clearRunningDownloads,
-  getConversationById,
-  getModelById,
-} from 'repositories';
+import { getConversationById, getModelById } from 'repositories';
 import { log } from 'helpers';
 import { useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen } from 'screens';
@@ -50,6 +46,15 @@ Sentry.init({
   enableNativeFramesTracking: true,
   environment: __DEV__ ? 'development' : 'production',
   debug: false,
+  beforeSend(event, hint) {
+    // Dev-only noise: Expo's async-require throws this when the JS bundle is embedded rather than served by Metro
+    const originalException = hint?.originalException as Error | undefined;
+    const message = originalException?.message ?? event.message ?? '';
+    if (message.includes('Cannot create devtools websocket connections')) {
+      return null;
+    }
+    return event;
+  },
   beforeBreadcrumb(breadcrumb) {
     // TODO: hot fix, delete when fix in future sentry version
     // On Android the native bridge (sentry-java) deserializes the breadcrumb
@@ -136,7 +141,6 @@ function AppLoader() {
 
     try {
       await initDatabase();
-      await clearRunningDownloads();
       await hydrateAppState();
       await dropStaleIdsInUse();
 

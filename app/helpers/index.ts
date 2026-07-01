@@ -1,5 +1,4 @@
 import { isIOS, isAndroid, getIOSVersion, isIOS26OrLater } from './platform';
-import { getAssetPath } from './assets';
 import { log } from './log';
 import { capitalize } from './string';
 import { safeJsonParse } from './json';
@@ -9,6 +8,13 @@ import { haptics } from './haptics';
 import { getFamilyIcon } from './familyIcon';
 import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
+import {
+  downloadModelPart,
+  downloadedPartPath,
+  deleteModelPartFiles,
+  modelPartPath,
+} from './modelDownload';
+import { toFileUri, toPlainPath } from './fileUri';
 import {
   filterModelsByDeviceMemory,
   modelRequiredMemoryGB,
@@ -31,8 +37,13 @@ import { toChatHistory, toModelHistory } from './chatHistory';
 
 export {
   getFamilyIcon,
-  getAssetPath,
   deleteModelFiles,
+  downloadModelPart,
+  downloadedPartPath,
+  deleteModelPartFiles,
+  modelPartPath,
+  toFileUri,
+  toPlainPath,
   filterModelsByDeviceMemory,
   modelRequiredMemoryGB,
   captureImageToMessageDocuments,

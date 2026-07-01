@@ -53,7 +53,7 @@ test('0 models to download (network failure), 1 model downloaded and 1 in use', 
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('pressing a model that is downloading explains it is in progress', async () => {
+test('pressing a downloading model offers to stop the download', async () => {
   const downloading = buildModel(30, { parts: [part('chat-model', 1)] });
   mockUseModelDownloads.mockReturnValue({
     downloads: [
@@ -69,16 +69,24 @@ test('pressing a model that is downloading explains it is in progress', async ()
   const screen = render(<ModelsScreen />);
   await act(async () => {});
 
-  // The downloading card carries a downloadProgress; pressing it shows the
-  // "download in progress" guidance rather than starting a second download.
+  // The downloading card carries a downloadProgress; pressing it offers a
+  // two-button alert: stop the current download, or cancel and keep going.
   const card = screen
     .UNSAFE_getAllByType('ModelCard' as never)
     .find(node => node.props.downloadProgress !== undefined);
   act(() => card?.props.onPress(downloading));
 
   expect(alertSpy).toHaveBeenCalledWith(
-    'screens.models.downloadInProgressTitle',
-    'screens.models.downloadInProgressMessage',
+    'screens.models.stopDownloadTitle',
+    'screens.models.stopDownloadMessage',
+    [
+      expect.objectContaining({
+        text: 'screens.models.stopDownload',
+        style: 'destructive',
+        onPress: expect.any(Function),
+      }),
+      expect.objectContaining({ text: 'common.cancel', style: 'cancel' }),
+    ],
   );
   alertSpy.mockRestore();
 });

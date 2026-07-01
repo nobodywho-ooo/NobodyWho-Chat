@@ -6,9 +6,6 @@ import {
   rowToModelDownload,
   modelDownloadProgress,
   createModelDownload,
-  claimModelDownload,
-  releaseModelDownload,
-  clearRunningDownloads,
   updateModelDownloadParts,
   getModelDownloads,
   deleteModelDownload,
@@ -99,44 +96,6 @@ describe('createModelDownload', () => {
   });
 });
 
-describe('claimModelDownload', () => {
-  test('claims an idle download (running 0 -> 1) and reports success', async () => {
-    const claimed = await claimModelDownload(3);
-
-    expect(claimed).toBe(true);
-    expect(db.execute).toHaveBeenCalledWith(
-      'UPDATE model_downloads SET running = 1 WHERE model_id = ? AND running = 0',
-      [3],
-    );
-  });
-
-  test('reports false when another loop already holds the lock', async () => {
-    db.execute.mockResolvedValue({ rows: [], rowsAffected: 0 });
-
-    expect(await claimModelDownload(3)).toBe(false);
-  });
-});
-
-describe('releaseModelDownload', () => {
-  test('clears the running flag for the model', async () => {
-    await releaseModelDownload(3);
-
-    expect(db.execute).toHaveBeenCalledWith(
-      'UPDATE model_downloads SET running = 0 WHERE model_id = ?',
-      [3],
-    );
-  });
-});
-
-describe('clearRunningDownloads', () => {
-  test('clears every running flag (stale locks from a killed session)', async () => {
-    await clearRunningDownloads();
-
-    expect(db.execute).toHaveBeenCalledWith(
-      'UPDATE model_downloads SET running = 0',
-    );
-  });
-});
 
 describe('updateModelDownloadParts', () => {
   test('writes the serialized parts progress for the model', async () => {

@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, act } from '@testing-library/react-native';
 import { Prompt } from 'react-native-nobodywho';
-import { exists, unlink } from '@dr.pogodin/react-native-fs';
+import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
 
 import { InputBar } from '../components/InputBar/InputBar';
 import { CameraCaptureModal } from '../components/CameraCaptureModal/CameraCaptureModal';
@@ -15,8 +15,8 @@ import {
 
 import { ChatScreen } from '../ChatScreen';
 
-const mockExists = exists as jest.Mock;
-const mockUnlink = unlink as jest.Mock;
+const mockGetInfo = getInfoAsync as jest.Mock;
+const mockUnlink = deleteAsync as jest.Mock;
 
 // ChatScreen reads only getAppState() from the store and `chat` from the
 // service; mock both so handleSend can run without the real model/db.
@@ -75,7 +75,7 @@ beforeEach(() => {
   });
   mockInsertConversation.mockReset().mockResolvedValue(42);
   mockInsertMessage.mockReset().mockResolvedValue(1);
-  mockExists.mockReset();
+  mockGetInfo.mockReset().mockResolvedValue({ exists: false });
   mockUnlink.mockReset();
 });
 
@@ -367,7 +367,7 @@ test('a photo captured from the camera is downscaled and attached as an image', 
 
 test('deselecting an attached image deletes its unsent copy from disk', async () => {
   mockChatPipeline = ModelPipeline.imageTextToText;
-  mockExists.mockResolvedValue(true); // the message-documents dir + copy exist
+  mockGetInfo.mockResolvedValue({ exists: true }); // the message-documents dir + copy exist
 
   const screen = render(
     <ChatScreen
@@ -388,14 +388,17 @@ test('deselecting an attached image deletes its unsent copy from disk', async ()
 
   // The orphaned copy (named from the picked IMG_0001) is unlinked, and nothing
   // is sent when the user then sends a plain-text message.
-  expect(mockUnlink).toHaveBeenCalledWith(expect.stringContaining('IMG_0001'));
+  expect(mockUnlink).toHaveBeenCalledWith(
+    expect.stringContaining('IMG_0001'),
+    { idempotent: true },
+  );
   await send(screen, 'never mind');
   expect(mockChat.ask).toHaveBeenCalledWith('never mind');
 });
 
 test('an unsent attachment is deleted when the screen unmounts', async () => {
   mockChatPipeline = ModelPipeline.imageTextToText;
-  mockExists.mockResolvedValue(true);
+  mockGetInfo.mockResolvedValue({ exists: true });
 
   const screen = render(
     <ChatScreen
@@ -412,12 +415,15 @@ test('an unsent attachment is deleted when the screen unmounts', async () => {
     screen.unmount();
   });
 
-  expect(mockUnlink).toHaveBeenCalledWith(expect.stringContaining('IMG_0001'));
+  expect(mockUnlink).toHaveBeenCalledWith(
+    expect.stringContaining('IMG_0001'),
+    { idempotent: true },
+  );
 });
 
 test('a sent attachment is NOT deleted on unmount (the message owns it)', async () => {
   mockChatPipeline = ModelPipeline.imageTextToText;
-  mockExists.mockResolvedValue(true);
+  mockGetInfo.mockResolvedValue({ exists: true });
 
   const screen = render(
     <ChatScreen

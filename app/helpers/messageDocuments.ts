@@ -1,16 +1,18 @@
 import {
-  copyFile,
-  DocumentDirectoryPath,
-  exists,
-  mkdir,
-  unlink,
-} from '@dr.pogodin/react-native-fs';
+  copyAsync,
+  deleteAsync,
+  documentDirectory,
+  getInfoAsync,
+  makeDirectoryAsync,
+} from 'expo-file-system/legacy';
+import { toFileUri, toPlainPath } from './fileUri';
 import { log } from './log';
 
 const MESSAGE_DOCUMENTS_DIR_NAME = 'message-documents';
 
+// Returns a PLAIN path (no file:// scheme)
 const messageDocumentsDir = (): string =>
-  `${DocumentDirectoryPath}/${MESSAGE_DOCUMENTS_DIR_NAME}`;
+  `${toPlainPath(documentDirectory ?? '')}${MESSAGE_DOCUMENTS_DIR_NAME}`;
 
 const uniqueName = (fileName: string): string => {
   const dot = fileName.lastIndexOf('.');
@@ -30,15 +32,14 @@ export const copyToMessageDocuments = async (
   originalName: string,
 ): Promise<string> => {
   const dir = messageDocumentsDir();
-  if (!(await exists(dir))) {
-    await mkdir(dir);
+  if (!(await getInfoAsync(toFileUri(dir))).exists) {
+    await makeDirectoryAsync(toFileUri(dir), { intermediates: true });
   }
 
   const name = uniqueName(originalName);
   const destPath = `${dir}/${name}`;
-  // react-native-fs copyFile expects a filesystem path, not a file:// URI.
-  const source = sourceUri.replace(/^file:\/\//, '');
-  await copyFile(source, destPath);
+
+  await copyAsync({ from: toFileUri(sourceUri), to: toFileUri(destPath) });
   return name;
 };
 
@@ -58,8 +59,8 @@ export const deleteMessageDocuments = async (
     paths.map(async path => {
       try {
         const resolved = path && resolveMessageDocumentPath(path);
-        if (resolved && (await exists(resolved))) {
-          await unlink(resolved);
+        if (resolved && (await getInfoAsync(toFileUri(resolved))).exists) {
+          await deleteAsync(toFileUri(resolved), { idempotent: true });
         }
       } catch (error) {
         log('deleteMessageDocuments failed', error, { capture: true });

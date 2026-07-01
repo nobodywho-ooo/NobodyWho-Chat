@@ -71,35 +71,6 @@ export async function createModelDownload(model: Model): Promise<boolean> {
   return created;
 }
 
-// Atomically acquires the live-process lock for a download: flips `running`
-// from 0 to 1 and reports whether this caller won. Because the UPDATE is a
-// single statement, two racing drivers (a press and a resume, or two resumes)
-// can't both succeed — only one sees a row affected, so only one loop runs.
-export async function claimModelDownload(modelId: number): Promise<boolean> {
-  const db = getDatabase();
-  const result = await db.execute(
-    'UPDATE model_downloads SET running = 1 WHERE model_id = ? AND running = 0',
-    [modelId],
-  );
-  return (result.rowsAffected ?? 0) > 0;
-}
-
-// Releases the lock so the download can be resumed later (e.g. after an error).
-export async function releaseModelDownload(modelId: number): Promise<void> {
-  const db = getDatabase();
-  await db.execute('UPDATE model_downloads SET running = 0 WHERE model_id = ?', [
-    modelId,
-  ]);
-}
-
-// Clears every lock — call once on app launch. A killed process leaves
-// `running = 1` with no loop to release it, which would otherwise block the
-// download from ever being resumed.
-export async function clearRunningDownloads(): Promise<void> {
-  const db = getDatabase();
-  await db.execute('UPDATE model_downloads SET running = 0');
-}
-
 // A transaction (not a plain execute) so op-sqlite flushes reactive queries on
 // commit — this is what advances the progress bar via `useModelDownloads`.
 // Callers throttle how often this runs (~1% steps) to keep it cheap.

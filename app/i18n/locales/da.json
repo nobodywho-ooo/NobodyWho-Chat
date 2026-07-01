@@ -107,8 +107,9 @@
       "youHaveDownloadedAllTheModels": "Du har downloadet alle modellerne.",
       "chooseModelTitle": "Vælg den rigtige model",
       "chooseModelMessage": "Modellers størrelse defineres ud fra deres antal parametre (f.eks. 0,6B, 1,2B ...). Større modeller er ofte klogere, men de kræver flere ressourcer og gør ydelsen langsommere. Hvis du ikke har en ny telefon, bør du derfor starte med en mindre model for at sikre en jævn ydelse.",
-      "downloadInProgressTitle": "Download i gang",
-      "downloadInProgressMessage": "Sørg for, at du har en stabil internetforbindelse, og vent et øjeblik. Hvis downloadet ser ud til at sidde fast efter 10 sekunder, så genstart appen — vi genoptager downloadet automatisk."
+      "stopDownloadTitle": "Stop denne download?",
+      "stopDownloadMessage": "Downloadet annulleres, og dets fremskridt kasseres. Du kan starte det igen når som helst.",
+      "stopDownload": "Stop download"
     },
     "downloadedModels": {
       "noModelDownloaded": "Ingen model downloadet",

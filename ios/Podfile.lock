@@ -2033,28 +2033,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ReactNativeFs (2.38.2):
-    - hermes-engine
-    - RCTRequired
-    - RCTTypeSafety
-    - React-Core
-    - React-Core-prebuilt
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/bridging
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - ReactNavigation (8.0.0-alpha.28):
     - hermes-engine
     - RCTRequired
@@ -2432,7 +2410,7 @@ DEPENDENCIES:
   - ExpoCameraBarcodeScanning (from `../node_modules/expo-camera/ios`)
   - ExpoDocumentPicker (from `../node_modules/expo-document-picker/ios`)
   - "ExpoDomWebView (from `../node_modules/expo/node_modules/@expo/dom-webview/ios`)"
-  - ExpoFileSystem (from `../node_modules/expo/node_modules/expo-file-system/ios`)
+  - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo/node_modules/expo-font/ios`)
   - ExpoImageManipulator (from `../node_modules/expo-image-manipulator/ios`)
   - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
@@ -2521,7 +2499,6 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - ReactNativeEnrichedMarkdown (from `../node_modules/react-native-enriched-markdown`)
-  - "ReactNativeFs (from `../node_modules/@dr.pogodin/react-native-fs`)"
   - "ReactNavigation (from `../node_modules/@react-navigation/native`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
@@ -2564,7 +2541,7 @@ EXTERNAL SOURCES:
   ExpoDomWebView:
     :path: "../node_modules/expo/node_modules/@expo/dom-webview/ios"
   ExpoFileSystem:
-    :path: "../node_modules/expo/node_modules/expo-file-system/ios"
+    :path: "../node_modules/expo-file-system/ios"
   ExpoFont:
     :path: "../node_modules/expo/node_modules/expo-font/ios"
   ExpoImageManipulator:
@@ -2740,8 +2717,6 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
   ReactNativeEnrichedMarkdown:
     :path: "../node_modules/react-native-enriched-markdown"
-  ReactNativeFs:
-    :path: "../node_modules/@dr.pogodin/react-native-fs"
   ReactNavigation:
     :path: "../node_modules/@react-navigation/native"
   RNDeviceInfo:
@@ -2867,7 +2842,6 @@ SPEC CHECKSUMS:
   ReactCommon: a804bb8d1dcf3ecdec3a77eb8bba19b7863bbbdb
   ReactNativeDependencies: 455919c5dfe11abf037bfb6fb4166b0c6dd2840b
   ReactNativeEnrichedMarkdown: 861d6937d7f4a6481e8446538dc715c93b545143
-  ReactNativeFs: 21026144ac71a65acf6855c52b1a8eb31012bb5d
   ReactNavigation: d018e14289d84619ff32fe8fd1722da1b71fcc3b
   RNDeviceInfo: 4c852998208b60dc192ae3529e5867817719ad1e
   RNGestureHandler: 2ff61eac036eaf89f6818bf4ed9c39771a17d134

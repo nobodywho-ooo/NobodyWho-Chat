@@ -7,33 +7,37 @@ import {
   ScrollView,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { downloadModel } from 'react-native-nobodywho';
 import { useAppState, useModelDownloads, useModels, useStyled } from 'hooks';
 import { find, map, pathEq, prop } from 'ramda';
 import { ErrorView, ListItem, ModelCard, PlatformIcon, Text } from 'components';
 import {
-  claimModelDownload,
   createModelDownload,
   deleteModelDownload,
   getModelDownloads,
   insertModel,
   modelDownloadProgress,
-  releaseModelDownload,
   updateModelDownloadParts,
 } from 'repositories';
 import { getAppState, setAppState } from 'database';
 import { Model, ModelDownload, ModelPart } from 'types';
-import { filterModelsByDeviceMemory, log } from 'helpers';
+import {
+  deleteModelPartFiles,
+  downloadModelPart,
+  filterModelsByDeviceMemory,
+  log,
+} from 'helpers';
+import { Spacings } from 'style';
 
 import styles from './ModelsScreen.styles';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Spacings } from 'style';
 
 const DOWNLOAD_THROTTLE = 0.01; // 1% step
 const MODELS_URL =
   'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/backend.json';
+
+const activeDownloads = new Map<number, AbortController>();
 
 export const ModelsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -100,46 +104,80 @@ export const ModelsScreen: React.FC = () => {
     [t],
   );
 
-  const showDownloadInProgress = useCallback(
-    () =>
-      Alert.alert(
-        t('screens.models.downloadInProgressTitle'),
-        t('screens.models.downloadInProgressMessage'),
-      ),
-    [t],
-  );
+  const stopDownload = useCallback((model: Model) => {
+    deleteModelDownload(model.id).catch(error =>
+      log('ModelsScreen stopDownload', error),
+    );
 
-  useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
+    const controller = activeDownloads.get(model.id);
+    if (controller) {
+      controller.abort();
+    } else {
+      // No live loop e.g. it already failed
+      deleteModelPartFiles(model.parts.map(part => part.fileName));
+    }
+  }, []);
+
+  const promptStopDownload = useCallback(
+    (model: Model) =>
+      Alert.alert(
+        t('screens.models.stopDownloadTitle'),
+        t('screens.models.stopDownloadMessage'),
+        [
+          {
+            text: t('screens.models.stopDownload'),
+            style: 'destructive',
+            onPress: () => stopDownload(model),
+          },
+          { text: t('common.cancel'), style: 'cancel' },
+        ],
+      ),
+    [t, stopDownload],
+  );
 
   const runDownload = useCallback(async (download: ModelDownload) => {
     const { model } = download;
 
-    const claimed = await claimModelDownload(model.id);
-    if (!claimed) return;
+    if (activeDownloads.has(model.id)) {
+      return;
+    }
 
-    const partsProgress = download.partsProgress.map(part => ({ ...part }));
+    const controller = new AbortController();
+    activeDownloads.set(model.id, controller);
+
+    let modelDownloaded = false;
 
     try {
+      const partsProgress = download.partsProgress.map(part => ({ ...part }));
+
       for (let i = 0; i < partsProgress.length; i++) {
-        const part = partsProgress[i];
-        const path = await downloadModel({
-          modelPath: part.url,
-          onDownloadProgress: (downloaded, total) => {
+        if (partsProgress[i].progress >= 1 && partsProgress[i].path) {
+          continue;
+        }
+
+        const path = await downloadModelPart(
+          partsProgress[i].url,
+          partsProgress[i].fileName,
+          controller.signal,
+          (downloaded, total) => {
             const progress = total > 0 ? downloaded / total : 0;
             if (
               progress - partsProgress[i].progress >= DOWNLOAD_THROTTLE ||
               progress >= 1
             ) {
               partsProgress[i] = { ...partsProgress[i], progress };
-              updateModelDownloadParts(model.id, partsProgress).catch(() => {});
+              updateModelDownloadParts(model.id, partsProgress).catch(error => {
+                log('runDownload updateModelDownloadParts', error);
+              });
             }
           },
-        });
-
+        );
         partsProgress[i] = { ...partsProgress[i], progress: 1, path };
         await updateModelDownloadParts(model.id, partsProgress);
+      }
+
+      if (controller.signal.aborted) {
+        return;
       }
 
       const downloadedParts: ModelPart[] = partsProgress.map(
@@ -152,6 +190,7 @@ export const ModelsScreen: React.FC = () => {
         }),
       );
       await insertModel({ ...model, parts: downloadedParts });
+      modelDownloaded = true;
 
       if (getAppState().modelIdInUse === undefined) {
         await setAppState({
@@ -162,8 +201,23 @@ export const ModelsScreen: React.FC = () => {
 
       await deleteModelDownload(model.id);
     } catch (error) {
-      log('ModelsScreen runDownload', error);
-      await releaseModelDownload(model.id);
+      log('ModelsScreen runDownload', error, {
+        capture: !controller.signal.aborted,
+      });
+
+      if (!controller.signal.aborted) {
+        deleteModelDownload(model.id).catch(deleteError => {
+          log('ModelsScreen runDownload deleteModelDownload', deleteError);
+        });
+      }
+    } finally {
+      if (activeDownloads.get(model.id) === controller) {
+        activeDownloads.delete(model.id);
+      }
+
+      if (controller.signal.aborted && !modelDownloaded) {
+        deleteModelPartFiles(model.parts.map(part => part.fileName));
+      }
     }
   }, []);
 
@@ -186,20 +240,26 @@ export const ModelsScreen: React.FC = () => {
     const resumeDownloads = async () => {
       try {
         const pendingDownloads = await getModelDownloads();
-        pendingDownloads.forEach(download => runDownload(download));
+        for (const download of pendingDownloads) {
+          if (!activeDownloads.has(download.model.id)) {
+            runDownload(download);
+          }
+        }
       } catch (error) {
-        log('ModelsScreen resumeDownloads', error);
+        log('ModelsScreen resumeDownloads', error, { capture: true });
       }
     };
 
+    fetchModels();
     resumeDownloads();
+
     const subscription = AppState.addEventListener('change', state => {
       if (state === 'active') {
         resumeDownloads();
       }
     });
     return () => subscription.remove();
-  }, [runDownload]);
+  }, [fetchModels, runDownload]);
 
   return (
     <ScrollView
@@ -247,7 +307,7 @@ export const ModelsScreen: React.FC = () => {
               key={download.model.id}
               model={download.model}
               downloadProgress={modelDownloadProgress(download)}
-              onPress={showDownloadInProgress}
+              onPress={promptStopDownload}
             />
           ))}
         </>
