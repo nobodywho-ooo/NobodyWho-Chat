@@ -95,7 +95,6 @@ PODS:
   - hermes-engine (250829098.0.10):
     - hermes-engine/Pre-built (= 250829098.0.10)
   - hermes-engine/Pre-built (250829098.0.10)
-  - iosMath (0.9.4)
   - libwebp (1.5.0):
     - libwebp/demux (= 1.5.0)
     - libwebp/mux (= 1.5.0)
@@ -2010,9 +2009,8 @@ PODS:
     - React-utils (= 0.85.2)
     - ReactNativeDependencies
   - ReactNativeDependencies (0.85.2)
-  - ReactNativeEnrichedMarkdown (0.6.0):
+  - ReactNativeEnrichedMarkdown (0.7.1):
     - hermes-engine
-    - iosMath (~> 0.9)
     - RCTRequired
     - RCTTypeSafety
     - React-Core
@@ -2514,7 +2512,6 @@ DEPENDENCIES:
 
 SPEC REPOS:
   trunk:
-    - iosMath
     - libwebp
     - SDWebImage
     - SDWebImageWebPCoder
@@ -2764,7 +2761,6 @@ SPEC CHECKSUMS:
   ExpoModulesWorkletsAdapter: c141a7854ac985cda989175ae6944c1bfe3ff91b
   FBLazyVector: 26fd21c75314e101f280d401e97f27d54f3f7064
   hermes-engine: a7dcf50ffa69c1b17f0d0ed5724f8754567a4e47
-  iosMath: f7a6cbadf9d836d2149c2a84c435b1effc244cba
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   LiquidGlass: 79edfdadba32c29aa45772a4684cfead35698e9a
   Nobodywho: caa26920f44a76bdab8adc54e77433652b8733b3
@@ -2841,7 +2837,7 @@ SPEC CHECKSUMS:
   ReactCodegen: aaa66b24b7e1531e4d11591c16ff3eaed8842ad4
   ReactCommon: a804bb8d1dcf3ecdec3a77eb8bba19b7863bbbdb
   ReactNativeDependencies: 455919c5dfe11abf037bfb6fb4166b0c6dd2840b
-  ReactNativeEnrichedMarkdown: 861d6937d7f4a6481e8446538dc715c93b545143
+  ReactNativeEnrichedMarkdown: 77fa102e189cc044d2c5142361bdf5b1c22453cc
   ReactNavigation: d018e14289d84619ff32fe8fd1722da1b71fcc3b
   RNDeviceInfo: 4c852998208b60dc192ae3529e5867817719ad1e
   RNGestureHandler: 2ff61eac036eaf89f6818bf4ed9c39771a17d134
