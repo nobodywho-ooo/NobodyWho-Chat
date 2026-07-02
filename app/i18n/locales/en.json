@@ -11,6 +11,7 @@
     "newChat": "New Chat",
     "models": "Models",
     "settings": "Settings",
+    "customizeAssistant": "Customize",
     "downloadModels": "Downloaded Models",
     "terms": "Terms & Conditions",
     "privacyPolicy": "Privacy Policy",
@@ -87,6 +88,8 @@
       "mySettings": "My Settings",
       "models": "Models",
       "manageYourModels": "Manage your models",
+      "customize": "Customize",
+      "customizeSubtitle": "Configure token generation",
       "about": "About",
       "terms": "Terms & Conditions",
       "termsSubtitle": "Read our terms of use",
@@ -116,6 +119,21 @@
       "deleteConfirmTitle": "Delete model?",
       "deleteConfirmMessage": "“{{model}}” and all its conversations will be permanently deleted. This cannot be undone.",
       "delete": "Delete"
+    },
+    "customizeAssistant": {
+      "temperature": "Temperature",
+      "temperatureSubtitle": "Higher values make answers more creative",
+      "systemPrompt": "System prompt",
+      "systemPromptSubtitle": "Instructions the assistant always follows",
+      "systemPromptPlaceholder": "e.g. You are a helpful assistant.",
+      "thinking": "Thinking",
+      "thinkingSubtitle": "Let the model reason before answering",
+      "toolCalling": "Tool calling",
+      "toolCallingSubtitle": "Let the model use tools like weather and search",
+      "maxTokens": "Max tokens",
+      "maxTokensSubtitle": "Context size of the conversation",
+      "decreaseMaxTokens": "Decrease max tokens",
+      "increaseMaxTokens": "Increase max tokens"
     },
     "chat": {
       "generationFailed": "Something went wrong while generating a response.",

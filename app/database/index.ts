@@ -5,9 +5,10 @@ import {
   getAppState,
   setAppState,
   subscribeAppState,
+  DEFAULT_ASSISTANT_CONFIG,
 } from './appState';
 
-export type { AppState } from './appState';
+export type { AppState, AssistantConfig } from './appState';
 
 export {
   getDatabase,
@@ -18,4 +19,5 @@ export {
   getAppState,
   setAppState,
   subscribeAppState,
+  DEFAULT_ASSISTANT_CONFIG,
 }

@@ -3,10 +3,46 @@ import { getStorage } from './storage';
 
 const APP_STATE = 'appState';
 
+export type AssistantConfig = {
+  temperature: number;
+  systemPrompt: string;
+  thinking: boolean;
+  toolCalling: boolean;
+  maxTokens: number;
+};
+
+export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
+  temperature: 0.8,
+  systemPrompt: '',
+  thinking: true,
+  toolCalling: true,
+  maxTokens: 1500,
+};
+
 export type AppState = {
   modelIdInUse?: number;
   conversationIdInUse?: number;
+  assistantConfig?: AssistantConfig;
 };
+
+function sameAssistantConfig(
+  a: AssistantConfig | undefined,
+  b: AssistantConfig | undefined,
+): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (a === undefined || b === undefined) {
+    return false;
+  }
+  return (
+    a.temperature === b.temperature &&
+    a.systemPrompt === b.systemPrompt &&
+    a.thinking === b.thinking &&
+    a.toolCalling === b.toolCalling &&
+    a.maxTokens === b.maxTokens
+  );
+}
 
 type AppStateListener = (next: AppState, prev: AppState) => void;
 
@@ -39,7 +75,8 @@ export async function setAppState(patch: Partial<AppState>): Promise<void> {
   const next = { ...prev, ...patch };
   if (
     next.modelIdInUse === prev.modelIdInUse &&
-    next.conversationIdInUse === prev.conversationIdInUse
+    next.conversationIdInUse === prev.conversationIdInUse &&
+    sameAssistantConfig(next.assistantConfig, prev.assistantConfig)
   ) {
     return;
   }

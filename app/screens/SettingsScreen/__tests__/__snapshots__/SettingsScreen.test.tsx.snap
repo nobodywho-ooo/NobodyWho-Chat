@@ -28,6 +28,14 @@ exports[`renders correctly SettingsScreen 1`] = `
       subtitle="screens.settings.manageYourModels"
       title="screens.settings.models"
     />
+    <ListItem
+      androidIconName="tune"
+      iconBackgroundColor="#007AFF"
+      iosIconName="slider.horizontal.3"
+      onPress={[Function]}
+      subtitle="screens.settings.customizeSubtitle"
+      title="screens.settings.customize"
+    />
     <Text
       style={
         {

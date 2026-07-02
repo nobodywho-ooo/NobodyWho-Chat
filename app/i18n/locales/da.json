@@ -11,6 +11,7 @@
     "newChat": "Ny chat",
     "models": "Modeller",
     "settings": "Indstillinger",
+    "customizeAssistant": "Tilpas",
     "downloadModels": "Downloadede modeller",
     "terms": "Vilkår og betingelser",
     "privacyPolicy": "Privatlivspolitik",
@@ -87,6 +88,8 @@
       "mySettings": "Mine indstillinger",
       "models": "Modeller",
       "manageYourModels": "Administrer dine modeller",
+      "customize": "Tilpas",
+      "customizeSubtitle": "Konfigurer token-generering",
       "about": "Om",
       "terms": "Vilkår og betingelser",
       "termsSubtitle": "Læs vores brugervilkår",
@@ -116,6 +119,21 @@
       "deleteConfirmTitle": "Slet model?",
       "deleteConfirmMessage": "“{{model}}” og alle dens samtaler slettes permanent. Dette kan ikke fortrydes.",
       "delete": "Slet"
+    },
+    "customizeAssistant": {
+      "temperature": "Temperatur",
+      "temperatureSubtitle": "Højere værdier gør svarene mere kreative",
+      "systemPrompt": "Systemprompt",
+      "systemPromptSubtitle": "Instruktioner, som assistenten altid følger",
+      "systemPromptPlaceholder": "f.eks. Du er en hjælpsom assistent.",
+      "thinking": "Ræsonnement",
+      "thinkingSubtitle": "Lad modellen ræsonnere, før den svarer",
+      "toolCalling": "Værktøjskald",
+      "toolCallingSubtitle": "Lad modellen bruge værktøjer som vejr og søgning",
+      "maxTokens": "Maks. tokens",
+      "maxTokensSubtitle": "Samtalens kontekststørrelse",
+      "decreaseMaxTokens": "Reducér maks. tokens",
+      "increaseMaxTokens": "Forøg maks. tokens"
     },
     "chat": {
       "generationFailed": "Noget gik galt under genereringen af et svar.",

@@ -72,6 +72,37 @@ describe('setAppState', () => {
     );
   });
 
+  test('persists assistant config changes', async () => {
+    const assistantConfig = {
+      temperature: 1.2,
+      systemPrompt: 'Be brief.',
+      thinking: false,
+      toolCalling: true,
+      maxTokens: 2000,
+    };
+
+    await setAppState({ assistantConfig });
+
+    expect(getAppState().assistantConfig).toEqual(assistantConfig);
+    expect(storage.setItem).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not persist an assistant config equal in value', async () => {
+    const assistantConfig = {
+      temperature: 1.2,
+      systemPrompt: 'Be brief.',
+      thinking: false,
+      toolCalling: true,
+      maxTokens: 2000,
+    };
+    await setAppState({ assistantConfig });
+    storage.setItem.mockClear();
+
+    await setAppState({ assistantConfig: { ...assistantConfig } });
+
+    expect(storage.setItem).not.toHaveBeenCalled();
+  });
+
   test('does not persist when nothing changes', async () => {
     await setAppState({ modelIdInUse: 5 });
     storage.setItem.mockClear();

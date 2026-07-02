@@ -1,0 +1,80 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly Slider 1`] = `
+<View
+  accessibilityRole="adjustable"
+  accessibilityValue={
+    {
+      "max": 2,
+      "min": 0,
+      "now": 0.8,
+    }
+  }
+  accessible={true}
+  onLayout={[Function]}
+  onMoveShouldSetResponder={[Function]}
+  onMoveShouldSetResponderCapture={[Function]}
+  onResponderEnd={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderReject={[Function]}
+  onResponderRelease={[Function]}
+  onResponderStart={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  onStartShouldSetResponderCapture={[Function]}
+  style={
+    {
+      "height": 40,
+      "justifyContent": "center",
+    }
+  }
+>
+  <View
+    style={
+      [
+        {
+          "borderRadius": 2,
+          "height": 4,
+          "overflow": "hidden",
+        },
+        {
+          "backgroundColor": "#ebebeb",
+        },
+      ]
+    }
+  >
+    <View
+      style={
+        [
+          {
+            "borderRadius": 2,
+            "height": "100%",
+          },
+          {
+            "backgroundColor": "#628395",
+            "width": 80,
+          },
+        ]
+      }
+    />
+  </View>
+  <View
+    style={
+      [
+        {
+          "borderRadius": 12,
+          "height": 24,
+          "position": "absolute",
+          "width": 24,
+        },
+        {
+          "backgroundColor": "#628395",
+          "left": 70.4,
+        },
+      ]
+    }
+  />
+</View>
+`;

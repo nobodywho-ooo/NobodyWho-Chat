@@ -33,6 +33,8 @@ interface AiServiceContextValue extends AiServiceState {
     systemPrompt?: string;
     sampler?: SamplerConfig;
     contextSize?: number;
+    thinking?: boolean;
+    toolCalling?: boolean;
   }) => Promise<void>;
   disposeChat: () => void;
   dispose: () => void;
@@ -116,6 +118,8 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       systemPrompt?: string;
       sampler?: SamplerConfig;
       contextSize?: number;
+      thinking?: boolean;
+      toolCalling?: boolean;
     }) => {
       if (chatRef.current) {
         return;
@@ -170,15 +174,20 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         const tools =
-          model.toolCalling && model.pipeline === ModelPipeline.textGeneration
+          model.toolCalling &&
+          (opts.toolCalling ?? true) &&
+          model.pipeline === ModelPipeline.textGeneration
             ? buildChatTools()
             : undefined;
 
+        // Multimodal contexts are capped: larger ones exhaust Metal buffer
         const contextSize =
-          opts?.contextSize ??
-          (projectionModelPath !== undefined
-            ? MULTIMODAL_CONTEXT_SIZE
-            : undefined);
+          projectionModelPath !== undefined
+            ? Math.min(
+                opts.contextSize ?? MULTIMODAL_CONTEXT_SIZE,
+                MULTIMODAL_CONTEXT_SIZE,
+              )
+            : opts.contextSize;
 
         const chat = await Chat.fromPath({
           modelPath: chatModelPath,
@@ -188,7 +197,9 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
           systemPrompt: opts?.systemPrompt,
           sampler: opts?.sampler,
           contextSize,
-          templateVariables: { enable_thinking: model.thinking },
+          templateVariables: {
+            enable_thinking: model.thinking && (opts.thinking ?? true),
+          },
         });
 
         if (generation !== chatGeneration.current) {

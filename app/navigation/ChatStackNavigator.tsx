@@ -10,8 +10,14 @@ import React, {
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AppState, AppStateStatus, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { SamplerPresets } from 'react-native-nobodywho';
 import { DisplayMessage } from 'types';
-import { getAppState, setAppState, subscribeAppState } from 'database';
+import {
+  DEFAULT_ASSISTANT_CONFIG,
+  getAppState,
+  setAppState,
+  subscribeAppState,
+} from 'database';
 import {
   getConversationById,
   getMessagesByConversationId,
@@ -29,6 +35,7 @@ import { useAppState, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
 import {
   ChatScreen,
+  CustomizeAssistantScreen,
   DownloadedModelsScreen,
   ErrorScreen,
   LoadingScreen,
@@ -124,7 +131,10 @@ export const ChatStackNavigator = () => {
   // --- Lifecycle steps -------------------------------------------------------
 
   const mountModelAndCreateChat = useCallback(async () => {
-    const { modelIdInUse: modelId } = getAppState();
+    const {
+      modelIdInUse: modelId,
+      assistantConfig = DEFAULT_ASSISTANT_CONFIG,
+    } = getAppState();
     if (modelId === undefined) {
       throw new Error('ChatStackNavigator: no model in use');
     }
@@ -134,7 +144,14 @@ export const ChatStackNavigator = () => {
       throw new Error(`ChatStackNavigator: model ${modelId} not found`);
     }
 
-    await createChat({ model });
+    await createChat({
+      model,
+      systemPrompt: assistantConfig.systemPrompt.trim() || undefined,
+      sampler: SamplerPresets.temperature(assistantConfig.temperature),
+      contextSize: assistantConfig.maxTokens,
+      thinking: assistantConfig.thinking,
+      toolCalling: assistantConfig.toolCalling,
+    });
     if (chat.current === undefined) {
       throw new Error('ChatStackNavigator: chat creation failed');
     }
@@ -243,11 +260,14 @@ export const ChatStackNavigator = () => {
     }
   }, [startSession]);
 
-  // React to app-state changes: a model change tears down the chat and
-  // rebuilds from scratch; a conversation-only change reloads just the history.
+  // React to app-state changes: a model or assistant-config change tears down
+  // the chat and rebuilds from scratch; a conversation-only change reloads just the history.
   useEffect(() => {
     return subscribeAppState((next, prev) => {
-      if (next.modelIdInUse !== prev.modelIdInUse) {
+      if (
+        next.modelIdInUse !== prev.modelIdInUse ||
+        next.assistantConfig !== prev.assistantConfig
+      ) {
         disposeChat();
         if (next.modelIdInUse !== undefined) {
           startSession();
@@ -363,6 +383,15 @@ export const ChatStackNavigator = () => {
           component={ModelsScreen}
           options={({ navigation }) => ({
             title: t('navigation.models'),
+            presentation: 'modal',
+            headerRight: () => renderCloseButton(navigation),
+          })}
+        />
+        <Stack.Screen
+          name="CustomizeAssistantScreen"
+          component={CustomizeAssistantScreen}
+          options={({ navigation }) => ({
+            title: t('navigation.customizeAssistant'),
             presentation: 'modal',
             headerRight: () => renderCloseButton(navigation),
           })}
