@@ -48,5 +48,25 @@ target 'reffen' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # Fix error of "react-native-enriched-markdown": "^0.7.1"
+    # Delete when fixed
+    # “RaTeX.xcframework-ios.signature” couldn’t be copied to “Signatures” because an item with the same name already exists.
+    # Failure Reason: A file with the name “RaTeX.xcframework-ios.signature” already exists.
+
+    # The RaTeX SPM binary (pulled in by react-native-enriched-markdown for LaTeX
+    # math) emits its `.signature` file both at the top of BUILT_PRODUCTS_DIR and
+    # inside the pod's own build dir. During *archive*, Xcode flattens every
+    # *.signature into <archive>/Signatures/ keyed by filename, so the two copies
+    # collide with NSCocoaErrorDomain 516 ("file exists"). Delete the nested
+    # duplicate at build time, leaving the canonical top-level one.
+
+    installer.pods_project.targets.each do |target|
+      next unless target.name == 'ReactNativeEnrichedMarkdown'
+
+      phase = target.new_shell_script_build_phase('Remove duplicate RaTeX signature')
+      phase.shell_script = 'rm -f "${BUILT_PRODUCTS_DIR}/RaTeX.xcframework-ios.signature"'
+      phase.run_only_for_deployment_postprocessing = '0'
+    end
   end
 end
