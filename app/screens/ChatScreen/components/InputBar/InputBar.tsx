@@ -1,17 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  TextInput,
-  Pressable,
-  StyleProp,
-  ViewStyle,
-  Keyboard,
-} from 'react-native';
+import { View, TextInput, StyleProp, ViewStyle, Keyboard } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { useStyled } from 'hooks';
 import { useTheme } from 'context';
-import { IconButton, PlatformIcon, Text } from 'components';
+import { IconButton, Text } from 'components';
 import { Theme } from 'types';
 
 import { styles, INPUT_BAR_HEIGHT } from './InputBar.styles';
@@ -283,14 +276,16 @@ const InputBarAction: React.FC<InputBarActionProps> = ({
 
   if (isStreaming) {
     return (
-      <Pressable onPress={onStop}>
-        <PlatformIcon
-          iosIconName="stop.circle"
-          androidIconName="stop_circle"
-          size={28}
-          color={colors.dangerSurface}
-        />
-      </Pressable>
+      <IconButton
+        icon={{
+          iosIconName: 'stop',
+          androidIconName: 'stop',
+        }}
+        onPress={onStop}
+        size={20}
+        color={colors.ctaContentSecondary}
+        backgroundColor={colors.ctaSurfaceSecondary}
+      />
     );
   }
 

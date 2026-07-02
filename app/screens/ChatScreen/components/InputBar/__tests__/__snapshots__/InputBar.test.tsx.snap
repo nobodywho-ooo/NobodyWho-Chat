@@ -212,44 +212,18 @@ exports[`renders correctly InputBar when streaming 1`] = `
       }
       value=""
     />
-    <View
-      accessibilityState={
+    <IconButton
+      backgroundColor="#000000"
+      color="#FFFFFF"
+      icon={
         {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
+          "androidIconName": "stop",
+          "iosIconName": "stop",
         }
       }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onBlur={[Function]}
-      onClick={[Function]}
-      onFocus={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-    >
-      <PlatformIcon
-        androidIconName="stop_circle"
-        color="#f9342a"
-        iosIconName="stop.circle"
-        size={28}
-      />
-    </View>
+      onPress={[Function]}
+      size={20}
+    />
   </View>
 </View>
 `;

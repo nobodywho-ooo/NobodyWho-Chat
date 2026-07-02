@@ -190,7 +190,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
           "flexDirection": "row",
           "gap": 12,
           "justifyContent": "space-between",
-          "paddingTop": 20,
+          "marginTop": 20,
         }
       }
     >
@@ -217,20 +217,28 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
           screens.customizeAssistant.thinkingSubtitle
         </Text>
       </View>
-      <RCTSwitch
-        accessibilityRole="switch"
-        onChange={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        onTintColor="#628395"
+      <View
         style={
           {
-            "alignSelf": "flex-start",
+            "justifyContent": "center",
           }
         }
-        thumbTintColor="#FFFFFF"
-        value={true}
-      />
+      >
+        <RCTSwitch
+          accessibilityRole="switch"
+          onChange={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          onTintColor="#628395"
+          style={
+            {
+              "alignSelf": "flex-start",
+            }
+          }
+          thumbTintColor="#FFFFFF"
+          value={true}
+        />
+      </View>
     </View>
     <View
       style={
@@ -239,7 +247,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
           "flexDirection": "row",
           "gap": 12,
           "justifyContent": "space-between",
-          "paddingTop": 20,
+          "marginTop": 20,
         }
       }
     >
@@ -266,20 +274,28 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
           screens.customizeAssistant.toolCallingSubtitle
         </Text>
       </View>
-      <RCTSwitch
-        accessibilityRole="switch"
-        onChange={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-        onTintColor="#628395"
+      <View
         style={
           {
-            "alignSelf": "flex-start",
+            "justifyContent": "center",
           }
         }
-        thumbTintColor="#FFFFFF"
-        value={true}
-      />
+      >
+        <RCTSwitch
+          accessibilityRole="switch"
+          onChange={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          onTintColor="#628395"
+          style={
+            {
+              "alignSelf": "flex-start",
+            }
+          }
+          thumbTintColor="#FFFFFF"
+          value={true}
+        />
+      </View>
     </View>
     <View
       style={
