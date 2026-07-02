@@ -268,6 +268,10 @@ jest.mock('react-native-nobodywho', () => {
     Chat: { fromPath: (opts) => mockFromPath(opts) },
     Encoder: { fromPath: jest.fn() },
     CrossEncoder: { fromPath: jest.fn() },
+    SamplerPresets: {
+      default: jest.fn(() => ({ preset: 'default' })),
+      temperature: jest.fn(temperature => ({ preset: 'temperature', temperature })),
+    },
     Prompt,
     Tool,
     downloadModel: (opts) => mockDownloadModel(opts),

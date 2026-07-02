@@ -1,0 +1,366 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly CustomizeAssistantScreen 1`] = `
+<RCTScrollView
+  contentInsetAdjustmentBehavior="automatic"
+  keyboardShouldPersistTaps="handled"
+  style={
+    [
+      {
+        "flex": 1,
+        "paddingHorizontal": 16,
+        "paddingTop": 16,
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <View>
+    <Text
+      bold={true}
+    >
+      screens.customizeAssistant.temperature
+    </Text>
+    <Text
+      style={
+        {
+          "color": "#7c7c7c",
+        }
+      }
+      variant="body2"
+    >
+      screens.customizeAssistant.temperatureSubtitle
+    </Text>
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 12,
+          "paddingTop": 4,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "flex": 1,
+          }
+        }
+      >
+        <View
+          accessibilityRole="adjustable"
+          accessibilityValue={
+            {
+              "max": 2,
+              "min": 0,
+              "now": 0.8,
+            }
+          }
+          accessible={true}
+          onLayout={[Function]}
+          onMoveShouldSetResponder={[Function]}
+          onMoveShouldSetResponderCapture={[Function]}
+          onResponderEnd={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderReject={[Function]}
+          onResponderRelease={[Function]}
+          onResponderStart={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          onStartShouldSetResponderCapture={[Function]}
+          style={
+            {
+              "height": 40,
+              "justifyContent": "center",
+            }
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 2,
+                  "height": 4,
+                  "overflow": "hidden",
+                },
+                {
+                  "backgroundColor": "#ebebeb",
+                },
+              ]
+            }
+          >
+            <View
+              style={
+                [
+                  {
+                    "borderRadius": 2,
+                    "height": "100%",
+                  },
+                  {
+                    "backgroundColor": "#628395",
+                    "width": 0,
+                  },
+                ]
+              }
+            />
+          </View>
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 12,
+                  "height": 24,
+                  "position": "absolute",
+                  "width": 24,
+                },
+                {
+                  "backgroundColor": "#628395",
+                  "left": 0,
+                },
+              ]
+            }
+          />
+        </View>
+      </View>
+      <Text
+        bold={true}
+        style={
+          {
+            "minWidth": 32,
+            "textAlign": "right",
+          }
+        }
+      >
+        0.8
+      </Text>
+    </View>
+    <Text
+      bold={true}
+      style={
+        {
+          "paddingTop": 20,
+        }
+      }
+    >
+      screens.customizeAssistant.systemPrompt
+    </Text>
+    <Text
+      style={
+        {
+          "color": "#7c7c7c",
+        }
+      }
+      variant="body2"
+    >
+      screens.customizeAssistant.systemPromptSubtitle
+    </Text>
+    <TextInput
+      multiline={true}
+      onChangeText={[Function]}
+      onEndEditing={[Function]}
+      placeholder="screens.customizeAssistant.systemPromptPlaceholder"
+      placeholderTextColor="#7c7c7c"
+      style={
+        [
+          {
+            "borderRadius": 12,
+            "borderWidth": 1,
+            "marginTop": 8,
+            "minHeight": 96,
+            "padding": 12,
+            "textAlignVertical": "top",
+          },
+          {
+            "borderColor": "#e1e1e1",
+            "color": "#000000",
+          },
+        ]
+      }
+      value=""
+    />
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 12,
+          "justifyContent": "space-between",
+          "paddingTop": 20,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "flex": 1,
+          }
+        }
+      >
+        <Text
+          bold={true}
+        >
+          screens.customizeAssistant.thinking
+        </Text>
+        <Text
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body2"
+        >
+          screens.customizeAssistant.thinkingSubtitle
+        </Text>
+      </View>
+      <RCTSwitch
+        accessibilityRole="switch"
+        onChange={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        onTintColor="#628395"
+        style={
+          {
+            "alignSelf": "flex-start",
+          }
+        }
+        thumbTintColor="#FFFFFF"
+        value={true}
+      />
+    </View>
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 12,
+          "justifyContent": "space-between",
+          "paddingTop": 20,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "flex": 1,
+          }
+        }
+      >
+        <Text
+          bold={true}
+        >
+          screens.customizeAssistant.toolCalling
+        </Text>
+        <Text
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body2"
+        >
+          screens.customizeAssistant.toolCallingSubtitle
+        </Text>
+      </View>
+      <RCTSwitch
+        accessibilityRole="switch"
+        onChange={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        onTintColor="#628395"
+        style={
+          {
+            "alignSelf": "flex-start",
+          }
+        }
+        thumbTintColor="#FFFFFF"
+        value={true}
+      />
+    </View>
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 12,
+          "justifyContent": "space-between",
+          "paddingTop": 20,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "flex": 1,
+          }
+        }
+      >
+        <Text
+          bold={true}
+        >
+          screens.customizeAssistant.maxTokens
+        </Text>
+        <Text
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body2"
+        >
+          screens.customizeAssistant.maxTokensSubtitle
+        </Text>
+      </View>
+      <View
+        style={
+          {
+            "alignItems": "center",
+            "flexDirection": "row",
+            "gap": 8,
+          }
+        }
+      >
+        <IconButton
+          accessibilityLabel="screens.customizeAssistant.decreaseMaxTokens"
+          color="#000000"
+          disabled={false}
+          icon={
+            {
+              "androidIconName": "remove",
+              "iosIconName": "minus",
+            }
+          }
+          onPress={[Function]}
+        />
+        <Text
+          bold={true}
+          style={
+            {
+              "minWidth": 48,
+              "textAlign": "center",
+            }
+          }
+        >
+          1500
+        </Text>
+        <IconButton
+          accessibilityLabel="screens.customizeAssistant.increaseMaxTokens"
+          color="#000000"
+          disabled={false}
+          icon={
+            {
+              "androidIconName": "add",
+              "iosIconName": "plus",
+            }
+          }
+          onPress={[Function]}
+        />
+      </View>
+    </View>
+  </View>
+</RCTScrollView>
+`;

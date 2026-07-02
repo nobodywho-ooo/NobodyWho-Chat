@@ -24,6 +24,16 @@ test('pressing models navigates to the ModelsScreen', () => {
   expect(mockNavigate).toHaveBeenCalledWith('ModelsScreen');
 });
 
+test('pressing customize navigates to the CustomizeAssistantScreen', () => {
+  const screen = render(<SettingsScreen />);
+
+  fireEvent.press(
+    screen.UNSAFE_getByProps({ title: 'screens.settings.customize' }),
+  );
+
+  expect(mockNavigate).toHaveBeenCalledWith('CustomizeAssistantScreen');
+});
+
 test('pressing terms & conditions navigates to the TermsScreen', () => {
   const screen = render(<SettingsScreen />);
 

@@ -115,8 +115,18 @@ beforeEach(async () => {
   await setAppState({
     modelIdInUse: undefined,
     conversationIdInUse: undefined,
+    assistantConfig: undefined,
   });
 });
+
+// What mountModelAndCreateChat derives from DEFAULT_ASSISTANT_CONFIG.
+const defaultCreateChatOpts = {
+  systemPrompt: undefined,
+  sampler: { preset: 'temperature', temperature: 0.8 },
+  contextSize: 1500,
+  thinking: true,
+  toolCalling: true,
+};
 
 // The empty chat is gated on a measured container height; jsdom never lays out,
 // so wait for the chat screen to mount, fire its layout, then confirm the empty
@@ -168,7 +178,10 @@ test('mounts the in-use model and shows the empty chat', async () => {
   const screen = render(<ChatStackNavigator />);
 
   await showEmptyChat(screen);
-  expect(mockCreateChat).toHaveBeenCalledWith({ model: buildModel(0) });
+  expect(mockCreateChat).toHaveBeenCalledWith({
+    model: buildModel(0),
+    ...defaultCreateChatOpts,
+  });
   expect(mockChatInstance.setChatHistory).toHaveBeenCalledWith([]);
 });
 
@@ -197,7 +210,40 @@ test('disposes and rebuilds the chat when the in-use model changes', async () =>
 
   expect(mockDisposeChat).toHaveBeenCalledTimes(1);
   await waitFor(() => expect(mockCreateChat).toHaveBeenCalledTimes(2));
-  expect(mockCreateChat).toHaveBeenLastCalledWith({ model: buildModel(1) });
+  expect(mockCreateChat).toHaveBeenLastCalledWith({
+    model: buildModel(1),
+    ...defaultCreateChatOpts,
+  });
+});
+
+test('disposes and rebuilds the chat when the assistant config changes', async () => {
+  await setAppState({ modelIdInUse: 0 });
+
+  const screen = render(<ChatStackNavigator />);
+  await showEmptyChat(screen);
+
+  await act(async () => {
+    await setAppState({
+      assistantConfig: {
+        temperature: 1.5,
+        systemPrompt: 'Talk like a pirate.',
+        thinking: false,
+        toolCalling: false,
+        maxTokens: 2000,
+      },
+    });
+  });
+
+  expect(mockDisposeChat).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(mockCreateChat).toHaveBeenCalledTimes(2));
+  expect(mockCreateChat).toHaveBeenLastCalledWith({
+    model: buildModel(0),
+    systemPrompt: 'Talk like a pirate.',
+    sampler: { preset: 'temperature', temperature: 1.5 },
+    contextSize: 2000,
+    thinking: false,
+    toolCalling: false,
+  });
 });
 
 test('injects restored assistant messages with an empty toolCalls array', async () => {

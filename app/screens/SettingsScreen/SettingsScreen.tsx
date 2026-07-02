@@ -42,6 +42,15 @@ export const SettingsScreen: React.FC = () => {
         // @ts-ignore
         onPress={() => navigation.navigate('ModelsScreen')}
       />
+      <ListItem
+        title={t('screens.settings.customize')}
+        subtitle={t('screens.settings.customizeSubtitle')}
+        iosIconName="slider.horizontal.3"
+        androidIconName="tune"
+        iconBackgroundColor="#007AFF"
+        // @ts-ignore
+        onPress={() => navigation.navigate('CustomizeAssistantScreen')}
+      />
       <Text style={styles.sectionHeader}>{t('screens.settings.about')}</Text>
       <ListItem
         title={t('screens.settings.terms')}
