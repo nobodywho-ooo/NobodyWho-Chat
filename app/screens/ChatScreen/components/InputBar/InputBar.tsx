@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { useStyled } from 'hooks';
 import { useTheme } from 'context';
-import { IconButton, Text } from 'components';
+import { IconButton, IconButtonIconProps, Text } from 'components';
 import { Theme } from 'types';
 
 import { styles, INPUT_BAR_HEIGHT } from './InputBar.styles';
@@ -274,36 +274,31 @@ const InputBarAction: React.FC<InputBarActionProps> = ({
 }) => {
   const { colors } = useStyled();
 
-  if (isStreaming) {
-    return (
-      <IconButton
-        icon={{
-          iosIconName: 'stop',
-          androidIconName: 'stop',
-        }}
-        onPress={onStop}
-        size={20}
-        color={colors.ctaContentSecondary}
-        backgroundColor={colors.ctaSurfaceSecondary}
-      />
-    );
-  }
-
   let color = colors.ctaContentPrimary;
   let backgroundColor = colors.ctaSurfacePrimary;
+  let icon: IconButtonIconProps = {
+    iosIconName: 'arrow.up',
+    androidIconName: 'arrow_upward',
+  };
 
   if (value === '') {
     color = colors.ctaContentPrimary;
     backgroundColor = colors.ctaSurfacePrimaryDisabled;
   }
 
+  if (isStreaming) {
+    color = colors.ctaContentSecondary;
+    backgroundColor = colors.ctaSurfaceSecondary;
+    icon = {
+      iosIconName: 'stop',
+      androidIconName: 'stop',
+    };
+  }
+
   return (
     <IconButton
-      icon={{
-        iosIconName: 'arrow.up',
-        androidIconName: 'arrow_upward',
-      }}
-      onPress={onSend}
+      icon={icon}
+      onPress={isStreaming ? onStop : onSend}
       size={20}
       color={color}
       backgroundColor={backgroundColor}
