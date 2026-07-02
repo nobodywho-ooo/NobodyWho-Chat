@@ -160,7 +160,7 @@ exports[`renders correctly ModelCard 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }
@@ -199,7 +199,7 @@ exports[`renders correctly ModelCard 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }
@@ -238,7 +238,7 @@ exports[`renders correctly ModelCard 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }
@@ -277,7 +277,7 @@ exports[`renders correctly ModelCard 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }
@@ -470,7 +470,7 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }
@@ -509,7 +509,7 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }
@@ -548,7 +548,7 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }
@@ -587,7 +587,7 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }
@@ -936,7 +936,7 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }
@@ -975,7 +975,7 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }
@@ -1014,7 +1014,7 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }
@@ -1053,7 +1053,7 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
                 "paddingVertical": 4,
               },
               {
-                "backgroundColor": "#ebebeb",
+                "backgroundColor": "#f7f7f7",
               },
             ]
           }

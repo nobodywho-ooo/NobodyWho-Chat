@@ -13,7 +13,7 @@ exports[`Tag renders a label with an icon 1`] = `
         "paddingVertical": 4,
       },
       {
-        "backgroundColor": "#ebebeb",
+        "backgroundColor": "#f7f7f7",
       },
     ]
   }
@@ -55,7 +55,7 @@ exports[`Tag renders a label without an icon 1`] = `
         "paddingVertical": 4,
       },
       {
-        "backgroundColor": "#ebebeb",
+        "backgroundColor": "#f7f7f7",
       },
     ]
   }
@@ -91,7 +91,7 @@ exports[`Tag renders no icon when only one platform icon name is provided 1`] = 
         "paddingVertical": 4,
       },
       {
-        "backgroundColor": "#ebebeb",
+        "backgroundColor": "#f7f7f7",
       },
     ]
   }

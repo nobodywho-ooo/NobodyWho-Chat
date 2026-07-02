@@ -3,113 +3,119 @@
 exports[`renders correctly InputBar 1`] = `
 <View
   style={
-    [
-      {
-        "bottom": 0,
-        "left": 0,
-        "paddingHorizontal": 12,
-        "paddingTop": 4,
-        "position": "absolute",
-        "right": 0,
-      },
-      undefined,
-      {
-        "backgroundColor": "#FFFFFF",
-      },
-    ]
+    {
+      "bottom": 0,
+      "left": 0,
+      "position": "absolute",
+      "right": 0,
+    }
   }
 >
-  <LinearGradient
-    colors={
-      [
-        "rgba(255, 255, 255, 0)",
-        "rgba(255, 255, 255, 0.9)",
-      ]
-    }
-    end={
-      {
-        "x": 0,
-        "y": 1,
-      }
-    }
-    pointerEvents="none"
-    start={
-      {
-        "x": 0,
-        "y": 0,
-      }
-    }
-    style={
-      {
-        "height": 10,
-        "left": -12,
-        "position": "absolute",
-        "right": -12,
-        "top": -10,
-      }
-    }
-  />
   <View
     style={
       [
         {
-          "alignItems": "center",
-          "borderRadius": 16,
-          "flexDirection": "row",
-          "minHeight": 42,
-          "paddingHorizontal": 16,
-          "paddingVertical": 8,
+          "paddingHorizontal": 12,
+          "paddingTop": 4,
         },
+        undefined,
         {
           "backgroundColor": "#FFFFFF",
-          "borderColor": "#e1e1e1",
-          "borderWidth": 1,
         },
       ]
     }
   >
-    <View
+    <LinearGradient
+      colors={
+        [
+          "rgba(255, 255, 255, 0)",
+          "rgba(255, 255, 255, 0.9)",
+        ]
+      }
+      end={
+        {
+          "x": 0,
+          "y": 1,
+        }
+      }
+      pointerEvents="none"
+      start={
+        {
+          "x": 0,
+          "y": 0,
+        }
+      }
       style={
         {
-          "alignItems": "center",
-          "alignSelf": "flex-start",
-          "flexDirection": "row",
+          "height": 10,
+          "left": 0,
+          "position": "absolute",
+          "right": 0,
+          "top": -10,
         }
       }
     />
-    <TextInput
-      multiline={true}
-      onChangeText={[Function]}
-      placeholder="components.inputBar.placeholder"
-      placeholderTextColor="#999"
+    <View
       style={
         [
           {
-            "flex": 1,
-            "fontSize": 16,
-            "maxHeight": 100,
-            "paddingRight": 6,
-            "paddingTop": -4,
+            "alignItems": "center",
+            "borderRadius": 16,
+            "flexDirection": "row",
+            "minHeight": 42,
+            "paddingHorizontal": 16,
+            "paddingVertical": 8,
           },
           {
-            "color": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "borderColor": "#e1e1e1",
+            "borderWidth": 1,
           },
         ]
       }
-      value=""
-    />
-    <IconButton
-      backgroundColor="#b0c1cb"
-      color="#FFFFFF"
-      icon={
-        {
-          "androidIconName": "arrow_upward",
-          "iosIconName": "arrow.up",
+    >
+      <View
+        style={
+          {
+            "alignSelf": "center",
+            "flexDirection": "row",
+          }
         }
-      }
-      onPress={[Function]}
-      size={20}
-    />
+      />
+      <TextInput
+        multiline={true}
+        onChangeText={[Function]}
+        placeholder="components.inputBar.placeholder"
+        placeholderTextColor="#999"
+        style={
+          [
+            {
+              "flex": 1,
+              "fontSize": 16,
+              "maxHeight": 100,
+              "paddingRight": 6,
+              "paddingTop": -4,
+            },
+            {
+              "color": "#000000",
+            },
+          ]
+        }
+        value=""
+      />
+      <IconButton
+        backgroundColor="#b0c1cb"
+        color="#FFFFFF"
+        icon={
+          {
+            "androidIconName": "arrow_upward",
+            "iosIconName": "arrow.up",
+          }
+        }
+        onPress={[Function]}
+        size={20}
+      />
+    </View>
   </View>
 </View>
 `;
@@ -117,113 +123,119 @@ exports[`renders correctly InputBar 1`] = `
 exports[`renders correctly InputBar when streaming 1`] = `
 <View
   style={
-    [
-      {
-        "bottom": 0,
-        "left": 0,
-        "paddingHorizontal": 12,
-        "paddingTop": 4,
-        "position": "absolute",
-        "right": 0,
-      },
-      undefined,
-      {
-        "backgroundColor": "#FFFFFF",
-      },
-    ]
+    {
+      "bottom": 0,
+      "left": 0,
+      "position": "absolute",
+      "right": 0,
+    }
   }
 >
-  <LinearGradient
-    colors={
-      [
-        "rgba(255, 255, 255, 0)",
-        "rgba(255, 255, 255, 0.9)",
-      ]
-    }
-    end={
-      {
-        "x": 0,
-        "y": 1,
-      }
-    }
-    pointerEvents="none"
-    start={
-      {
-        "x": 0,
-        "y": 0,
-      }
-    }
-    style={
-      {
-        "height": 10,
-        "left": -12,
-        "position": "absolute",
-        "right": -12,
-        "top": -10,
-      }
-    }
-  />
   <View
     style={
       [
         {
-          "alignItems": "center",
-          "borderRadius": 16,
-          "flexDirection": "row",
-          "minHeight": 42,
-          "paddingHorizontal": 16,
-          "paddingVertical": 8,
+          "paddingHorizontal": 12,
+          "paddingTop": 4,
         },
+        undefined,
         {
           "backgroundColor": "#FFFFFF",
-          "borderColor": "#e1e1e1",
-          "borderWidth": 1,
         },
       ]
     }
   >
-    <View
+    <LinearGradient
+      colors={
+        [
+          "rgba(255, 255, 255, 0)",
+          "rgba(255, 255, 255, 0.9)",
+        ]
+      }
+      end={
+        {
+          "x": 0,
+          "y": 1,
+        }
+      }
+      pointerEvents="none"
+      start={
+        {
+          "x": 0,
+          "y": 0,
+        }
+      }
       style={
         {
-          "alignItems": "center",
-          "alignSelf": "flex-start",
-          "flexDirection": "row",
+          "height": 10,
+          "left": 0,
+          "position": "absolute",
+          "right": 0,
+          "top": -10,
         }
       }
     />
-    <TextInput
-      multiline={true}
-      onChangeText={[Function]}
-      placeholder="components.inputBar.placeholder"
-      placeholderTextColor="#999"
+    <View
       style={
         [
           {
-            "flex": 1,
-            "fontSize": 16,
-            "maxHeight": 100,
-            "paddingRight": 6,
-            "paddingTop": -4,
+            "alignItems": "center",
+            "borderRadius": 16,
+            "flexDirection": "row",
+            "minHeight": 42,
+            "paddingHorizontal": 16,
+            "paddingVertical": 8,
           },
           {
-            "color": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "borderColor": "#e1e1e1",
+            "borderWidth": 1,
           },
         ]
       }
-      value=""
-    />
-    <IconButton
-      backgroundColor="#000000"
-      color="#FFFFFF"
-      icon={
-        {
-          "androidIconName": "stop",
-          "iosIconName": "stop",
+    >
+      <View
+        style={
+          {
+            "alignSelf": "center",
+            "flexDirection": "row",
+          }
         }
-      }
-      onPress={[Function]}
-      size={20}
-    />
+      />
+      <TextInput
+        multiline={true}
+        onChangeText={[Function]}
+        placeholder="components.inputBar.placeholder"
+        placeholderTextColor="#999"
+        style={
+          [
+            {
+              "flex": 1,
+              "fontSize": 16,
+              "maxHeight": 100,
+              "paddingRight": 6,
+              "paddingTop": -4,
+            },
+            {
+              "color": "#000000",
+            },
+          ]
+        }
+        value=""
+      />
+      <IconButton
+        backgroundColor="#ebebeb"
+        color="#000000"
+        icon={
+          {
+            "androidIconName": "stop",
+            "iosIconName": "stop",
+          }
+        }
+        onPress={[Function]}
+        size={20}
+      />
+    </View>
   </View>
 </View>
 `;
@@ -231,113 +243,119 @@ exports[`renders correctly InputBar when streaming 1`] = `
 exports[`renders correctly InputBar with value 1`] = `
 <View
   style={
-    [
-      {
-        "bottom": 0,
-        "left": 0,
-        "paddingHorizontal": 12,
-        "paddingTop": 4,
-        "position": "absolute",
-        "right": 0,
-      },
-      undefined,
-      {
-        "backgroundColor": "#FFFFFF",
-      },
-    ]
+    {
+      "bottom": 0,
+      "left": 0,
+      "position": "absolute",
+      "right": 0,
+    }
   }
 >
-  <LinearGradient
-    colors={
-      [
-        "rgba(255, 255, 255, 0)",
-        "rgba(255, 255, 255, 0.9)",
-      ]
-    }
-    end={
-      {
-        "x": 0,
-        "y": 1,
-      }
-    }
-    pointerEvents="none"
-    start={
-      {
-        "x": 0,
-        "y": 0,
-      }
-    }
-    style={
-      {
-        "height": 10,
-        "left": -12,
-        "position": "absolute",
-        "right": -12,
-        "top": -10,
-      }
-    }
-  />
   <View
     style={
       [
         {
-          "alignItems": "center",
-          "borderRadius": 16,
-          "flexDirection": "row",
-          "minHeight": 42,
-          "paddingHorizontal": 16,
-          "paddingVertical": 8,
+          "paddingHorizontal": 12,
+          "paddingTop": 4,
         },
+        undefined,
         {
           "backgroundColor": "#FFFFFF",
-          "borderColor": "#e1e1e1",
-          "borderWidth": 1,
         },
       ]
     }
   >
-    <View
+    <LinearGradient
+      colors={
+        [
+          "rgba(255, 255, 255, 0)",
+          "rgba(255, 255, 255, 0.9)",
+        ]
+      }
+      end={
+        {
+          "x": 0,
+          "y": 1,
+        }
+      }
+      pointerEvents="none"
+      start={
+        {
+          "x": 0,
+          "y": 0,
+        }
+      }
       style={
         {
-          "alignItems": "center",
-          "alignSelf": "flex-start",
-          "flexDirection": "row",
+          "height": 10,
+          "left": 0,
+          "position": "absolute",
+          "right": 0,
+          "top": -10,
         }
       }
     />
-    <TextInput
-      multiline={true}
-      onChangeText={[Function]}
-      placeholder="components.inputBar.placeholder"
-      placeholderTextColor="#999"
+    <View
       style={
         [
           {
-            "flex": 1,
-            "fontSize": 16,
-            "maxHeight": 100,
-            "paddingRight": 6,
-            "paddingTop": -4,
+            "alignItems": "center",
+            "borderRadius": 16,
+            "flexDirection": "row",
+            "minHeight": 42,
+            "paddingHorizontal": 16,
+            "paddingVertical": 8,
           },
           {
-            "color": "#000000",
+            "backgroundColor": "#FFFFFF",
+            "borderColor": "#e1e1e1",
+            "borderWidth": 1,
           },
         ]
       }
-      value="Type here"
-    />
-    <IconButton
-      backgroundColor="#628395"
-      color="#FFFFFF"
-      icon={
-        {
-          "androidIconName": "arrow_upward",
-          "iosIconName": "arrow.up",
+    >
+      <View
+        style={
+          {
+            "alignSelf": "center",
+            "flexDirection": "row",
+          }
         }
-      }
-      onPress={[Function]}
-      size={20}
-    />
+      />
+      <TextInput
+        multiline={true}
+        onChangeText={[Function]}
+        placeholder="components.inputBar.placeholder"
+        placeholderTextColor="#999"
+        style={
+          [
+            {
+              "flex": 1,
+              "fontSize": 16,
+              "maxHeight": 100,
+              "paddingRight": 6,
+              "paddingTop": -4,
+            },
+            {
+              "color": "#000000",
+            },
+          ]
+        }
+        value="Type here"
+      />
+      <IconButton
+        backgroundColor="#628395"
+        color="#FFFFFF"
+        icon={
+          {
+            "androidIconName": "arrow_upward",
+            "iosIconName": "arrow.up",
+          }
+        }
+        onPress={[Function]}
+        size={20}
+      />
+    </View>
   </View>
 </View>
 `;
@@ -345,135 +363,141 @@ exports[`renders correctly InputBar with value 1`] = `
 exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
 <View
   style={
-    [
-      {
-        "bottom": 0,
-        "left": 0,
-        "paddingHorizontal": 12,
-        "paddingTop": 4,
-        "position": "absolute",
-        "right": 0,
-      },
-      undefined,
-      {
-        "backgroundColor": "#FFFFFF",
-      },
-    ]
+    {
+      "bottom": 0,
+      "left": 0,
+      "position": "absolute",
+      "right": 0,
+    }
   }
 >
-  <LinearGradient
-    colors={
-      [
-        "rgba(255, 255, 255, 0)",
-        "rgba(255, 255, 255, 0.9)",
-      ]
-    }
-    end={
-      {
-        "x": 0,
-        "y": 1,
-      }
-    }
-    pointerEvents="none"
-    start={
-      {
-        "x": 0,
-        "y": 0,
-      }
-    }
-    style={
-      {
-        "height": 10,
-        "left": -12,
-        "position": "absolute",
-        "right": -12,
-        "top": -10,
-      }
-    }
-  />
   <View
     style={
       [
         {
-          "alignItems": "center",
-          "borderRadius": 16,
-          "flexDirection": "row",
-          "minHeight": 42,
-          "paddingHorizontal": 16,
-          "paddingVertical": 8,
+          "paddingHorizontal": 12,
+          "paddingTop": 4,
         },
+        undefined,
         {
           "backgroundColor": "#FFFFFF",
-          "borderColor": "#e1e1e1",
-          "borderWidth": 1,
         },
       ]
     }
   >
-    <View
+    <LinearGradient
+      colors={
+        [
+          "rgba(255, 255, 255, 0)",
+          "rgba(255, 255, 255, 0.9)",
+        ]
+      }
+      end={
+        {
+          "x": 0,
+          "y": 1,
+        }
+      }
+      pointerEvents="none"
+      start={
+        {
+          "x": 0,
+          "y": 0,
+        }
+      }
       style={
         {
-          "alignItems": "center",
-          "alignSelf": "flex-start",
-          "flexDirection": "row",
+          "height": 10,
+          "left": 0,
+          "position": "absolute",
+          "right": 0,
+          "top": -10,
         }
+      }
+    />
+    <View
+      style={
+        [
+          {
+            "alignItems": "center",
+            "borderRadius": 16,
+            "flexDirection": "row",
+            "minHeight": 42,
+            "paddingHorizontal": 16,
+            "paddingVertical": 8,
+          },
+          {
+            "backgroundColor": "#FFFFFF",
+            "borderColor": "#e1e1e1",
+            "borderWidth": 1,
+          },
+        ]
       }
     >
       <View
         style={
           {
-            "marginRight": 8,
+            "alignSelf": "center",
+            "flexDirection": "row",
           }
         }
       >
-        <IconButton
-          accessibilityLabel="components.inputBar.attach"
-          backgroundColor="#ebebeb"
-          color="#000000"
-          icon={
+        <View
+          style={
             {
-              "androidIconName": "add",
-              "iosIconName": "plus",
+              "marginRight": 8,
             }
           }
-          onPress={[Function]}
-          size={20}
-        />
+        >
+          <IconButton
+            accessibilityLabel="components.inputBar.attach"
+            backgroundColor="#ebebeb"
+            color="#000000"
+            icon={
+              {
+                "androidIconName": "add",
+                "iosIconName": "plus",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+          />
+        </View>
       </View>
-    </View>
-    <TextInput
-      multiline={true}
-      onChangeText={[Function]}
-      placeholder="components.inputBar.placeholder"
-      placeholderTextColor="#999"
-      style={
-        [
-          {
-            "flex": 1,
-            "fontSize": 16,
-            "maxHeight": 100,
-            "paddingRight": 6,
-            "paddingTop": -4,
-          },
-          {
-            "color": "#000000",
-          },
-        ]
-      }
-      value=""
-    />
-    <IconButton
-      backgroundColor="#b0c1cb"
-      color="#FFFFFF"
-      icon={
-        {
-          "androidIconName": "arrow_upward",
-          "iosIconName": "arrow.up",
+      <TextInput
+        multiline={true}
+        onChangeText={[Function]}
+        placeholder="components.inputBar.placeholder"
+        placeholderTextColor="#999"
+        style={
+          [
+            {
+              "flex": 1,
+              "fontSize": 16,
+              "maxHeight": 100,
+              "paddingRight": 6,
+              "paddingTop": -4,
+            },
+            {
+              "color": "#000000",
+            },
+          ]
         }
-      }
-      onPress={[Function]}
-      size={20}
-    />
+        value=""
+      />
+      <IconButton
+        backgroundColor="#b0c1cb"
+        color="#FFFFFF"
+        icon={
+          {
+            "androidIconName": "arrow_upward",
+            "iosIconName": "arrow.up",
+          }
+        }
+        onPress={[Function]}
+        size={20}
+      />
+    </View>
   </View>
 </View>
 `;

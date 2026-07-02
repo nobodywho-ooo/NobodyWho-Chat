@@ -131,6 +131,16 @@ jest.mock('expo-image-manipulator', () => ({
   },
 }));
 
+jest.mock('expo-blur', () => {
+  const mockReact = require('react');
+  return {
+    BlurView: ({ children }) =>
+      mockReact.createElement(mockReact.Fragment, null, children),
+    BlurTargetView: ({ children }) =>
+      mockReact.createElement(mockReact.Fragment, null, children),
+  };
+});
+
 jest.mock('expo-camera', () => {
   const React = require('react');
   return {

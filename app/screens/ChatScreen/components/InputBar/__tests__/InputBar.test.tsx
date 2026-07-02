@@ -11,74 +11,60 @@ const foo = () => {
   // do nothing.
 };
 
-test('renders correctly InputBar', () => {
-  const tree = render(
+// InputBar's expanded state is owned by its parent (ChatScreen drives the blur
+// overlay from it), so tests render it through a small stateful host.
+const StatefulInputBar: React.FC<
+  Partial<React.ComponentProps<typeof InputBar>>
+> = props => {
+  const [attachExpanded, setAttachExpanded] = React.useState(false);
+  return (
     <InputBar
       value={''}
       isStreaming={false}
+      attachExpanded={attachExpanded}
+      onAttachExpandedChange={setAttachExpanded}
       onChangeText={foo}
       onSend={foo}
       onStop={foo}
-    />,
-  ).toJSON();
+      {...props}
+    />
+  );
+};
+
+test('renders correctly InputBar', () => {
+  const tree = render(<StatefulInputBar />).toJSON();
   expect(tree).toMatchSnapshot();
 });
 
 test('renders correctly InputBar with value', () => {
-  const tree = render(
-    <InputBar
-      value={'Type here'}
-      isStreaming={false}
-      onChangeText={foo}
-      onSend={foo}
-      onStop={foo}
-    />,
-  ).toJSON();
+  const tree = render(<StatefulInputBar value={'Type here'} />).toJSON();
   expect(tree).toMatchSnapshot();
 });
 
 test('renders correctly InputBar when streaming', () => {
-  const tree = render(
-    <InputBar
-      value={''}
-      isStreaming={true}
-      onChangeText={foo}
-      onSend={foo}
-      onStop={foo}
-    />,
-  ).toJSON();
+  const tree = render(<StatefulInputBar isStreaming />).toJSON();
   expect(tree).toMatchSnapshot();
 });
 
 test('renders the collapsed + toggle when attachments are enabled', () => {
   const tree = render(
-    <InputBar
-      value={''}
-      isStreaming={false}
+    <StatefulInputBar
       showImageAttach
       showAudioAttach
       onAttachImage={foo}
       onAttachAudio={foo}
-      onChangeText={foo}
-      onSend={foo}
-      onStop={foo}
     />,
   ).toJSON();
   expect(tree).toMatchSnapshot();
 });
 
-test('pressing + reveals the attach options and hides the text input', () => {
+test('pressing + lists the attach options and keeps the text input', () => {
   const screen = render(
-    <InputBar
-      value={''}
-      isStreaming={false}
+    <StatefulInputBar
       showImageAttach
       showAudioAttach
       onAttachImage={foo}
       onAttachAudio={foo}
-      onChangeText={foo}
-      onSend={foo}
-      onStop={foo}
     />,
   );
 
@@ -97,8 +83,8 @@ test('pressing + reveals the attach options and hides the text input', () => {
     .find(node => node.props.icon.iosIconName === 'plus');
   act(() => toggle?.props.onPress());
 
-  // Expanded: toggle becomes ×, the photo + camera + waveform buttons appear,
-  // and the text input is hidden.
+  // Expanded: toggle becomes ×, the photo + camera + waveform options are
+  // listed, and the text input stays visible.
   expect(iconNames()).toEqual(
     expect.arrayContaining(['xmark', 'photo', 'camera', 'waveform']),
   );
@@ -106,20 +92,12 @@ test('pressing + reveals the attach options and hides the text input', () => {
   expect(screen.getByText('components.inputBar.photo')).toBeTruthy();
   expect(screen.getByText('components.inputBar.camera')).toBeTruthy();
   expect(screen.getByText('components.inputBar.audio')).toBeTruthy();
-  expect(screen.UNSAFE_queryByType(TextInput)).toBeNull();
+  expect(screen.UNSAFE_queryByType(TextInput)).toBeTruthy();
 });
 
 test('the camera button only appears for image-capable models', () => {
   const screen = render(
-    <InputBar
-      value={''}
-      isStreaming={false}
-      showAudioAttach
-      onAttachAudio={foo}
-      onChangeText={foo}
-      onSend={foo}
-      onStop={foo}
-    />,
+    <StatefulInputBar showAudioAttach onAttachAudio={foo} />,
   );
 
   const toggle = screen
@@ -141,16 +119,11 @@ test('the camera button only appears for image-capable models', () => {
 // icons are visible.
 const expandedImageIcons = (imageSource?: 'photo' | 'camera'): string[] => {
   const screen = render(
-    <InputBar
-      value={''}
-      isStreaming={false}
+    <StatefulInputBar
       showImageAttach
       imageSource={imageSource}
       onAttachImage={foo}
       onAttachCamera={foo}
-      onChangeText={foo}
-      onSend={foo}
-      onStop={foo}
     />,
   );
   // Find the toggle by its (stable) label, not its icon — the icon is a
@@ -185,18 +158,70 @@ test('an image captured via Camera hides the Photo button', () => {
   expect(icons).not.toContain('photo');
 });
 
+test('with an image attached, only the image option is listed', () => {
+  const screen = render(
+    <StatefulInputBar
+      showImageAttach
+      showAudioAttach
+      imageSource="photo"
+      onAttachImage={foo}
+      onAttachCamera={foo}
+      onAttachAudio={foo}
+    />,
+  );
+
+  const toggle = screen
+    .UNSAFE_getAllByType(IconButton as never)
+    .find(
+      node => node.props.accessibilityLabel === 'components.inputBar.attach',
+    );
+  act(() => toggle?.props.onPress());
+
+  const iconNames = screen
+    .UNSAFE_getAllByType(IconButton as never)
+    .map(node => node.props.icon.iosIconName);
+  expect(iconNames).toContain('photo');
+  expect(iconNames).not.toContain('camera');
+  expect(iconNames).not.toContain('waveform');
+  // The remaining option offers to unselect the attachment.
+  expect(screen.getByText('components.inputBar.unselect')).toBeTruthy();
+});
+
+test('with audio attached, only the audio option is listed', () => {
+  const screen = render(
+    <StatefulInputBar
+      showImageAttach
+      showAudioAttach
+      hasAudio
+      onAttachImage={foo}
+      onAttachCamera={foo}
+      onAttachAudio={foo}
+    />,
+  );
+
+  const toggle = screen
+    .UNSAFE_getAllByType(IconButton as never)
+    .find(
+      node => node.props.accessibilityLabel === 'components.inputBar.attach',
+    );
+  act(() => toggle?.props.onPress());
+
+  const iconNames = screen
+    .UNSAFE_getAllByType(IconButton as never)
+    .map(node => node.props.icon.iosIconName);
+  expect(iconNames).toContain('waveform');
+  expect(iconNames).not.toContain('photo');
+  expect(iconNames).not.toContain('camera');
+  expect(screen.getByText('components.inputBar.unselect')).toBeTruthy();
+});
+
 test('the toggle shows a paperclip once an attachment is present', () => {
   const screen = render(
-    <InputBar
-      value={''}
-      isStreaming={false}
+    <StatefulInputBar
       showImageAttach
       imageSource="photo"
       onAttachImage={foo}
       onAttachCamera={foo}
-      onChangeText={foo}
-      onSend={foo}
-      onStop={foo}
     />,
   );
 
@@ -211,28 +236,52 @@ test('the toggle shows a paperclip once an attachment is present', () => {
 
 test('selecting an attachment collapses the expanded tray', () => {
   const props = {
-    value: '',
-    isStreaming: false,
     showImageAttach: true,
     onAttachImage: foo,
     onAttachCamera: foo,
-    onChangeText: foo,
-    onSend: foo,
-    onStop: foo,
   };
-  const screen = render(<InputBar {...props} />);
+  const screen = render(<StatefulInputBar {...props} />);
 
-  // Open the tray — the text input is replaced by the attach options.
+  // Open the tray — the attach options are listed above the input.
   const toggle = screen
     .UNSAFE_getAllByType(IconButton as never)
     .find(
       node => node.props.accessibilityLabel === 'components.inputBar.attach',
     );
   act(() => toggle?.props.onPress());
-  expect(screen.UNSAFE_queryByType(TextInput)).toBeNull();
+  expect(screen.queryByText('components.inputBar.photo')).toBeTruthy();
 
-  // An image gets attached (the parent updates imageSource) → tray collapses
-  // and the text input is back.
-  screen.rerender(<InputBar {...props} imageSource="photo" />);
-  expect(screen.UNSAFE_queryByType(TextInput)).toBeTruthy();
+  // An image gets attached (the parent updates imageSource) → tray collapses.
+  screen.rerender(<StatefulInputBar {...props} imageSource="photo" />);
+  expect(screen.queryByText('components.inputBar.photo')).toBeNull();
+});
+
+test('sending closes the expanded tray', () => {
+  const onSend = jest.fn();
+  const screen = render(
+    <StatefulInputBar
+      value={'hello'}
+      showImageAttach
+      onAttachImage={foo}
+      onAttachCamera={foo}
+      onSend={onSend}
+    />,
+  );
+
+  const toggle = screen
+    .UNSAFE_getAllByType(IconButton as never)
+    .find(
+      node => node.props.accessibilityLabel === 'components.inputBar.attach',
+    );
+  act(() => toggle?.props.onPress());
+  expect(screen.queryByText('components.inputBar.photo')).toBeTruthy();
+
+  // The send button is the icon button with the arrow-up icon.
+  const send = screen
+    .UNSAFE_getAllByType(IconButton as never)
+    .find(node => node.props.icon.iosIconName === 'arrow.up');
+  act(() => send?.props.onPress());
+
+  expect(onSend).toHaveBeenCalled();
+  expect(screen.queryByText('components.inputBar.photo')).toBeNull();
 });
