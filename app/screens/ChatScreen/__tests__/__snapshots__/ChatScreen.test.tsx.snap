@@ -241,10 +241,12 @@ exports[`renders ChatScreen with existing messages 1`] = `
     </View>
   </RCTScrollView>
   <InputBar
+    attachExpanded={false}
     hasAudio={false}
     isStreaming={false}
     onAttachAudio={[Function]}
     onAttachCamera={[Function]}
+    onAttachExpandedChange={[Function]}
     onAttachImage={[Function]}
     onBlur={[Function]}
     onChangeText={[Function]}
@@ -366,10 +368,12 @@ exports[`renders correctly empty ChatScreen 1`] = `
     </View>
   </View>
   <InputBar
+    attachExpanded={false}
     hasAudio={false}
     isStreaming={false}
     onAttachAudio={[Function]}
     onAttachCamera={[Function]}
+    onAttachExpandedChange={[Function]}
     onAttachImage={[Function]}
     onBlur={[Function]}
     onChangeText={[Function]}

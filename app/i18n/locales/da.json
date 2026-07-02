@@ -27,7 +27,6 @@
     "inputBar": {
       "placeholder": "Spørg om noget...",
       "attach": "Vedhæft filer",
-      "close": "Luk",
       "closeAttach": "Luk vedhæftninger",
       "attachImage": "Vedhæft billede",
       "attachAudio": "Vedhæft lyd",

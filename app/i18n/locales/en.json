@@ -27,7 +27,6 @@
     "inputBar": {
       "placeholder": "Ask something...",
       "attach": "Attach files",
-      "close": "Close",
       "closeAttach": "Close attachments",
       "attachImage": "Attach image",
       "attachAudio": "Attach audio",

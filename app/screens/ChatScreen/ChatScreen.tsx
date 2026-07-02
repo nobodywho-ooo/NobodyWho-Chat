@@ -2,7 +2,10 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Keyboard, Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList, FlashListRef } from '@shopify/flash-list';
+import { BlurTargetView, BlurView } from 'expo-blur';
+import LinearGradient from 'react-native-linear-gradient';
 import { MessageListItem } from 'components';
+import { useTheme } from 'context';
 import { useStyled } from 'hooks';
 import {
   DisplayMessage,
@@ -11,12 +14,18 @@ import {
 } from 'types';
 import { useAiService } from 'services';
 import { isAndroid } from 'helpers';
+import { Theme } from 'types';
 
 import { CameraCaptureModal, EmptyChat, InputBar } from './components';
 import { useAttachments, useChatGeneration, useKeyboardHeight } from './hooks';
 import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
+
+const gradientColors: Record<Theme, string[]> = {
+  light: ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.9)'],
+  dark: ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 0.9)'],
+};
 
 interface ChatScreenProps {
   conversationId: number | undefined;
@@ -30,13 +39,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   onConversationCreated,
 }) => {
   const { colors } = useStyled();
+  const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { chat, chatPipeline } = useAiService();
   const flatListRef = useRef<FlashListRef<DisplayMessage>>(null);
+  const blurTargetRef = useRef<View>(null);
   const [messages, setMessages] = useState<DisplayMessage[]>(initialMessages);
   const [conversationId, setConversationId] = useState(initialConversationId);
   const [inputText, setInputText] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const [attachExpanded, setAttachExpanded] = useState(false);
   const [stableHeight, setStableHeight] = useState(0);
 
   const { keyboardHeight, isKeyboardVisible } = useKeyboardHeight();
@@ -62,6 +74,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   useEffect(() => {
     setMessages(initialMessages);
     setConversationId(initialConversationId);
+    setAttachExpanded(false);
     clearAllAttachments();
   }, [initialMessages, initialConversationId, clearAllAttachments]);
 
@@ -97,38 +110,64 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         onPress={Keyboard.dismiss}
         accessible={false}
       />
-      {messages.length === 0 ? (
-        !isInputFocused &&
-        stableHeight > 0 && (
-          <View style={[styles.emptyChatContainer, { height: stableHeight }]}>
-            <EmptyChat />
-          </View>
-        )
-      ) : (
-        <FlashList
-          ref={flatListRef}
-          data={messages}
-          style={styles.listContainer}
-          contentContainerStyle={[
-            styles.listContent,
-            { paddingBottom: listPaddingBottom },
-          ]}
-          keyExtractor={(_, index) => index.toString()}
-          showsVerticalScrollIndicator={false}
-          renderItem={({ item, index }) => (
-            <MessageListItem
-              message={item}
-              isStreaming={isStreaming && index === messages.length - 1}
-            />
-          )}
-          onContentSizeChange={scrollToEnd}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={isAndroid ? 'on-drag' : 'interactive'}
-        />
+      <BlurTargetView ref={blurTargetRef} style={styles.blurTargetContainer}>
+        {messages.length === 0 ? (
+          !isInputFocused &&
+          stableHeight > 0 && (
+            <View style={[styles.emptyChatContainer, { height: stableHeight }]}>
+              <EmptyChat />
+            </View>
+          )
+        ) : (
+          <FlashList
+            ref={flatListRef}
+            data={messages}
+            style={styles.listContainer}
+            contentContainerStyle={[
+              styles.listContent,
+              { paddingBottom: listPaddingBottom },
+            ]}
+            keyExtractor={(_, index) => index.toString()}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item, index }) => (
+              <MessageListItem
+                message={item}
+                isStreaming={isStreaming && index === messages.length - 1}
+              />
+            )}
+            onContentSizeChange={scrollToEnd}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={isAndroid ? 'on-drag' : 'interactive'}
+          />
+        )}
+      </BlurTargetView>
+      {attachExpanded && (
+        <Pressable
+          style={styles.blurOverlay}
+          onPress={() => setAttachExpanded(false)}
+          accessible={false}
+        >
+          <BlurView
+            style={styles.blurFill}
+            intensity={16}
+            tint={theme}
+            blurMethod="dimezisBlurViewSdk31Plus"
+            blurTarget={blurTargetRef}
+          />
+          <LinearGradient
+            pointerEvents="none"
+            colors={gradientColors[theme]}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 0, y: 0 }}
+            style={styles.headerGradient}
+          />
+        </Pressable>
       )}
       <InputBar
         value={inputText}
         isStreaming={isStreaming}
+        attachExpanded={attachExpanded}
+        onAttachExpandedChange={setAttachExpanded}
         showImageAttach={ingestsImage}
         showAudioAttach={ingestsAudio}
         imageSource={attachments.attachedDocuments?.imageSource}

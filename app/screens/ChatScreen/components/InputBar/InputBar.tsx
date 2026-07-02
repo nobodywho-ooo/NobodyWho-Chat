@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, TextInput, StyleProp, ViewStyle, Keyboard } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, TextInput, StyleProp, ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { useStyled } from 'hooks';
@@ -19,6 +19,8 @@ export type ImageAttachSource = 'photo' | 'camera';
 interface InputBarProps {
   value: string;
   isStreaming: boolean;
+  attachExpanded: boolean;
+  onAttachExpandedChange: (expanded: boolean) => void;
   onChangeText: (text: string) => void;
   onSend: () => void;
   onStop: () => void;
@@ -37,6 +39,8 @@ interface InputBarProps {
 export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   value,
   isStreaming,
+  attachExpanded,
+  onAttachExpandedChange,
   onChangeText,
   onSend,
   onStop,
@@ -54,15 +58,18 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   const { t } = useTranslation();
   const { colors } = useStyled();
   const theme = useTheme();
-  const [attachExpanded, setAttachExpanded] = useState(false);
 
   const canAttach = showImageAttach || showAudioAttach;
   const showToggle = canAttach && !isStreaming;
   const expanded = showToggle && attachExpanded;
   const hasImage = imageSource !== undefined;
   const hasAttachment = hasImage || hasAudio;
-  const showPhoto = showImageAttach && imageSource !== 'camera';
-  const showCamera = showImageAttach && imageSource !== 'photo';
+
+  const showPhoto =
+    showImageAttach && (hasAttachment ? imageSource === 'photo' : true);
+  const showCamera =
+    showImageAttach && (hasAttachment ? imageSource === 'camera' : true);
+  const showAudio = showAudioAttach && (hasAttachment ? hasAudio : true);
 
   const prevAttachments = useRef({ hasImage, hasAudio });
 
@@ -70,22 +77,26 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
     const addedImage = hasImage && !prevAttachments.current.hasImage;
     const addedAudio = hasAudio && !prevAttachments.current.hasAudio;
     if (addedImage || addedAudio) {
-      setAttachExpanded(false);
+      onAttachExpandedChange(false);
     }
     prevAttachments.current = { hasImage, hasAudio };
-  }, [hasImage, hasAudio]);
+  }, [hasImage, hasAudio, onAttachExpandedChange]);
+
+  useEffect(() => {
+    if (attachExpanded && !showToggle) {
+      onAttachExpandedChange(false);
+    }
+  }, [attachExpanded, showToggle, onAttachExpandedChange]);
 
   const toggleAttach = () => {
-    // Dismiss the keyboard as we open the tray, while the TextInput is still
-    // mounted to receive the blur. If we waited until after the re-render (the
-    // tray replaces the TextInput), there'd be no focused input left to blur,
-    // and on Android the orphaned soft keyboard lingers and reconfigures — a
-    // number row appears, growing it past the height ChatScreen measured, so it
-    // covers the input bar. There's nothing to type into while the tray is open.
-    if (!attachExpanded) {
-      Keyboard.dismiss();
+    onAttachExpandedChange(!attachExpanded);
+  };
+
+  const handleSend = () => {
+    if (attachExpanded) {
+      onAttachExpandedChange(false);
     }
-    setAttachExpanded(prev => !prev);
+    onSend();
   };
 
   const extraStyle = {
@@ -93,12 +104,6 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
     borderColor: colors.border,
     borderWidth: 1,
   };
-
-  const mainViewStyle = [
-    styles.mainContainer,
-    style,
-    { backgroundColor: colors.surface },
-  ];
 
   const renderAttachButton = ({
     icon,
@@ -159,99 +164,101 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   );
 
   return (
-    <View style={mainViewStyle}>
-      <LinearGradient
-        pointerEvents="none"
-        colors={gradientColors[theme]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={styles.topGradient}
-      />
-      <View style={[styles.inputBarContainer, extraStyle]}>
-        <View style={styles.attachMainContainer}>
-          {showToggle &&
-            renderAttachButton({
-              icon: expanded
-                ? { iosIconName: 'xmark', androidIconName: 'close' }
-                : hasAttachment
-                  ? { iosIconName: 'paperclip', androidIconName: 'attach_file' }
-                  : { iosIconName: 'plus', androidIconName: 'add' },
-              active: !expanded && hasAttachment,
-              onPress: toggleAttach,
-              accessibilityLabel: t(
-                expanded
-                  ? 'components.inputBar.closeAttach'
-                  : 'components.inputBar.attach',
-              ),
-            })}
-          {expanded && (
-            <Text
-              variant="body2"
-              style={[styles.closeLabel, { color: colors.onSurface }]}
-            >
-              {t('components.inputBar.close')}
-            </Text>
-          )}
-        </View>
-        {expanded ? (
-          <View style={styles.attachOptions}>
-            {showPhoto &&
-              renderAttachOption({
-                icon: { iosIconName: 'photo', androidIconName: 'image' },
-                label: hasAttachment
+    <View style={styles.mainContainer}>
+      {expanded && (
+        <View style={[styles.attachOptionsList, extraStyle]}>
+          {showPhoto &&
+            renderAttachOption({
+              icon: { iosIconName: 'photo', androidIconName: 'image' },
+              label:
+                imageSource === 'photo'
                   ? t('components.inputBar.unselect')
                   : t('components.inputBar.photo'),
-                active: imageSource === 'photo',
-                onPress: onAttachImage,
-                accessibilityLabel: t('components.inputBar.attachImage'),
-              })}
-            {showCamera &&
-              renderAttachOption({
-                icon: {
-                  iosIconName: 'camera',
-                  androidIconName: 'photo_camera',
-                },
-                label: hasAttachment
+              active: imageSource === 'photo',
+              onPress: onAttachImage,
+              accessibilityLabel: t('components.inputBar.attachImage'),
+            })}
+          {showCamera &&
+            renderAttachOption({
+              icon: {
+                iosIconName: 'camera',
+                androidIconName: 'photo_camera',
+              },
+              label:
+                imageSource === 'camera'
                   ? t('components.inputBar.unselect')
                   : t('components.inputBar.camera'),
-                active: imageSource === 'camera',
-                onPress: onAttachCamera,
-                accessibilityLabel: t('components.inputBar.attachCamera'),
-              })}
-            {showAudioAttach &&
-              renderAttachOption({
-                icon: {
-                  iosIconName: 'waveform',
-                  androidIconName: 'music_note',
-                },
-                label: hasAttachment
-                  ? t('components.inputBar.unselect')
-                  : t('components.inputBar.audio'),
-                active: hasAudio,
-                onPress: onAttachAudio,
-                accessibilityLabel: t('components.inputBar.attachAudio'),
+              active: imageSource === 'camera',
+              onPress: onAttachCamera,
+              accessibilityLabel: t('components.inputBar.attachCamera'),
+            })}
+          {showAudio &&
+            renderAttachOption({
+              icon: {
+                iosIconName: 'waveform',
+                androidIconName: 'music_note',
+              },
+              label: hasAudio
+                ? t('components.inputBar.unselect')
+                : t('components.inputBar.audio'),
+              active: hasAudio,
+              onPress: onAttachAudio,
+              accessibilityLabel: t('components.inputBar.attachAudio'),
+            })}
+        </View>
+      )}
+      <View
+        style={[
+          styles.inputFieldContainer,
+          style,
+          { backgroundColor: colors.surface },
+        ]}
+      >
+        <LinearGradient
+          pointerEvents="none"
+          colors={gradientColors[theme]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={styles.topGradient}
+        />
+        <View style={[styles.inputBarContainer, extraStyle]}>
+          <View style={styles.attachMainContainer}>
+            {showToggle &&
+              renderAttachButton({
+                icon: expanded
+                  ? { iosIconName: 'xmark', androidIconName: 'close' }
+                  : hasAttachment
+                    ? {
+                        iosIconName: 'paperclip',
+                        androidIconName: 'attach_file',
+                      }
+                    : { iosIconName: 'plus', androidIconName: 'add' },
+                active: !expanded && hasAttachment,
+                onPress: toggleAttach,
+                accessibilityLabel: t(
+                  expanded
+                    ? 'components.inputBar.closeAttach'
+                    : 'components.inputBar.attach',
+                ),
               })}
           </View>
-        ) : (
-          <>
-            <TextInput
-              style={[styles.textInput, { color: colors.onSurface }]}
-              placeholder={t('components.inputBar.placeholder')}
-              placeholderTextColor="#999"
-              value={value}
-              onChangeText={onChangeText}
-              onFocus={onFocus}
-              onBlur={onBlur}
-              multiline
-            />
-            <InputBarAction
-              isStreaming={isStreaming}
-              value={value}
-              onSend={onSend}
-              onStop={onStop}
-            />
-          </>
-        )}
+          <TextInput
+            style={[styles.textInput, { color: colors.onSurface }]}
+            placeholder={t('components.inputBar.placeholder')}
+            placeholderTextColor="#999"
+            value={value}
+            onChangeText={onChangeText}
+            onFocus={onFocus}
+            onBlur={onBlur}
+            multiline
+          />
+          <InputBarAction
+            isStreaming={isStreaming}
+            value={value}
+            onSend={handleSend}
+            onStop={onStop}
+          />
+        </View>
       </View>
     </View>
   );
@@ -287,8 +294,8 @@ const InputBarAction: React.FC<InputBarActionProps> = ({
   }
 
   if (isStreaming) {
-    color = colors.ctaContentSecondary;
-    backgroundColor = colors.ctaSurfaceSecondary;
+    color = colors.onSurface;
+    backgroundColor = colors.surfaceContainer;
     icon = {
       iosIconName: 'stop',
       androidIconName: 'stop',

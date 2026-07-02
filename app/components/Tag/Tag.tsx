@@ -20,14 +20,13 @@ export const Tag: React.FC<TagProps> = ({
 }) => {
   const { colors } = useStyled();
 
-  const textColor =
-    label === 'Recommended'
-      ? colors.ctaContentPrimary
-      : colors.onSurfaceVariant;
-  const backgroundColor =
-    label === 'Recommended'
-      ? colors.ctaSurfacePrimaryDisabled
-      : colors.surfaceContainer;
+  let textColor = colors.onSurfaceVariant;
+  let backgroundColor = colors.surfaceSecondary;
+
+  if (label === 'Recommended') {
+    textColor = colors.onSurface;
+    backgroundColor = colors.surfaceContainer;
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: backgroundColor }]}>

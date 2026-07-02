@@ -10,13 +10,15 @@ export const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  inputFieldContainer: {
     paddingTop: Spacings.xs,
     paddingHorizontal: Spacings.md,
   },
   topGradient: {
     position: 'absolute',
-    left: -Spacings.md,
-    right: -Spacings.md,
+    left: 0,
+    right: 0,
     top: -TOP_GRADIENT_HEIGHT,
     height: TOP_GRADIENT_HEIGHT,
   },
@@ -43,16 +45,16 @@ export const styles = StyleSheet.create({
   },
   attachMainContainer: {
     flexDirection: 'row',
-    alignSelf: 'flex-start',
-    alignItems: 'center'
+    alignSelf: 'center',
   },
-  attachOptions: {
-    flex: 1,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'center',
-    columnGap: Spacings.md,
-    rowGap: Spacings.sm,
+  attachOptionsList: {
+    alignSelf: 'flex-start',
+    borderRadius: 16,
+    paddingHorizontal: Spacings.lg,
+    paddingVertical: Spacings.md,
+    rowGap: Spacings.md,
+    marginBottom: Spacings.sm,
+    marginHorizontal: Spacings.md,
   },
   attachOption: {
     flexDirection: 'row',
@@ -61,7 +63,4 @@ export const styles = StyleSheet.create({
   attachLabel: {
     marginLeft: Spacings.xs,
   },
-  closeLabel: {
-    marginRight: Spacings.sm,
-  }
 });
