@@ -10,7 +10,7 @@ exports[`renders correctly InUseModel 1`] = `
     }
     variant="h4"
   >
-    screens.models.inUse
+    header
   </Text>,
   <ModelCard
     isSelected={true}
