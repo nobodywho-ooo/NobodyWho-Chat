@@ -16,7 +16,7 @@ import { useAiService } from 'services';
 import { isAndroid } from 'helpers';
 import { Theme } from 'types';
 
-import { CameraCaptureModal, EmptyChat, InputBar } from './components';
+import { CameraCaptureModal, InputBar, MessageStarters } from './components';
 import { useAttachments, useChatGeneration, useKeyboardHeight } from './hooks';
 import styles from './ChatScreen.styles';
 
@@ -47,9 +47,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const [messages, setMessages] = useState<DisplayMessage[]>(initialMessages);
   const [conversationId, setConversationId] = useState(initialConversationId);
   const [inputText, setInputText] = useState('');
-  const [isInputFocused, setIsInputFocused] = useState(false);
   const [attachExpanded, setAttachExpanded] = useState(false);
-  const [stableHeight, setStableHeight] = useState(0);
 
   const { keyboardHeight, isKeyboardVisible } = useKeyboardHeight();
   const ingestsImage = pipelineIngestsImage(chatPipeline);
@@ -97,28 +95,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const listPaddingBottom = bottomOffset + InputBar.height + INPUT_BAR_PADDING;
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: colors.surface }]}
-      onLayout={e => {
-        if (!isInputFocused && !isKeyboardVisible) {
-          setStableHeight(e.nativeEvent.layout.height);
-        }
-      }}
-    >
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <Pressable
         style={styles.dismissOverlay}
         onPress={Keyboard.dismiss}
         accessible={false}
       />
       <BlurTargetView ref={blurTargetRef} style={styles.blurTargetContainer}>
-        {messages.length === 0 ? (
-          !isInputFocused &&
-          stableHeight > 0 && (
-            <View style={[styles.emptyChatContainer, { height: stableHeight }]}>
-              <EmptyChat />
-            </View>
-          )
-        ) : (
+        {messages.length > 0 && (
           <FlashList
             ref={flatListRef}
             data={messages}
@@ -178,9 +162,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         onChangeText={setInputText}
         onSend={handleSend}
         onStop={stopStreaming}
-        onFocus={() => setIsInputFocused(true)}
-        onBlur={() => setIsInputFocused(false)}
         style={{ paddingBottom: bottomOffset }}
+        topAccessory={
+          messages.length === 0 &&
+          !attachExpanded && (
+            <MessageStarters pipeline={chatPipeline} onSelect={setInputText} />
+          )
+        }
       />
       {ingestsImage && (
         <CameraCaptureModal

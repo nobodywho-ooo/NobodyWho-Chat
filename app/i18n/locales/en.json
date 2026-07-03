@@ -21,8 +21,117 @@
     }
   },
   "components": {
-    "emptyChat": {
-      "startAChat": "Start a chat"
+    "messageStarters": {
+      "planParisTrip": {
+        "title": "Plan",
+        "subtitle": "a trip to Paris",
+        "body": "I want to plan a 7-day trip to Paris. Please suggest must-see attractions, recommend good neighborhoods to stay in, and create a daily itinerary including restaurants and activities."
+      },
+      "beginMeditating": {
+        "title": "Begin",
+        "subtitle": "meditating",
+        "body": "I'm interested in starting a meditation practice. Please guide me through basic meditation techniques, suggest a daily routine, and explain the benefits for mental well-being."
+      },
+      "designWorkoutRoutine": {
+        "title": "Design",
+        "subtitle": "a workout routine",
+        "body": "I'd like to design a home workout routine without equipment. Please create a balanced exercise plan that targets all major muscle groups, including warm-up and cool-down stretches."
+      },
+      "pickWeekendActivity": {
+        "title": "Pick",
+        "subtitle": "a weekend activity",
+        "body": "Options for a free Saturday: 1. Hiking: Great weather, but a long drive. 2. Movie marathon: Relaxing but indoors all day. 3. Local event: Social but unpredictable. Choose the best activity based on energy levels and mood."
+      },
+      "packLight": {
+        "title": "Pack",
+        "subtitle": "light for a weekend trip",
+        "body": "A 3-day trip allows only a carry-on bag. Pack essentials, including versatile outfits, toiletries, and necessary gadgets, while keeping luggage minimal."
+      },
+      "organizeFinances": {
+        "title": "Organize",
+        "subtitle": "my finances",
+        "body": "I want to get my personal finances organized. Please help me create a monthly budget, track my expenses, and suggest practical strategies for saving money."
+      },
+      "tellMeSomethingFascinating": {
+        "title": "Tell me",
+        "subtitle": "something fascinating",
+        "body": "Share an interesting scientific discovery or historical fact that most people don't know about. Please explain why it's significant and its impact on our understanding."
+      },
+      "prepareJobInterview": {
+        "title": "Prepare",
+        "subtitle": "for a job interview",
+        "body": "An interview is scheduled for a marketing position. Research common questions, prepare answers, and choose professional attire to make a strong impression."
+      },
+      "writeProfessionally": {
+        "title": "Write",
+        "subtitle": "professionally",
+        "body": "I need to write a formal email to decline a business proposal while maintaining good relationships. Please help me craft a polite and professional message."
+      },
+      "startLearningFrench": {
+        "title": "Start learning",
+        "subtitle": "French",
+        "body": "I want to start learning French. Could you create a beginner-friendly study plan with daily exercises, recommended resources, and practical conversation starters?"
+      },
+      "planVacationTrip": {
+        "title": "Plan",
+        "subtitle": "a vacation trip",
+        "body": "A 5-day trip to Italy includes stops in Rome and Florence. Balance sightseeing, relaxation, and local food experiences while considering travel time between cities."
+      },
+      "explainComplexTopic": {
+        "title": "Explain",
+        "subtitle": "a complex topic simply",
+        "body": "Could you explain how quantum computing works in simple terms? Please use everyday analogies and avoid technical jargon."
+      },
+      "organizeBirthdayParty": {
+        "title": "Organize",
+        "subtitle": "a birthday party",
+        "body": "A birthday party is planned for 10 guests with a $400 budget. Allocate funds for food, decorations, and entertainment while keeping costs under control."
+      },
+      "summarizeText": {
+        "title": "Summarize",
+        "subtitle": "this text",
+        "body": "Could you please provide a concise summary of this text, highlighting the main points and key takeaways? Focus on the most important information while maintaining the core message."
+      },
+      "decideDinner": {
+        "title": "Decide",
+        "subtitle": "what to cook for dinner",
+        "body": "The fridge contains chicken, bell peppers, rice, and a few spices. Create a quick and tasty meal using these ingredients without requiring a grocery trip."
+      },
+      "discoverNextBook": {
+        "title": "Discover",
+        "subtitle": "my next book",
+        "body": "Based on my interest in fiction novels with strong character development and psychological themes, could you recommend some books? I recently enjoyed works by Donna Tartt and Haruki Murakami."
+      },
+      "boostProductivity": {
+        "title": "Boost",
+        "subtitle": "my productivity",
+        "body": "I need help creating a balanced daily schedule that maximizes my productivity while maintaining work-life balance. Please include time management tips and suggested breaks."
+      },
+      "describeImage": {
+        "title": "Describe",
+        "subtitle": "this image",
+        "body": "Please describe this image in detail"
+      },
+      "identifyPlant": {
+        "title": "Identify",
+        "subtitle": "this plant",
+        "body": "What plant or flower is this?"
+      },
+      "analyzeArtwork": {
+        "title": "Analyze",
+        "subtitle": "this artwork",
+        "body": "Can you analyze this artwork?"
+      },
+      "identifyAnimal": {
+        "title": "Identify",
+        "subtitle": "this animal",
+        "body": "What animal is this?"
+      },
+      "describeAudio": {
+        "title": "Describe",
+        "subtitle": "this audio file",
+        "body": "Tell me what you hear in this audio file"
+      }
     },
     "inputBar": {
       "placeholder": "Ask about anything...",

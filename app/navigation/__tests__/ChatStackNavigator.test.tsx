@@ -5,7 +5,6 @@ import { render, act, waitFor } from '@testing-library/react-native';
 import { mockUseModels } from 'jest/mock/hooks';
 import { buildModel } from 'jest/factories/model';
 import { ModelPipeline } from 'types';
-import { fireContainerLayout } from 'jest/layout';
 import { getAppState, setAppState } from 'database';
 import { InputBar } from '../../screens/ChatScreen/components/InputBar/InputBar';
 import {
@@ -60,6 +59,15 @@ jest.mock('services', () => ({
   }),
   subscribeToolInvocations: jest.fn(() => jest.fn()),
 }));
+
+// The starter selection is random; pin it so showEmptyChat can wait on a
+// known starter.
+jest.mock(
+  '../../screens/ChatScreen/components/MessageStarters/starters',
+  () => ({
+    pickStarterIds: () => ['planParisTrip'],
+  }),
+);
 
 jest.mock('repositories', () => ({
   getModelById: jest.fn(),
@@ -128,13 +136,13 @@ const defaultCreateChatOpts = {
   toolCalling: true,
 };
 
-// The empty chat is gated on a measured container height; jsdom never lays out,
-// so wait for the chat screen to mount, fire its layout, then confirm the empty
-// state is visible.
+// An empty chat offers the message starters above the input bar; wait for the
+// chat screen to mount and confirm that empty state is visible.
 const showEmptyChat = (screen: ReturnType<typeof render>) =>
   waitFor(() => {
-    fireContainerLayout(screen);
-    expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy();
+    expect(
+      screen.getByText('components.messageStarters.planParisTrip.title'),
+    ).toBeTruthy();
   });
 
 test('shows NoModelDownloadedScreen when no model is downloaded', () => {
@@ -344,7 +352,9 @@ test('switching conversations keeps the chat screen mounted (no loading flash)',
   // History injection is still pending. The old design flipped status to Loading
   // (unmounting ChatScreen for the loading screen); the new design stays Ready, so
   // the previous conversation's content is still on screen instead of a flash.
-  expect(screen.getByText('components.emptyChat.startAChat')).toBeTruthy();
+  expect(
+    screen.getByText('components.messageStarters.planParisTrip.title'),
+  ).toBeTruthy();
 
   await act(async () => {
     resolveSetHistory();

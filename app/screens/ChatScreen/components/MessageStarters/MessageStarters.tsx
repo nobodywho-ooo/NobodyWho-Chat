@@ -1,0 +1,41 @@
+import React, { useMemo } from 'react';
+import { ScrollView } from 'react-native';
+import { useTranslation } from 'react-i18next';
+import { ChatPipeline } from 'types';
+
+import { MessageStarter } from './MessageStarter';
+import { pickStarterIds } from './starters';
+import styles from './MessageStarters.styles';
+
+interface MessageStartersProps {
+  pipeline: ChatPipeline;
+  onSelect: (body: string) => void;
+}
+
+export const MessageStarters: React.FC<MessageStartersProps> = ({
+  pipeline,
+  onSelect,
+}) => {
+  const { t } = useTranslation();
+  const starterIds = useMemo(() => pickStarterIds(pipeline), [pipeline]);
+
+  return (
+    <ScrollView
+      horizontal
+      style={styles.list}
+      contentContainerStyle={styles.listContent}
+      showsHorizontalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      {starterIds.map(id => (
+        <MessageStarter
+          key={id}
+          title={t(`components.messageStarters.${id}.title`)}
+          subtitle={t(`components.messageStarters.${id}.subtitle`)}
+          body={t(`components.messageStarters.${id}.body`)}
+          onPress={onSelect}
+        />
+      ))}
+    </ScrollView>
+  );
+};

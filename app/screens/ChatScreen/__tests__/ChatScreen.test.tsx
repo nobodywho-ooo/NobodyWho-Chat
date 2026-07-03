@@ -4,8 +4,12 @@ import { Message } from 'react-native-nobodywho';
 
 import { MessageListItem } from 'components';
 import { AiServiceProvider } from 'services';
-import { fireContainerLayout } from 'jest/layout';
 import { ChatScreen } from '../ChatScreen';
+
+// The starter selection is random; pin it so the snapshot stays stable.
+jest.mock('../components/MessageStarters/starters', () => ({
+  pickStarterIds: () => ['planParisTrip', 'summarizeText'],
+}));
 
 test('renders correctly empty ChatScreen', () => {
   const screen = render(
@@ -17,8 +21,10 @@ test('renders correctly empty ChatScreen', () => {
       />
     </AiServiceProvider>,
   );
-  // The empty state only mounts once the container has measured its height.
-  fireContainerLayout(screen);
+  // No message sent yet, so the starters are offered above the input bar.
+  expect(
+    screen.getByText('components.messageStarters.planParisTrip.title'),
+  ).toBeTruthy();
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
