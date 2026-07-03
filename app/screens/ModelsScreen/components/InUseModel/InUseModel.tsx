@@ -1,5 +1,4 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import { ModelCard } from 'components';
 import { Model } from 'types';
 
@@ -7,14 +6,18 @@ import { SectionHeader } from '../SectionHeader/SectionHeader';
 
 interface InUseModelProps {
   model: Model;
+  title: string;
+  first?: boolean;
 }
 
-export const InUseModel: React.FC<InUseModelProps> = ({ model }) => {
-  const { t } = useTranslation();
-
+export const InUseModel: React.FC<InUseModelProps> = ({
+  model,
+  title,
+  first = true,
+}) => {
   return (
     <>
-      <SectionHeader first title={t('screens.models.inUse')} />
+      <SectionHeader first={first} title={title} />
       <ModelCard isSelected model={model} />
     </>
   );

@@ -8,9 +8,16 @@ import React, {
 } from 'react';
 import { Chat, SamplerConfig } from 'react-native-nobodywho';
 import * as Sentry from '@sentry/react-native';
-import { downloadedPartPath, log, sleep } from 'helpers';
-import { ChatPipeline, Model, ModelPipeline, toChatPipeline } from 'types';
+import { downloadedPartPath, log, modelDirectoryPath, sleep } from 'helpers';
+import {
+  ChatPipeline,
+  Model,
+  ModelPipeline,
+  isTtsPipeline,
+  toChatPipeline,
+} from 'types';
 import { buildChatTools } from './tools';
+import { TtsInstance, loadTtsEngine } from './ttsEngine';
 
 export enum AiModelState {
   NotLoaded = 'notLoaded',
@@ -22,10 +29,12 @@ export enum AiModelState {
 interface AiServiceState {
   chatState: AiModelState;
   chatPipeline: ChatPipeline;
+  ttsState: AiModelState;
 }
 
 interface AiServiceContextValue extends AiServiceState {
   chat: React.RefObject<Chat | undefined>;
+  tts: React.RefObject<TtsInstance | undefined>;
 
   createChat: (opts: {
     model: Model;
@@ -37,6 +46,8 @@ interface AiServiceContextValue extends AiServiceState {
     toolCalling?: boolean;
   }) => Promise<void>;
   disposeChat: () => void;
+  createTts: (opts: { model: Model }) => Promise<void>;
+  disposeTts: () => void;
   dispose: () => void;
 }
 
@@ -47,6 +58,7 @@ const AiServiceContext = createContext<AiServiceContextValue | undefined>(
 const _initialState: AiServiceState = {
   chatState: AiModelState.NotLoaded,
   chatPipeline: ModelPipeline.textGeneration,
+  ttsState: AiModelState.NotLoaded,
 };
 
 // chat.destroy() is fire-and-forget: it signals the native worker thread but
@@ -67,21 +79,25 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   const [state, setState] = useState<AiServiceState>(_initialState);
 
   const chatRef = useRef<Chat | undefined>(undefined);
+  const ttsRef = useRef<TtsInstance | undefined>(undefined);
 
   // Bumped on every dispose. A createChat that resolves after its generation
   // passed must discard its instance instead of resurrecting a disposed chat.
   const chatGeneration = useRef(0);
+  const ttsGeneration = useRef(0);
 
-  // The in-flight chat load (undefined when idle), so the next createChat can
-  // serialize behind it. Chat.fromPath has no cancellation, and disposeChat
-  // can't tear down a load that hasn't returned its instance yet — so without
-  // serializing, switching models mid-load would run two heavy llama.cpp loads
-  // at once. That deadlocks (or OOMs) the native backend, and the app then
-  // hangs on "Loading…" forever — even across restarts, since the same model
-  // stays persisted as in use. Chaining each load onto the previous one
-  // guarantees only one fromPath runs at a time, so a superseded load fully
-  // releases the backend before the next begins.
-  const chatLoadRef = useRef<Promise<unknown> | undefined>(undefined);
+  // The in-flight native load (undefined when idle), so the next load can
+  // serialize behind it. Neither Chat.fromPath nor Tts.load has cancellation,
+  // and a dispose can't tear down a load that hasn't returned its instance
+  // yet — so without serializing, switching models mid-load would run two
+  // heavy native loads at once. That deadlocks (or OOMs) the native backend,
+  // and the app then hangs on "Loading…" forever — even across restarts, since
+  // the same model stays persisted as in use. Chaining each load onto the
+  // previous one guarantees only one native load runs at a time, so a
+  // superseded load fully releases the backend before the next begins. Chat
+  // and TTS loads share this single chain: the invariant is per-backend, not
+  // per-engine.
+  const nativeLoadRef = useRef<Promise<unknown> | undefined>(undefined);
 
   // Run a chat teardown serialized on the same chain as loads, so the next
   // createChat's `await previousLoad` also waits out the teardown + settle
@@ -89,7 +105,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   // backgrounding) followed by a reload (on returning) overlaps the old
   // context's native release with the new one's Metal allocation.
   const enqueueTeardown = useCallback((teardown: () => void) => {
-    const previous = chatLoadRef.current;
+    const previous = nativeLoadRef.current;
     const barrier = (async () => {
       // Serialize behind any in-flight load before touching the backend.
       if (previous) {
@@ -107,7 +123,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     })();
     // Publish so the next createChat (or teardown) serializes behind us; swallow
     // rejections so one failure can't reject the next `await previousLoad`.
-    chatLoadRef.current = barrier.catch(() => undefined);
+    nativeLoadRef.current = barrier.catch(() => undefined);
     return barrier;
   }, []);
 
@@ -126,7 +142,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       const generation = chatGeneration.current;
-      const previousLoad = chatLoadRef.current;
+      const previousLoad = nativeLoadRef.current;
 
       const load = (async () => {
         // Wait for any in-flight load to fully settle (and release the native
@@ -149,7 +165,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
 
         const chatPart = model.parts.find(part => part.type === 'chat-model');
         const chatModelPath = chatPart
-          ? downloadedPartPath(chatPart.fileName)
+          ? downloadedPartPath(model.id, chatPart.fileName)
           : null;
 
         if (!chatModelPath) {
@@ -164,7 +180,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
             : undefined;
 
         const projectionModelPath = projectionPart
-          ? (downloadedPartPath(projectionPart.fileName) ?? undefined)
+          ? (downloadedPartPath(model.id, projectionPart.fileName) ?? undefined)
           : undefined;
 
         if (projectionPart && !projectionModelPath) {
@@ -211,7 +227,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
               capture: true,
             });
           }
-          // This IIFE owns chatLoadRef, so we can't enqueueTeardown (self-wait).
+          // This IIFE owns nativeLoadRef, so we can't enqueueTeardown (self-wait).
           // The newer load already awaits this IIFE via `await previousLoad`, so
           // settling here delays its fromPath until our GPU buffers are freed.
           await sleep(TEARDOWN_SETTLE_MS);
@@ -219,17 +235,19 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         }
 
         chatRef.current = chat;
+        const chatPipeline = toChatPipeline(model.pipeline);
+
         setState(s => ({
           ...s,
           chatState: AiModelState.Ready,
-          chatPipeline: toChatPipeline(model.pipeline),
+          chatPipeline: chatPipeline,
         }));
       })();
 
       // Publish this load so the next createChat serializes behind it. The
       // stored handle swallows rejections so one failed load can't reject the
       // next load's `await previousLoad`.
-      chatLoadRef.current = load.catch(() => undefined);
+      nativeLoadRef.current = load.catch(() => undefined);
 
       try {
         await load;
@@ -274,12 +292,96 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     }));
   }, [enqueueTeardown]);
 
+  const createTts = useCallback(async (opts: { model: Model }) => {
+    if (ttsRef.current) {
+      return;
+    }
+
+    const { model } = opts;
+    if (!isTtsPipeline(model.pipeline)) {
+      throw new Error(
+        `AiService: model ${model.id} (${model.name}) is not a TTS model`,
+      );
+    }
+
+    const generation = ttsGeneration.current;
+    const previousLoad = nativeLoadRef.current;
+
+    const load = (async () => {
+      if (previousLoad) {
+        await previousLoad;
+      }
+
+      if (generation !== ttsGeneration.current || ttsRef.current) {
+        return;
+      }
+
+      setState(s => ({ ...s, ttsState: AiModelState.Loading }));
+
+      const missingPart = model.parts.find(
+        part => downloadedPartPath(model.id, part.fileName) === null,
+      );
+
+      if (missingPart) {
+        throw new Error(
+          `AiService: TTS file ${missingPart.fileName} missing for model ${model.id} (${model.name}) — re-download required`,
+        );
+      }
+
+      const tts = await loadTtsEngine(modelDirectoryPath(model.id));
+
+      if (generation !== ttsGeneration.current) {
+        // TODO: might be needed - check
+        try {
+          tts.destroy();
+        } catch (error) {
+          log('AiService superseded tts destroy failed', error, {
+            capture: true,
+          });
+        }
+        await sleep(TEARDOWN_SETTLE_MS);
+        return;
+      }
+
+      ttsRef.current = tts;
+      setState(s => ({ ...s, ttsState: AiModelState.Ready }));
+    })();
+
+    nativeLoadRef.current = load.catch(() => undefined);
+
+    try {
+      await load;
+    } catch (error) {
+      log('AiService create tts', error, { capture: true });
+      if (generation === ttsGeneration.current) {
+        setState(s => ({ ...s, ttsState: AiModelState.Error }));
+      }
+      throw error;
+    }
+  }, []);
+
+  const disposeTts = useCallback(() => {
+    ttsGeneration.current += 1;
+    const instance = ttsRef.current;
+    ttsRef.current = undefined;
+
+    if (instance) {
+      // TODO: might be needed - check
+      enqueueTeardown(() => instance.destroy());
+    }
+
+    setState(s => ({ ...s, ttsState: AiModelState.NotLoaded }));
+  }, [enqueueTeardown]);
+
   const dispose = useCallback(() => {
     chatGeneration.current += 1;
-    // Clear the ref BEFORE destroying so a throwing destroy() can't leave a
-    // stale instance that blocks the next createChat().
+    ttsGeneration.current += 1;
+    // Clear the refs BEFORE destroying so a throwing destroy() can't leave a
+    // stale instance that blocks the next createChat()/createTts().
     const chatInstance = chatRef.current;
     chatRef.current = undefined;
+    const ttsInstance = ttsRef.current;
+    ttsRef.current = undefined;
 
     // The Chat can overlap a future chat load, so route its teardown through
     // the load chain (stop generation first, since only Chat streams).
@@ -296,6 +398,11 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       });
     }
 
+    // Second enqueue serializes behind the chat teardown on the same chain.
+    if (ttsInstance) {
+      enqueueTeardown(() => ttsInstance.destroy());
+    }
+
     setState(_initialState);
   }, [enqueueTeardown]);
 
@@ -303,11 +410,14 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     () => ({
       ...state,
       chat: chatRef,
+      tts: ttsRef,
       createChat,
       disposeChat,
+      createTts,
+      disposeTts,
       dispose,
     }),
-    [state, createChat, disposeChat, dispose],
+    [state, createChat, disposeChat, createTts, disposeTts, dispose],
   );
 
   return (

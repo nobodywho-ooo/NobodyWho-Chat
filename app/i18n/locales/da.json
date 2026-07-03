@@ -25,7 +25,7 @@
       "startAChat": "Start en chat"
     },
     "inputBar": {
-      "placeholder": "Spørg om noget...",
+      "placeholder": "Spørg om hvad som helst...",
       "attach": "Vedhæft filer",
       "closeAttach": "Luk vedhæftninger",
       "attachImage": "Vedhæft billede",
@@ -99,6 +99,7 @@
     },
     "models": {
       "inUse": "I brug",
+      "voiceInUse": "Stemme i brug",
       "readyToUse": "Klar til brug",
       "downloaded": "Downloadet",
       "modelCount_one": "{{count}} model",

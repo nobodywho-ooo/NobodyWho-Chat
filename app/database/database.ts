@@ -24,6 +24,10 @@ export function closeDatabase(): void {
   }
 }
 
+// Regenerated from the enum on every fresh install, so extending ModelPipeline
+// extends the CHECK below without a new migration. A database created BEFORE an
+// enum addition has the old list frozen in (user_version already 1) — inserting
+// a model with a newer pipeline fails its CHECK. Fine pre-release: wipe the app.
 const PIPELINES = Object.values(ModelPipeline)
   .map(pipeline => `'${pipeline}'`)
   .join(', ');

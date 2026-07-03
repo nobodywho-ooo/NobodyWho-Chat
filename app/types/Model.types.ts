@@ -1,7 +1,7 @@
 export interface ModelPart {
   url: string;
-  fileName: string;
-  type: string; // values: chat-model | projection-model
+  fileName: string; // Path of the file relative to the model's root directory, may contain subdirectories (e.g. "onnx/vocoder.onnx")
+  type: string; // values: chat-model | projection-model | tts-file...
   path: string;
   sizeGB: number;
 }
@@ -45,7 +45,10 @@ export enum ModelPipeline {
   audioTextToText = "audioTextToText",
   imageAudioTextToText = "imageAudioTextToText",
   featureExtraction = "featureExtraction",
-  textRanking = "textRanking"
+  textRanking = "textRanking",
+  textToSpeech = "textToSpeech",
+  speechToText = "speech-to-text",
+  automaticSpeechRecognition = "automatic-speech-recognition"
 }
 
 export const pipelineLabel: Record<ModelPipeline, string> = {
@@ -56,6 +59,9 @@ export const pipelineLabel: Record<ModelPipeline, string> = {
   [ModelPipeline.imageAudioTextToText]: 'Image/Audio/Text to Text',
   [ModelPipeline.featureExtraction]: 'Feature extraction',
   [ModelPipeline.textRanking]: 'Text ranking',
+  [ModelPipeline.textToSpeech]: 'Text to Speech',
+  [ModelPipeline.speechToText]: 'Speech to Text',
+  [ModelPipeline.automaticSpeechRecognition]: 'Automatic Speech Recognition',
 };
 
 export type ChatPipeline =
@@ -64,15 +70,28 @@ export type ChatPipeline =
   | ModelPipeline.audioTextToText
   | ModelPipeline.imageAudioTextToText;
 
+export const isChatPipeline = (
+  pipeline: ModelPipeline,
+): pipeline is ChatPipeline =>
+  pipeline === ModelPipeline.textGeneration ||
+  pipeline === ModelPipeline.imageTextToText ||
+  pipeline === ModelPipeline.audioTextToText ||
+  pipeline === ModelPipeline.imageAudioTextToText;
+
+export const isTtsPipeline = (pipeline: ModelPipeline): boolean =>
+  pipeline === ModelPipeline.textToSpeech;
+
+// Only chat-capable pipelines may reach the chat backend; a non-chat model
+// (e.g. text-to-speech) slipping through would be silently loaded as a GGUF
+// chat model and fail deep in the native layer — throw at the boundary instead.
 export const toChatPipeline = (pipeline: ModelPipeline): ChatPipeline => {
-  switch (pipeline) {
-    case ModelPipeline.imageTextToText:
-    case ModelPipeline.audioTextToText:
-    case ModelPipeline.imageAudioTextToText:
-      return pipeline;
-    default:
-      return ModelPipeline.textGeneration;
+  if (isChatPipeline(pipeline)) {
+    return pipeline;
   }
+  if (pipeline === ModelPipeline.textToSpeech) {
+    throw new Error(`toChatPipeline: ${pipeline} is not a chat pipeline`);
+  }
+  return ModelPipeline.textGeneration;
 };
 
 export const pipelineIngestsImage = (pipeline: ChatPipeline): boolean =>

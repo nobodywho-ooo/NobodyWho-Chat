@@ -2,7 +2,12 @@ import { Directory, File, FileMode, Paths } from 'expo-file-system';
 
 import { toPlainPath } from './fileUri';
 
-// Downloaded model files live under <documents>/models
+// Downloaded model files live under <documents>/models/<modelId> — one
+// directory per model. Parts reconstruct the model's own file tree inside it
+// (a part's fileName may contain subdirectories, e.g. "onnx/vocoder.onnx"), so
+// two models can ship identically-named files without colliding, folder-based
+// loaders (TTS) can be handed the directory itself, and deleting a model is a
+// single recursive directory removal.
 const MODELS_DIR_NAME = 'models';
 
 // A resumable download accumulates bytes into `<fileName>.partial`, pulling each
@@ -34,14 +39,46 @@ const APPEND_SLICE_BYTES = 4 * 1024 * 1024;
 // otherwise only ends when the caller aborts. Bound it independently.
 const META_TIMEOUT_MS = 15_000;
 
-const modelsDirectory = (): Directory => new Directory(Paths.document, MODELS_DIR_NAME);
+const modelDirectory = (modelId: number): Directory =>
+  new Directory(Paths.document, MODELS_DIR_NAME, String(modelId));
 
-const ensureModelsDirectory = (): Directory => {
-  const dir = modelsDirectory();
-  if (!dir.exists) {
-    dir.create({ intermediates: true });
+// The plain filesystem path of a model's directory — what folder-based loaders
+// (e.g. Tts.load's `source`) receive.
+export const modelDirectoryPath = (modelId: number): string =>
+  toPlainPath(modelDirectory(modelId).uri);
+
+// Part fileNames come from the remote catalogue, which is parsed without
+// validation — refuse anything that could resolve outside the model directory.
+// Returns the path split into its segments. Exported only for direct unit
+// testing; callers should go through downloadModelPart/downloadedPartPath.
+export const assertSafeRelativePath = (fileName: string): string[] => {
+  const segments = fileName.split('/');
+  if (
+    fileName.includes('\\') ||
+    segments.some(
+      segment => segment === '' || segment === '.' || segment === '..',
+    )
+  ) {
+    throw new Error(`modelDownload: unsafe part fileName "${fileName}"`);
   }
-  return dir;
+  return segments;
+};
+
+// Where a part's final file (and its resume scaffolding) lives: the directory
+// holding it, and its name inside that directory. Nested targets are resolved
+// segment by segment — the Directory constructor joins variadic segments, and
+// rename() below only accepts a bare name within the same directory. Exported
+// only for direct unit testing.
+export const locatePart = (
+  modelId: number,
+  fileName: string,
+): { parentDir: Directory; baseName: string } => {
+  const segments = assertSafeRelativePath(fileName);
+  const parentDir =
+    segments.length > 1
+      ? new Directory(modelDirectory(modelId), ...segments.slice(0, -1))
+      : modelDirectory(modelId);
+  return { parentDir, baseName: segments[segments.length - 1] };
 };
 
 const deleteIfExists = (file: File): void => {
@@ -76,8 +113,12 @@ const appendFile = async (
 
 // The plain filesystem path of an already fully-downloaded part, or null if it
 // is not present. Used to skip parts that completed on a previous attempt.
-export const downloadedPartPath = (fileName: string): string | null => {
-  const file = new File(modelsDirectory(), fileName);
+export const downloadedPartPath = (
+  modelId: number,
+  fileName: string,
+): string | null => {
+  const { parentDir, baseName } = locatePart(modelId, fileName);
+  const file = new File(parentDir, baseName);
   return file.exists ? toPlainPath(file.uri) : null;
 };
 
@@ -137,7 +178,7 @@ const fetchRemoteMeta = async (
 // the next run's `finalFile.exists` check would mistake for a finished download.
 const downloadWholeFile = async (
   url: string,
-  fileName: string,
+  baseName: string,
   finalFile: File,
   partial: File,
   validatorFile: File,
@@ -152,27 +193,31 @@ const downloadWholeFile = async (
     onProgress: ({ bytesWritten, totalBytes }) =>
       onProgress(bytesWritten, totalBytes),
   });
-  partial.rename(fileName);
+  partial.rename(baseName);
   return toPlainPath(finalFile.uri);
 };
 
 export const downloadModelPart = async (
+  modelId: number,
   url: string,
   fileName: string,
   signal: AbortSignal,
   onProgress: (downloaded: number, total: number) => void,
 ): Promise<string> => {
-  const dir = ensureModelsDirectory();
-  const finalFile = new File(dir, fileName);
+  const { parentDir, baseName } = locatePart(modelId, fileName);
+  if (!parentDir.exists) {
+    parentDir.create({ intermediates: true });
+  }
+  const finalFile = new File(parentDir, baseName);
 
   if (finalFile.exists) {
     onProgress(finalFile.size, finalFile.size);
     return toPlainPath(finalFile.uri);
   }
 
-  const partial = new File(dir, fileName + PARTIAL_SUFFIX);
-  const chunk = new File(dir, fileName + CHUNK_SUFFIX);
-  const validatorFile = new File(dir, fileName + VALIDATOR_SUFFIX);
+  const partial = new File(parentDir, baseName + PARTIAL_SUFFIX);
+  const chunk = new File(parentDir, baseName + CHUNK_SUFFIX);
+  const validatorFile = new File(parentDir, baseName + VALIDATOR_SUFFIX);
 
   const meta = await fetchRemoteMeta(url, signal);
 
@@ -180,7 +225,7 @@ export const downloadModelPart = async (
   if (!meta.acceptsRanges || meta.total === undefined) {
     return downloadWholeFile(
       url,
-      fileName,
+      baseName,
       finalFile,
       partial,
       validatorFile,
@@ -260,7 +305,7 @@ export const downloadModelPart = async (
         if (chunk.size === total) {
           return await downloadWholeFile(
             url,
-            fileName,
+            baseName,
             finalFile,
             partial,
             validatorFile,
@@ -283,23 +328,20 @@ export const downloadModelPart = async (
     deleteIfExists(chunk);
   }
 
-  partial.rename(fileName);
+  partial.rename(baseName);
   deleteIfExists(validatorFile);
 
   return toPlainPath(finalFile.uri);
 };
 
-// Removes a model's downloaded part files (best-effort) — used when a download
-// is stopped before it finishes. Clears the completed file plus any leftover
-// resume scaffolding (`.partial` / `.chunk` / `.etag`).
-export const deleteModelPartFiles = (fileNames: string[]): void => {
-  const dir = modelsDirectory();
-  fileNames.forEach(name => {
-    [
-      name,
-      name + PARTIAL_SUFFIX,
-      name + CHUNK_SUFFIX,
-      name + VALIDATOR_SUFFIX,
-    ].forEach(candidate => deleteIfExists(new File(dir, candidate)));
-  });
+// Removes everything downloaded for a model (best-effort) — finished files,
+// resume scaffolding (`.partial` / `.chunk` / `.etag`) and any subdirectories —
+// by deleting the model's directory tree. Used when a download is stopped
+// before it finishes and when a downloaded model is deleted.
+export const deleteModelDirectory = (modelId: number): void => {
+  const dir = modelDirectory(modelId);
+  if (dir.exists) {
+    // Directory.delete() removes contents recursively.
+    dir.delete();
+  }
 };

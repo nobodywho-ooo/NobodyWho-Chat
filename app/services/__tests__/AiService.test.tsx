@@ -13,6 +13,15 @@ import {
   TEARDOWN_SETTLE_MS,
 } from '../AiService';
 
+// The TTS engine facade is mocked at its boundary: the installed nobodywho
+// package doesn't ship Tts yet, and these tests only care that AiService
+// drives the facade correctly (paths, serialization, teardown).
+const mockLoadTtsEngine = jest.fn();
+jest.mock('../ttsEngine', () => ({
+  loadTtsEngine: (source: string) => mockLoadTtsEngine(source),
+  isTtsEngineAvailable: () => true,
+}));
+
 (globalThis as unknown as { __DEV__: boolean }).__DEV__ = false;
 
 // chat teardown is deferred onto the load chain (destroy + a settle delay), so
@@ -41,6 +50,20 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 beforeEach(() => {
   mockFromPath.mockReset();
+  mockLoadTtsEngine.mockReset();
+});
+
+const ttsModel = buildModel(9, {
+  pipeline: ModelPipeline.textToSpeech,
+  parts: [
+    {
+      url: 'https://example.com/onnx/vocoder.onnx',
+      fileName: 'onnx/vocoder.onnx',
+      type: 'tts-file',
+      path: '/models/9/onnx/vocoder.onnx',
+      sizeGB: 0.1,
+    },
+  ],
 });
 
 test('createChat loads the model and exposes the chat', async () => {
@@ -53,7 +76,7 @@ test('createChat loads the model and exposes the chat', async () => {
   });
 
   expect(mockFromPath).toHaveBeenCalledWith(
-    expect.objectContaining({ modelPath: '/mock-documents/models/model.gguf' }),
+    expect.objectContaining({ modelPath: '/mock-documents/models/1/model.gguf' }),
   );
   expect(result.current.chatState).toBe(AiModelState.Ready);
   expect(result.current.chat.current).toBe(chat);
@@ -91,8 +114,8 @@ test('createChat wires the projection model and reports the chat pipeline', asyn
 
   expect(mockFromPath).toHaveBeenCalledWith(
     expect.objectContaining({
-      modelPath: '/mock-documents/models/model.gguf',
-      projectionModelPath: '/mock-documents/models/mmproj.gguf',
+      modelPath: '/mock-documents/models/2/model.gguf',
+      projectionModelPath: '/mock-documents/models/2/mmproj.gguf',
       // Multimodal loads are bounded to keep the Metal allocation small.
       contextSize: MULTIMODAL_CONTEXT_SIZE,
     }),
@@ -295,7 +318,7 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
   });
   expect(mockFromPath).toHaveBeenCalledTimes(1);
   expect(mockFromPath).toHaveBeenLastCalledWith(
-    expect.objectContaining({ modelPath: '/mock-documents/models/a.gguf' }),
+    expect.objectContaining({ modelPath: '/mock-documents/models/1/a.gguf' }),
   );
 
   // Switch to B (dispose + create) while A is still loading.
@@ -330,7 +353,7 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
   });
   expect(mockFromPath).toHaveBeenCalledTimes(2);
   expect(mockFromPath).toHaveBeenLastCalledWith(
-    expect.objectContaining({ modelPath: '/mock-documents/models/b.gguf' }),
+    expect.objectContaining({ modelPath: '/mock-documents/models/2/b.gguf' }),
   );
 
   // B becomes the live chat.
@@ -379,4 +402,134 @@ test('a reload waits for the previous chat teardown to settle before allocating'
   expect(mockFromPath).toHaveBeenCalledTimes(2);
   expect(result.current.chat.current).toBe(chatB);
   expect(result.current.chatState).toBe(AiModelState.Ready);
+});
+
+test('createTts loads the engine from the model directory', async () => {
+  const tts = { synthesize: jest.fn(), destroy: jest.fn() };
+  mockLoadTtsEngine.mockResolvedValue(tts);
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  await act(async () => {
+    await result.current.createTts({ model: ttsModel });
+  });
+
+  // The engine gets the model's directory, not any single file.
+  expect(mockLoadTtsEngine).toHaveBeenCalledWith('/mock-documents/models/9');
+  expect(result.current.ttsState).toBe(AiModelState.Ready);
+  expect(result.current.tts.current).toBe(tts);
+  // The chat slot is untouched.
+  expect(result.current.chatState).toBe(AiModelState.NotLoaded);
+});
+
+test('createTts refuses a non-TTS model', async () => {
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  await act(async () => {
+    await expect(result.current.createTts({ model })).rejects.toThrow(
+      /is not a TTS model/,
+    );
+  });
+
+  expect(mockLoadTtsEngine).not.toHaveBeenCalled();
+});
+
+test('createTts fails loudly when a TTS file is missing on disk', async () => {
+  const { File } = jest.requireMock('expo-file-system');
+  mockLoadTtsEngine.mockResolvedValue({ synthesize: jest.fn(), destroy: jest.fn() });
+  File.mockExists = false;
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  try {
+    await act(async () => {
+      await expect(result.current.createTts({ model: ttsModel })).rejects.toThrow(
+        /TTS file .* missing/,
+      );
+    });
+
+    expect(mockLoadTtsEngine).not.toHaveBeenCalled();
+    expect(result.current.ttsState).toBe(AiModelState.Error);
+  } finally {
+    File.mockExists = true;
+  }
+});
+
+test('createTts serializes behind an in-flight chat load on the shared chain', async () => {
+  // Chat load in flight: fromPath is pending until we resolve it.
+  let resolveChat!: (chat: unknown) => void;
+  mockFromPath.mockImplementation(
+    () => new Promise(resolve => (resolveChat = resolve)),
+  );
+  const tts = { synthesize: jest.fn(), destroy: jest.fn() };
+  mockLoadTtsEngine.mockResolvedValue(tts);
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  let ttsLoad: Promise<void> | undefined;
+  act(() => {
+    result.current.createChat({ model });
+  });
+  act(() => {
+    ttsLoad = result.current.createTts({ model: ttsModel });
+  });
+
+  // The invariant: no second native load while the first is in flight.
+  await act(async () => {
+    await flushMicrotasks();
+  });
+  expect(mockFromPath).toHaveBeenCalledTimes(1);
+  expect(mockLoadTtsEngine).not.toHaveBeenCalled();
+
+  // Chat finishes -> the chain releases -> the TTS load runs.
+  await act(async () => {
+    resolveChat({ destroy: jest.fn() });
+    await ttsLoad;
+  });
+  expect(mockLoadTtsEngine).toHaveBeenCalledTimes(1);
+  expect(result.current.chatState).toBe(AiModelState.Ready);
+  expect(result.current.ttsState).toBe(AiModelState.Ready);
+});
+
+test('disposeTts destroys the engine via the teardown chain', async () => {
+  const tts = { synthesize: jest.fn(), destroy: jest.fn() };
+  mockLoadTtsEngine.mockResolvedValue(tts);
+  const { result } = renderHook(() => useAiService(), { wrapper });
+  await act(async () => {
+    await result.current.createTts({ model: ttsModel });
+  });
+
+  act(() => result.current.disposeTts());
+  expect(result.current.tts.current).toBeUndefined();
+  expect(result.current.ttsState).toBe(AiModelState.NotLoaded);
+
+  // The native destroy is deferred onto the load chain.
+  await act(async () => {
+    await flushMicrotasks();
+  });
+  expect(tts.destroy).toHaveBeenCalledTimes(1);
+});
+
+test('dispose tears down both engines', async () => {
+  const chat = { stopGeneration: jest.fn(), destroy: jest.fn() };
+  const tts = { synthesize: jest.fn(), destroy: jest.fn() };
+  mockFromPath.mockResolvedValue(chat);
+  mockLoadTtsEngine.mockResolvedValue(tts);
+  const { result } = renderHook(() => useAiService(), { wrapper });
+  await act(async () => {
+    await result.current.createChat({ model });
+    await result.current.createTts({ model: ttsModel });
+  });
+
+  act(() => result.current.dispose());
+  expect(result.current.chat.current).toBeUndefined();
+  expect(result.current.tts.current).toBeUndefined();
+
+  // Both teardowns are chained (chat first, then tts after its settle).
+  await act(async () => {
+    await flushMicrotasks();
+  });
+  expect(chat.destroy).toHaveBeenCalledTimes(1);
+  await act(async () => {
+    await waitForTeardownSettle();
+    await flushMicrotasks();
+  });
+  expect(tts.destroy).toHaveBeenCalledTimes(1);
 });
