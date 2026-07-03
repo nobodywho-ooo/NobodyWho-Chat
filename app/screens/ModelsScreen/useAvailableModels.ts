@@ -1,11 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { find, map, pathEq, prop } from 'ramda';
 import { useAppState, useModelDownloads, useModels } from 'hooks';
-import { Model } from 'types';
+import { Model, ModelPipeline } from 'types';
 import { filterModelsByDeviceMemory } from 'helpers';
 
-// const MODELS_URL =
-//   'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.1.0.json';
 const MODELS_URL =
   'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.0.0-build-4.json';
 
@@ -28,7 +26,8 @@ export const useAvailableModels = () => {
     try {
       const response = await fetch(MODELS_URL);
       const data: Model[] = await response.json();
-      setModels(await filterModelsByDeviceMemory(data));
+      const chatModels = data.filter(model => model.pipeline !== ModelPipeline.textToSpeech);
+      setModels(await filterModelsByDeviceMemory(chatModels));
     } catch {
       setHasError(true);
     } finally {
