@@ -149,7 +149,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
         return;
       }
       copyToClipboard(content);
-      haptics.selection();
+      haptics.light();
     } catch (error) {
       log('handleCopyUser copy error ', error);
     }
@@ -162,7 +162,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
         return;
       }
       copyToClipboard(text);
-      haptics.selection();
+      haptics.light();
       setCopied(true);
     } catch (error) {
       log('handleCopy copy error ', error);

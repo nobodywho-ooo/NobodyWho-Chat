@@ -16,7 +16,7 @@ export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
   systemPrompt: '',
   thinking: true,
   toolCalling: false,
-  maxTokens: 1500,
+  maxTokens: 2500,
 };
 
 export type AppState = {

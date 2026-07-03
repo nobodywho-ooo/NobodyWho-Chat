@@ -59,6 +59,8 @@ test('the stepper changes max tokens by 500 and clamps at the minimum', () => {
   fireEvent.press(minus);
   fireEvent.press(minus);
   fireEvent.press(minus);
+  fireEvent.press(minus);
+  fireEvent.press(minus);
   expect(getAppState().assistantConfig?.maxTokens).toBe(MAX_TOKENS_MIN);
 
   // At the minimum the decrease button is disabled.

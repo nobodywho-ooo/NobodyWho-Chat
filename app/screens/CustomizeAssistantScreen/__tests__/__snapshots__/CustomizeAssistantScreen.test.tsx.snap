@@ -361,7 +361,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
             }
           }
         >
-          1500
+          2500
         </Text>
         <IconButton
           accessibilityLabel="screens.customizeAssistant.increaseMaxTokens"

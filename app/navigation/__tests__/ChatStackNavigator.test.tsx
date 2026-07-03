@@ -131,7 +131,7 @@ beforeEach(async () => {
 const defaultCreateChatOpts = {
   systemPrompt: undefined,
   sampler: { preset: 'temperature', temperature: 0.8 },
-  contextSize: 1500,
+  contextSize: 2500,
   thinking: true,
   toolCalling: false,
 };
