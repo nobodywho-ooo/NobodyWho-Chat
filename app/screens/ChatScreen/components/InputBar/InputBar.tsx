@@ -27,6 +27,7 @@ interface InputBarProps {
   onFocus?: () => void;
   onBlur?: () => void;
   style?: StyleProp<ViewStyle>;
+  topAccessory?: React.ReactNode;
   showImageAttach?: boolean;
   showAudioAttach?: boolean;
   imageSource?: ImageAttachSource;
@@ -47,6 +48,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   onFocus,
   onBlur,
   style,
+  topAccessory,
   showImageAttach = false,
   showAudioAttach = false,
   imageSource,
@@ -165,6 +167,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
 
   return (
     <View style={styles.mainContainer}>
+      {topAccessory}
       {expanded && (
         <View style={[styles.attachOptionsList, extraStyle]}>
           {showPhoto &&

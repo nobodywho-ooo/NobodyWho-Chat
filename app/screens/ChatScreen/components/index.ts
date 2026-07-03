@@ -1,5 +1,5 @@
 import { CameraCaptureModal } from './CameraCaptureModal/CameraCaptureModal';
-import { EmptyChat } from './EmptyChat/EmptyChat';
 import { InputBar } from './InputBar/InputBar';
+import { MessageStarters } from './MessageStarters/MessageStarters';
 
-export { CameraCaptureModal, EmptyChat, InputBar };
+export { CameraCaptureModal, InputBar, MessageStarters };

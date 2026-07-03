@@ -2,7 +2,6 @@
 
 exports[`renders ChatScreen with existing messages 1`] = `
 <View
-  onLayout={[Function]}
   style={
     [
       {
@@ -248,9 +247,7 @@ exports[`renders ChatScreen with existing messages 1`] = `
     onAttachCamera={[Function]}
     onAttachExpandedChange={[Function]}
     onAttachImage={[Function]}
-    onBlur={[Function]}
     onChangeText={[Function]}
-    onFocus={[Function]}
     onSend={[Function]}
     onStop={[Function]}
     showAudioAttach={false}
@@ -267,7 +264,6 @@ exports[`renders ChatScreen with existing messages 1`] = `
 
 exports[`renders correctly empty ChatScreen 1`] = `
 <View
-  onLayout={[Function]}
   style={
     [
       {
@@ -320,53 +316,6 @@ exports[`renders correctly empty ChatScreen 1`] = `
       }
     }
   />
-  <View
-    style={
-      [
-        {
-          "left": 0,
-          "position": "absolute",
-          "right": 0,
-          "top": 0,
-        },
-        {
-          "height": 812,
-        },
-      ]
-    }
-  >
-    <View
-      style={
-        {
-          "alignItems": "center",
-          "alignSelf": "center",
-          "flex": 1,
-          "justifyContent": "center",
-        }
-      }
-    >
-      <PlatformIcon
-        androidIconName="chat_bubble"
-        color="#c1c1c1"
-        iosIconName="bubble.fill"
-        size={48}
-      />
-      <Text
-        style={
-          [
-            {
-              "paddingTop": 10,
-            },
-            {
-              "color": "#7c7c7c",
-            },
-          ]
-        }
-      >
-        components.emptyChat.startAChat
-      </Text>
-    </View>
-  </View>
   <InputBar
     attachExpanded={false}
     hasAudio={false}
@@ -375,9 +324,7 @@ exports[`renders correctly empty ChatScreen 1`] = `
     onAttachCamera={[Function]}
     onAttachExpandedChange={[Function]}
     onAttachImage={[Function]}
-    onBlur={[Function]}
     onChangeText={[Function]}
-    onFocus={[Function]}
     onSend={[Function]}
     onStop={[Function]}
     showAudioAttach={false}
@@ -388,6 +335,156 @@ exports[`renders correctly empty ChatScreen 1`] = `
       }
     }
     value=""
-  />
+  >
+    <RCTScrollView
+      contentContainerStyle={
+        {
+          "columnGap": 8,
+          "paddingHorizontal": 12,
+        }
+      }
+      horizontal={true}
+      keyboardShouldPersistTaps="handled"
+      showsHorizontalScrollIndicator={false}
+      style={
+        {
+          "marginBottom": 8,
+        }
+      }
+    >
+      <View>
+        <View
+          accessibilityLabel="components.messageStarters.planParisTrip.title components.messageStarters.planParisTrip.subtitle"
+          accessibilityRole="button"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "borderRadius": 16,
+                "paddingHorizontal": 16,
+                "paddingVertical": 12,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+              false,
+            ]
+          }
+        >
+          <Text
+            bold={true}
+            numberOfLines={1}
+            variant="body2"
+          >
+            components.messageStarters.planParisTrip.title
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+            variant="body2"
+          >
+            components.messageStarters.planParisTrip.subtitle
+          </Text>
+        </View>
+        <View
+          accessibilityLabel="components.messageStarters.summarizeText.title components.messageStarters.summarizeText.subtitle"
+          accessibilityRole="button"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "borderRadius": 16,
+                "paddingHorizontal": 16,
+                "paddingVertical": 12,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+              false,
+            ]
+          }
+        >
+          <Text
+            bold={true}
+            numberOfLines={1}
+            variant="body2"
+          >
+            components.messageStarters.summarizeText.title
+          </Text>
+          <Text
+            numberOfLines={1}
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+            variant="body2"
+          >
+            components.messageStarters.summarizeText.subtitle
+          </Text>
+        </View>
+      </View>
+    </RCTScrollView>
+  </InputBar>
 </View>
 `;

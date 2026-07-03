@@ -33,12 +33,6 @@ export default StyleSheet.create({
     top: 0,
     height: 10,
   },
-  emptyChatContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-  },
   listContainer: {
     flex: 1,
   },
