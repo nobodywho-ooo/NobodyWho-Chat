@@ -26,6 +26,7 @@ export const ModelsScreen: React.FC = () => {
   const {
     availableModels,
     currentModel,
+    currentTtsModel,
     downloadedCount,
     isLoading,
     hasError,
@@ -55,12 +56,22 @@ export const ModelsScreen: React.FC = () => {
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
-      {!!currentModel && <InUseModel model={currentModel} />}
+      {!!currentModel && (
+        <InUseModel model={currentModel} title={t('screens.models.inUse')} />
+      )}
+
+      {!!currentTtsModel && (
+        <InUseModel
+          model={currentTtsModel}
+          title={t('screens.models.voiceInUse')}
+          first={!currentModel}
+        />
+      )}
 
       {downloadedCount > 0 && (
         <DownloadedModelsLink
           count={downloadedCount}
-          first={!currentModel}
+          first={!currentModel && !currentTtsModel}
           onPress={goToDownloadedModels}
         />
       )}

@@ -47,6 +47,20 @@ const pipelineIcon: Record<
     iosIconName: 'list.number',
     androidIconName: 'format_list_numbered',
   },
+  [ModelPipeline.textToSpeech]: {
+    iosIconName: 'speaker.wave.2',
+    androidIconName: 'text_to_speech',
+  },
+  // TODO: update icons
+  [ModelPipeline.speechToText]: {
+    iosIconName: 'speaker.wave.2',
+    androidIconName: 'text_to_speech',
+  },
+  // TODO: update icons
+  [ModelPipeline.automaticSpeechRecognition]: {
+    iosIconName: 'speaker.wave.2',
+    androidIconName: 'text_to_speech',
+  },
 };
 
 interface ModelCardProps {

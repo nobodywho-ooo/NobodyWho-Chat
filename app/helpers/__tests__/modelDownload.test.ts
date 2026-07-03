@@ -1,5 +1,7 @@
 const MB = 1024 * 1024;
-const MODELS = 'file:///docs/models';
+const MODEL_ID = 7;
+// Every model gets its own directory under <documents>/models.
+const MODEL_DIR = `file:///docs/models/${MODEL_ID}`;
 
 // A stateful in-memory expo-file-system mock (overrides the shared jest setup
 // mock for this file). File sizes on disk are the source of truth for resume,
@@ -90,6 +92,16 @@ jest.mock('expo-file-system', () => {
       return true;
     }
     create() {}
+    // Matches the real API: removes the directory tree recursively.
+    delete() {
+      const prefix = `${this.uri.replace(/\/+$/, '')}/`;
+      [...sizes.keys()]
+        .filter(uri => uri.startsWith(prefix))
+        .forEach(uri => {
+          sizes.delete(uri);
+          texts.delete(uri);
+        });
+    }
   }
 
   const Paths = { document: { uri: 'file:///docs/' } };
@@ -108,7 +120,10 @@ jest.mock('expo-file-system', () => {
 import {
   downloadModelPart,
   downloadedPartPath,
-  deleteModelPartFiles,
+  deleteModelDirectory,
+  modelDirectoryPath,
+  assertSafeRelativePath,
+  locatePart,
 } from '../modelDownload';
 
 const efs = jest.requireMock('expo-file-system') as any;
@@ -193,18 +208,19 @@ test('downloads a fresh file in chunks and publishes it atomically', async () =>
   const progress: Array<[number, number]> = [];
 
   const path = await downloadModelPart(
+    MODEL_ID,
     'https://x/chat-model.gguf',
     'chat-model.gguf',
     noSignal(),
     (d, t) => progress.push([d, t]),
   );
 
-  expect(path).toBe('/docs/models/chat-model.gguf');
-  expect(sizes.get(`${MODELS}/chat-model.gguf`)).toBe(total);
+  expect(path).toBe(`/docs/models/${MODEL_ID}/chat-model.gguf`);
+  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf`)).toBe(total);
   // Scaffolding is cleaned up once published.
-  expect(sizes.has(`${MODELS}/chat-model.gguf.partial`)).toBe(false);
-  expect(sizes.has(`${MODELS}/chat-model.gguf.chunk`)).toBe(false);
-  expect(sizes.has(`${MODELS}/chat-model.gguf.etag`)).toBe(false);
+  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.partial`)).toBe(false);
+  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.chunk`)).toBe(false);
+  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.etag`)).toBe(false);
   expect(rangesRequested()).toEqual([
     `bytes=0-${16 * MB - 1}`,
     `bytes=${16 * MB}-${32 * MB - 1}`,
@@ -216,15 +232,47 @@ test('downloads a fresh file in chunks and publishes it atomically', async () =>
   expect(progress[progress.length - 1]).toEqual([total, total]);
 });
 
+test('reconstructs nested part paths inside the model directory', async () => {
+  const total = 40 * MB;
+  setupRemote({ total });
+
+  const path = await downloadModelPart(
+    MODEL_ID,
+    'https://x/resolve/main/onnx/vocoder.onnx',
+    'onnx/vocoder.onnx',
+    noSignal(),
+    () => {},
+  );
+
+  expect(path).toBe(`/docs/models/${MODEL_ID}/onnx/vocoder.onnx`);
+  expect(sizes.get(`${MODEL_DIR}/onnx/vocoder.onnx`)).toBe(total);
+  // Resume scaffolding lives beside the file, inside the nested directory.
+  expect(sizes.has(`${MODEL_DIR}/onnx/vocoder.onnx.partial`)).toBe(false);
+  expect(sizes.has(`${MODEL_DIR}/onnx/vocoder.onnx.chunk`)).toBe(false);
+});
+
+test('rejects part fileNames that could escape the model directory', async () => {
+  setupRemote({ total: MB });
+  const unsafe = ['../evil.gguf', 'a/../../evil.gguf', '/abs.gguf', 'a//b', 'a\\b'];
+
+  for (const fileName of unsafe) {
+    await expect(
+      downloadModelPart(MODEL_ID, 'https://x/f', fileName, noSignal(), () => {}),
+    ).rejects.toThrow(/unsafe part fileName/);
+  }
+  expect(downloadFileAsync).not.toHaveBeenCalled();
+});
+
 test('resumes from the bytes already on disk', async () => {
   const total = 40 * MB;
   setupRemote({ total, etag: '"v1"' });
   // A previous attempt left 16 MiB + a matching validator.
-  sizes.set(`${MODELS}/chat-model.gguf.partial`, 16 * MB);
-  sizes.set(`${MODELS}/chat-model.gguf.etag`, 4);
-  texts.set(`${MODELS}/chat-model.gguf.etag`, '"v1"');
+  sizes.set(`${MODEL_DIR}/chat-model.gguf.partial`, 16 * MB);
+  sizes.set(`${MODEL_DIR}/chat-model.gguf.etag`, 4);
+  texts.set(`${MODEL_DIR}/chat-model.gguf.etag`, '"v1"');
 
   await downloadModelPart(
+    MODEL_ID,
     'https://x/chat-model.gguf',
     'chat-model.gguf',
     noSignal(),
@@ -236,17 +284,18 @@ test('resumes from the bytes already on disk', async () => {
     `bytes=${16 * MB}-${32 * MB - 1}`,
     `bytes=${32 * MB}-${40 * MB - 1}`,
   ]);
-  expect(sizes.get(`${MODELS}/chat-model.gguf`)).toBe(total);
+  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf`)).toBe(total);
 });
 
 test('discards a stale partial when the remote file changed', async () => {
   const total = 40 * MB;
   setupRemote({ total, etag: '"v2"' }); // remote now serves a different version
-  sizes.set(`${MODELS}/chat-model.gguf.partial`, 16 * MB);
-  sizes.set(`${MODELS}/chat-model.gguf.etag`, 4);
-  texts.set(`${MODELS}/chat-model.gguf.etag`, '"v1"');
+  sizes.set(`${MODEL_DIR}/chat-model.gguf.partial`, 16 * MB);
+  sizes.set(`${MODEL_DIR}/chat-model.gguf.etag`, 4);
+  texts.set(`${MODEL_DIR}/chat-model.gguf.etag`, '"v1"');
 
   await downloadModelPart(
+    MODEL_ID,
     'https://x/chat-model.gguf',
     'chat-model.gguf',
     noSignal(),
@@ -259,7 +308,7 @@ test('discards a stale partial when the remote file changed', async () => {
     `bytes=${16 * MB}-${32 * MB - 1}`,
     `bytes=${32 * MB}-${40 * MB - 1}`,
   ]);
-  expect(sizes.get(`${MODELS}/chat-model.gguf`)).toBe(total);
+  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf`)).toBe(total);
 });
 
 test('falls back to a single download when the server has no range support', async () => {
@@ -267,21 +316,22 @@ test('falls back to a single download when the server has no range support', asy
   setupRemote({ total, honorsRanges: false });
 
   const path = await downloadModelPart(
+    MODEL_ID,
     'https://x/chat-model.gguf',
     'chat-model.gguf',
     noSignal(),
     () => {},
   );
 
-  expect(path).toBe('/docs/models/chat-model.gguf');
+  expect(path).toBe(`/docs/models/${MODEL_ID}/chat-model.gguf`);
   expect(downloadFileAsync).toHaveBeenCalledTimes(1);
   // One shot with no Range header — but written to `.partial` first, then
   // renamed to the final name, so a failed transfer can never leave a truncated
   // file that looks complete.
-  expect(destUris[0]).toBe(`${MODELS}/chat-model.gguf.partial`);
+  expect(destUris[0]).toBe(`${MODEL_DIR}/chat-model.gguf.partial`);
   expect(downloadFileAsync.mock.calls[0][2].headers).toBeUndefined();
-  expect(sizes.has(`${MODELS}/chat-model.gguf.partial`)).toBe(false);
-  expect(sizes.get(`${MODELS}/chat-model.gguf`)).toBe(total);
+  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.partial`)).toBe(false);
+  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf`)).toBe(total);
 });
 
 test('recovers when the server advertises ranges but then ignores them', async () => {
@@ -290,13 +340,14 @@ test('recovers when the server advertises ranges but then ignores them', async (
   setupRemote({ total, honorsRanges: false, advertisesRanges: true });
 
   const path = await downloadModelPart(
+    MODEL_ID,
     'https://x/chat-model.gguf',
     'chat-model.gguf',
     noSignal(),
     () => {},
   );
 
-  expect(path).toBe('/docs/models/chat-model.gguf');
+  expect(path).toBe(`/docs/models/${MODEL_ID}/chat-model.gguf`);
   // The first ranged request came back as the whole file, so instead of looping
   // forever on the ignored range it restarts as a single whole-file download:
   // one ranged attempt, then one range-less download into `.partial`.
@@ -305,11 +356,11 @@ test('recovers when the server advertises ranges but then ignores them', async (
     `bytes=0-${16 * MB - 1}`,
   );
   expect(downloadFileAsync.mock.calls[1][2].headers).toBeUndefined();
-  expect(destUris[destUris.length - 1]).toBe(`${MODELS}/chat-model.gguf.partial`);
-  expect(sizes.get(`${MODELS}/chat-model.gguf`)).toBe(total);
+  expect(destUris[destUris.length - 1]).toBe(`${MODEL_DIR}/chat-model.gguf.partial`);
+  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf`)).toBe(total);
   // Scaffolding is cleaned up on the recovery path too.
-  expect(sizes.has(`${MODELS}/chat-model.gguf.partial`)).toBe(false);
-  expect(sizes.has(`${MODELS}/chat-model.gguf.chunk`)).toBe(false);
+  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.partial`)).toBe(false);
+  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.chunk`)).toBe(false);
 });
 
 test('aborts a hung HEAD request after the timeout instead of stalling', async () => {
@@ -326,11 +377,14 @@ test('aborts a hung HEAD request after the timeout instead of stalling', async (
   );
 
   const promise = downloadModelPart(
+    MODEL_ID,
     'https://x/chat-model.gguf',
     'chat-model.gguf',
     noSignal(),
     () => {},
   );
+  
+  // eslint-disable-next-line jest/valid-expect
   const assertion = expect(promise).rejects.toThrow();
 
   await jest.advanceTimersByTimeAsync(15_000);
@@ -343,16 +397,17 @@ test('aborts a hung HEAD request after the timeout instead of stalling', async (
 
 test('returns immediately when the file is already installed', async () => {
   setupRemote({ total: 40 * MB });
-  sizes.set(`${MODELS}/chat-model.gguf`, 40 * MB);
+  sizes.set(`${MODEL_DIR}/chat-model.gguf`, 40 * MB);
 
   const path = await downloadModelPart(
+    MODEL_ID,
     'https://x/chat-model.gguf',
     'chat-model.gguf',
     noSignal(),
     () => {},
   );
 
-  expect(path).toBe('/docs/models/chat-model.gguf');
+  expect(path).toBe(`/docs/models/${MODEL_ID}/chat-model.gguf`);
   expect(downloadFileAsync).not.toHaveBeenCalled();
   // No need to even hit the network (no HEAD) for an installed model.
   expect((globalThis as any).fetch).not.toHaveBeenCalled();
@@ -374,6 +429,7 @@ test('an abort stops the loop and keeps the partial for a later resume', async (
 
   await expect(
     downloadModelPart(
+      MODEL_ID,
       'https://x/chat-model.gguf',
       'chat-model.gguf',
       controller.signal,
@@ -382,28 +438,103 @@ test('an abort stops the loop and keeps the partial for a later resume', async (
   ).rejects.toThrow();
 
   // Nothing published; the first chunk is retained on disk to resume from.
-  expect(sizes.has(`${MODELS}/chat-model.gguf`)).toBe(false);
-  expect(sizes.get(`${MODELS}/chat-model.gguf.partial`)).toBe(16 * MB);
+  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf`)).toBe(false);
+  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf.partial`)).toBe(16 * MB);
   // Transient chunk file is cleaned up even on the error path.
-  expect(sizes.has(`${MODELS}/chat-model.gguf.chunk`)).toBe(false);
+  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.chunk`)).toBe(false);
 });
 
 test('downloadedPartPath returns a path only once the file exists', () => {
-  expect(downloadedPartPath('chat-model.gguf')).toBeNull();
-  sizes.set(`${MODELS}/chat-model.gguf`, 1);
-  expect(downloadedPartPath('chat-model.gguf')).toBe('/docs/models/chat-model.gguf');
+  expect(downloadedPartPath(MODEL_ID, 'chat-model.gguf')).toBeNull();
+  sizes.set(`${MODEL_DIR}/chat-model.gguf`, 1);
+  expect(downloadedPartPath(MODEL_ID, 'chat-model.gguf')).toBe(
+    `/docs/models/${MODEL_ID}/chat-model.gguf`,
+  );
+  // Nested parts resolve too.
+  expect(downloadedPartPath(MODEL_ID, 'onnx/vocoder.onnx')).toBeNull();
+  sizes.set(`${MODEL_DIR}/onnx/vocoder.onnx`, 1);
+  expect(downloadedPartPath(MODEL_ID, 'onnx/vocoder.onnx')).toBe(
+    `/docs/models/${MODEL_ID}/onnx/vocoder.onnx`,
+  );
 });
 
-test('deleteModelPartFiles clears the file and its resume scaffolding', () => {
-  const names = [
+test('modelDirectoryPath is the plain path of the model directory', () => {
+  expect(modelDirectoryPath(MODEL_ID)).toBe(`/docs/models/${MODEL_ID}`);
+});
+
+test('deleteModelDirectory removes the whole model tree', () => {
+  const mine = [
     'chat-model.gguf',
     'chat-model.gguf.partial',
-    'chat-model.gguf.chunk',
     'chat-model.gguf.etag',
+    'onnx/vocoder.onnx',
+    'onnx/vocoder.onnx.chunk',
+    'voice_styles/F1.json',
   ];
-  names.forEach(n => sizes.set(`${MODELS}/${n}`, 1));
+  mine.forEach(n => sizes.set(`${MODEL_DIR}/${n}`, 1));
+  // Another model's identically-named file survives.
+  sizes.set('file:///docs/models/1/chat-model.gguf', 1);
 
-  deleteModelPartFiles(['chat-model.gguf']);
+  deleteModelDirectory(MODEL_ID);
 
-  names.forEach(n => expect(sizes.has(`${MODELS}/${n}`)).toBe(false));
+  mine.forEach(n => expect(sizes.has(`${MODEL_DIR}/${n}`)).toBe(false));
+  expect(sizes.has('file:///docs/models/1/chat-model.gguf')).toBe(true);
+});
+
+describe('assertSafeRelativePath', () => {
+  test('returns the path split into segments for valid relative paths', () => {
+    expect(assertSafeRelativePath('chat-model.gguf')).toEqual([
+      'chat-model.gguf',
+    ]);
+    expect(assertSafeRelativePath('onnx/vocoder.onnx')).toEqual([
+      'onnx',
+      'vocoder.onnx',
+    ]);
+    expect(assertSafeRelativePath('a/b/c.json')).toEqual(['a', 'b', 'c.json']);
+  });
+
+  test.each([
+    ['an empty string', ''],
+    ['a leading slash (absolute path)', '/etc/passwd'],
+    ['a trailing slash (empty final segment)', 'onnx/'],
+    ['a doubled slash (empty middle segment)', 'onnx//vocoder.onnx'],
+    ['a single-dot segment', './chat-model.gguf'],
+    ['a parent-directory segment', '../evil.gguf'],
+    ['a nested parent-directory segment', 'a/../../evil.gguf'],
+    ['a trailing parent-directory segment', 'onnx/..'],
+    ['a backslash', 'onnx\\vocoder.onnx'],
+  ])('throws on %s ("%s")', (_description, fileName) => {
+    expect(() => assertSafeRelativePath(fileName)).toThrow(
+      /unsafe part fileName/,
+    );
+  });
+});
+
+describe('locatePart', () => {
+  test('a top-level fileName resolves directly under the model directory', () => {
+    const { parentDir, baseName } = locatePart(MODEL_ID, 'chat-model.gguf');
+
+    expect(parentDir.uri).toBe(MODEL_DIR);
+    expect(baseName).toBe('chat-model.gguf');
+  });
+
+  test('a nested fileName resolves its parent directory segment by segment', () => {
+    const { parentDir, baseName } = locatePart(MODEL_ID, 'onnx/vocoder.onnx');
+
+    expect(parentDir.uri).toBe(`${MODEL_DIR}/onnx`);
+    expect(baseName).toBe('vocoder.onnx');
+  });
+
+  test('a deeply nested fileName joins every intermediate segment', () => {
+    const { parentDir, baseName } = locatePart(MODEL_ID, 'a/b/c/d.json');
+
+    expect(parentDir.uri).toBe(`${MODEL_DIR}/a/b/c`);
+    expect(baseName).toBe('d.json');
+  });
+
+  test('propagates the unsafe-path rejection from assertSafeRelativePath', () => {
+    expect(() => locatePart(MODEL_ID, '../evil.gguf')).toThrow(
+      /unsafe part fileName/,
+    );
+  });
 });

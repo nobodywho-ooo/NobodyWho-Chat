@@ -89,6 +89,7 @@ jest.mock('expo-file-system', () => {
       return true;
     }
     create() {}
+    delete() {}
   }
   const Paths = {
     document: { uri: 'file:///mock-documents/' },

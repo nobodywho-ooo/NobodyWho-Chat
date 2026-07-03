@@ -25,7 +25,7 @@
       "startAChat": "Start a chat"
     },
     "inputBar": {
-      "placeholder": "Ask something...",
+      "placeholder": "Ask about anything...",
       "attach": "Attach files",
       "closeAttach": "Close attachments",
       "attachImage": "Attach image",
@@ -99,6 +99,7 @@
     },
     "models": {
       "inUse": "In use",
+      "voiceInUse": "Voice in use",
       "readyToUse": "Ready to use",
       "downloaded": "Downloaded",
       "modelCount_one": "{{count}} model",

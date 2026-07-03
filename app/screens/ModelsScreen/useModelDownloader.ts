@@ -9,8 +9,14 @@ import {
   insertModel,
 } from 'repositories';
 import { getAppState, setAppState } from 'database';
-import { Model, ModelDownload, ModelPart } from 'types';
-import { deleteModelPartFiles, downloadModelPart, log } from 'helpers';
+import {
+  Model,
+  ModelDownload,
+  ModelPart,
+  isChatPipeline,
+  isTtsPipeline,
+} from 'types';
+import { deleteModelDirectory, downloadModelPart, log } from 'helpers';
 
 const DOWNLOAD_THROTTLE = 0.01; // 1% step
 
@@ -43,6 +49,7 @@ export const useModelDownloader = () => {
         }
 
         const path = await downloadModelPart(
+          model.id,
           partsProgress[i].url,
           partsProgress[i].fileName,
           controller.signal,
@@ -76,14 +83,28 @@ export const useModelDownloader = () => {
           sizeGB,
         }),
       );
-      await insertModel({ ...model, parts: downloadedParts });
+      try {
+        await insertModel({ ...model, parts: downloadedParts });
+      } catch (error) {
+        await deleteModelDownload(model.id);
+        deleteModelDirectory(model.id);
+        throw error;
+      }
       modelDownloaded = true;
 
-      if (getAppState().modelIdInUse === undefined) {
+      if (
+        isChatPipeline(model.pipeline) &&
+        getAppState().modelIdInUse === undefined
+      ) {
         await setAppState({
           modelIdInUse: model.id,
           conversationIdInUse: undefined,
         });
+      } else if (
+        isTtsPipeline(model.pipeline) &&
+        getAppState().ttsModelIdInUse === undefined
+      ) {
+        await setAppState({ ttsModelIdInUse: model.id });
       }
 
       await deleteModelDownload(model.id);
@@ -97,7 +118,7 @@ export const useModelDownloader = () => {
       }
 
       if (controller.signal.aborted && !modelDownloaded) {
-        deleteModelPartFiles(model.parts.map(part => part.fileName));
+        deleteModelDirectory(model.id);
       }
     }
   }, []);
@@ -127,7 +148,7 @@ export const useModelDownloader = () => {
       controller.abort();
     } else {
       // No live loop (e.g. it already failed) — clean the files up directly.
-      deleteModelPartFiles(model.parts.map(part => part.fileName));
+      deleteModelDirectory(model.id);
     }
   }, []);
 

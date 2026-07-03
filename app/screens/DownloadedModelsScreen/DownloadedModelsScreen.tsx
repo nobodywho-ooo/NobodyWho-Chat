@@ -13,7 +13,7 @@ import { deleteModel, getDocumentPathsByModelId } from 'repositories';
 import { deleteMessageDocuments, deleteModelFiles, isIOS, log } from 'helpers';
 import { ModelCard, PlatformIcon, Text } from 'components';
 import { useAiService } from 'services';
-import { Model } from 'types';
+import { Model, isTtsPipeline, isChatPipeline } from 'types';
 
 import styles from './DownloadedModelsScreen.styles';
 
@@ -21,8 +21,8 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { models } = useModels();
-  const { modelIdInUse } = useAppState();
-  const { chat } = useAiService();
+  const { modelIdInUse, ttsModelIdInUse } = useAppState();
+  const { chat, disposeTts, disposeChat } = useAiService();
   const navigation = useNavigation();
   const route = useRoute();
   const [deleteMode, setDeleteMode] = useState(false);
@@ -42,6 +42,15 @@ export const DownloadedModelsScreen: React.FC = () => {
       try {
         const documentPaths = await getDocumentPathsByModelId(model.id);
 
+        if (ttsModelIdInUse === model.id) {
+          disposeTts();
+          await setAppState({ ttsModelIdInUse: undefined });
+        }
+
+        if (isChatPipeline(model.pipeline)) {
+          disposeChat;
+        }
+
         const filesDeleted = await deleteModelFiles(model);
         if (!filesDeleted) {
           throw new Error('files not deleted');
@@ -60,7 +69,7 @@ export const DownloadedModelsScreen: React.FC = () => {
         log('DownloadedModelsScreen handleDeleteModel', error);
       }
     },
-    [modelIdInUse],
+    [modelIdInUse, ttsModelIdInUse, disposeTts, disposeChat],
   );
 
   const confirmDeleteModel = useCallback(
@@ -88,21 +97,36 @@ export const DownloadedModelsScreen: React.FC = () => {
       if (deleteMode) {
         confirmDeleteModel(model);
         return;
-      } else {
-        if (modelIdInUse !== model.id) {
-          // Stop any in-flight generation before the model switch tears down
-          // the current chat, so a live stream ends cleanly rather than being
-          // cut off mid-token as the backend is swapped out.
-          chat.current?.stopGeneration();
-          setAppState({
-            modelIdInUse: model.id,
-            conversationIdInUse: undefined,
-          });
+      }
+
+      if (isTtsPipeline(model.pipeline)) {
+        if (ttsModelIdInUse !== model.id) {
+          setAppState({ ttsModelIdInUse: model.id });
           navigation.goBack();
         }
+        return;
+      }
+
+      if (modelIdInUse !== model.id) {
+        // Stop any in-flight generation before the model switch tears down
+        // the current chat, so a live stream ends cleanly rather than being
+        // cut off mid-token as the backend is swapped out.
+        chat.current?.stopGeneration();
+        setAppState({
+          modelIdInUse: model.id,
+          conversationIdInUse: undefined,
+        });
+        navigation.goBack();
       }
     },
-    [deleteMode, confirmDeleteModel, modelIdInUse, chat, navigation],
+    [
+      deleteMode,
+      confirmDeleteModel,
+      modelIdInUse,
+      ttsModelIdInUse,
+      chat,
+      navigation,
+    ],
   );
 
   const renderHeaderRight = useCallback(() => {
@@ -163,12 +187,16 @@ export const DownloadedModelsScreen: React.FC = () => {
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
       {models.map(model => {
+        const isSelected = isTtsPipeline(model.pipeline)
+          ? ttsModelIdInUse === model.id
+          : modelIdInUse === model.id;
+
         return (
           <ModelCard
             key={model.id}
             isDownloaded
             deleteMode={deleteMode}
-            isSelected={modelIdInUse === model.id}
+            isSelected={isSelected}
             model={model}
             onPress={handleModelPress}
           />

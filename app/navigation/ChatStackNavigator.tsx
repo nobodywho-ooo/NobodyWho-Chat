@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {
   createContext,
   useCallback,
@@ -11,7 +12,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AppState, AppStateStatus, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SamplerPresets } from 'react-native-nobodywho';
-import { DisplayMessage } from 'types';
+import { DisplayMessage, isChatPipeline, isTtsPipeline } from 'types';
 import {
   DEFAULT_ASSISTANT_CONFIG,
   getAppState,
@@ -120,7 +121,8 @@ export const ChatStackNavigator = () => {
   const { colors } = useStyled();
   const { models, loading: modelsLoading } = useModels();
   const { modelIdInUse } = useAppState();
-  const { chat, createChat, disposeChat } = useAiService();
+  const { chat, createChat, disposeChat, createTts, disposeTts } =
+    useAiService();
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
   const [chatHistory, setChatHistory] = useState<DisplayMessage[]>([]);
@@ -142,6 +144,15 @@ export const ChatStackNavigator = () => {
     const model = await getModelById(modelId);
     if (model === undefined) {
       throw new Error(`ChatStackNavigator: model ${modelId} not found`);
+    }
+
+    // Every write site keeps non-chat models out of modelIdInUse; this is the
+    // tripwire in case one slips through — fail loudly, not deep in the
+    // native loader.
+    if (!isChatPipeline(model.pipeline)) {
+      throw new Error(
+        `ChatStackNavigator: model ${modelId} (${model.pipeline}) is not a chat model`,
+      );
     }
 
     await createChat({
@@ -250,6 +261,24 @@ export const ChatStackNavigator = () => {
     setAppState({ conversationIdInUse: id });
   }, []);
 
+  const loadTtsIfSelected = useCallback(async () => {
+    // TODO: uncomment when TTS is ready
+    return;
+
+    // const { ttsModelIdInUse } = getAppState();
+    // if (ttsModelIdInUse === undefined) {
+    //   return;
+    // }
+    // const model = await getModelById(ttsModelIdInUse);
+    // if (model === undefined || !isTtsPipeline(model.pipeline)) {
+    //   return;
+    // }
+    // await createTts({ model }).catch(error =>
+    //   log('ChatStackNavigator tts load', error, { capture: true }),
+    // );
+    // }, [createTts]);
+  }, []);
+
   // --- Lifecycle triggers ----------------------------------------------------
 
   // Initial load. With no model in use there is no session to start —
@@ -258,12 +287,20 @@ export const ChatStackNavigator = () => {
     if (getAppState().modelIdInUse !== undefined) {
       startSession();
     }
-  }, [startSession]);
+    loadTtsIfSelected();
+  }, [startSession, loadTtsIfSelected]);
 
   // React to app-state changes: a model or assistant-config change tears down
   // the chat and rebuilds from scratch; a conversation-only change reloads just the history.
   useEffect(() => {
     return subscribeAppState((next, prev) => {
+      if (next.ttsModelIdInUse !== prev.ttsModelIdInUse) {
+        disposeTts();
+        if (next.ttsModelIdInUse !== undefined) {
+          loadTtsIfSelected();
+        }
+      }
+
       if (
         next.modelIdInUse !== prev.modelIdInUse ||
         next.assistantConfig !== prev.assistantConfig
@@ -283,9 +320,16 @@ export const ChatStackNavigator = () => {
         refreshChatHistory();
       }
     });
-  }, [disposeChat, startSession, refreshChatHistory]);
+  }, [
+    disposeChat,
+    disposeTts,
+    startSession,
+    refreshChatHistory,
+    loadTtsIfSelected,
+  ]);
 
   const unloadedForBackground = useRef(false);
+  const ttsUnloadedForBackground = useRef(false);
   useEffect(() => {
     const subscription = AppState.addEventListener(
       'change',
@@ -298,26 +342,43 @@ export const ChatStackNavigator = () => {
             disposeChat();
             unloadedForBackground.current = true;
           }
-        } else if (nextState === 'active' && unloadedForBackground.current) {
-          unloadedForBackground.current = false;
-          if (getAppState().modelIdInUse !== undefined) {
-            startSession();
+          if (getAppState().ttsModelIdInUse !== undefined) {
+            disposeTts();
+            ttsUnloadedForBackground.current = true;
+          }
+        } else if (nextState === 'active') {
+          if (unloadedForBackground.current) {
+            unloadedForBackground.current = false;
+            if (getAppState().modelIdInUse !== undefined) {
+              startSession();
+            }
+          }
+          if (ttsUnloadedForBackground.current) {
+            ttsUnloadedForBackground.current = false;
+            loadTtsIfSelected();
           }
         }
       },
     );
     return () => subscription.remove();
-  }, [disposeChat, startSession]);
+  }, [disposeChat, disposeTts, startSession, loadTtsIfSelected]);
 
   const inUseModelName = models.find(m => m.id === modelIdInUse)?.name;
   const loadingMessage = inUseModelName
     ? t('screens.loadingScreen.loadingModel', { model: inUseModelName })
     : t('common.loading');
 
+  // Only chat-capable models make the chat root usable — a device with only a
+  // voice model downloaded still has nothing to chat with.
+  const hasChatModels = useMemo(
+    () => models.some(model => isChatPipeline(model.pipeline)),
+    [models],
+  );
+
   const chatRootValue = useMemo<ChatRootContextValue>(
     () => ({
       modelsLoading,
-      hasModels: models.length > 0,
+      hasModels: hasChatModels,
       modelIdInUse,
       status,
       chatHistory,
@@ -328,7 +389,7 @@ export const ChatStackNavigator = () => {
     }),
     [
       modelsLoading,
-      models.length,
+      hasChatModels,
       modelIdInUse,
       status,
       chatHistory,

@@ -12,11 +12,13 @@ import { buildModel } from 'jest/factories/model';
 import { DownloadedModelsScreen } from '../DownloadedModelsScreen';
 
 // The screen stops any in-flight generation before switching models; expose the
-// chat ref so that can be asserted.
+// chat ref so that can be asserted. Deleting the selected voice model also
+// disposes the TTS engine before its files go away.
 const mockStopGeneration = jest.fn();
+const mockDisposeTts = jest.fn();
 const mockChat = { current: { stopGeneration: mockStopGeneration } };
 jest.mock('services', () => ({
-  useAiService: () => ({ chat: mockChat }),
+  useAiService: () => ({ chat: mockChat, disposeTts: mockDisposeTts }),
 }));
 
 // Deleting a model also clears any message attachments that belonged to its
@@ -48,6 +50,7 @@ beforeEach(() => {
   mockSetAppState.mockClear();
   mockSetOptions.mockClear();
   mockStopGeneration.mockClear();
+  mockDisposeTts.mockClear();
   mockGoBack.mockClear();
   mockChat.current = { stopGeneration: mockStopGeneration };
   mockGetDocumentPaths.mockReset().mockResolvedValue([]);
@@ -163,5 +166,79 @@ test('without canDelete (drawer entry) deletion is unavailable', () => {
   const header = render(headerRight());
   expect(header.UNSAFE_queryAllByProps({ iosIconName: 'trash' })).toHaveLength(0);
 
+  alertSpy.mockRestore();
+});
+
+test('pressing a TTS model selects it as the voice — never as the chat model', () => {
+  const { ModelPipeline } = jest.requireActual('types');
+  const models = [
+    buildModel(1),
+    buildModel(7, { pipeline: ModelPipeline.textToSpeech }),
+  ];
+  mockUseModels.mockReturnValue({ models });
+  mockUseAppState.mockReturnValue({ modelIdInUse: 1 });
+
+  const screen = render(<DownloadedModelsScreen />);
+  fireEvent.press(screen.UNSAFE_getByProps({ model: models[1] }), models[1]);
+
+  expect(mockSetAppState).toHaveBeenCalledWith({ ttsModelIdInUse: 7 });
+  expect(mockSetAppState).not.toHaveBeenCalledWith(
+    expect.objectContaining({ modelIdInUse: 7 }),
+  );
+  // Selecting a voice doesn't touch the running chat.
+  expect(mockStopGeneration).not.toHaveBeenCalled();
+  expect(mockGoBack).toHaveBeenCalled();
+});
+
+test('the checkmark reflects each pipeline against its own in-use slot', () => {
+  const { ModelPipeline } = jest.requireActual('types');
+  const models = [
+    buildModel(1),
+    buildModel(7, { pipeline: ModelPipeline.textToSpeech }),
+  ];
+  mockUseModels.mockReturnValue({ models });
+  // Chat slot points at 1, voice slot at 7 — both cards show as selected.
+  mockUseAppState.mockReturnValue({ modelIdInUse: 1, ttsModelIdInUse: 7 });
+
+  const screen = render(<DownloadedModelsScreen />);
+  expect(
+    screen.UNSAFE_getByProps({ model: models[0] }).props.isSelected,
+  ).toBe(true);
+  expect(
+    screen.UNSAFE_getByProps({ model: models[1] }).props.isSelected,
+  ).toBe(true);
+});
+
+test('deleting the selected voice model disposes the engine and clears the slot', async () => {
+  const { ModelPipeline } = jest.requireActual('types');
+  const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const models = [
+    buildModel(1),
+    buildModel(7, { pipeline: ModelPipeline.textToSpeech }),
+  ];
+  mockUseModels.mockReturnValue({ models });
+  mockUseAppState.mockReturnValue({ modelIdInUse: 1, ttsModelIdInUse: 7 });
+
+  const screen = render(<DownloadedModelsScreen />);
+  act(() => headerToggle().props.onPress());
+  act(() =>
+    screen.UNSAFE_getByProps({ model: models[1] }).props.onPress(models[1]),
+  );
+
+  const buttons = alertSpy.mock.calls.at(-1)![2]!;
+  const confirm = buttons.find(button => button.style === 'destructive')!;
+  await act(async () => {
+    confirm.onPress?.();
+  });
+
+  await waitFor(() =>
+    expect(mockSetAppState).toHaveBeenCalledWith({ ttsModelIdInUse: undefined }),
+  );
+  // The engine teardown is enqueued before the files are removed.
+  expect(mockDisposeTts).toHaveBeenCalled();
+  // The chat slot is untouched.
+  expect(mockSetAppState).not.toHaveBeenCalledWith(
+    expect.objectContaining({ modelIdInUse: undefined }),
+  );
   alertSpy.mockRestore();
 });

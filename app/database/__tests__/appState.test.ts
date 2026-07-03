@@ -43,6 +43,24 @@ describe('hydrateAppState', () => {
 });
 
 describe('setAppState', () => {
+  // Guards the hand-rolled no-op comparison: a key missing from it makes every
+  // write of that key silently vanish (not persisted, not notified). The voice
+  // slot is the newest key, so pin it explicitly.
+  test('a ttsModelIdInUse-only change persists and notifies subscribers', async () => {
+    const listener = jest.fn();
+    const unsubscribe = subscribeAppState(listener);
+
+    await setAppState({ ttsModelIdInUse: 7 });
+
+    expect(getAppState()).toEqual({ ttsModelIdInUse: 7 });
+    expect(storage.setItem).toHaveBeenCalledWith(
+      APP_STATE,
+      JSON.stringify({ ttsModelIdInUse: 7 }),
+    );
+    expect(listener).toHaveBeenCalledWith({ ttsModelIdInUse: 7 }, {});
+    unsubscribe();
+  });
+
   test('merges the patch and persists the state as JSON', async () => {
     await setAppState({ modelIdInUse: 1 });
     await setAppState({ conversationIdInUse: 2 });

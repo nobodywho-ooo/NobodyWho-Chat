@@ -4,8 +4,10 @@ import { useAppState, useModelDownloads, useModels } from 'hooks';
 import { Model } from 'types';
 import { filterModelsByDeviceMemory } from 'helpers';
 
+// const MODELS_URL =
+//   'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.1.0.json';
 const MODELS_URL =
-  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.0.0.json';
+  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.0.0-build-4.json';
 
 // Fetches the catalogue, filters it to what the device can run, and derives the
 // three lists the screen renders: the model in use, how many are downloaded,
@@ -13,7 +15,7 @@ const MODELS_URL =
 export const useAvailableModels = () => {
   const { models: storedModels } = useModels();
   const { downloads } = useModelDownloads();
-  const { modelIdInUse } = useAppState();
+  const { modelIdInUse, ttsModelIdInUse } = useAppState();
 
   const [models, setModels] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,9 +66,15 @@ export const useAvailableModels = () => {
     [modelIdInUse, storedModels],
   );
 
+  const currentTtsModel = useMemo(
+    () => find(pathEq(ttsModelIdInUse, ['id']), storedModels),
+    [ttsModelIdInUse, storedModels],
+  );
+
   return {
     availableModels,
     currentModel,
+    currentTtsModel,
     downloadedCount: downloadedModelIds.length,
     isLoading,
     hasError,

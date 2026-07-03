@@ -13,6 +13,7 @@ import {
 } from '@react-native-menu/menu';
 import { useTranslation } from 'react-i18next';
 import { setAppState } from 'database';
+import { isChatPipeline } from 'types';
 import { deleteConversation } from 'repositories';
 import { DrawerContentScreen } from 'screens';
 import { PlatformIcon, Text } from 'components';
@@ -183,7 +184,7 @@ export const DrawerNavigator = () => {
   let title: string | undefined =
     currentConversationTitle ?? t('navigation.newChat');
 
-  if (models.length === 0) {
+  if (!models.some(model => isChatPipeline(model.pipeline))) {
     title = undefined;
   }
 

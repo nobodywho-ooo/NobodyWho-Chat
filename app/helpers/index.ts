@@ -11,7 +11,8 @@ import { deleteModelFiles } from './modelFiles';
 import {
   downloadModelPart,
   downloadedPartPath,
-  deleteModelPartFiles,
+  deleteModelDirectory,
+  modelDirectoryPath,
 } from './modelDownload';
 import { toFileUri, toPlainPath } from './fileUri';
 import {
@@ -39,7 +40,8 @@ export {
   deleteModelFiles,
   downloadModelPart,
   downloadedPartPath,
-  deleteModelPartFiles,
+  deleteModelDirectory,
+  modelDirectoryPath,
   toFileUri,
   toPlainPath,
   filterModelsByDeviceMemory,

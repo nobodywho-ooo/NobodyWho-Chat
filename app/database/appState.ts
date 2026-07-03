@@ -21,6 +21,7 @@ export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
 
 export type AppState = {
   modelIdInUse?: number;
+  ttsModelIdInUse?: number;
   conversationIdInUse?: number;
   assistantConfig?: AssistantConfig;
 };
@@ -75,6 +76,7 @@ export async function setAppState(patch: Partial<AppState>): Promise<void> {
   const next = { ...prev, ...patch };
   if (
     next.modelIdInUse === prev.modelIdInUse &&
+    next.ttsModelIdInUse === prev.ttsModelIdInUse &&
     next.conversationIdInUse === prev.conversationIdInUse &&
     sameAssistantConfig(next.assistantConfig, prev.assistantConfig)
   ) {
