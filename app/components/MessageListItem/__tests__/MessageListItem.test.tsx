@@ -130,6 +130,13 @@ test('does not render a copy button for user messages', () => {
   expect(queryByRole('button')).toBeNull();
 });
 
+test('copies a user message to the clipboard on long press', () => {
+  const message: Message = { role: 'user', content: 'hello there' };
+  const { getByText } = render(<MessageListItem message={message} />);
+  fireEvent(getByText('hello there'), 'longPress');
+  expect(copyToClipboard).toHaveBeenCalledWith('hello there');
+});
+
 test('does not render a copy button while an assistant message is still empty', () => {
   const message: Message = { role: 'assistant', content: '' };
   const { queryByRole } = render(<MessageListItem message={message} />);

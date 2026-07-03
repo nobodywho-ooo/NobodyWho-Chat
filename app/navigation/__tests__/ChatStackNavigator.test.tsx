@@ -100,20 +100,20 @@ let appStateHandler: (state: AppStateStatus) => void = () => {};
 beforeEach(async () => {
   mockExternalPickerActive = false;
   appStateHandler = () => {};
-  jest.spyOn(AppState, 'addEventListener').mockImplementation((_event, handler) => {
-    appStateHandler = handler as (state: AppStateStatus) => void;
-    return { remove: jest.fn() } as never;
-  });
+  jest
+    .spyOn(AppState, 'addEventListener')
+    .mockImplementation((_event, handler) => {
+      appStateHandler = handler as (state: AppStateStatus) => void;
+      return { remove: jest.fn() } as never;
+    });
   mockUseModels.mockReturnValue({ models: [buildModel(0)], loading: false });
   mockChatRef.current = undefined;
   mockCreateChat.mockClear();
   mockDisposeChat.mockClear();
   mockChatInstance.setChatHistory.mockReset().mockResolvedValue(undefined);
-  mockChatInstance.ask
-    .mockReset()
-    .mockImplementation(async function* () {
-      yield 'hello';
-    });
+  mockChatInstance.ask.mockReset().mockImplementation(async function* () {
+    yield 'hello';
+  });
   mockGetModelById.mockReset().mockResolvedValue(buildModel(0));
   mockGetConversationById.mockReset();
   mockGetMessagesByConversationId.mockReset().mockResolvedValue([]);
@@ -133,7 +133,7 @@ const defaultCreateChatOpts = {
   sampler: { preset: 'temperature', temperature: 0.8 },
   contextSize: 1500,
   thinking: true,
-  toolCalling: true,
+  toolCalling: false,
 };
 
 // An empty chat offers the message starters above the input bar; wait for the
@@ -163,12 +163,18 @@ test('shows the loading screen while models are still loading', async () => {
 
   const screen = render(<ChatStackNavigator />);
 
-  expect(screen.queryByText('screens.noModelDownloaded.noModelAvailable')).toBeNull();
-  expect(screen.queryByText('screens.noModelSelected.pleaseSelectAModel')).toBeNull();
+  expect(
+    screen.queryByText('screens.noModelDownloaded.noModelAvailable'),
+  ).toBeNull();
+  expect(
+    screen.queryByText('screens.noModelSelected.pleaseSelectAModel'),
+  ).toBeNull();
 
   // A model is in use, so a session starts asynchronously; flush it so its
   // state updates are wrapped in act and don't leak past the test.
-  await waitFor(() => expect(mockChatInstance.setChatHistory).toHaveBeenCalled());
+  await waitFor(() =>
+    expect(mockChatInstance.setChatHistory).toHaveBeenCalled(),
+  );
 });
 
 test('shows NoModelSelectedScreen and starts no session when no model is in use', () => {
@@ -262,7 +268,13 @@ test('injects restored assistant messages with an empty toolCalls array', async 
     modelId: 0,
   });
   mockGetMessagesByConversationId.mockResolvedValue([
-    { id: 1, conversationId: 5, role: 'user', content: 'hi', documentsPath: [] },
+    {
+      id: 1,
+      conversationId: 5,
+      role: 'user',
+      content: 'hi',
+      documentsPath: [],
+    },
     {
       id: 2,
       conversationId: 5,
@@ -331,7 +343,13 @@ test('switching conversations keeps the chat screen mounted (no loading flash)',
     modelId: 0,
   });
   mockGetMessagesByConversationId.mockResolvedValue([
-    { id: 1, conversationId: 5, role: 'user', content: 'hi', documentsPath: [] },
+    {
+      id: 1,
+      conversationId: 5,
+      role: 'user',
+      content: 'hi',
+      documentsPath: [],
+    },
   ]);
 
   // Make the (non-empty) history injection hang so we can observe the in-between
@@ -391,7 +409,13 @@ test('clearing the conversation after a load error reloads and recovers', async 
     modelId: 0,
   });
   mockGetMessagesByConversationId.mockResolvedValue([
-    { id: 1, conversationId: 5, role: 'user', content: 'hi', documentsPath: [] },
+    {
+      id: 1,
+      conversationId: 5,
+      role: 'user',
+      content: 'hi',
+      documentsPath: [],
+    },
   ]);
   mockChatInstance.setChatHistory.mockImplementation(async (history = []) => {
     if (history.length > 0) {

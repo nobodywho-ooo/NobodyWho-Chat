@@ -15,7 +15,7 @@ export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
   temperature: 0.8,
   systemPrompt: '',
   thinking: true,
-  toolCalling: true,
+  toolCalling: false,
   maxTokens: 1500,
 };
 

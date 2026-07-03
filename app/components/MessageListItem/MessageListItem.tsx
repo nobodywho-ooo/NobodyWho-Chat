@@ -143,13 +143,29 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
     return () => clearTimeout(timeout);
   }, [copied]);
 
+  const handleCopyUser = useCallback(() => {
+    try {
+      if (content === '') {
+        return;
+      }
+      copyToClipboard(content);
+      haptics.selection();
+    } catch (error) {
+      log('handleCopyUser copy error ', error);
+    }
+  }, [content]);
+
   const handleCopy = useCallback(() => {
     try {
-      copyToClipboard(stripThinkingBlocks(content));
+      const text = stripThinkingBlocks(content);
+      if (text === '') {
+        return;
+      }
+      copyToClipboard(text);
       haptics.selection();
       setCopied(true);
     } catch (error) {
-      log('MessageListItem copy error ', error);
+      log('handleCopy copy error ', error);
     }
   }, [content]);
 
@@ -158,14 +174,16 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
       <View style={styles.userContainer}>
         {renderAttachedFiles()}
         {content.length > 0 && (
-          <View
-            style={[
+          <Pressable
+            onLongPress={handleCopyUser}
+            style={({ pressed }) => [
               styles.userBubbleContainer,
               { backgroundColor: colors.surfaceContainer },
+              pressed && styles.userBubblePressed,
             ]}
           >
             <Text style={styles.text}>{content}</Text>
-          </View>
+          </Pressable>
         )}
       </View>
     );
@@ -182,6 +200,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
     const isAwaitingResponse =
       isStreaming && content.length === 0 && toolInvocations.length === 0;
     const isThinkingActive = isStreaming && !isThinkingComplete;
+    const canCopyAssistantText = stripThinkingBlocks(content) !== '';
 
     return (
       <View style={styles.assistantContainer}>
@@ -236,7 +255,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
                 pressed && styles.copyButtonPressed,
               ]}
             >
-              {!isStreaming && (
+              {!isStreaming && canCopyAssistantText && (
                 <>
                   <PlatformIcon
                     iosIconName={copied ? 'checkmark' : 'doc.on.doc'}

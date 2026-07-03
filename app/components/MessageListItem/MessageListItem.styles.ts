@@ -13,6 +13,9 @@ export default StyleSheet.create({
     paddingVertical: Spacings.md,
     borderRadius: 16,
   },
+  userBubblePressed: {
+    opacity: 0.6,
+  },
   assistantContainer: {
     marginVertical: Spacings.md,
     marginTop: Spacings.md,

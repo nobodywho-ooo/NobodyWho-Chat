@@ -293,7 +293,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
             }
           }
           thumbTintColor="#FFFFFF"
-          value={true}
+          value={false}
         />
       </View>
     </View>
