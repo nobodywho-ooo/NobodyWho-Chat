@@ -5,7 +5,7 @@ import { render, act, waitFor } from '@testing-library/react-native';
 import { mockUseModels } from 'jest/mock/hooks';
 import { buildModel } from 'jest/factories/model';
 import { ModelPipeline } from 'types';
-import { getAppState, setAppState } from 'database';
+import { getAppState, setAppState, DEFAULT_ASSISTANT_CONFIG } from 'database';
 import { InputBar } from '../../screens/ChatScreen/components/InputBar/InputBar';
 import {
   getModelById,
@@ -131,7 +131,7 @@ beforeEach(async () => {
 const defaultCreateChatOpts = {
   systemPrompt: undefined,
   sampler: { preset: 'temperature', temperature: 0.8 },
-  contextSize: 2500,
+  contextSize: DEFAULT_ASSISTANT_CONFIG.maxTokens,
   thinking: true,
   toolCalling: false,
 };

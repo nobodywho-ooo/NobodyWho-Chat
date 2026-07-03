@@ -15,9 +15,9 @@ import styles from './CustomizeAssistantScreen.styles';
 export const TEMPERATURE_MIN = 0;
 export const TEMPERATURE_MAX = 2;
 export const TEMPERATURE_STEP = 0.1;
-export const MAX_TOKENS_MIN = 500;
-export const MAX_TOKENS_MAX = 8000;
-export const MAX_TOKENS_STEP = 500;
+export const TOKENS_MIN = 500;
+export const TOKENS_MAX = 8000;
+export const TOKENS_STEP = 500;
 
 export const CustomizeAssistantScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -144,18 +144,15 @@ export const CustomizeAssistantScreen: React.FC = () => {
             accessibilityLabel={t(
               'screens.customizeAssistant.decreaseMaxTokens',
             )}
-            disabled={config.maxTokens <= MAX_TOKENS_MIN}
+            disabled={config.maxTokens <= TOKENS_MIN}
             color={
-              config.maxTokens <= MAX_TOKENS_MIN
+              config.maxTokens <= TOKENS_MIN
                 ? colors.onSurfaceDisabled
                 : colors.onSurface
             }
             onPress={() =>
               savePreference({
-                maxTokens: Math.max(
-                  config.maxTokens - MAX_TOKENS_STEP,
-                  MAX_TOKENS_MIN,
-                ),
+                maxTokens: Math.max(config.maxTokens - TOKENS_STEP, TOKENS_MIN),
               })
             }
           />
@@ -167,18 +164,15 @@ export const CustomizeAssistantScreen: React.FC = () => {
             accessibilityLabel={t(
               'screens.customizeAssistant.increaseMaxTokens',
             )}
-            disabled={config.maxTokens >= MAX_TOKENS_MAX}
+            disabled={config.maxTokens >= TOKENS_MAX}
             color={
-              config.maxTokens >= MAX_TOKENS_MAX
+              config.maxTokens >= TOKENS_MAX
                 ? colors.onSurfaceDisabled
                 : colors.onSurface
             }
             onPress={() =>
               savePreference({
-                maxTokens: Math.min(
-                  config.maxTokens + MAX_TOKENS_STEP,
-                  MAX_TOKENS_MAX,
-                ),
+                maxTokens: Math.min(config.maxTokens + TOKENS_STEP, TOKENS_MAX),
               })
             }
           />

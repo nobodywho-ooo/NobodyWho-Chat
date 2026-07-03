@@ -361,12 +361,12 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
             }
           }
         >
-          2500
+          8000
         </Text>
         <IconButton
           accessibilityLabel="screens.customizeAssistant.increaseMaxTokens"
-          color="#000000"
-          disabled={false}
+          color="#c1c1c1"
+          disabled={true}
           icon={
             {
               "androidIconName": "add",

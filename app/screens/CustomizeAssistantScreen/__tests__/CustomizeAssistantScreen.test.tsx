@@ -6,8 +6,8 @@ import { getAppState, setAppState, DEFAULT_ASSISTANT_CONFIG } from 'database';
 
 import {
   CustomizeAssistantScreen,
-  MAX_TOKENS_MIN,
-  MAX_TOKENS_STEP,
+  TOKENS_MIN,
+  TOKENS_STEP,
 } from '../CustomizeAssistantScreen';
 
 beforeEach(async () => {
@@ -45,27 +45,27 @@ test('toggling tool calling persists the config', () => {
 test('the stepper changes max tokens by 500 and clamps at the minimum', () => {
   const screen = render(<CustomizeAssistantScreen />);
 
+  // The default is already at the maximum, so increasing is a no-op.
   const plus = screen.getByLabelText(
     'screens.customizeAssistant.increaseMaxTokens',
   );
   fireEvent.press(plus);
   expect(getAppState().assistantConfig?.maxTokens).toBe(
-    DEFAULT_ASSISTANT_CONFIG.maxTokens + MAX_TOKENS_STEP,
+    DEFAULT_ASSISTANT_CONFIG.maxTokens,
   );
 
   const minus = screen.getByLabelText(
     'screens.customizeAssistant.decreaseMaxTokens',
   );
-  fireEvent.press(minus);
-  fireEvent.press(minus);
-  fireEvent.press(minus);
-  fireEvent.press(minus);
-  fireEvent.press(minus);
-  expect(getAppState().assistantConfig?.maxTokens).toBe(MAX_TOKENS_MIN);
+  const presses = (DEFAULT_ASSISTANT_CONFIG.maxTokens - TOKENS_MIN) / TOKENS_STEP;
+  for (let i = 0; i < presses; i++) {
+    fireEvent.press(minus);
+  }
+  expect(getAppState().assistantConfig?.maxTokens).toBe(TOKENS_MIN);
 
   // At the minimum the decrease button is disabled.
   fireEvent.press(minus);
-  expect(getAppState().assistantConfig?.maxTokens).toBe(MAX_TOKENS_MIN);
+  expect(getAppState().assistantConfig?.maxTokens).toBe(TOKENS_MIN);
 });
 
 test('editing the system prompt persists on end editing', () => {
