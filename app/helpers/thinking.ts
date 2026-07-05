@@ -5,12 +5,13 @@ interface ThinkDelimiters {
 
 // Different model families wrap their reasoning in different delimiters.
 // Qwen-style models use <think>…</think>; Gemma-style models open a reasoning
-// channel with <|channel>thought and close it with <channel|>. We support
-// every known pair so reasoning is folded away instead of leaking into the
-// rendered answer.
+// channel with <|channel>thought and close it with <channel|>; Ministral-style
+// models use [THINK]…[/THINK]. We support every known pair so reasoning is
+// folded away instead of leaking into the rendered answer.
 const THINK_DELIMITERS: ThinkDelimiters[] = [
   { open: '<think>', close: '</think>' },
   { open: '<|channel>thought', close: '<channel|>' },
+  { open: '[THINK]', close: '[/THINK]' },
 ];
 
 const escapeRegExp = (value: string): string =>

@@ -8,15 +8,15 @@ export type AssistantConfig = {
   systemPrompt: string;
   thinking: boolean;
   toolCalling: boolean;
-  maxTokens: number;
+  contextSize: number;
 };
 
 export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
   temperature: 0.8,
-  systemPrompt: '',
+  systemPrompt: 'You are a helpful assistant running on a smartphone.',
   thinking: true,
   toolCalling: false,
-  maxTokens: 8000, // context size
+  contextSize: 8000,
 };
 
 export type AppState = {
@@ -41,7 +41,7 @@ function sameAssistantConfig(
     a.systemPrompt === b.systemPrompt &&
     a.thinking === b.thinking &&
     a.toolCalling === b.toolCalling &&
-    a.maxTokens === b.maxTokens
+    a.contextSize === b.contextSize
   );
 }
 
@@ -56,6 +56,13 @@ export async function hydrateAppState(): Promise<void> {
     _state = raw !== undefined ? JSON.parse(raw) : {};
   } catch {
     _state = {};
+  }
+  // Fall back if fields added/renamed
+  if (_state.assistantConfig) {
+    _state.assistantConfig = {
+      ...DEFAULT_ASSISTANT_CONFIG,
+      ..._state.assistantConfig,
+    };
   }
 }
 

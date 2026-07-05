@@ -50,22 +50,23 @@ test('the stepper changes max tokens by 500 and clamps at the minimum', () => {
     'screens.customizeAssistant.increaseMaxTokens',
   );
   fireEvent.press(plus);
-  expect(getAppState().assistantConfig?.maxTokens).toBe(
-    DEFAULT_ASSISTANT_CONFIG.maxTokens,
+  expect(getAppState().assistantConfig?.contextSize).toBe(
+    DEFAULT_ASSISTANT_CONFIG.contextSize,
   );
 
   const minus = screen.getByLabelText(
     'screens.customizeAssistant.decreaseMaxTokens',
   );
-  const presses = (DEFAULT_ASSISTANT_CONFIG.maxTokens - TOKENS_MIN) / TOKENS_STEP;
+  const presses =
+    (DEFAULT_ASSISTANT_CONFIG.contextSize - TOKENS_MIN) / TOKENS_STEP;
   for (let i = 0; i < presses; i++) {
     fireEvent.press(minus);
   }
-  expect(getAppState().assistantConfig?.maxTokens).toBe(TOKENS_MIN);
+  expect(getAppState().assistantConfig?.contextSize).toBe(TOKENS_MIN);
 
   // At the minimum the decrease button is disabled.
   fireEvent.press(minus);
-  expect(getAppState().assistantConfig?.maxTokens).toBe(TOKENS_MIN);
+  expect(getAppState().assistantConfig?.contextSize).toBe(TOKENS_MIN);
 });
 
 test('editing the system prompt persists on end editing', () => {

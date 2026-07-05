@@ -8,6 +8,7 @@ import { IconButton, IconButtonIconProps, Text } from 'components';
 import { Theme } from 'types';
 
 import { styles, INPUT_BAR_HEIGHT } from './InputBar.styles';
+import { haptics } from 'helpers';
 
 const gradientColors: Record<Theme, string[]> = {
   light: ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.9)'],
@@ -91,6 +92,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   }, [attachExpanded, showToggle, onAttachExpandedChange]);
 
   const toggleAttach = () => {
+    haptics.medium();
     onAttachExpandedChange(!attachExpanded);
   };
 

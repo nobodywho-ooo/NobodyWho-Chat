@@ -124,7 +124,7 @@ export function useChatGeneration({
       onConversationCreated(id);
     }
 
-    haptics.light();
+    haptics.heavy();
 
     await insertMessage({
       conversationId: id,

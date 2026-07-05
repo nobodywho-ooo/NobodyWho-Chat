@@ -104,4 +104,22 @@ describe('parseThinking', () => {
       '## The Cartographer\n\nElara lived on the edge of a forgotten town.',
     );
   });
+
+  test('splits a Ministral THINK block from the answer', () => {
+    expect(
+      parseThinking('[THINK]Okay, so the user needs help[/THINK]The answer'),
+    ).toEqual({
+      thinking: 'Okay, so the user needs help',
+      rest: 'The answer',
+      isThinkingComplete: true,
+    });
+  });
+
+  test('streams a still-open Ministral THINK block as active', () => {
+    expect(parseThinking('[THINK]still going')).toEqual({
+      thinking: 'still going',
+      rest: '',
+      isThinkingComplete: false,
+    });
+  });
 });

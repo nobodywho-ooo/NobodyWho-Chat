@@ -129,9 +129,9 @@ beforeEach(async () => {
 
 // What mountModelAndCreateChat derives from DEFAULT_ASSISTANT_CONFIG.
 const defaultCreateChatOpts = {
-  systemPrompt: undefined,
+  systemPrompt: DEFAULT_ASSISTANT_CONFIG.systemPrompt,
   sampler: { preset: 'temperature', temperature: 0.8 },
-  contextSize: DEFAULT_ASSISTANT_CONFIG.maxTokens,
+  contextSize: DEFAULT_ASSISTANT_CONFIG.contextSize,
   thinking: true,
   toolCalling: false,
 };
@@ -243,7 +243,7 @@ test('disposes and rebuilds the chat when the assistant config changes', async (
         systemPrompt: 'Talk like a pirate.',
         thinking: false,
         toolCalling: false,
-        maxTokens: 2000,
+        contextSize: 2000,
       },
     });
   });

@@ -181,7 +181,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
           },
         ]
       }
-      value=""
+      value="You are a helpful assistant running on a smartphone."
     />
     <View
       style={

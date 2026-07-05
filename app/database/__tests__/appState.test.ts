@@ -4,6 +4,7 @@ import {
   getAppState,
   setAppState,
   subscribeAppState,
+  DEFAULT_ASSISTANT_CONFIG,
 } from '../appState';
 
 const APP_STATE = 'appState';
@@ -39,6 +40,24 @@ describe('hydrateAppState', () => {
     await hydrateAppState();
 
     expect(getAppState()).toEqual({});
+  });
+
+  test('fills in fields missing from a stale persisted assistantConfig with current defaults', async () => {
+    // Simulates a config persisted by an older app version, before a field
+    // was added/renamed (e.g. contextSize did not exist yet).
+    storage.getItem.mockResolvedValue(
+      JSON.stringify({
+        assistantConfig: { temperature: 0.5, maxTokens: 4000 },
+      }),
+    );
+
+    await hydrateAppState();
+
+    expect(getAppState().assistantConfig).toEqual({
+      ...DEFAULT_ASSISTANT_CONFIG,
+      temperature: 0.5,
+      maxTokens: 4000,
+    });
   });
 });
 
@@ -96,7 +115,7 @@ describe('setAppState', () => {
       systemPrompt: 'Be brief.',
       thinking: false,
       toolCalling: true,
-      maxTokens: 2000,
+      contextSize: 2000,
     };
 
     await setAppState({ assistantConfig });
@@ -111,7 +130,7 @@ describe('setAppState', () => {
       systemPrompt: 'Be brief.',
       thinking: false,
       toolCalling: true,
-      maxTokens: 2000,
+      contextSize: 2000,
     };
     await setAppState({ assistantConfig });
     storage.setItem.mockClear();

@@ -144,35 +144,41 @@ export const CustomizeAssistantScreen: React.FC = () => {
             accessibilityLabel={t(
               'screens.customizeAssistant.decreaseMaxTokens',
             )}
-            disabled={config.maxTokens <= TOKENS_MIN}
+            disabled={config.contextSize <= TOKENS_MIN}
             color={
-              config.maxTokens <= TOKENS_MIN
+              config.contextSize <= TOKENS_MIN
                 ? colors.onSurfaceDisabled
                 : colors.onSurface
             }
             onPress={() =>
               savePreference({
-                maxTokens: Math.max(config.maxTokens - TOKENS_STEP, TOKENS_MIN),
+                contextSize: Math.max(
+                  config.contextSize - TOKENS_STEP,
+                  TOKENS_MIN,
+                ),
               })
             }
           />
           <Text bold style={styles.stepperValue}>
-            {config.maxTokens}
+            {config.contextSize}
           </Text>
           <IconButton
             icon={{ iosIconName: 'plus', androidIconName: 'add' }}
             accessibilityLabel={t(
               'screens.customizeAssistant.increaseMaxTokens',
             )}
-            disabled={config.maxTokens >= TOKENS_MAX}
+            disabled={config.contextSize >= TOKENS_MAX}
             color={
-              config.maxTokens >= TOKENS_MAX
+              config.contextSize >= TOKENS_MAX
                 ? colors.onSurfaceDisabled
                 : colors.onSurface
             }
             onPress={() =>
               savePreference({
-                maxTokens: Math.min(config.maxTokens + TOKENS_STEP, TOKENS_MAX),
+                contextSize: Math.min(
+                  config.contextSize + TOKENS_STEP,
+                  TOKENS_MAX,
+                ),
               })
             }
           />

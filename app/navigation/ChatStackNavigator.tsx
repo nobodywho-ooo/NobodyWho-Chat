@@ -159,7 +159,7 @@ export const ChatStackNavigator = () => {
       model,
       systemPrompt: assistantConfig.systemPrompt.trim() || undefined,
       sampler: SamplerPresets.temperature(assistantConfig.temperature),
-      contextSize: assistantConfig.maxTokens,
+      contextSize: assistantConfig.contextSize,
       thinking: assistantConfig.thinking,
       toolCalling: assistantConfig.toolCalling,
     });
