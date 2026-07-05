@@ -117,7 +117,7 @@ exports[`renders correctly ModelCard 1`] = `
       >
         <PlatformIcon
           androidIconName="chat"
-          color="#7c7c7c"
+          color="#000000"
           iosIconName="text.bubble"
           size={12}
         />
@@ -263,6 +263,45 @@ exports[`renders correctly ModelCard 1`] = `
             }
           >
             Thinking
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 4,
+              },
+              {
+                "backgroundColor": "rgba(230, 184, 0, 0.15)",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="memory"
+            color="#e6b800"
+            iosIconName="cpu"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                  "marginLeft": 2,
+                },
+                {
+                  "color": "#e6b800",
+                },
+              ]
+            }
+          >
+            High CPU usage
           </Text>
         </View>
         <View
@@ -427,7 +466,7 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
       >
         <PlatformIcon
           androidIconName="chat"
-          color="#7c7c7c"
+          color="#000000"
           iosIconName="text.bubble"
           size={12}
         />
@@ -587,6 +626,45 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
                 "paddingVertical": 4,
               },
               {
+                "backgroundColor": "rgba(230, 184, 0, 0.15)",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="memory"
+            color="#e6b800"
+            iosIconName="cpu"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                  "marginLeft": 2,
+                },
+                {
+                  "color": "#e6b800",
+                },
+              ]
+            }
+          >
+            High CPU usage
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 4,
+              },
+              {
                 "backgroundColor": "#f7f7f7",
               },
             ]
@@ -731,7 +809,7 @@ exports[`renders correctly ModelCard when model is downloading 1`] = `
       >
         <PlatformIcon
           androidIconName="chat"
-          color="#7c7c7c"
+          color="#000000"
           iosIconName="text.bubble"
           size={12}
         />
@@ -893,7 +971,7 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
       >
         <PlatformIcon
           androidIconName="chat"
-          color="#7c7c7c"
+          color="#000000"
           iosIconName="text.bubble"
           size={12}
         />
@@ -1039,6 +1117,45 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
             }
           >
             Thinking
+          </Text>
+        </View>
+        <View
+          style={
+            [
+              {
+                "alignItems": "center",
+                "borderRadius": 6,
+                "flexDirection": "row",
+                "gap": 2,
+                "paddingHorizontal": 8,
+                "paddingVertical": 4,
+              },
+              {
+                "backgroundColor": "rgba(230, 184, 0, 0.15)",
+              },
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="memory"
+            color="#e6b800"
+            iosIconName="cpu"
+            size={12}
+          />
+          <Text
+            style={
+              [
+                {
+                  "fontSize": 12,
+                  "marginLeft": 2,
+                },
+                {
+                  "color": "#e6b800",
+                },
+              ]
+            }
+          >
+            High CPU usage
           </Text>
         </View>
         <View

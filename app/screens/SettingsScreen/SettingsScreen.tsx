@@ -32,7 +32,7 @@ export const SettingsScreen: React.FC = () => {
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
-      <Text>{t('screens.settings.mySettings')}</Text>
+      <Text>{t('screens.settings.app')}</Text>
       <ListItem
         title={t('screens.settings.models')}
         subtitle={t('screens.settings.manageYourModels')}

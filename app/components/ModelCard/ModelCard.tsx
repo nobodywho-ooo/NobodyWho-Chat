@@ -12,6 +12,8 @@ import { Tag } from '../Tag/Tag';
 import styles from './ModelCard.styles';
 import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
 
+const HIGH_CPU_USAGE_SIZE_GB = 2;
+
 const pipelineIcon: Record<
   ModelPipeline,
   {
@@ -155,7 +157,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
               iosIconName={pipelineIcon[pipeline].iosIconName}
               androidIconName={pipelineIcon[pipeline].androidIconName}
               size={fontSizes.caption}
-              color={colors.onSurfaceVariant}
+              color={colors.onSurface}
             />
             <Text
               variant="body2"
@@ -194,6 +196,13 @@ export const ModelCard: React.FC<ModelCardProps> = ({
                   iosIconName="lightbulb"
                   androidIconName="lightbulb"
                   label="Thinking"
+                />
+              )}
+              {sizeGB > HIGH_CPU_USAGE_SIZE_GB && (
+                <Tag
+                  iosIconName="cpu"
+                  androidIconName="memory"
+                  label="High CPU usage"
                 />
               )}
               {tags.map(tag => (

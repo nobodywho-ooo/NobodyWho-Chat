@@ -26,4 +26,11 @@ describe('Tag', () => {
     ).toJSON();
     expect(tree).toMatchSnapshot();
   });
+
+  test('renders the High CPU usage label in yellow with a yellow background', () => {
+    const tree = render(
+      <Tag label="High CPU usage" iosIconName="cpu" androidIconName="memory" />,
+    ).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
 });

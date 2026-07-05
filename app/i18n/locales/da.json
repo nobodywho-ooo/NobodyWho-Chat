@@ -193,7 +193,7 @@
       "changeModel": "Skift model"
     },
     "settings": {
-      "mySettings": "Mine indstillinger",
+      "app": "App",
       "models": "Modeller",
       "manageYourModels": "Administrer dine modeller",
       "customize": "Tilpas",

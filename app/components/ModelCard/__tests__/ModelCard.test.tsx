@@ -52,3 +52,17 @@ test('renders correctly ModelCard when model is selected', () => {
   const tree = render(<ModelCard model={mockModel} isSelected />).toJSON();
   expect(tree).toMatchSnapshot();
 });
+
+test('shows a High CPU usage tag when the model size is above 2 GB', () => {
+  const bigModel: Model = { ...mockModel, sizeGB: 2.5 };
+  const { getAllByText } = render(<ModelCard model={bigModel} />);
+
+  expect(getAllByText('High CPU usage')).toHaveLength(1);
+});
+
+test('does not show a High CPU usage tag when the model size is 2 GB or below', () => {
+  const smallModel: Model = { ...mockModel, sizeGB: 2 };
+  const { queryByText } = render(<ModelCard model={smallModel} />);
+
+  expect(queryByText('High CPU usage')).toBeNull();
+});

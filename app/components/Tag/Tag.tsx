@@ -23,9 +23,12 @@ export const Tag: React.FC<TagProps> = ({
   let textColor = colors.onSurfaceVariant;
   let backgroundColor = colors.surfaceSecondary;
 
-  if (label === 'Recommended') {
+  if (label === 'Great First Pick') {
     textColor = colors.onSurface;
     backgroundColor = colors.surfaceContainer;
+  } else if (label === 'High CPU usage') {
+    textColor = colors.warningContent;
+    backgroundColor = colors.warningSurface;
   }
 
   return (
@@ -35,7 +38,7 @@ export const Tag: React.FC<TagProps> = ({
           iosIconName={iosIconName}
           androidIconName={androidIconName}
           size={12}
-          color={colors.onSurfaceVariant}
+          color={textColor}
         />
       )}
       <Text style={[styles.text, { color: textColor }]}>{label}</Text>

@@ -113,3 +113,45 @@ exports[`Tag renders no icon when only one platform icon name is provided 1`] = 
   </Text>
 </View>
 `;
+
+exports[`Tag renders the High CPU usage label in yellow with a yellow background 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "borderRadius": 6,
+        "flexDirection": "row",
+        "gap": 2,
+        "paddingHorizontal": 8,
+        "paddingVertical": 4,
+      },
+      {
+        "backgroundColor": "rgba(230, 184, 0, 0.15)",
+      },
+    ]
+  }
+>
+  <PlatformIcon
+    androidIconName="memory"
+    color="#e6b800"
+    iosIconName="cpu"
+    size={12}
+  />
+  <Text
+    style={
+      [
+        {
+          "fontSize": 12,
+          "marginLeft": 2,
+        },
+        {
+          "color": "#e6b800",
+        },
+      ]
+    }
+  >
+    High CPU usage
+  </Text>
+</View>
+`;
