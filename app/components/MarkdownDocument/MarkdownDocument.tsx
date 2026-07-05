@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
-import { ScrollView } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import { Linking, ScrollView } from 'react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
-import { getMarkdownStyle } from 'helpers';
+import { getMarkdownStyle, log } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
 
 import styles from './MarkdownDocument.styles';
@@ -21,13 +21,23 @@ export const MarkdownDocument: React.FC<MarkdownDocumentProps> = ({
     [isDarkMode, colors.onSurface],
   );
 
+  const handleLinkPress = useCallback(({ url }: { url: string }) => {
+    Linking.openURL(url).catch(error =>
+      log(`Failed to open URL ${url}`, error),
+    );
+  }, []);
+
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
       contentContainerStyle={styles.content}
     >
-      <EnrichedMarkdownText markdown={markdown} markdownStyle={markdownStyle} />
+      <EnrichedMarkdownText
+        markdown={markdown}
+        markdownStyle={markdownStyle}
+        onLinkPress={handleLinkPress}
+      />
     </ScrollView>
   );
 };

@@ -23,6 +23,7 @@ exports[`MarkdownDocument matches snapshot 1`] = `
     <EnrichedMarkdownText
       markdown="# Hello world"
       markdownStyle={{}}
+      onLinkPress={[Function]}
     />
   </View>
 </RCTScrollView>

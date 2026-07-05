@@ -1,5 +1,5 @@
 import React from 'react';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, Linking } from 'react-native';
 import { act, fireEvent, render, within } from '@testing-library/react-native';
 import { Message } from 'react-native-nobodywho';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
@@ -122,6 +122,28 @@ test('renders a streaming assistant message with StreamdownText', () => {
   render(<MessageListItem message={message} isStreaming />);
   expect(StreamdownText).toHaveBeenCalled();
   expect(EnrichedMarkdownText).not.toHaveBeenCalled();
+});
+
+test('opens a tapped link from a completed assistant message', () => {
+  jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  const message: Message = { role: 'assistant', content: 'see [link](https://example.com)' };
+  render(<MessageListItem message={message} isStreaming={false} />);
+
+  const [props] = (EnrichedMarkdownText as unknown as jest.Mock).mock.calls[0];
+  props.onLinkPress({ url: 'https://example.com' });
+
+  expect(Linking.openURL).toHaveBeenCalledWith('https://example.com');
+});
+
+test('opens a tapped link from a streaming assistant message', () => {
+  jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  const message: Message = { role: 'assistant', content: 'see [link](https://example.com)' };
+  render(<MessageListItem message={message} isStreaming />);
+
+  const [props] = (StreamdownText as unknown as jest.Mock).mock.calls[0];
+  props.onLinkPress({ url: 'https://example.com' });
+
+  expect(Linking.openURL).toHaveBeenCalledWith('https://example.com');
 });
 
 test('does not render a copy button for user messages', () => {

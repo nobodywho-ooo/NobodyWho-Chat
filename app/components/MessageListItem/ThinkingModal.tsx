@@ -1,5 +1,12 @@
-import React, { useMemo } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useCallback, useMemo } from 'react';
+import {
+  Linking,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {
   Gesture,
   GestureDetector,
@@ -16,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { StreamdownText } from 'react-native-streamdown';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
-import { getMarkdownStyle } from 'helpers';
+import { getMarkdownStyle, log } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
 import { Spacings } from 'style';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
@@ -77,6 +84,12 @@ export const ThinkingModal: React.FC<ThinkingModalProps> = ({
   }));
 
   const Renderer = active ? StreamdownText : EnrichedMarkdownText;
+
+  const handleLinkPress = useCallback(({ url }: { url: string }) => {
+    Linking.openURL(url).catch(error =>
+      log(`Failed to open URL ${url}`, error),
+    );
+  }, []);
 
   return (
     <Modal
@@ -139,6 +152,7 @@ export const ThinkingModal: React.FC<ThinkingModalProps> = ({
                 containerStyle={styles.content}
                 markdown={thinking}
                 markdownStyle={markdownStyle}
+                onLinkPress={handleLinkPress}
               />
             )}
           </ScrollView>

@@ -1,5 +1,11 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Linking,
+  Pressable,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { StreamdownText } from 'react-native-streamdown';
@@ -169,6 +175,12 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
     }
   }, [content]);
 
+  const handleLinkPress = useCallback(({ url }: { url: string }) => {
+    Linking.openURL(url).catch(error =>
+      log(`Failed to open URL ${url}`, error),
+    );
+  }, []);
+
   if (role === 'user') {
     return (
       <View style={styles.userContainer}>
@@ -233,12 +245,14 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
                   containerStyle={styles.streamdownContainer}
                   markdown={rest}
                   markdownStyle={markdownStyle}
+                  onLinkPress={handleLinkPress}
                 />
               ) : (
                 <EnrichedMarkdownText
                   containerStyle={styles.streamdownContainer}
                   markdown={rest}
                   markdownStyle={markdownStyle}
+                  onLinkPress={handleLinkPress}
                 />
               ))}
           </>
