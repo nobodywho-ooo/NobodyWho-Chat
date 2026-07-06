@@ -25,97 +25,87 @@
       "planParisTrip": {
         "title": "Planlæg",
         "subtitle": "en tur til Paris",
-        "body": "Jeg vil gerne planlægge en 7-dages tur til Paris. Foreslå seværdigheder, man ikke må gå glip af, anbefal gode kvarterer at bo i, og lav en dagsplan med restauranter og aktiviteter."
+        "body": "Jeg vil gerne planlægge en 5-dages tur til Paris. Foreslå seværdigheder og museer, man ikke må gå glip af, anbefal gode kvarterer at bo i, og lav en dagsplan."
       },
       "beginMeditating": {
         "title": "Begynd",
         "subtitle": "at meditere",
-        "body": "Jeg er interesseret i at begynde at meditere. Guid mig gennem grundlæggende meditationsteknikker, foreslå en daglig rutine, og forklar fordelene for det mentale velvære."
+        "body": "Jeg er interesseret i at begynde at meditere. Guid mig gennem grundlæggende meditationsteknikker, og foreslå en daglig rutine."
       },
       "designWorkoutRoutine": {
         "title": "Design",
         "subtitle": "et træningsprogram",
-        "body": "Jeg vil gerne lave et hjemmetræningsprogram uden udstyr. Lav en afbalanceret træningsplan, der rammer alle store muskelgrupper, inklusive opvarmning og udstrækning."
-      },
-      "pickWeekendActivity": {
-        "title": "Vælg",
-        "subtitle": "en weekendaktivitet",
-        "body": "Muligheder for en fri lørdag: 1. Vandretur: Godt vejr, men lang køretur. 2. Filmmaraton: Afslappende, men indendørs hele dagen. 3. Lokalt arrangement: Socialt, men uforudsigeligt. Vælg den bedste aktivitet ud fra energiniveau og humør."
+        "body": "Design et hjemmetræningsprogram uden udstyr til mig. Lav en afbalanceret træningsplan, der rammer alle store muskelgrupper, startende med opvarmning og afsluttende med udstrækning."
       },
       "packLight": {
         "title": "Pak",
         "subtitle": "let til en weekendtur",
-        "body": "En 3-dages tur tillader kun håndbagage. Pak det nødvendige, herunder alsidigt tøj, toiletsager og nødvendige gadgets, mens bagagen holdes minimal."
+        "body": "Pak det nødvendige til en 3-dages tur, herunder tøj til flere lejligheder, toiletsager og nødvendige gadgets, mens bagagen holdes minimal."
       },
       "organizeFinances": {
         "title": "Organisér",
         "subtitle": "min økonomi",
-        "body": "Jeg vil gerne have styr på min privatøkonomi. Hjælp mig med at lave et månedligt budget, holde styr på mine udgifter og foreslå praktiske strategier til at spare op."
+        "body": "Hjælp mig med at holde styr på min privatøkonomi. Lav et månedligt budget, hold styr på udgifter, og foreslå idéer til at spare op."
       },
       "tellMeSomethingFascinating": {
         "title": "Fortæl mig",
         "subtitle": "noget fascinerende",
-        "body": "Del en interessant videnskabelig opdagelse eller historisk kendsgerning, som de fleste ikke kender til. Forklar, hvorfor den er vigtig, og hvordan den har påvirket vores forståelse."
+        "body": "Fortæl mig om en interessant videnskabelig opdagelse eller historisk kendsgerning, som de fleste ikke har hørt om. Forklar, hvorfor den er vigtig, og hvilken betydning den har for vores forståelse."
       },
       "prepareJobInterview": {
         "title": "Forbered",
         "subtitle": "en jobsamtale",
-        "body": "En samtale til en stilling inden for marketing er planlagt. Undersøg almindelige spørgsmål, forbered svar, og vælg professionelt tøj for at gøre et stærkt indtryk."
+        "body": "En samtale til en designerstilling er planlagt. Undersøg typiske spørgsmål, forbered svar, og giv tips til at gøre et positivt indtryk."
       },
       "writeProfessionally": {
         "title": "Skriv",
         "subtitle": "professionelt",
-        "body": "Jeg skal skrive en formel e-mail, der afslår et forretningsforslag og samtidig bevarer det gode forhold. Hjælp mig med at formulere en høflig og professionel besked."
+        "body": "Jeg skal skrive en formel e-mail, der afslår et forretningsforslag og samtidig bevarer det gode forhold. Skriv en høflig og professionel besked for mig."
       },
       "startLearningFrench": {
         "title": "Begynd at lære",
         "subtitle": "fransk",
-        "body": "Jeg vil gerne begynde at lære fransk. Kan du lave en begyndervenlig studieplan med daglige øvelser, anbefalede ressourcer og praktiske samtaleemner?"
+        "body": "Hjælp mig med at begynde at lære fransk. Lav en begyndervenlig studieplan med daglige øvelser, anbefalede ressourcer, og giv mig nogle hverdagssætninger med oversættelser."
       },
       "planVacationTrip": {
         "title": "Planlæg",
         "subtitle": "en ferierejse",
-        "body": "En 5-dages tur til Italien inkluderer stop i Rom og Firenze. Afbalancér sightseeing, afslapning og lokale madoplevelser, og tag højde for rejsetiden mellem byerne."
+        "body": "Planlæg en 4-dages ferierejse til København. Jeg vil gerne se lidt på seværdigheder, motionere lidt og opleve lokal mad."
       },
       "explainComplexTopic": {
         "title": "Forklar",
         "subtitle": "et komplekst emne enkelt",
-        "body": "Kan du forklare, hvordan kvantecomputere fungerer, i enkle vendinger? Brug hverdagsanalogier og undgå teknisk jargon."
-      },
-      "organizeBirthdayParty": {
-        "title": "Organisér",
-        "subtitle": "en fødselsdagsfest",
-        "body": "En fødselsdagsfest planlægges for 10 gæster med et budget på 2.500 kr. Fordel pengene på mad, pynt og underholdning, mens omkostningerne holdes nede."
+        "body": "Forklar, hvordan kvantecomputere fungerer, i enkle vendinger."
       },
       "summarizeText": {
         "title": "Opsummér",
         "subtitle": "denne tekst",
-        "body": "Kan du give et kort resumé af denne tekst, der fremhæver hovedpointerne og de vigtigste budskaber? Fokusér på den vigtigste information, mens kernebudskabet bevares."
+        "body": "Kan du give mig et kort resumé af denne tekst og de vigtigste pointer?"
       },
       "decideDinner": {
         "title": "Beslut",
-        "subtitle": "hvad der skal laves til aftensmad",
-        "body": "Køleskabet indeholder kylling, peberfrugter, ris og et par krydderier. Lav et hurtigt og lækkert måltid med disse ingredienser uden en tur i supermarkedet."
+        "subtitle": "hvad der skal laves til frokost",
+        "body": "Køleskabet indeholder hakket oksekød, tomater, pasta og almindelige krydderier. Lav et hurtigt og lækkert måltid med disse ingredienser."
       },
       "discoverNextBook": {
         "title": "Opdag",
         "subtitle": "min næste bog",
-        "body": "Baseret på min interesse for skønlitteratur med stærk karakterudvikling og psykologiske temaer, kan du så anbefale nogle bøger? Jeg har for nylig nydt værker af Donna Tartt og Haruki Murakami."
+        "body": "Jeg kan godt lide at læse fantasy- og science fiction-romaner af forfatteren Brandon Sanderson. Anbefal nogle bøger og forfattere."
       },
       "boostProductivity": {
         "title": "Boost",
         "subtitle": "min produktivitet",
-        "body": "Jeg har brug for hjælp til at lave en afbalanceret dagsplan, der maksimerer min produktivitet og samtidig bevarer balancen mellem arbejde og fritid. Inkludér tips til tidsstyring og forslag til pauser."
+        "body": "Lav en daglig rutine, der maksimerer min produktivitet og samtidig bevarer balancen mellem arbejde og fritid. Inkludér tips til tidsstyring og forslag til pauser."
       },
       "describeImage": {
         "title": "Beskriv",
         "subtitle": "dette billede",
-        "body": "Beskriv venligst dette billede i detaljer"
+        "body": "Beskriv venligst dette billede"
       },
       "identifyPlant": {
         "title": "Identificér",
         "subtitle": "denne plante",
-        "body": "Hvilken plante eller blomst er dette?"
+        "body": "Hvilken plante er dette?"
       },
       "analyzeArtwork": {
         "title": "Analysér",
