@@ -214,6 +214,7 @@ export const ChatStackNavigator = () => {
     const isCurrent = () => sessionId === sessionIdRef.current;
 
     setStatus(SessionStatus.Loading);
+
     try {
       await steps();
       if (isCurrent()) {

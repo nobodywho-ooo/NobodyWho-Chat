@@ -180,7 +180,8 @@ jest.mock('expo-audio', () => {
 // react-native-gesture-handler's native module isn't available under Jest, and
 // the real entrypoint calls TurboModuleRegistry.getEnforcing on import. Stub the
 // pieces FullScreenImageModal uses: a chainable Gesture.Pan builder and
-// pass-through GestureDetector / GestureHandlerRootView wrappers.
+// pass-through GestureDetector / GestureHandlerRootView wrappers, plus the
+// RNGH ScrollView (mapped to RN's) that MessageStarters renders.
 jest.mock('react-native-gesture-handler', () => {
   const mockReact = require('react');
   const chainableGesture = () => {
@@ -198,6 +199,7 @@ jest.mock('react-native-gesture-handler', () => {
       mockReact.createElement(mockReact.Fragment, null, children),
     GestureHandlerRootView: ({ children }) =>
       mockReact.createElement(mockReact.Fragment, null, children),
+    ScrollView: require('react-native').ScrollView,
   };
 });
 

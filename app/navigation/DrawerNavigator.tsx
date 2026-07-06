@@ -6,6 +6,7 @@ import {
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import type { PanGesture } from 'react-native-gesture-handler';
 import {
   MenuView,
   type MenuAction,
@@ -20,9 +21,18 @@ import { PlatformIcon, Text } from 'components';
 import { log, haptics, isIOS, capitalize } from 'helpers';
 import { useAppState, useConversations, useModels, useStyled } from 'hooks';
 
+import { messageStartersScrollRef } from '../screens/ChatScreen/components/MessageStarters/MessageStarters';
+
 import { ChatStackNavigator } from './ChatStackNavigator';
 import { Spacings } from 'style';
 import { useAiService } from 'services';
+
+// swipeEdgeWidth spans the whole screen, so on Android the drawer pan would
+// otherwise activate (5dp) before the starters' horizontal scroll can claim
+// the drag (8dp touch slop) and steal it. Touches that miss the scroll view
+// never involve its handler, so drawer swipes elsewhere are unaffected.
+const configureDrawerGesture = (gesture: PanGesture) =>
+  gesture.requireExternalGestureToFail(messageStartersScrollRef);
 
 const Drawer = createDrawerNavigator();
 const ICON_SIZE = 22;
@@ -206,6 +216,7 @@ export const DrawerNavigator = () => {
         overlayStyle: { backgroundColor: colors.shadow },
         swipeEnabled: true,
         swipeEdgeWidth: Dimensions.get('window').width,
+        configureGestureHandler: configureDrawerGesture,
       }}
     >
       <Drawer.Screen
@@ -241,6 +252,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     justifyContent: 'center',
     alignItems: isIOS ? 'center' : 'flex-start',
+    paddingRight: isIOS ? undefined : Spacings.md,
     marginHorizontal: Spacings.xl,
   },
 });
