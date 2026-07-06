@@ -5,7 +5,7 @@ import { Model, ModelPipeline } from 'types';
 import { filterModelsByDeviceMemory } from 'helpers';
 
 const MODELS_URL =
-  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.0.0-build-5.json';
+  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.0.0.json';
 
 // Fetches the catalogue, filters it to what the device can run, and derives the
 // three lists the screen renders: the model in use, how many are downloaded,
