@@ -1,3 +1,5 @@
+![NobodyWho Chat Preview](./nobodywho-chat-preview.png)
+
 [![Discord](https://img.shields.io/discord/1308812521456799765?logo=discord&style=flat-square)](https://discord.gg/qhaMc2qCYB)
 [![Matrix](https://img.shields.io/badge/Matrix-000?logo=matrix&logoColor=fff)](https://matrix.to/#/#nobodywho:matrix.org)
 [![Mastodon](https://img.shields.io/badge/Mastodon-6364FF?logo=mastodon&logoColor=fff&style=flat-square)](https://mastodon.gamedev.place/@nobodywho)
@@ -14,6 +16,7 @@ It's built with **[NobodyWho](https://github.com/nobodywho-ooo/nobodywho)**, a l
 - **Fully Private & Offline**: all conversations and data stay on your device; no conversation is collected, shared, or sent to the cloud, and the chat works without an internet connection
 - **Free & Open**: no sign-ups, subscriptions, or paywalls
 - **Chat** — stream responses from a local LLM in real time
+- **Industry-leading models** — download and use several powerful LLMs, including thinking models
 - **Tool calling**: give the model access to custom functions (e.g. weather, historical facts, stock prices...)
 - **Vision & Hearing** — image & audio ingestion with a multimodal model
 
