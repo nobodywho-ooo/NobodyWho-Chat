@@ -13,8 +13,9 @@ exports[`renders correctly MessageListItem for assistant 1`] = `
     style={
       {
         "alignItems": "center",
-        "alignSelf": "flex-start",
         "flexDirection": "row",
+        "flexWrap": "wrap",
+        "gap": 16,
         "marginTop": 12,
       }
     }
@@ -54,10 +55,6 @@ exports[`renders correctly MessageListItem for assistant 1`] = `
       onStartShouldSetResponder={[Function]}
       style={
         [
-          {
-            "alignItems": "center",
-            "flexDirection": "row",
-          },
           false,
         ]
       }
@@ -66,25 +63,54 @@ exports[`renders correctly MessageListItem for assistant 1`] = `
         androidIconName="content_copy"
         color="#7c7c7c"
         iosIconName="doc.on.doc"
-        size={14}
+        size={16}
       />
-      <Text
-        style={
-          [
-            {
-              "includeFontPadding": false,
-              "lineHeight": 16,
-              "marginLeft": 4,
-            },
-            {
-              "color": "#7c7c7c",
-            },
-          ]
+    </View>
+    <View
+      accessibilityLabel="components.messageListItem.playAudio"
+      accessibilityRole="button"
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
         }
-        variant="caption"
-      >
-        components.messageListItem.copy
-      </Text>
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      hitSlop={8}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        [
+          false,
+        ]
+      }
+    >
+      <PlatformIcon
+        androidIconName="volume_up"
+        color="#7c7c7c"
+        iosIconName="speaker.wave.2"
+        size={16}
+      />
     </View>
   </View>
 </View>

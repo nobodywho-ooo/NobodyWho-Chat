@@ -53,6 +53,7 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
   const { colors } = useStyled();
   const { isDarkMode } = useThemeMode();
   const [copied, setCopied] = useState(false);
+  const [playingAudio, setPlayingAudio] = useState(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const [openToolIndex, setOpenToolIndex] = useState<number | null>(null);
@@ -175,6 +176,19 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
     }
   }, [content]);
 
+  const handlePlayAudio = useCallback(() => {
+    try {
+      setPlayingAudio(true);
+      const delay = (ms: number) =>
+        new Promise(() => setTimeout(() => setPlayingAudio(false), ms));
+      delay(2000);
+      haptics.medium();
+    } catch (error) {
+      setPlayingAudio(false);
+      log('handleCopy copy error ', error);
+    }
+  }, []);
+
   const handleLinkPress = useCallback(({ url }: { url: string }) => {
     Linking.openURL(url).catch(error =>
       log(`Failed to open URL ${url}`, error),
@@ -212,7 +226,9 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
     const isAwaitingResponse =
       isStreaming && content.length === 0 && toolInvocations.length === 0;
     const isThinkingActive = isStreaming && !isThinkingComplete;
-    const canCopyAssistantText = stripThinkingBlocks(content) !== '';
+    const canCopyAssistantText =
+      stripThinkingBlocks(content) !== '' && !isStreaming;
+    const canPlayAudio = !isStreaming; // TODO: update when ready
 
     return (
       <View style={styles.assistantContainer}>
@@ -259,37 +275,38 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
         )}
         {content.length > 0 && (
           <View style={styles.footerContainer}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t('components.messageListItem.copy')}
-              hitSlop={8}
-              onPress={handleCopy}
-              style={({ pressed }) => [
-                styles.copyButton,
-                pressed && styles.copyButtonPressed,
-              ]}
-            >
-              {!isStreaming && canCopyAssistantText && (
-                <>
-                  <PlatformIcon
-                    iosIconName={copied ? 'checkmark' : 'doc.on.doc'}
-                    androidIconName={copied ? 'check' : 'content_copy'}
-                    size={14}
-                    color={accentColor}
-                  />
-                  <Text
-                    variant="caption"
-                    style={[styles.copyLabel, { color: accentColor }]}
-                  >
-                    {t(
-                      copied
-                        ? 'components.messageListItem.copied'
-                        : 'components.messageListItem.copy',
-                    )}
-                  </Text>
-                </>
-              )}
-            </Pressable>
+            {canCopyAssistantText && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('components.messageListItem.copy')}
+                hitSlop={8}
+                onPress={handleCopy}
+                style={({ pressed }) => [pressed && styles.buttonPressed]}
+              >
+                <PlatformIcon
+                  iosIconName={copied ? 'checkmark' : 'doc.on.doc'}
+                  androidIconName={copied ? 'check' : 'content_copy'}
+                  size={16}
+                  color={accentColor}
+                />
+              </Pressable>
+            )}
+            {canPlayAudio && (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={t('components.messageListItem.playAudio')}
+                hitSlop={8}
+                onPress={handlePlayAudio}
+                style={({ pressed }) => [pressed && styles.buttonPressed]}
+              >
+                <PlatformIcon
+                  iosIconName={playingAudio ? 'pause' : 'speaker.wave.2'}
+                  androidIconName={playingAudio ? 'pause' : 'volume_up'}
+                  size={16}
+                  color={accentColor}
+                />
+              </Pressable>
+            )}
             {metrics.length > 0 && (
               <Text
                 variant="caption"

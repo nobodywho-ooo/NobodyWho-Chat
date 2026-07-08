@@ -28,25 +28,16 @@ export default StyleSheet.create({
     lineHeight: 22,
   },
   footerContainer: {
+    flexWrap: 'wrap',
+    gap: Spacings.lg,
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     marginTop: Spacings.md,
   },
-  copyButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  copyButtonPressed: {
+  buttonPressed: {
     opacity: 0.6,
   },
-  copyLabel: {
-    marginLeft: 4,
-    lineHeight: 16,
-    includeFontPadding: false,
-  },
   metricsText: {
-    marginLeft: 12,
     lineHeight: 16,
     includeFontPadding: false,
   },
