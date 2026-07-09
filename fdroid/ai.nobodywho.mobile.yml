@@ -1,0 +1,77 @@
+# DRAFT — copy to <fdroiddata fork>/metadata/ai.nobodywho.mobile.yml
+# (this file does not belong in the app repo; it lives in F-Droid's fdroiddata repo)
+#
+# Also requires a srclib definition at <fdroiddata fork>/srclibs/NobodyWho.yml:
+#   RepoType: git
+#   Repo: https://github.com/nobodywho-ooo/nobodywho.git
+#
+# Validate with: fdroid rewritemeta ai.nobodywho.mobile && fdroid lint ai.nobodywho.mobile
+
+AntiFeatures:
+  Tracking:
+    en-US: Crash reporting via Sentry (not opt-in).
+  NonFreeAssets:
+    en-US: Offers downloads of language models with non-free licenses (e.g. Gemma).
+Categories:
+  - AI Chat
+License: EUPL-1.2
+AuthorName: NobodyWho
+AuthorEmail: pierre@nobodywho.ooo
+AuthorWebSite: https://nobodywho.ooo
+WebSite: https://nobodywho.ooo
+SourceCode: https://github.com/nobodywho-ooo/reffen
+IssueTracker: https://github.com/nobodywho-ooo/reffen/issues
+Changelog: https://github.com/nobodywho-ooo/reffen/releases
+
+AutoName: NobodyWho Chat
+
+RepoType: git
+Repo: https://github.com/nobodywho-ooo/reffen.git
+
+Builds:
+  - versionName: 1.0.0
+    versionCode: 8
+    commit: v1.0.0
+    timeout: 10800
+    sudo:
+      - apt-get update
+      - apt-get install -y npm cmake ninja-build
+      - curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | bash -s -- -y
+    init:
+      - npm ci
+    srclibs:
+      # Must match the react-native-nobodywho version in package-lock.json;
+      # tag format in the nobodywho repo: nobodywho-react-native-v<version>
+      - NobodyWho@nobodywho-react-native-v2.3.0
+    scandelete:
+      # npm package ships prebuilt iOS static libs; unused on Android
+      - node_modules/react-native-nobodywho/NobodywhoFramework.xcframework
+      - node_modules
+    build:
+      # 1. Build libnobodywho_uniffi.so from source (instead of the gradle
+      #    task downloading it from GitHub Releases — the task skips the
+      #    download when the file already exists at the expected path).
+      - export PATH="$HOME/.cargo/bin:$PATH"
+      - export ANDROID_NDK_HOME="$ANDROID_NDK"
+      - cargo install cargo-ndk --locked
+      # NOTE: verify the crate/package name against the nobodywho repo
+      - (cd $$NobodyWho$$ && cargo ndk -t arm64-v8a -t x86_64 build --release
+        -p nobodywho-uniffi)
+      - NW_VER=$(node -p "require('./node_modules/react-native-nobodywho/package.json').version")
+      - NW_DIR=node_modules/react-native-nobodywho/android/build/nobodywho-native/$NW_VER
+      - mkdir -p $NW_DIR/arm64-v8a $NW_DIR/x86_64
+      - cp $$NobodyWho$$/target/aarch64-linux-android/release/libnobodywho_uniffi.so
+        $NW_DIR/arm64-v8a/
+      - cp $$NobodyWho$$/target/x86_64-linux-android/release/libnobodywho_uniffi.so
+        $NW_DIR/x86_64/
+      # 2. Build the app; disable Sentry source-map upload (no sentry.properties)
+      - cd android && SENTRY_DISABLE_AUTO_UPLOAD=true ./gradlew assembleRelease
+    ndk: r27b
+    output: android/app/build/outputs/apk/release/app-release.apk
+
+# Only plain semver tags (v1.0.0, v1.0.1, ...) are F-Droid releases;
+# v*-build-N tags are internal testing builds and must not match.
+AutoUpdateMode: Version
+UpdateCheckMode: Tags ^v[0-9]+\.[0-9]+\.[0-9]+$
+CurrentVersion: 1.0.0
+CurrentVersionCode: 8

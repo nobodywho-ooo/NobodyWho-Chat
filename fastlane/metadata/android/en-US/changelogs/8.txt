@@ -1,0 +1,6 @@
+First public release.
+
+- Chat with local LLMs, fully offline and private
+- Model downloads
+- Tool calling
+- Image & audio input with multimodal models
