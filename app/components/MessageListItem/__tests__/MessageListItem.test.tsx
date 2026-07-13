@@ -63,48 +63,49 @@ test('copies the assistant message content to the clipboard when pressed', () =>
     role: 'assistant',
     content: 'Yes, the water is wet',
   };
-  const { getByRole } = render(<MessageListItem message={message} />);
-  fireEvent.press(getByRole('button'));
+  const { getByLabelText } = render(<MessageListItem message={message} />);
+  fireEvent.press(getByLabelText('components.messageListItem.copy'));
   expect(copyToClipboard).toHaveBeenCalledWith('Yes, the water is wet');
 });
 
-test('shows a copied confirmation after copying, then reverts', () => {
+test('shows a checkmark icon after copying, then reverts', () => {
   jest.useFakeTimers();
   const message: Message = { role: 'assistant', content: 'copy me' };
-  const { getByRole, getByText, queryByText } = render(
-    <MessageListItem message={message} />,
-  );
+  const { getByLabelText } = render(<MessageListItem message={message} />);
+  const copyButton = getByLabelText('components.messageListItem.copy');
+  const icon = () => copyButton.findByType('PlatformIcon' as never);
 
-  expect(getByText('components.messageListItem.copy')).toBeTruthy();
+  expect(icon().props.iosIconName).toBe('doc.on.doc');
 
-  fireEvent.press(getByRole('button'));
-  expect(getByText('components.messageListItem.copied')).toBeTruthy();
+  fireEvent.press(copyButton);
+  expect(icon().props.iosIconName).toBe('checkmark');
 
   act(() => {
     jest.runAllTimers();
   });
-  expect(queryByText('components.messageListItem.copied')).toBeNull();
-  expect(getByText('components.messageListItem.copy')).toBeTruthy();
+  expect(icon().props.iosIconName).toBe('doc.on.doc');
 
   jest.useRealTimers();
 });
 
-test('hides the copy label while the message is streaming', () => {
+test('hides the copy button while the message is streaming', () => {
   const message: Message = { role: 'assistant', content: 'streaming…' };
-  const { getByRole, queryByText } = render(
+  const { queryByLabelText } = render(
     <MessageListItem message={message} isStreaming />,
   );
-  // The copy button still renders; only its text label is hidden mid-stream.
-  expect(getByRole('button')).toBeTruthy();
-  expect(queryByText('components.messageListItem.copy')).toBeNull();
+  expect(
+    queryByLabelText('components.messageListItem.copy'),
+  ).toBeNull();
 });
 
-test('shows the copy label once the message is no longer streaming', () => {
+test('shows the copy button once the message is no longer streaming', () => {
   const message: Message = { role: 'assistant', content: 'done' };
-  const { getByText } = render(
+  const { getByLabelText } = render(
     <MessageListItem message={message} isStreaming={false} />,
   );
-  expect(getByText('components.messageListItem.copy')).toBeTruthy();
+  expect(
+    getByLabelText('components.messageListItem.copy'),
+  ).toBeTruthy();
 });
 
 test('renders a completed assistant message with EnrichedMarkdownText', () => {

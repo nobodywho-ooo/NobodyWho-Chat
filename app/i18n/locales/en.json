@@ -143,7 +143,6 @@
     },
     "messageListItem": {
       "copy": "Copy",
-      "copied": "Copied",
       "playAudio": "Play audio",
       "pauseAudio": "Pause audio",
       "viewImage": "View image",

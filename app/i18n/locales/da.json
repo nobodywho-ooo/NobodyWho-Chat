@@ -143,7 +143,6 @@
     },
     "messageListItem": {
       "copy": "Kopiér",
-      "copied": "Kopieret",
       "playAudio": "Afspil lyd",
       "pauseAudio": "Sæt lyd på pause",
       "viewImage": "Vis billede",
