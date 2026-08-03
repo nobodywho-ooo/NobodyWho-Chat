@@ -11,8 +11,10 @@ NobodyWho Chat is a fully offline, private AI assistant that runs entirely on yo
 
 It's built with **[NobodyWho](https://github.com/nobodywho-ooo/nobodywho)**, a library designed to run LLMs locally and efficiently on any device.
 
-[<img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="60">](https://apps.apple.com/us/app/nobodywho-chat/id6781001350)
-[<img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="60">](https://play.google.com/store/apps/details?id=ai.nobodywho.mobile)
+<table><tr>
+<td valign="middle"><a href="https://apps.apple.com/us/app/nobodywho-chat/id6781001350"><img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="Download on the App Store" height="45"></a></td>
+<td valign="middle"><a href="https://play.google.com/store/apps/details?id=ai.nobodywho.mobile"><img src="https://play.google.com/intl/en_us/badges/static/images/badges/en_badge_web_generic.png" alt="Get it on Google Play" height="67"></a></td>
+</tr></table>
 
 ## Features
 
