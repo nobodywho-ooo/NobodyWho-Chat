@@ -68,6 +68,8 @@ jest.mock('expo-file-system', () => {
     get exists() {
       return File.mockExists;
     }
+    create() {}
+    write() {}
     delete() {}
     open() {
       return {
@@ -174,6 +176,26 @@ jest.mock('expo-audio', () => {
       playing: player.playing,
       didJustFinish: false,
     }),
+    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+    // Imperative player used for synthesized-speech playback: play()/pause()
+    // flip its own `playing` flag so the toggle path can be asserted; listeners
+    // are captured but never fired.
+    createAudioPlayer: () => {
+      const player = {
+        playing: false,
+        currentStatus: { didJustFinish: false },
+        seekTo: jest.fn(),
+        remove: jest.fn(),
+        addListener: jest.fn(() => ({ remove: jest.fn() })),
+      };
+      player.play = jest.fn(() => {
+        player.playing = true;
+      });
+      player.pause = jest.fn(() => {
+        player.playing = false;
+      });
+      return player;
+    },
   };
 });
 
@@ -251,6 +273,7 @@ jest.mock('@shopify/flash-list', () => ({
 }));
 
 export const mockFromPath = jest.fn();
+export const mockLoadTts = jest.fn();
 export const mockDownloadModel = jest.fn(() => Promise.resolve('file://downloaded.gguf'));
 
 jest.mock('react-native-nobodywho', () => {
@@ -279,6 +302,7 @@ jest.mock('react-native-nobodywho', () => {
   }
   return {
     Chat: { fromPath: (opts) => mockFromPath(opts) },
+    Tts: { load: (opts) => mockLoadTts(opts) },
     Encoder: { fromPath: jest.fn() },
     CrossEncoder: { fromPath: jest.fn() },
     SamplerPresets: {

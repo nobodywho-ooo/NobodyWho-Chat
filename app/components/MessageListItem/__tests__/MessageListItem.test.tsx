@@ -5,11 +5,34 @@ import { Message } from 'react-native-nobodywho';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { StreamdownText } from 'react-native-streamdown';
 import { copyToClipboard } from 'helpers';
+import { AiModelState, useAiService } from 'services';
 import { DisplayMessage } from 'types';
 
 import { MessageListItem } from '../MessageListItem';
 
 jest.unmock('../MessageListItem');
+
+// MessageListItem reads the TTS engine off AiService; stub the hook so it can
+// render outside an AiServiceProvider and so playback can be driven per test.
+// AiModelState is re-exported here too, so mirror its values for the gating.
+jest.mock('services', () => ({
+  useAiService: jest.fn(),
+  AiModelState: {
+    NotLoaded: 'notLoaded',
+    Loading: 'loading',
+    Ready: 'ready',
+    Error: 'error',
+  },
+}));
+
+const mockUseAiService = useAiService as jest.Mock;
+
+beforeEach(() => {
+  mockUseAiService.mockReturnValue({
+    tts: { current: undefined },
+    ttsState: AiModelState.NotLoaded,
+  });
+});
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -347,4 +370,82 @@ test('copies only the answer, stripping the reasoning', () => {
   const { getByLabelText } = render(<MessageListItem message={message} />);
   fireEvent.press(getByLabelText('components.messageListItem.copy'));
   expect(copyToClipboard).toHaveBeenCalledWith('the answer');
+});
+
+const readyTts = (synthesize: jest.Mock) => ({
+  tts: { current: { synthesize } },
+  ttsState: AiModelState.Ready,
+});
+
+test('synthesizes and plays the assistant answer when the play button is pressed', async () => {
+  const synthesize = jest.fn().mockResolvedValue(new Uint8Array([1, 2, 3]));
+  mockUseAiService.mockReturnValue(readyTts(synthesize));
+  const message: Message = { role: 'assistant', content: 'read this aloud' };
+  const { getByLabelText } = render(<MessageListItem message={message} />);
+  const button = getByLabelText('components.messageListItem.playAudio');
+
+  await act(async () => {
+    fireEvent.press(button);
+  });
+
+  // Only the spoken answer is synthesized, and the icon flips to a pause glyph.
+  expect(synthesize).toHaveBeenCalledWith('read this aloud');
+  expect(button.findByType('PlatformIcon' as never).props.iosIconName).toBe(
+    'pause',
+  );
+});
+
+test('synthesizes only the answer, stripping the reasoning', async () => {
+  const synthesize = jest.fn().mockResolvedValue(new Uint8Array([0]));
+  mockUseAiService.mockReturnValue(readyTts(synthesize));
+  const message: Message = {
+    role: 'assistant',
+    content: '<think>plan</think>spoken part',
+  };
+  const { getByLabelText } = render(<MessageListItem message={message} />);
+
+  await act(async () => {
+    fireEvent.press(getByLabelText('components.messageListItem.playAudio'));
+  });
+
+  expect(synthesize).toHaveBeenCalledWith('spoken part');
+});
+
+test('hides the play button until a TTS engine is loaded', () => {
+  // Default mock reports ttsState NotLoaded, so there's nothing to play.
+  const message: Message = { role: 'assistant', content: 'no engine yet' };
+  const { queryByLabelText } = render(<MessageListItem message={message} />);
+  expect(
+    queryByLabelText('components.messageListItem.playAudio'),
+  ).toBeNull();
+});
+
+test('shows the play button once a TTS engine is ready', () => {
+  mockUseAiService.mockReturnValue(readyTts(jest.fn()));
+  const message: Message = { role: 'assistant', content: 'speak me' };
+  const { getByLabelText } = render(<MessageListItem message={message} />);
+  expect(
+    getByLabelText('components.messageListItem.playAudio'),
+  ).toBeTruthy();
+});
+
+test('pauses synthesized playback on a second press', async () => {
+  const synthesize = jest.fn().mockResolvedValue(new Uint8Array([1]));
+  mockUseAiService.mockReturnValue(readyTts(synthesize));
+  const message: Message = { role: 'assistant', content: 'toggle me' };
+  const { getByLabelText } = render(<MessageListItem message={message} />);
+  const button = getByLabelText('components.messageListItem.playAudio');
+  const icon = () => button.findByType('PlatformIcon' as never);
+
+  await act(async () => {
+    fireEvent.press(button);
+  });
+  expect(icon().props.iosIconName).toBe('pause');
+
+  // The second press toggles the existing player without re-synthesizing.
+  await act(async () => {
+    fireEvent.press(button);
+  });
+  expect(synthesize).toHaveBeenCalledTimes(1);
+  expect(icon().props.iosIconName).toBe('speaker.wave.2');
 });

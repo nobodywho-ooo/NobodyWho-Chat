@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { find, map, pathEq, prop } from 'ramda';
 import { useAppState, useModelDownloads, useModels } from 'hooks';
-import { Model, ModelPipeline } from 'types';
+import { Model } from 'types';
 import { filterModelsByDeviceMemory } from 'helpers';
 
 const MODELS_URL =
@@ -26,8 +26,7 @@ export const useAvailableModels = () => {
     try {
       const response = await fetch(MODELS_URL);
       const data: Model[] = await response.json();
-      const chatModels = data.filter(model => model.pipeline !== ModelPipeline.textToSpeech);
-      setModels(await filterModelsByDeviceMemory(chatModels));
+      setModels(await filterModelsByDeviceMemory(data));
     } catch {
       setHasError(true);
     } finally {

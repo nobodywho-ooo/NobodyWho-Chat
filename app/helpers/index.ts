@@ -34,6 +34,7 @@ import {
   resolveMessageDocumentPath,
 } from './messageDocuments';
 import { toChatHistory, toModelHistory } from './chatHistory';
+import { getTtsArchitecture } from './nobodywho';
 
 export {
   getFamilyIcon,
@@ -70,4 +71,5 @@ export {
   sleep,
   toChatHistory,
   toModelHistory,
+  getTtsArchitecture,
 };

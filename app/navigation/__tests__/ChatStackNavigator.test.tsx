@@ -56,7 +56,15 @@ jest.mock('services', () => ({
     chatPipeline: mockChatPipeline,
     createChat: mockCreateChat,
     disposeChat: mockDisposeChat,
+    tts: { current: undefined },
+    ttsState: 'notLoaded',
   }),
+  AiModelState: {
+    NotLoaded: 'notLoaded',
+    Loading: 'loading',
+    Ready: 'ready',
+    Error: 'error',
+  },
   subscribeToolInvocations: jest.fn(() => jest.fn()),
 }));
 

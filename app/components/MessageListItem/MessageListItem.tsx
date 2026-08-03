@@ -1,4 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -7,6 +14,8 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { File, Paths } from 'expo-file-system';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { StreamdownText } from 'react-native-streamdown';
 import {
@@ -21,6 +30,7 @@ import {
   stripThinkingBlocks,
 } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
+import { AiModelState, useAiService } from 'services';
 import { DisplayMessage } from 'types';
 import { AudioAttachment } from './AudioAttachment';
 import { FullScreenImageModal } from './FullScreenImageModal';
@@ -52,8 +62,19 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
   const { content, role, tokensPerSecond, timeToFirstToken } = message;
   const { colors } = useStyled();
   const { isDarkMode } = useThemeMode();
+  const { tts, ttsState } = useAiService();
   const [copied, setCopied] = useState(false);
   const [playingAudio, setPlayingAudio] = useState(false);
+  // Holds the synthesized-speech player and its backing WAV file for this
+  // message, so a second press toggles playback instead of re-synthesizing and
+  // so both are freed on unmount. A per-instance id keeps the cache filenames
+  // of sibling messages from colliding.
+  const playerRef = useRef<AudioPlayer | null>(null);
+  const audioFileRef = useRef<File | null>(null);
+  const audioFileId = useId().replace(/[^a-zA-Z0-9]/g, '');
+  // Guards the synthesis path so double-taps while a clip is being generated
+  // (synthesis is slow, and no player exists yet) don't kick off a second one.
+  const isPreparingRef = useRef(false);
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const [openToolIndex, setOpenToolIndex] = useState<number | null>(null);
@@ -176,18 +197,113 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
     }
   }, [content]);
 
-  const handlePlayAudio = useCallback(() => {
+  const teardownPlayback = useCallback(() => {
+    const player = playerRef.current;
+    playerRef.current = null;
+    if (player) {
+      try {
+        player.remove();
+      } catch (error) {
+        log('MessageListItem teardownPlayback remove', error);
+      }
+    }
+    const file = audioFileRef.current;
+    audioFileRef.current = null;
+    if (file) {
+      try {
+        if (file.exists) {
+          file.delete();
+        }
+      } catch (error) {
+        log('MessageListItem teardownPlayback delete', error);
+      }
+    }
+  }, []);
+
+  // Free the native player and its cache file when the message scrolls out.
+  useEffect(() => teardownPlayback, [teardownPlayback]);
+
+  const handlePlayAudio = useCallback(async () => {
+    // Ignore taps while a clip is still being synthesized.
+    if (isPreparingRef.current) {
+      return;
+    }
+
+    // Already synthesized: just toggle playback rather than regenerating. The
+    // decision is driven by our own `playingAudio` state (kept in sync by the
+    // status listener below) because the imperative player's `.playing` getter
+    // can lag the real state, which left pause unresponsive.
+    const player = playerRef.current;
+    if (player) {
+      try {
+        if (playingAudio) {
+          player.pause();
+          setPlayingAudio(false);
+        } else {
+          if (player.currentStatus.didJustFinish) {
+            player.seekTo(0);
+          }
+          player.play();
+          setPlayingAudio(true);
+        }
+        haptics.medium();
+      } catch (error) {
+        log('handlePlayAudio toggle error', error);
+      }
+      return;
+    }
+
+    const text = stripThinkingBlocks(content);
+    const synthesizer = tts.current;
+    if (text === '' || !synthesizer) {
+      return;
+    }
+
     try {
+      isPreparingRef.current = true;
+      // Optimistic feedback: synthesis is slow, so flip the icon immediately.
       setPlayingAudio(true);
-      const delay = (ms: number) =>
-        new Promise(() => setTimeout(() => setPlayingAudio(false), ms));
-      delay(2000);
+
+      // NobodyWho returns WAV bytes; expo-audio plays from a URI, so persist
+      // them to the cache directory first. write() creates/overwrites the file.
+      const wav = await synthesizer.synthesize(text);
+      log(
+        `TTS synthesized ${wav.byteLength} bytes ` +
+          `(header "${String.fromCharCode(...wav.subarray(0, 4))}")`,
+      );
+      const file = new File(Paths.cache, `tts-${audioFileId}.wav`);
+      file.write(wav);
+      audioFileRef.current = file;
+
+      // createAudioPlayer (unlike the useAudioPlayer hook) doesn't activate a
+      // playback session, so on iOS the audio converter / file player fail to
+      // prepare (AudioConverterService -302 / FigFilePlayer -12864). Re-assert
+      // the session — it's idempotent — right before creating the player.
+      await setAudioModeAsync({ playsInSilentMode: true });
+
+      const newPlayer = createAudioPlayer({ uri: file.uri });
+      playerRef.current = newPlayer;
+      newPlayer.addListener('playbackStatusUpdate', status => {
+        // Surface the human-readable decode/playback error rather than leaving
+        // only the raw CoreAudio spew in the native log.
+        if (status.error) {
+          setPlayingAudio(false);
+          log('handlePlayAudio playback failed', status.error);
+        } else if (status.didJustFinish) {
+          // Reset the button once the clip finishes (there's no auto-loop).
+          setPlayingAudio(false);
+        }
+      });
+      newPlayer.play();
       haptics.medium();
     } catch (error) {
       setPlayingAudio(false);
-      log('handleCopy copy error ', error);
+      teardownPlayback();
+      log('handlePlayAudio synthesize error', error);
+    } finally {
+      isPreparingRef.current = false;
     }
-  }, []);
+  }, [playingAudio, content, tts, audioFileId, teardownPlayback]);
 
   const handleLinkPress = useCallback(({ url }: { url: string }) => {
     Linking.openURL(url).catch(error =>
@@ -226,9 +342,12 @@ const MessageListItem: React.FC<MessageListItemProps> = ({
     const isAwaitingResponse =
       isStreaming && content.length === 0 && toolInvocations.length === 0;
     const isThinkingActive = isStreaming && !isThinkingComplete;
-    const canCopyAssistantText =
-      stripThinkingBlocks(content) !== '' && !isStreaming;
-    const canPlayAudio = !isStreaming; // TODO: update when ready
+    const hasSpokenText = stripThinkingBlocks(content) !== '';
+    const canCopyAssistantText = hasSpokenText && !isStreaming;
+    // Only offer playback once a TTS engine is actually loaded and ready,
+    // otherwise the button would be a no-op.
+    const canPlayAudio =
+      hasSpokenText && !isStreaming && ttsState === AiModelState.Ready;
 
     return (
       <View style={styles.assistantContainer}>

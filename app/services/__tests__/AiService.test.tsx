@@ -2,7 +2,7 @@ import React from 'react';
 import { renderHook, act } from '@testing-library/react-native';
 
 import { buildModel } from 'jest/factories/model';
-import { mockFromPath } from 'jest/mock/node-modules';
+import { mockFromPath, mockLoadTts } from 'jest/mock/node-modules';
 import { ModelPipeline } from 'types';
 
 import {
@@ -12,15 +12,6 @@ import {
   MULTIMODAL_CONTEXT_SIZE,
   TEARDOWN_SETTLE_MS,
 } from '../AiService';
-
-// The TTS engine facade is mocked at its boundary: the installed nobodywho
-// package doesn't ship Tts yet, and these tests only care that AiService
-// drives the facade correctly (paths, serialization, teardown).
-const mockLoadTtsEngine = jest.fn();
-jest.mock('../ttsEngine', () => ({
-  loadTtsEngine: (source: string) => mockLoadTtsEngine(source),
-  isTtsEngineAvailable: () => true,
-}));
 
 (globalThis as unknown as { __DEV__: boolean }).__DEV__ = false;
 
@@ -50,11 +41,12 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 beforeEach(() => {
   mockFromPath.mockReset();
-  mockLoadTtsEngine.mockReset();
+  mockLoadTts.mockReset();
 });
 
 const ttsModel = buildModel(9, {
   pipeline: ModelPipeline.textToSpeech,
+  family: 'Supertonic',
   parts: [
     {
       url: 'https://example.com/onnx/vocoder.onnx',
@@ -406,15 +398,19 @@ test('a reload waits for the previous chat teardown to settle before allocating'
 
 test('createTts loads the engine from the model directory', async () => {
   const tts = { synthesize: jest.fn(), destroy: jest.fn() };
-  mockLoadTtsEngine.mockResolvedValue(tts);
+  mockLoadTts.mockResolvedValue(tts);
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await result.current.createTts({ model: ttsModel });
   });
 
-  // The engine gets the model's directory, not any single file.
-  expect(mockLoadTtsEngine).toHaveBeenCalledWith('/mock-documents/models/9');
+  // Tts.load gets the model's directory as its source, plus the architecture
+  // derived from the catalogue family (the numeric path can't be inferred).
+  expect(mockLoadTts).toHaveBeenCalledWith({
+    source: '/mock-documents/models/9',
+    architecture: 'supertonic',
+  });
   expect(result.current.ttsState).toBe(AiModelState.Ready);
   expect(result.current.tts.current).toBe(tts);
   // The chat slot is untouched.
@@ -430,12 +426,12 @@ test('createTts refuses a non-TTS model', async () => {
     );
   });
 
-  expect(mockLoadTtsEngine).not.toHaveBeenCalled();
+  expect(mockLoadTts).not.toHaveBeenCalled();
 });
 
 test('createTts fails loudly when a TTS file is missing on disk', async () => {
   const { File } = jest.requireMock('expo-file-system');
-  mockLoadTtsEngine.mockResolvedValue({ synthesize: jest.fn(), destroy: jest.fn() });
+  mockLoadTts.mockResolvedValue({ synthesize: jest.fn(), destroy: jest.fn() });
   File.mockExists = false;
   const { result } = renderHook(() => useAiService(), { wrapper });
 
@@ -446,7 +442,7 @@ test('createTts fails loudly when a TTS file is missing on disk', async () => {
       );
     });
 
-    expect(mockLoadTtsEngine).not.toHaveBeenCalled();
+    expect(mockLoadTts).not.toHaveBeenCalled();
     expect(result.current.ttsState).toBe(AiModelState.Error);
   } finally {
     File.mockExists = true;
@@ -460,7 +456,7 @@ test('createTts serializes behind an in-flight chat load on the shared chain', a
     () => new Promise(resolve => (resolveChat = resolve)),
   );
   const tts = { synthesize: jest.fn(), destroy: jest.fn() };
-  mockLoadTtsEngine.mockResolvedValue(tts);
+  mockLoadTts.mockResolvedValue(tts);
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   let ttsLoad: Promise<void> | undefined;
@@ -476,21 +472,21 @@ test('createTts serializes behind an in-flight chat load on the shared chain', a
     await flushMicrotasks();
   });
   expect(mockFromPath).toHaveBeenCalledTimes(1);
-  expect(mockLoadTtsEngine).not.toHaveBeenCalled();
+  expect(mockLoadTts).not.toHaveBeenCalled();
 
   // Chat finishes -> the chain releases -> the TTS load runs.
   await act(async () => {
     resolveChat({ destroy: jest.fn() });
     await ttsLoad;
   });
-  expect(mockLoadTtsEngine).toHaveBeenCalledTimes(1);
+  expect(mockLoadTts).toHaveBeenCalledTimes(1);
   expect(result.current.chatState).toBe(AiModelState.Ready);
   expect(result.current.ttsState).toBe(AiModelState.Ready);
 });
 
 test('disposeTts destroys the engine via the teardown chain', async () => {
   const tts = { synthesize: jest.fn(), destroy: jest.fn() };
-  mockLoadTtsEngine.mockResolvedValue(tts);
+  mockLoadTts.mockResolvedValue(tts);
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.createTts({ model: ttsModel });
@@ -511,7 +507,7 @@ test('dispose tears down both engines', async () => {
   const chat = { stopGeneration: jest.fn(), destroy: jest.fn() };
   const tts = { synthesize: jest.fn(), destroy: jest.fn() };
   mockFromPath.mockResolvedValue(chat);
-  mockLoadTtsEngine.mockResolvedValue(tts);
+  mockLoadTts.mockResolvedValue(tts);
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.createChat({ model });

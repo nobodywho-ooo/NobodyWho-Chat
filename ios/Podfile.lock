@@ -131,7 +131,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - Nobodywho (2.3.0):
+  - Nobodywho (2.4.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2769,7 +2769,7 @@ SPEC CHECKSUMS:
   hermes-engine: a7dcf50ffa69c1b17f0d0ed5724f8754567a4e47
   libwebp: 02b23773aedb6ff1fd38cec7a77b81414c6842a8
   LiquidGlass: 79edfdadba32c29aa45772a4684cfead35698e9a
-  Nobodywho: caa26920f44a76bdab8adc54e77433652b8733b3
+  Nobodywho: 2e25c18e68dbafaa9319ab50d9e8a28e2deb2550
   op-sqlite: fe2ab854138fface0bda8b23fb686d8d8e0600b0
   RCTDeprecation: c7a2768f905d76ca6d2cfefb26e4349eacbdfca3
   RCTRequired: 5e502c3553cfbed090a991c444448da452fb752e

@@ -109,9 +109,7 @@ export const useModelDownloader = () => {
 
       await deleteModelDownload(model.id);
     } catch (error) {
-      log('ModelsScreen runDownload', error, {
-        capture: !controller.signal.aborted, // TODO: delete capture when model downloading is stable
-      });
+      log('ModelsScreen runDownload', error);
     } finally {
       if (activeDownloads.get(model.id) === controller) {
         activeDownloads.delete(model.id);

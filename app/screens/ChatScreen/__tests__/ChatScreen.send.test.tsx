@@ -40,7 +40,15 @@ jest.mock('services', () => ({
   useAiService: () => ({
     chat: mockChatRef,
     chatPipeline: mockChatPipeline,
+    tts: { current: undefined },
+    ttsState: 'notLoaded',
   }),
+  AiModelState: {
+    NotLoaded: 'notLoaded',
+    Loading: 'loading',
+    Ready: 'ready',
+    Error: 'error',
+  },
   subscribeToolInvocations: jest.fn(() => jest.fn()),
 }));
 

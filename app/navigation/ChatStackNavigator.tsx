@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 import React, {
   createContext,
   useCallback,
@@ -263,22 +263,18 @@ export const ChatStackNavigator = () => {
   }, []);
 
   const loadTtsIfSelected = useCallback(async () => {
-    // TODO: uncomment when TTS is ready
-    return;
-
-    // const { ttsModelIdInUse } = getAppState();
-    // if (ttsModelIdInUse === undefined) {
-    //   return;
-    // }
-    // const model = await getModelById(ttsModelIdInUse);
-    // if (model === undefined || !isTtsPipeline(model.pipeline)) {
-    //   return;
-    // }
-    // await createTts({ model }).catch(error =>
-    //   log('ChatStackNavigator tts load', error, { capture: true }),
-    // );
-    // }, [createTts]);
-  }, []);
+    const { ttsModelIdInUse } = getAppState();
+    if (ttsModelIdInUse === undefined) {
+      return;
+    }
+    const model = await getModelById(ttsModelIdInUse);
+    if (model === undefined || !isTtsPipeline(model.pipeline)) {
+      return;
+    }
+    await createTts({ model }).catch(error =>
+      log('ChatStackNavigator tts load', error, { capture: true }),
+    );
+  }, [createTts]);
 
   // --- Lifecycle triggers ----------------------------------------------------
 

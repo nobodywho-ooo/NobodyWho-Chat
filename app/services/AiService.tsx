@@ -6,9 +6,15 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { Chat, SamplerConfig } from 'react-native-nobodywho';
+import { Chat, SamplerConfig, Tts } from 'react-native-nobodywho';
 import * as Sentry from '@sentry/react-native';
-import { downloadedPartPath, log, modelDirectoryPath, sleep } from 'helpers';
+import {
+  downloadedPartPath,
+  log,
+  modelDirectoryPath,
+  sleep,
+  getTtsArchitecture,
+} from 'helpers';
 import {
   ChatPipeline,
   Model,
@@ -17,7 +23,6 @@ import {
   toChatPipeline,
 } from 'types';
 import { buildChatTools } from './tools';
-import { TtsInstance, loadTtsEngine } from './ttsEngine';
 
 export enum AiModelState {
   NotLoaded = 'notLoaded',
@@ -34,7 +39,7 @@ interface AiServiceState {
 
 interface AiServiceContextValue extends AiServiceState {
   chat: React.RefObject<Chat | undefined>;
-  tts: React.RefObject<TtsInstance | undefined>;
+  tts: React.RefObject<Tts | undefined>;
 
   createChat: (opts: {
     model: Model;
@@ -79,7 +84,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   const [state, setState] = useState<AiServiceState>(_initialState);
 
   const chatRef = useRef<Chat | undefined>(undefined);
-  const ttsRef = useRef<TtsInstance | undefined>(undefined);
+  const ttsRef = useRef<Tts | undefined>(undefined);
 
   // Bumped on every dispose. A createChat that resolves after its generation
   // passed must discard its instance instead of resurrecting a disposed chat.
@@ -328,10 +333,15 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         );
       }
 
-      const tts = await loadTtsEngine(modelDirectoryPath(model.id));
+      const tts = await Tts.load({
+        source: modelDirectoryPath(model.id),
+        architecture: getTtsArchitecture(model.family),
+      });
 
       if (generation !== ttsGeneration.current) {
         // TODO: might be needed - check
+        // Disposed while loading — free the instance we just built and settle
+        // before the next native load allocates.
         try {
           tts.destroy();
         } catch (error) {
