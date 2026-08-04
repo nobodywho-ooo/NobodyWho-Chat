@@ -4,7 +4,7 @@ import {
   type SFSymbolProps,
   type MaterialSymbolProps,
 } from '@react-navigation/native';
-import { PlatformIcon } from 'components';
+import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { useStyled } from 'hooks';
 
 import styles from './IconButton.styles';
