@@ -6,7 +6,7 @@ import { BlurTargetView, BlurView } from 'expo-blur';
 import LinearGradient from 'react-native-linear-gradient';
 import { MessageListItem } from 'components';
 import { useTheme } from 'context';
-import { useStyled } from 'hooks';
+import { useAppState, useStyled } from 'hooks';
 import {
   DisplayMessage,
   pipelineIngestsAudio,
@@ -17,7 +17,12 @@ import { isAndroid } from 'helpers';
 import { Theme } from 'types';
 
 import { CameraCaptureModal, InputBar, MessageStarters } from './components';
-import { useAttachments, useChatGeneration, useKeyboardHeight } from './hooks';
+import {
+  useAttachments,
+  useChatGeneration,
+  useKeyboardHeight,
+  useTtsPlayback,
+} from './hooks';
 import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
@@ -42,6 +47,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const { chat, chatPipeline } = useAiService();
+  const { ttsModelIdInUse } = useAppState();
+  const canPlayAudio = ttsModelIdInUse !== undefined;
+  const {
+    playingIndex,
+    loadingIndex: audioLoadingIndex,
+    play: playAudio,
+    stop: stopAudio,
+  } = useTtsPlayback();
   const flatListRef = useRef<FlashListRef<DisplayMessage>>(null);
   const blurTargetRef = useRef<View>(null);
   const [messages, setMessages] = useState<DisplayMessage[]>(initialMessages);
@@ -74,7 +87,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     setConversationId(initialConversationId);
     setAttachExpanded(false);
     clearAllAttachments();
-  }, [initialMessages, initialConversationId, clearAllAttachments]);
+    stopAudio();
+  }, [initialMessages, initialConversationId, clearAllAttachments, stopAudio]);
 
   const scrollToEnd = useCallback((_width: number, contentHeight: number) => {
     flatListRef.current?.scrollToOffset({
@@ -117,6 +131,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               <MessageListItem
                 message={item}
                 isStreaming={isStreaming && index === messages.length - 1}
+                index={index}
+                canPlayAudio={canPlayAudio}
+                isAudioLoading={audioLoadingIndex === index}
+                isAudioPlaying={playingIndex === index}
+                onPlayAudio={playAudio}
+                onStopAudio={stopAudio}
               />
             )}
             onContentSizeChange={scrollToEnd}

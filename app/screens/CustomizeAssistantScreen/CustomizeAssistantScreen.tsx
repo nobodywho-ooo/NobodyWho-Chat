@@ -11,6 +11,7 @@ import { useStyled } from 'hooks';
 import { IconButton, Slider, Text } from 'components';
 
 import styles from './CustomizeAssistantScreen.styles';
+import { SupertonicPreferences } from './SupertonicPreferences';
 
 export const TEMPERATURE_MIN = 0;
 export const TEMPERATURE_MAX = 2;
@@ -42,6 +43,7 @@ export const CustomizeAssistantScreen: React.FC = () => {
   // Closing the screen mid-edit must not lose the pending changes
   const configRef = useRef(config);
   configRef.current = config;
+
   useEffect(
     () => () => {
       setAppState({ assistantConfig: configRef.current });
@@ -184,6 +186,12 @@ export const CustomizeAssistantScreen: React.FC = () => {
           />
         </View>
       </View>
+
+      <SupertonicPreferences
+        voice={config.ttsVoice}
+        language={config.ttsLanguage}
+        onChange={savePreference}
+      />
     </ScrollView>
   );
 };

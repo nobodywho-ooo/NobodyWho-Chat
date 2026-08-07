@@ -145,6 +145,7 @@
       "copy": "Copy",
       "playAudio": "Play audio",
       "pauseAudio": "Pause audio",
+      "stopAudio": "Stop audio",
       "viewImage": "View image",
       "closeImage": "Close image",
       "thinking": "Thinking…",
@@ -186,7 +187,7 @@
       "models": "Models",
       "manageYourModels": "Manage your models",
       "customize": "Customize",
-      "customizeSubtitle": "Configure token generation",
+      "customizeSubtitle": "Configure your assistant",
       "about": "About",
       "terms": "Terms & Conditions",
       "termsSubtitle": "Read our terms of use",
@@ -196,8 +197,8 @@
       "github": "Github"
     },
     "models": {
-      "inUse": "In use",
-      "voiceInUse": "Voice in use",
+      "textModelInUse": "Text model in use",
+      "voiceModelInUse": "Voice model in use",
       "readyToUse": "Ready to use",
       "downloaded": "Downloaded",
       "modelCount_one": "{{count}} model",
@@ -231,7 +232,13 @@
       "maxTokens": "Max tokens",
       "maxTokensSubtitle": "Context size of the conversation",
       "decreaseMaxTokens": "Decrease max tokens",
-      "increaseMaxTokens": "Increase max tokens"
+      "increaseMaxTokens": "Increase max tokens",
+      "voice": "Voice",
+      "voiceSubtitle": "The speaking voice used to read messages aloud",
+      "voiceMale": "Male {{index}}",
+      "voiceFemale": "Female {{index}}",
+      "language": "Language",
+      "languageSubtitle": "The language the voice speaks"
     },
     "chat": {
       "generationFailed": "Something went wrong while generating a response.",

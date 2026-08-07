@@ -7,10 +7,11 @@ import { MarkdownDocument } from './MarkdownDocument/MarkdownDocument';
 import { MessageListItem } from './MessageListItem/MessageListItem';
 import { ModelCard } from './ModelCard/ModelCard';
 import { PlatformIcon } from './PlatformIcon/PlatformIcon';
+import { SelectablePill } from './SelectablePill/SelectablePill';
 import { Slider } from './Slider/Slider';
 import { Tag } from './Tag/Tag';
 import { Text } from './Text/Text';
 
-export { Button, ProgressBar, ErrorView, IconButton, ListItem, MarkdownDocument, MessageListItem, ModelCard, PlatformIcon, Slider, Tag, Text };
+export { Button, ProgressBar, ErrorView, IconButton, ListItem, MarkdownDocument, MessageListItem, ModelCard, PlatformIcon, SelectablePill, Slider, Tag, Text };
 
 export type { IconButtonIconProps };

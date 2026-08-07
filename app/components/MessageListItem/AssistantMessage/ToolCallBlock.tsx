@@ -3,8 +3,9 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
 import { Spacings } from 'style';
-import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
-import { Text } from '../Text/Text';
+
+import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
+import { Text } from '../../Text/Text';
 
 const CARD_BORDER_WIDTH = 1;
 

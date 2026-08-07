@@ -46,6 +46,8 @@ const mockCreateChat = jest.fn(async () => {
 const mockDisposeChat = jest.fn(() => {
   mockChatRef.current = undefined;
 });
+const mockCreateTts = jest.fn(async () => {});
+const mockDisposeTts = jest.fn();
 // These suites only exercise text models; mock-prefixed so the jest.mock
 // factory may reference it (out-of-scope enums are rejected otherwise).
 const mockChatPipeline = ModelPipeline.textGeneration;
@@ -56,6 +58,8 @@ jest.mock('services', () => ({
     chatPipeline: mockChatPipeline,
     createChat: mockCreateChat,
     disposeChat: mockDisposeChat,
+    createTts: mockCreateTts,
+    disposeTts: mockDisposeTts,
   }),
   subscribeToolInvocations: jest.fn(() => jest.fn()),
 }));
@@ -110,6 +114,8 @@ beforeEach(async () => {
   mockChatRef.current = undefined;
   mockCreateChat.mockClear();
   mockDisposeChat.mockClear();
+  mockCreateTts.mockClear();
+  mockDisposeTts.mockClear();
   mockChatInstance.setChatHistory.mockReset().mockResolvedValue(undefined);
   mockChatInstance.ask.mockReset().mockImplementation(async function* () {
     yield 'hello';
@@ -122,6 +128,7 @@ beforeEach(async () => {
   // Reset the real appState store between tests.
   await setAppState({
     modelIdInUse: undefined,
+    ttsModelIdInUse: undefined,
     conversationIdInUse: undefined,
     assistantConfig: undefined,
   });
@@ -244,6 +251,8 @@ test('disposes and rebuilds the chat when the assistant config changes', async (
         thinking: false,
         toolCalling: false,
         contextSize: 2000,
+        ttsVoice: 'M1',
+        ttsLanguage: 'en',
       },
     });
   });
@@ -257,6 +266,54 @@ test('disposes and rebuilds the chat when the assistant config changes', async (
     contextSize: 2000,
     thinking: false,
     toolCalling: false,
+  });
+});
+
+test('loads a non-Supertonic TTS model with no voice or language', async () => {
+  // Selection clears voice/language for non-Supertonic engines (see
+  // resolveTtsPrefs), so the loader reads an empty pair straight from the
+  // config and a Kokoro model keeps its own built-in defaults.
+  await setAppState({
+    ttsModelIdInUse: 5,
+    assistantConfig: { ...DEFAULT_ASSISTANT_CONFIG },
+  });
+  mockGetModelById.mockResolvedValue(
+    buildModel(5, { pipeline: ModelPipeline.textToSpeech, family: 'Kokoro' }),
+  );
+
+  render(<ChatStackNavigator />);
+
+  await waitFor(() => expect(mockCreateTts).toHaveBeenCalled());
+  expect(mockCreateTts).toHaveBeenLastCalledWith({
+    model: expect.objectContaining({ id: 5, family: 'Kokoro' }),
+    voice: undefined,
+    language: undefined,
+  });
+});
+
+test('forwards the chosen voice and language to a Supertonic model', async () => {
+  await setAppState({
+    ttsModelIdInUse: 7,
+    assistantConfig: {
+      ...DEFAULT_ASSISTANT_CONFIG,
+      ttsVoice: 'F3',
+      ttsLanguage: 'de',
+    },
+  });
+  mockGetModelById.mockResolvedValue(
+    buildModel(7, {
+      pipeline: ModelPipeline.textToSpeech,
+      family: 'Supertonic',
+    }),
+  );
+
+  render(<ChatStackNavigator />);
+
+  await waitFor(() => expect(mockCreateTts).toHaveBeenCalled());
+  expect(mockCreateTts).toHaveBeenLastCalledWith({
+    model: expect.objectContaining({ id: 7, family: 'Supertonic' }),
+    voice: 'F3',
+    language: 'de',
   });
 });
 

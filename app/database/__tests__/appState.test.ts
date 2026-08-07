@@ -116,6 +116,8 @@ describe('setAppState', () => {
       thinking: false,
       toolCalling: true,
       contextSize: 2000,
+      ttsVoice: 'M1',
+      ttsLanguage: 'en',
     };
 
     await setAppState({ assistantConfig });
@@ -131,6 +133,8 @@ describe('setAppState', () => {
       thinking: false,
       toolCalling: true,
       contextSize: 2000,
+      ttsVoice: 'M1',
+      ttsLanguage: 'en',
     };
     await setAppState({ assistantConfig });
     storage.setItem.mockClear();

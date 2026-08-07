@@ -8,7 +8,7 @@ import {
   updateModelDownloadParts,
   insertModel,
 } from 'repositories';
-import { getAppState, setAppState } from 'database';
+import { DEFAULT_ASSISTANT_CONFIG, getAppState, setAppState } from 'database';
 import {
   Model,
   ModelDownload,
@@ -16,7 +16,12 @@ import {
   isChatPipeline,
   isTtsPipeline,
 } from 'types';
-import { deleteModelDirectory, downloadModelPart, log } from 'helpers';
+import {
+  deleteModelDirectory,
+  downloadModelPart,
+  log,
+  resolveTtsPrefs,
+} from 'helpers';
 
 const DOWNLOAD_THROTTLE = 0.01; // 1% step
 
@@ -83,6 +88,7 @@ export const useModelDownloader = () => {
           sizeGB,
         }),
       );
+
       try {
         await insertModel({ ...model, parts: downloadedParts });
       } catch (error) {
@@ -90,6 +96,7 @@ export const useModelDownloader = () => {
         deleteModelDirectory(model.id);
         throw error;
       }
+      
       modelDownloaded = true;
 
       if (
@@ -104,7 +111,13 @@ export const useModelDownloader = () => {
         isTtsPipeline(model.pipeline) &&
         getAppState().ttsModelIdInUse === undefined
       ) {
-        await setAppState({ ttsModelIdInUse: model.id });
+        // Stamp the model's voice/language defaults into the config as it takes
+        // the voice slot, so the loader and picker can read them directly.
+        const config = getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
+        await setAppState({
+          ttsModelIdInUse: model.id,
+          assistantConfig: { ...config, ...resolveTtsPrefs(model, config) },
+        });
       }
 
       await deleteModelDownload(model.id);

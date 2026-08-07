@@ -57,13 +57,16 @@ export const ModelsScreen: React.FC = () => {
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
       {!!currentModel && (
-        <InUseModel model={currentModel} title={t('screens.models.inUse')} />
+        <InUseModel
+          model={currentModel}
+          title={t('screens.models.textModelInUse')}
+        />
       )}
 
       {!!currentTtsModel && (
         <InUseModel
           model={currentTtsModel}
-          title={t('screens.models.voiceInUse')}
+          title={t('screens.models.voiceModelInUse')}
           first={!currentModel}
         />
       )}

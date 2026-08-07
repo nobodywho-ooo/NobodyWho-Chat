@@ -4,9 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { log, messageDocumentUri } from 'helpers';
 import { useStyled } from 'hooks';
-import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
-import { Waveform } from './Waveform';
 import { Spacings } from 'style';
+
+import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
+import { Waveform } from './Waveform';
 
 interface AudioAttachmentProps {
   path: string;

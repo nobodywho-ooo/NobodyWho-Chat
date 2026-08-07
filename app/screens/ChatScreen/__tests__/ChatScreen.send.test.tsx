@@ -18,11 +18,17 @@ import { ChatScreen } from '../ChatScreen';
 const mockGetInfo = getInfoAsync as jest.Mock;
 const mockUnlink = deleteAsync as jest.Mock;
 
-// ChatScreen reads only getAppState() from the store and `chat` from the
-// service; mock both so handleSend can run without the real model/db.
-jest.mock('database', () => ({
-  getAppState: jest.fn(() => ({ modelIdInUse: 0 })),
-}));
+// ChatScreen reads getAppState()/subscribeAppState() from the store and `chat`
+// from the service; mock both so handleSend can run without the real model/db.
+// getAppState must return a stable reference — useAppState() feeds it to
+// useSyncExternalStore, which loops if the snapshot identity changes each call.
+jest.mock('database', () => {
+  const appState = { modelIdInUse: 0 };
+  return {
+    getAppState: jest.fn(() => appState),
+    subscribeAppState: jest.fn(() => () => {}),
+  };
+});
 
 const mockChat = {
   ask: jest.fn(),
@@ -40,7 +46,15 @@ jest.mock('services', () => ({
   useAiService: () => ({
     chat: mockChatRef,
     chatPipeline: mockChatPipeline,
+    tts: { current: undefined },
+    ttsState: 'notLoaded',
   }),
+  AiModelState: {
+    NotLoaded: 'notLoaded',
+    Loading: 'loading',
+    Ready: 'ready',
+    Error: 'error',
+  },
   subscribeToolInvocations: jest.fn(() => jest.fn()),
 }));
 

@@ -143,7 +143,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
       }
       variant="h4"
     >
-      screens.models.inUse
+      screens.models.textModelInUse
     </Text>
     <ModelCard
       isSelected={true}
@@ -311,7 +311,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
       }
       variant="h4"
     >
-      screens.models.inUse
+      screens.models.textModelInUse
     </Text>
     <ModelCard
       isSelected={true}

@@ -145,6 +145,7 @@
       "copy": "Kopiér",
       "playAudio": "Afspil lyd",
       "pauseAudio": "Sæt lyd på pause",
+      "stopAudio": "Stop lyd",
       "viewImage": "Vis billede",
       "closeImage": "Luk billede",
       "thinking": "Tænker…",
@@ -186,7 +187,7 @@
       "models": "Modeller",
       "manageYourModels": "Administrer dine modeller",
       "customize": "Tilpas",
-      "customizeSubtitle": "Konfigurer token-generering",
+      "customizeSubtitle": "Konfigurer din assistent",
       "about": "Om",
       "terms": "Vilkår og betingelser",
       "termsSubtitle": "Læs vores brugervilkår",
@@ -196,8 +197,8 @@
       "github": "Github"
     },
     "models": {
-      "inUse": "I brug",
-      "voiceInUse": "Stemme i brug",
+      "textModelInUse": "Tekstmodel i brug",
+      "voiceModelInUse": "Stemmemodel i brug",
       "readyToUse": "Klar til brug",
       "downloaded": "Downloadet",
       "modelCount_one": "{{count}} model",
@@ -231,7 +232,13 @@
       "maxTokens": "Maks. tokens",
       "maxTokensSubtitle": "Samtalens kontekststørrelse",
       "decreaseMaxTokens": "Reducér maks. tokens",
-      "increaseMaxTokens": "Forøg maks. tokens"
+      "increaseMaxTokens": "Forøg maks. tokens",
+      "voice": "Stemme",
+      "voiceSubtitle": "Stemmen der læser beskeder højt",
+      "voiceMale": "Mand {{index}}",
+      "voiceFemale": "Kvinde {{index}}",
+      "language": "Sprog",
+      "languageSubtitle": "Sproget stemmen taler"
     },
     "chat": {
       "generationFailed": "Noget gik galt under genereringen af et svar.",

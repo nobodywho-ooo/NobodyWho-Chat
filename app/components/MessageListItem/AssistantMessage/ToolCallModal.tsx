@@ -1,12 +1,5 @@
-import React, { useCallback, useMemo } from 'react';
-import {
-  Linking,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import React from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   Gesture,
   GestureDetector,
@@ -21,44 +14,48 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { StreamdownText } from 'react-native-streamdown';
-import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
-import { getMarkdownStyle, log } from 'helpers';
-import { useStyled, useThemeMode } from 'hooks';
+import { useStyled } from 'hooks';
 import { Spacings } from 'style';
-import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
-import { Text } from '../Text/Text';
+
+import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
+import { Text } from '../../Text/Text';
 
 const DISMISS_DISTANCE = 120;
 const DISMISS_VELOCITY = 800;
 
-interface ThinkingModalProps {
-  thinking: string | null;
-  active?: boolean;
+const prettyArguments = (args: Record<string, unknown>): string => {
+  try {
+    return JSON.stringify(args, null, 2);
+  } catch {
+    return String(args);
+  }
+};
+
+interface ToolCallModalProps {
+  name: string;
+  arguments: Record<string, unknown>;
+  result: string;
+  visible: boolean;
   onClose: () => void;
 }
 
-export const ThinkingModal: React.FC<ThinkingModalProps> = ({
-  thinking,
-  active = false,
+export const ToolCallModal: React.FC<ToolCallModalProps> = ({
+  name,
+  arguments: callArguments,
+  result,
+  visible,
   onClose,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const { isDarkMode } = useThemeMode();
   const insets = useSafeAreaInsets();
   const translateY = useSharedValue(0);
 
-  const markdownStyle = useMemo(
-    () => getMarkdownStyle(isDarkMode, colors.onSurface),
-    [isDarkMode, colors.onSurface],
-  );
-
   React.useEffect(() => {
-    if (thinking !== null) {
+    if (visible) {
       translateY.value = 0;
     }
-  }, [thinking, translateY]);
+  }, [visible, translateY]);
 
   const panGesture = Gesture.Pan()
     .onUpdate(event => {
@@ -83,17 +80,9 @@ export const ThinkingModal: React.FC<ThinkingModalProps> = ({
     opacity: interpolate(translateY.value, [0, DISMISS_DISTANCE * 2], [1, 0.2]),
   }));
 
-  const Renderer = active ? StreamdownText : EnrichedMarkdownText;
-
-  const handleLinkPress = useCallback(({ url }: { url: string }) => {
-    Linking.openURL(url).catch(error =>
-      log(`Failed to open URL ${url}`, error),
-    );
-  }, []);
-
   return (
     <Modal
-      visible={thinking !== null}
+      visible={visible}
       animationType="fade"
       transparent
       onRequestClose={onClose}
@@ -117,15 +106,28 @@ export const ThinkingModal: React.FC<ThinkingModalProps> = ({
                 ]}
               />
               <View style={styles.headerRowContainer}>
-                <Text variant="body1" bold style={styles.title}>
-                  {t('components.messageListItem.thinkingTitle')}
-                </Text>
+                <View style={styles.titleContainer}>
+                  <PlatformIcon
+                    iosIconName="wrench.and.screwdriver"
+                    androidIconName="build"
+                    size={18}
+                    color={colors.onSurface}
+                  />
+                  <Text
+                    variant="body1"
+                    bold
+                    numberOfLines={1}
+                    style={styles.title}
+                  >
+                    {name}
+                  </Text>
+                </View>
                 <Pressable
                   onPress={onClose}
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel={t(
-                    'components.messageListItem.closeThinking',
+                    'components.messageListItem.closeToolCalls',
                   )}
                 >
                   <PlatformIcon
@@ -147,14 +149,25 @@ export const ThinkingModal: React.FC<ThinkingModalProps> = ({
             ]}
             showsVerticalScrollIndicator
           >
-            {thinking !== null && (
-              <Renderer
-                containerStyle={styles.content}
-                markdown={thinking}
-                markdownStyle={markdownStyle}
-                onLinkPress={handleLinkPress}
-              />
-            )}
+            <Text
+              variant="caption"
+              style={[styles.sectionLabel, { color: colors.onSurfaceVariant }]}
+            >
+              {t('components.messageListItem.toolArguments')}
+            </Text>
+            <Text style={[styles.code, { color: colors.onSurface }]}>
+              {prettyArguments(callArguments)}
+            </Text>
+
+            <Text
+              variant="caption"
+              style={[styles.sectionLabel, { color: colors.onSurfaceVariant }]}
+            >
+              {t('components.messageListItem.toolResult')}
+            </Text>
+            <Text style={[styles.code, { color: colors.onSurface }]}>
+              {result}
+            </Text>
           </ScrollView>
         </Animated.View>
       </GestureHandlerRootView>
@@ -194,6 +207,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: Spacings.md,
   },
+  titleContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: Spacings.xs,
+  },
   title: {
     flex: 1,
   },
@@ -203,8 +222,16 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: Spacings.lg,
     paddingTop: Spacings.sm,
+    rowGap: Spacings.xs,
   },
-  content: {
-    alignItems: 'flex-start',
+  sectionLabel: {
+    marginTop: Spacings.md,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  code: {
+    fontFamily: 'Courier',
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

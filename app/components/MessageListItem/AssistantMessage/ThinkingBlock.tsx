@@ -6,8 +6,9 @@ import { StreamdownText } from 'react-native-streamdown';
 import { getMarkdownStyle } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
 import { Spacings } from 'style';
-import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
-import { Text } from '../Text/Text';
+
+import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
+import { Text } from '../../Text/Text';
 
 const PREVIEW_LINES = 4;
 const PREVIEW_FONT_SIZE = 14;

@@ -244,52 +244,6 @@ exports[`renders ChatScreen with existing messages 1`] = `
                 size={16}
               />
             </View>
-            <View
-              accessibilityLabel="components.messageListItem.playAudio"
-              accessibilityRole="button"
-              accessibilityState={
-                {
-                  "busy": undefined,
-                  "checked": undefined,
-                  "disabled": undefined,
-                  "expanded": undefined,
-                  "selected": undefined,
-                }
-              }
-              accessibilityValue={
-                {
-                  "max": undefined,
-                  "min": undefined,
-                  "now": undefined,
-                  "text": undefined,
-                }
-              }
-              accessible={true}
-              collapsable={false}
-              focusable={true}
-              hitSlop={8}
-              onBlur={[Function]}
-              onClick={[Function]}
-              onFocus={[Function]}
-              onResponderGrant={[Function]}
-              onResponderMove={[Function]}
-              onResponderRelease={[Function]}
-              onResponderTerminate={[Function]}
-              onResponderTerminationRequest={[Function]}
-              onStartShouldSetResponder={[Function]}
-              style={
-                [
-                  false,
-                ]
-              }
-            >
-              <PlatformIcon
-                androidIconName="volume_up"
-                color="#7c7c7c"
-                iosIconName="speaker.wave.2"
-                size={16}
-              />
-            </View>
           </View>
         </View>
       </View>

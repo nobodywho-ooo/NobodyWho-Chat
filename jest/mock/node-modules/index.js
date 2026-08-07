@@ -59,6 +59,8 @@ jest.mock('expo-file-system', () => {
       .reduce((acc, part) =>
         acc ? `${acc.replace(/\/+$/, '')}/${part.replace(/^\/+/, '')}` : part,
       );
+  // The trailing path segment of a joined uri (its file/dir name).
+  const basename = uri => uri.replace(/\/+$/, '').split('/').pop() ?? '';
   class File {
     constructor(...segs) {
       this.uri = join(segs);
@@ -68,7 +70,11 @@ jest.mock('expo-file-system', () => {
     get exists() {
       return File.mockExists;
     }
+    get name() {
+      return basename(this.uri);
+    }
     delete() {}
+    write() {}
     open() {
       return {
         readBytes: () => ({ length: 0 }),
@@ -85,12 +91,22 @@ jest.mock('expo-file-system', () => {
     constructor(...segs) {
       this.uri = join(segs);
     }
+    // Present by default; flip Directory.mockExists to false to exercise the
+    // missing-folder path. Directory.mockEntries is what list() returns.
     get exists() {
-      return true;
+      return Directory.mockExists;
+    }
+    get name() {
+      return basename(this.uri);
     }
     create() {}
     delete() {}
+    list() {
+      return Directory.mockEntries;
+    }
   }
+  Directory.mockExists = true;
+  Directory.mockEntries = [];
   const Paths = {
     document: { uri: 'file:///mock-documents/' },
     cache: { uri: 'file:///mock-cache/' },
@@ -164,6 +180,7 @@ jest.mock('expo-audio', () => {
         ref.current = {
           play: () => setPlaying(true),
           pause: () => setPlaying(false),
+          replace: jest.fn(),
           seekTo: jest.fn(),
         };
       }
@@ -251,6 +268,7 @@ jest.mock('@shopify/flash-list', () => ({
 }));
 
 export const mockFromPath = jest.fn();
+export const mockTtsLoad = jest.fn();
 export const mockDownloadModel = jest.fn(() => Promise.resolve('file://downloaded.gguf'));
 
 jest.mock('react-native-nobodywho', () => {
@@ -279,6 +297,7 @@ jest.mock('react-native-nobodywho', () => {
   }
   return {
     Chat: { fromPath: (opts) => mockFromPath(opts) },
+    Tts: { load: (opts) => mockTtsLoad(opts) },
     Encoder: { fromPath: jest.fn() },
     CrossEncoder: { fromPath: jest.fn() },
     SamplerPresets: {

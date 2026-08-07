@@ -15,7 +15,8 @@ import { scheduleOnRN } from 'react-native-worklets';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Spacings } from 'style';
-import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
+
+import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
 
 const DISMISS_DISTANCE = 120;
 const DISMISS_VELOCITY = 800;

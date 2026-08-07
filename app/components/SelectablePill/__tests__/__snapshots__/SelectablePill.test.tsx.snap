@@ -1,0 +1,125 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SelectablePill renders a selected pill 1`] = `
+<View
+  accessibilityLabel="Male 1"
+  accessibilityRole="button"
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": undefined,
+      "expanded": undefined,
+      "selected": true,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={true}
+  hitSlop={4}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "borderRadius": 999,
+        "borderWidth": 1,
+        "paddingHorizontal": 12,
+        "paddingVertical": 8,
+      },
+      {
+        "backgroundColor": "#628395",
+        "borderColor": "transparent",
+      },
+      false,
+    ]
+  }
+>
+  <Text
+    style={
+      {
+        "color": "#FFFFFF",
+      }
+    }
+  >
+    Male 1
+  </Text>
+</View>
+`;
+
+exports[`SelectablePill renders an unselected pill 1`] = `
+<View
+  accessibilityLabel="Male 1"
+  accessibilityRole="button"
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": undefined,
+      "expanded": undefined,
+      "selected": false,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={true}
+  hitSlop={4}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "borderRadius": 999,
+        "borderWidth": 1,
+        "paddingHorizontal": 12,
+        "paddingVertical": 8,
+      },
+      {
+        "backgroundColor": "#f7f7f7",
+        "borderColor": "#e1e1e1",
+      },
+      false,
+    ]
+  }
+>
+  <Text
+    style={
+      {
+        "color": "#000000",
+      }
+    }
+  >
+    Male 1
+  </Text>
+</View>
+`;

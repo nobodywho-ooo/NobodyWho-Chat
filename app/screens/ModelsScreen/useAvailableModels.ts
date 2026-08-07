@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { find, map, pathEq, prop } from 'ramda';
 import { useAppState, useModelDownloads, useModels } from 'hooks';
-import { Model, ModelPipeline } from 'types';
+import { Model } from 'types';
 import { filterModelsByDeviceMemory } from 'helpers';
 
 const MODELS_URL =
-  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.0.0.json';
+  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.0.0-beta.json';
 
 // Fetches the catalogue, filters it to what the device can run, and derives the
 // three lists the screen renders: the model in use, how many are downloaded,
@@ -26,8 +26,7 @@ export const useAvailableModels = () => {
     try {
       const response = await fetch(MODELS_URL);
       const data: Model[] = await response.json();
-      const chatModels = data.filter(model => model.pipeline !== ModelPipeline.textToSpeech);
-      setModels(await filterModelsByDeviceMemory(chatModels));
+      setModels(await filterModelsByDeviceMemory(data));
     } catch {
       setHasError(true);
     } finally {

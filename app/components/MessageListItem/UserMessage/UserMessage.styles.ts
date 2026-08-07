@@ -16,30 +16,9 @@ export default StyleSheet.create({
   userBubblePressed: {
     opacity: 0.6,
   },
-  assistantContainer: {
-    marginVertical: Spacings.md,
-    marginTop: Spacings.md,
-  },
-  streamdownContainer: {
-    alignItems: 'flex-start',
-  },
   text: {
     fontSize: 15,
     lineHeight: 22,
-  },
-  footerContainer: {
-    flexWrap: 'wrap',
-    gap: Spacings.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: Spacings.md,
-  },
-  buttonPressed: {
-    opacity: 0.6,
-  },
-  metricsText: {
-    lineHeight: 16,
-    includeFontPadding: false,
   },
   attachmentsContainer: {
     marginBottom: Spacings.sm,
@@ -68,7 +47,4 @@ export default StyleSheet.create({
   imagePressed: {
     opacity: 0.6,
   },
-  loadingIndicator: {
-    alignSelf: 'flex-start',
-  }
 });

@@ -8,9 +8,15 @@ import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAppState, useModels, useStyled } from 'hooks';
-import { setAppState } from 'database';
+import { DEFAULT_ASSISTANT_CONFIG, getAppState, setAppState } from 'database';
 import { deleteModel, getDocumentPathsByModelId } from 'repositories';
-import { deleteMessageDocuments, deleteModelFiles, isIOS, log } from 'helpers';
+import {
+  deleteMessageDocuments,
+  deleteModelFiles,
+  isIOS,
+  log,
+  resolveTtsPrefs,
+} from 'helpers';
 import { ModelCard, PlatformIcon, Text } from 'components';
 import { useAiService } from 'services';
 import { Model, isTtsPipeline, isChatPipeline } from 'types';
@@ -48,7 +54,7 @@ export const DownloadedModelsScreen: React.FC = () => {
         }
 
         if (isChatPipeline(model.pipeline)) {
-          disposeChat;
+          disposeChat();
         }
 
         const filesDeleted = await deleteModelFiles(model);
@@ -101,7 +107,14 @@ export const DownloadedModelsScreen: React.FC = () => {
 
       if (isTtsPipeline(model.pipeline)) {
         if (ttsModelIdInUse !== model.id) {
-          setAppState({ ttsModelIdInUse: model.id });
+          // Stamp the model's voice/language defaults into the config as it
+          // takes the voice slot, so the loader and picker read them directly.
+          const config =
+            getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
+          setAppState({
+            ttsModelIdInUse: model.id,
+            assistantConfig: { ...config, ...resolveTtsPrefs(model, config) },
+          });
           navigation.goBack();
         }
         return;
