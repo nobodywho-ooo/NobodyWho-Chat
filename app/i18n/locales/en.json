@@ -182,6 +182,11 @@
       "settings": "Settings",
       "changeModel": "Change model"
     },
+    "voiceAssistant": {
+      "title": "Voice Assistant",
+      "headline": "Talk to your assistant",
+      "description": "Hands-free voice conversations are coming soon. Swipe right to go back to your chat."
+    },
     "settings": {
       "app": "App",
       "models": "Models",

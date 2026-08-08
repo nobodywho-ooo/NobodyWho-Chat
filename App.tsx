@@ -19,7 +19,7 @@ import { log } from 'helpers';
 import { useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
-import { DrawerNavigator } from 'navigation';
+import { RootDrawerNavigator } from 'navigation';
 import { useTranslation } from 'react-i18next';
 
 const unWantedError =
@@ -97,7 +97,7 @@ function AppContent() {
         translucent
       />
       <Sentry.NavigationContainer theme={navigationTheme}>
-        <DrawerNavigator />
+        <RootDrawerNavigator />
       </Sentry.NavigationContainer>
     </>
   );

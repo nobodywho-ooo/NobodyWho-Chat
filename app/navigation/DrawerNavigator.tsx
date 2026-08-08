@@ -6,7 +6,6 @@ import {
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
-import type { PanGesture } from 'react-native-gesture-handler';
 import {
   MenuView,
   type MenuAction,
@@ -20,19 +19,15 @@ import { DrawerContentScreen } from 'screens';
 import { PlatformIcon, Text } from 'components';
 import { log, haptics, isIOS, capitalize } from 'helpers';
 import { useAppState, useConversations, useModels, useStyled } from 'hooks';
-
-import { messageStartersScrollRef } from '../screens/ChatScreen/components/MessageStarters/MessageStarters';
+import { useAiService } from 'services';
+import { Spacings } from 'style';
 
 import { ChatStackNavigator } from './ChatStackNavigator';
-import { Spacings } from 'style';
-import { useAiService } from 'services';
-
-// swipeEdgeWidth spans the whole screen, so on Android the drawer pan would
-// otherwise activate (5dp) before the starters' horizontal scroll can claim
-// the drag (8dp touch slop) and steal it. Touches that miss the scroll view
-// never involve its handler, so drawer swipes elsewhere are unaffected.
-const configureDrawerGesture = (gesture: PanGesture) =>
-  gesture.requireExternalGestureToFail(messageStartersScrollRef);
+import {
+  DrawerStatusReporter,
+  buildLeftDrawerGesture,
+  useDrawerCoordination,
+} from './DrawerCoordination';
 
 const Drawer = createDrawerNavigator();
 const ICON_SIZE = 22;
@@ -171,11 +166,14 @@ const renderChatHeaderTitle = ({ children }: { children: string }) => (
 );
 
 const renderDrawerContent = ({ navigation }: DrawerContentComponentProps) => (
-  <DrawerContentScreen
-    onCloseDrawer={() => {
-      navigation.closeDrawer();
-    }}
-  />
+  <>
+    <DrawerStatusReporter side="left" />
+    <DrawerContentScreen
+      onCloseDrawer={() => {
+        navigation.closeDrawer();
+      }}
+    />
+  </>
 );
 
 export const DrawerNavigator = () => {
@@ -184,6 +182,7 @@ export const DrawerNavigator = () => {
   const { conversationIdInUse } = useAppState();
   const { conversations } = useConversations();
   const { models } = useModels();
+  const { openSide } = useDrawerCoordination();
 
   const insets = useSafeAreaInsets();
 
@@ -216,7 +215,7 @@ export const DrawerNavigator = () => {
         overlayStyle: { backgroundColor: colors.shadow },
         swipeEnabled: true,
         swipeEdgeWidth: Dimensions.get('window').width,
-        configureGestureHandler: configureDrawerGesture,
+        configureGestureHandler: buildLeftDrawerGesture(openSide === 'left'),
       }}
     >
       <Drawer.Screen
@@ -228,7 +227,8 @@ export const DrawerNavigator = () => {
 
           return {
             headerShown: isIOS || isAtRoot,
-            swipeEnabled: isIOS || isAtRoot,
+            // Disabled while the right drawer is open so its close gesture wins.
+            swipeEnabled: (isIOS || isAtRoot) && openSide !== 'right',
             title: title,
             headerTitle: renderChatHeaderTitle,
             headerTitleContainerStyle: { marginHorizontal: 8 },

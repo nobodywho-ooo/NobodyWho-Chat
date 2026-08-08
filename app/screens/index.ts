@@ -8,5 +8,6 @@ export * from './NoModelSelectedScreen/NoModelSelectedScreen';
 export * from './ModelsScreen/ModelsScreen';
 export * from './DownloadedModelsScreen/DownloadedModelsScreen';
 export * from './DrawerContentScreen/DrawerContentScreen';
+export * from './VoiceAssistantScreen/VoiceAssistantScreen';
 export * from './TermsScreen/TermsScreen';
 export * from './PrivacyPolicyScreen/PrivacyPolicyScreen';

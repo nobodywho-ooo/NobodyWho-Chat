@@ -182,6 +182,11 @@
       "settings": "Indstillinger",
       "changeModel": "Skift model"
     },
+    "voiceAssistant": {
+      "title": "Stemmeassistent",
+      "headline": "Tal med din assistent",
+      "description": "Håndfri stemmesamtaler er på vej. Stryg til højre for at gå tilbage til din chat."
+    },
     "settings": {
       "app": "App",
       "models": "Modeller",
