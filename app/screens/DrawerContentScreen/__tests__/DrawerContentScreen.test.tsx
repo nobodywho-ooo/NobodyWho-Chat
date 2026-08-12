@@ -9,6 +9,10 @@ import { AiServiceProvider } from 'services';
 
 import { DrawerContentScreen } from '../DrawerContentScreen';
 
+// DrawerContentScreen navigates via the navigation prop the drawer passes it
+// (not useNavigation — that resolves to the parent navigator in drawer content).
+const navigation = { navigate: mockNavigate } as never;
+
 beforeEach(() => {
   mockNavigate.mockClear();
   mockSetAppState.mockClear();
@@ -18,7 +22,7 @@ beforeEach(() => {
 test('renders correctly DrawerContentScreen', () => {
   const tree = render(
     <AiServiceProvider>
-      <DrawerContentScreen onCloseDrawer={() => {}} />
+      <DrawerContentScreen navigation={navigation} onCloseDrawer={() => {}} />
     </AiServiceProvider>,
   ).toJSON();
   expect(tree).toMatchSnapshot();
@@ -27,13 +31,15 @@ test('renders correctly DrawerContentScreen', () => {
 test('pressing settings navigates to the SettingsScreen', () => {
   const screen = render(
     <AiServiceProvider>
-      <DrawerContentScreen onCloseDrawer={jest.fn()} />
+      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
   fireEvent.press(screen.getByText('screens.drawerContent.settings'));
 
-  expect(mockNavigate).toHaveBeenCalledWith('SettingsScreen');
+  expect(mockNavigate).toHaveBeenCalledWith('Chat', {
+    screen: 'SettingsScreen',
+  });
 });
 
 test('pressing new chat clears the conversation in use and closes the drawer', () => {
@@ -41,7 +47,7 @@ test('pressing new chat clears the conversation in use and closes the drawer', (
   const onCloseDrawer = jest.fn();
   const screen = render(
     <AiServiceProvider>
-      <DrawerContentScreen onCloseDrawer={onCloseDrawer} />
+      <DrawerContentScreen navigation={navigation} onCloseDrawer={onCloseDrawer} />
     </AiServiceProvider>,
   );
 
@@ -60,7 +66,7 @@ test('hides the new chat button when no model is downloaded', () => {
 
   const screen = render(
     <AiServiceProvider>
-      <DrawerContentScreen onCloseDrawer={jest.fn()} />
+      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
@@ -74,7 +80,7 @@ test('hides the change model button with fewer than 2 downloaded models', () => 
 
   const screen = render(
     <AiServiceProvider>
-      <DrawerContentScreen onCloseDrawer={jest.fn()} />
+      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
@@ -88,13 +94,14 @@ test('pressing change model navigates to the DownloadedModelsScreen when 2+ mode
 
   const screen = render(
     <AiServiceProvider>
-      <DrawerContentScreen onCloseDrawer={jest.fn()} />
+      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
   fireEvent.press(screen.getByText('screens.drawerContent.changeModel'));
 
-  expect(mockNavigate).toHaveBeenCalledWith('DownloadedModelsScreen', {
-    canDelete: false,
+  expect(mockNavigate).toHaveBeenCalledWith('Chat', {
+    screen: 'DownloadedModelsScreen',
+    params: { canDelete: false },
   });
 });

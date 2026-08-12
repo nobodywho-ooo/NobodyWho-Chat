@@ -1,19 +1,21 @@
 import React, { useCallback } from 'react';
 import { View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { setAppState } from 'database';
 import { Button, IconButton, Text } from 'components';
 import { ActionButton, ConversationsList } from './components';
+import { useAiService } from 'services';
 import { useTheme } from 'context';
 import { useModels } from 'hooks';
+import { haptics } from 'helpers';
 import { Theme } from 'types';
 
 import styles from './DrawerContentScreen.styles';
-import { useAiService } from 'services';
 
 interface DrawerContentScreenProps {
+  navigation: DrawerContentComponentProps['navigation'];
   onCloseDrawer: () => void;
 }
 
@@ -23,31 +25,36 @@ const gradientColors: Record<Theme, string[]> = {
 };
 
 export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
+  navigation,
   onCloseDrawer,
 }) => {
   const { t } = useTranslation();
-  const navigation = useNavigation();
   const { models } = useModels();
-  const theme = useTheme();
   const { chat } = useAiService();
+  const theme = useTheme();
 
   const closeDrawer = onCloseDrawer;
 
   const handleSettingsPress = useCallback(() => {
     chat.current?.stopGeneration();
-    // @ts-ignore
-    navigation.navigate('SettingsScreen');
-  }, [navigation, chat]);
+    navigation.navigate('Chat', { screen: 'SettingsScreen' });
+    haptics.medium();
+    closeDrawer();
+  }, [navigation, chat, closeDrawer]);
 
   const handleChangeModelPress = useCallback(() => {
     chat.current?.stopGeneration();
-    // Switching models only — deletion is disabled from this entry point.
-    // @ts-ignore
-    navigation.navigate('DownloadedModelsScreen', { canDelete: false });
-  }, [navigation, chat]);
+    navigation.navigate('Chat', {
+      screen: 'DownloadedModelsScreen',
+      params: { canDelete: false },
+    });
+    haptics.medium();
+    closeDrawer();
+  }, [navigation, chat, closeDrawer]);
 
   const handleNewChatPress = useCallback(() => {
     setAppState({ conversationIdInUse: undefined });
+    haptics.medium();
     closeDrawer();
   }, [closeDrawer]);
 
@@ -59,7 +66,10 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         </Text>
         <IconButton
           icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
-          onPress={closeDrawer}
+          onPress={() => {
+            haptics.medium();
+            closeDrawer();
+          }}
         />
       </View>
 

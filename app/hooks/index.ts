@@ -4,5 +4,6 @@ export * from './useMessages';
 export * from './useModelDownloads';
 export * from './useModels';
 export * from './useCurrentTtsModel';
+export * from './useCurrentSttModel';
 export * from './useStyled';
 export * from './useThemeMode';

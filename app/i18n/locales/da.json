@@ -133,7 +133,12 @@
       "photo": "Foto",
       "camera": "Kamera",
       "audio": "Lyd",
-      "unselect": "Fravælg"
+      "voiceAssistant": "Stemmeassistent",
+      "unselect": "Fravælg",
+      "dictate": "Dikter",
+      "stopDictation": "Stop diktering",
+      "microphoneDeniedTitle": "Mikrofonadgang kræves",
+      "microphoneDeniedMessage": "Tillad mikrofonadgang i Indstillinger for at diktere dine beskeder."
     },
     "cameraCapture": {
       "permission": "Kameraadgang er nødvendig for at tage et billede.",
@@ -184,8 +189,24 @@
     },
     "voiceAssistant": {
       "title": "Stemmeassistent",
-      "headline": "Tal med din assistent",
-      "description": "Håndfri stemmesamtaler er på vej. Stryg til højre for at gå tilbage til din chat."
+      "start": "Begynd at lytte",
+      "stop": "Stop",
+      "status": {
+        "idle": "Tryk for at tale",
+        "listening": "Lytter…",
+        "transcribing": "Transskriberer",
+        "thinking": "Tænker",
+        "speaking": "Taler…",
+        "error": "Noget gik galt — tryk for at prøve igen"
+      },
+      "setup": {
+        "title": "Konfigurer stemmechat",
+        "description": "Håndfri chat kræver tre modeller indlæst samtidig:",
+        "chat": "Chatmodel",
+        "stt": "Tale-til-tekst-model",
+        "tts": "Tekst-til-tale-model",
+        "hint": "Download og aktiver én af hver, og kom så tilbage."
+      }
     },
     "settings": {
       "app": "App",
@@ -204,6 +225,7 @@
     "models": {
       "textModelInUse": "Tekstmodel i brug",
       "voiceModelInUse": "Stemmemodel i brug",
+      "transcriptionModelInUse": "Transskriptionsmodel i brug",
       "readyToUse": "Klar til brug",
       "downloaded": "Downloadet",
       "modelCount_one": "{{count}} model",

@@ -59,10 +59,8 @@ exports[`renders correctly InputBar 1`] = `
       style={
         [
           {
-            "alignItems": "center",
             "borderRadius": 16,
-            "flexDirection": "row",
-            "minHeight": 42,
+            "flexDirection": "column",
             "paddingHorizontal": 16,
             "paddingVertical": 8,
           },
@@ -74,14 +72,6 @@ exports[`renders correctly InputBar 1`] = `
         ]
       }
     >
-      <View
-        style={
-          {
-            "alignSelf": "center",
-            "flexDirection": "row",
-          }
-        }
-      />
       <TextInput
         multiline={true}
         onChangeText={[Function]}
@@ -94,7 +84,8 @@ exports[`renders correctly InputBar 1`] = `
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
-              "paddingTop": -4,
+              "paddingTop": 8,
+              "paddingVertical": 16,
             },
             {
               "color": "#000000",
@@ -103,18 +94,57 @@ exports[`renders correctly InputBar 1`] = `
         }
         value=""
       />
-      <IconButton
-        backgroundColor="#b0c1cb"
-        color="#FFFFFF"
-        icon={
+      <View
+        style={
           {
-            "androidIconName": "arrow_upward",
-            "iosIconName": "arrow.up",
+            "flexDirection": "row",
+            "justifyContent": "space-between",
+            "paddingBottom": 8,
           }
         }
-        onPress={[Function]}
-        size={20}
-      />
+      >
+        <View
+          style={
+            {
+              "flexDirection": "row",
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "alignSelf": "center",
+                "flexDirection": "row",
+              }
+            }
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.voiceAssistant"
+            backgroundColor="#ebebeb"
+            color="#000000"
+            icon={
+              {
+                "androidIconName": "graphic_eq",
+                "iosIconName": "waveform",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+          />
+        </View>
+        <IconButton
+          backgroundColor="#b0c1cb"
+          color="#FFFFFF"
+          icon={
+            {
+              "androidIconName": "arrow_upward",
+              "iosIconName": "arrow.up",
+            }
+          }
+          onPress={[Function]}
+          size={20}
+        />
+      </View>
     </View>
   </View>
 </View>
@@ -179,10 +209,8 @@ exports[`renders correctly InputBar when streaming 1`] = `
       style={
         [
           {
-            "alignItems": "center",
             "borderRadius": 16,
-            "flexDirection": "row",
-            "minHeight": 42,
+            "flexDirection": "column",
             "paddingHorizontal": 16,
             "paddingVertical": 8,
           },
@@ -194,14 +222,6 @@ exports[`renders correctly InputBar when streaming 1`] = `
         ]
       }
     >
-      <View
-        style={
-          {
-            "alignSelf": "center",
-            "flexDirection": "row",
-          }
-        }
-      />
       <TextInput
         multiline={true}
         onChangeText={[Function]}
@@ -214,7 +234,8 @@ exports[`renders correctly InputBar when streaming 1`] = `
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
-              "paddingTop": -4,
+              "paddingTop": 8,
+              "paddingVertical": 16,
             },
             {
               "color": "#000000",
@@ -223,18 +244,57 @@ exports[`renders correctly InputBar when streaming 1`] = `
         }
         value=""
       />
-      <IconButton
-        backgroundColor="#ebebeb"
-        color="#000000"
-        icon={
+      <View
+        style={
           {
-            "androidIconName": "stop",
-            "iosIconName": "stop",
+            "flexDirection": "row",
+            "justifyContent": "space-between",
+            "paddingBottom": 8,
           }
         }
-        onPress={[Function]}
-        size={20}
-      />
+      >
+        <View
+          style={
+            {
+              "flexDirection": "row",
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "alignSelf": "center",
+                "flexDirection": "row",
+              }
+            }
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.voiceAssistant"
+            backgroundColor="#ebebeb"
+            color="#000000"
+            icon={
+              {
+                "androidIconName": "graphic_eq",
+                "iosIconName": "waveform",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+          />
+        </View>
+        <IconButton
+          backgroundColor="#ebebeb"
+          color="#000000"
+          icon={
+            {
+              "androidIconName": "stop",
+              "iosIconName": "stop",
+            }
+          }
+          onPress={[Function]}
+          size={20}
+        />
+      </View>
     </View>
   </View>
 </View>
@@ -299,10 +359,8 @@ exports[`renders correctly InputBar with value 1`] = `
       style={
         [
           {
-            "alignItems": "center",
             "borderRadius": 16,
-            "flexDirection": "row",
-            "minHeight": 42,
+            "flexDirection": "column",
             "paddingHorizontal": 16,
             "paddingVertical": 8,
           },
@@ -314,14 +372,6 @@ exports[`renders correctly InputBar with value 1`] = `
         ]
       }
     >
-      <View
-        style={
-          {
-            "alignSelf": "center",
-            "flexDirection": "row",
-          }
-        }
-      />
       <TextInput
         multiline={true}
         onChangeText={[Function]}
@@ -334,7 +384,8 @@ exports[`renders correctly InputBar with value 1`] = `
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
-              "paddingTop": -4,
+              "paddingTop": 8,
+              "paddingVertical": 16,
             },
             {
               "color": "#000000",
@@ -343,18 +394,57 @@ exports[`renders correctly InputBar with value 1`] = `
         }
         value="Type here"
       />
-      <IconButton
-        backgroundColor="#628395"
-        color="#FFFFFF"
-        icon={
+      <View
+        style={
           {
-            "androidIconName": "arrow_upward",
-            "iosIconName": "arrow.up",
+            "flexDirection": "row",
+            "justifyContent": "space-between",
+            "paddingBottom": 8,
           }
         }
-        onPress={[Function]}
-        size={20}
-      />
+      >
+        <View
+          style={
+            {
+              "flexDirection": "row",
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "alignSelf": "center",
+                "flexDirection": "row",
+              }
+            }
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.voiceAssistant"
+            backgroundColor="#ebebeb"
+            color="#000000"
+            icon={
+              {
+                "androidIconName": "graphic_eq",
+                "iosIconName": "waveform",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+          />
+        </View>
+        <IconButton
+          backgroundColor="#628395"
+          color="#FFFFFF"
+          icon={
+            {
+              "androidIconName": "arrow_upward",
+              "iosIconName": "arrow.up",
+            }
+          }
+          onPress={[Function]}
+          size={20}
+        />
+      </View>
     </View>
   </View>
 </View>
@@ -419,10 +509,8 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
       style={
         [
           {
-            "alignItems": "center",
             "borderRadius": 16,
-            "flexDirection": "row",
-            "minHeight": 42,
+            "flexDirection": "column",
             "paddingHorizontal": 16,
             "paddingVertical": 8,
           },
@@ -434,36 +522,6 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
         ]
       }
     >
-      <View
-        style={
-          {
-            "alignSelf": "center",
-            "flexDirection": "row",
-          }
-        }
-      >
-        <View
-          style={
-            {
-              "marginRight": 8,
-            }
-          }
-        >
-          <IconButton
-            accessibilityLabel="components.inputBar.attach"
-            backgroundColor="#ebebeb"
-            color="#000000"
-            icon={
-              {
-                "androidIconName": "add",
-                "iosIconName": "plus",
-              }
-            }
-            onPress={[Function]}
-            size={20}
-          />
-        </View>
-      </View>
       <TextInput
         multiline={true}
         onChangeText={[Function]}
@@ -476,7 +534,8 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
-              "paddingTop": -4,
+              "paddingTop": 8,
+              "paddingVertical": 16,
             },
             {
               "color": "#000000",
@@ -485,18 +544,79 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
         }
         value=""
       />
-      <IconButton
-        backgroundColor="#b0c1cb"
-        color="#FFFFFF"
-        icon={
+      <View
+        style={
           {
-            "androidIconName": "arrow_upward",
-            "iosIconName": "arrow.up",
+            "flexDirection": "row",
+            "justifyContent": "space-between",
+            "paddingBottom": 8,
           }
         }
-        onPress={[Function]}
-        size={20}
-      />
+      >
+        <View
+          style={
+            {
+              "flexDirection": "row",
+            }
+          }
+        >
+          <View
+            style={
+              {
+                "alignSelf": "center",
+                "flexDirection": "row",
+              }
+            }
+          >
+            <View
+              style={
+                {
+                  "marginRight": 8,
+                }
+              }
+            >
+              <IconButton
+                accessibilityLabel="components.inputBar.attach"
+                backgroundColor="#ebebeb"
+                color="#000000"
+                icon={
+                  {
+                    "androidIconName": "add",
+                    "iosIconName": "plus",
+                  }
+                }
+                onPress={[Function]}
+                size={20}
+              />
+            </View>
+          </View>
+          <IconButton
+            accessibilityLabel="components.inputBar.voiceAssistant"
+            backgroundColor="#ebebeb"
+            color="#000000"
+            icon={
+              {
+                "androidIconName": "graphic_eq",
+                "iosIconName": "waveform",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+          />
+        </View>
+        <IconButton
+          backgroundColor="#b0c1cb"
+          color="#FFFFFF"
+          icon={
+            {
+              "androidIconName": "arrow_upward",
+              "iosIconName": "arrow.up",
+            }
+          }
+          onPress={[Function]}
+          size={20}
+        />
+      </View>
     </View>
   </View>
 </View>

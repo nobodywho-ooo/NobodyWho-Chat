@@ -47,7 +47,7 @@ export enum ModelPipeline {
   featureExtraction = "featureExtraction",
   textRanking = "textRanking",
   textToSpeech = "textToSpeech",
-  speechToText = "speech-to-text",
+  speechToText = "speech-to-text", // mirrored in backend, typo error, needs db migration
   automaticSpeechRecognition = "automatic-speech-recognition"
 }
 
@@ -81,14 +81,19 @@ export const isChatPipeline = (
 export const isTtsPipeline = (pipeline: ModelPipeline): boolean =>
   pipeline === ModelPipeline.textToSpeech;
 
+export const isSttPipeline = (pipeline: ModelPipeline): boolean =>
+  pipeline === ModelPipeline.speechToText ||
+  pipeline === ModelPipeline.automaticSpeechRecognition;
+
 // Only chat-capable pipelines may reach the chat backend; a non-chat model
-// (e.g. text-to-speech) slipping through would be silently loaded as a GGUF
-// chat model and fail deep in the native layer — throw at the boundary instead.
+// (e.g. text-to-speech or speech-to-text) slipping through would be silently
+// loaded as a GGUF chat model and fail deep in the native layer — throw at the
+// boundary instead.
 export const toChatPipeline = (pipeline: ModelPipeline): ChatPipeline => {
   if (isChatPipeline(pipeline)) {
     return pipeline;
   }
-  if (pipeline === ModelPipeline.textToSpeech) {
+  if (isTtsPipeline(pipeline) || isSttPipeline(pipeline)) {
     throw new Error(`toChatPipeline: ${pipeline} is not a chat pipeline`);
   }
   return ModelPipeline.textGeneration;

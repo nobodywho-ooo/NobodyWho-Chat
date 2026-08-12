@@ -27,6 +27,7 @@ export const ModelsScreen: React.FC = () => {
     availableModels,
     currentModel,
     currentTtsModel,
+    currentSttModel,
     downloadedCount,
     isLoading,
     hasError,
@@ -71,10 +72,18 @@ export const ModelsScreen: React.FC = () => {
         />
       )}
 
+      {!!currentSttModel && (
+        <InUseModel
+          model={currentSttModel}
+          title={t('screens.models.transcriptionModelInUse')}
+          first={!currentModel && !currentTtsModel}
+        />
+      )}
+
       {downloadedCount > 0 && (
         <DownloadedModelsLink
           count={downloadedCount}
-          first={!currentModel && !currentTtsModel}
+          first={!currentModel && !currentTtsModel && !currentSttModel}
           onPress={goToDownloadedModels}
         />
       )}

@@ -133,7 +133,12 @@
       "photo": "Photo",
       "camera": "Camera",
       "audio": "Audio",
-      "unselect": "Unselect"
+      "voiceAssistant": "Voice Assistant",
+      "unselect": "Unselect",
+      "dictate": "Dictate",
+      "stopDictation": "Stop dictation",
+      "microphoneDeniedTitle": "Microphone access needed",
+      "microphoneDeniedMessage": "Allow microphone access in Settings to dictate your messages."
     },
     "cameraCapture": {
       "permission": "Camera access is needed to take a photo.",
@@ -184,8 +189,24 @@
     },
     "voiceAssistant": {
       "title": "Voice Assistant",
-      "headline": "Talk to your assistant",
-      "description": "Hands-free voice conversations are coming soon. Swipe right to go back to your chat."
+      "start": "Start listening",
+      "stop": "Stop",
+      "status": {
+        "idle": "Tap to speak",
+        "listening": "Listening…",
+        "transcribing": "Transcribing",
+        "thinking": "Thinking",
+        "speaking": "Speaking…",
+        "error": "Something went wrong — tap to try again"
+      },
+      "setup": {
+        "title": "Set up voice chat",
+        "description": "Hands-free chat needs three models loaded at once:",
+        "chat": "Chat model",
+        "stt": "Speech-to-text model",
+        "tts": "Text-to-speech model",
+        "hint": "Download and activate one of each, then come back."
+      }
     },
     "settings": {
       "app": "App",
@@ -204,6 +225,7 @@
     "models": {
       "textModelInUse": "Text model in use",
       "voiceModelInUse": "Voice model in use",
+      "transcriptionModelInUse": "Transcription model in use",
       "readyToUse": "Ready to use",
       "downloaded": "Downloaded",
       "modelCount_one": "{{count}} model",

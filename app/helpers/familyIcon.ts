@@ -1,6 +1,6 @@
 import type { FC } from 'react';
 import type { SvgProps } from 'react-native-svg';
-import { qwen, bonsai, liquid, gemma4, supertonic, mistral, ibm } from 'svg';
+import { qwen, bonsai, liquid, gemma4, supertonic, mistral, ibm, openai } from 'svg';
 
 const familyIcons: Record<string, FC<SvgProps>> = {
   qwen: qwen,
@@ -9,7 +9,8 @@ const familyIcons: Record<string, FC<SvgProps>> = {
   "Gemma 4": gemma4,
   supertonic: supertonic,
   ministral: mistral,
-  "Granite 4.0": ibm
+  "Granite 4.0": ibm,
+  "Whisper": openai,
 };
 
 export const getFamilyIcon = (family: string): FC<SvgProps> | undefined => {

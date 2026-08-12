@@ -13,6 +13,7 @@ import { Spacings } from 'style';
 import { DrawerNavigator } from './DrawerNavigator';
 import {
   DrawerCoordinationProvider,
+  DrawerOpenerReporter,
   DrawerStatusReporter,
   buildRightDrawerGesture,
   useDrawerCoordination,
@@ -43,7 +44,9 @@ const getLeafRouteName = (route: NestedRoute): string => {
   while (current.state && current.state.routes.length > 0) {
     const { index, routes } = current.state;
     const next = routes[index ?? routes.length - 1];
-    if (!next) break;
+    if (!next) {
+      break;
+    }
     current = next;
   }
   return current.name;
@@ -54,8 +57,10 @@ const Drawer = createDrawerNavigator();
 const renderVoiceAssistant = ({ navigation }: DrawerContentComponentProps) => (
   <>
     <DrawerStatusReporter side="right" />
+    <DrawerOpenerReporter side="right" navigation={navigation} />
     <VoiceAssistantScreen
       onCloseDrawer={() => {
+        haptics.medium();
         navigation.closeDrawer();
       }}
     />
@@ -65,7 +70,7 @@ const renderVoiceAssistant = ({ navigation }: DrawerContentComponentProps) => (
 const RootDrawer = () => {
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
-  const { openSide } = useDrawerCoordination();
+  const { openSide, scrollGesture } = useDrawerCoordination();
 
   return (
     <Drawer.Navigator
@@ -86,7 +91,10 @@ const RootDrawer = () => {
         swipeEdgeWidth: Dimensions.get('window').width,
         // Left-ward drag opens; while open, a right-ward drag closes it. The
         // left drawer owns right-ward drags, so the two never fight.
-        configureGestureHandler: buildRightDrawerGesture(openSide === 'right'),
+        configureGestureHandler: buildRightDrawerGesture(
+          openSide === 'right',
+          scrollGesture,
+        ),
       }}
     >
       <Drawer.Screen

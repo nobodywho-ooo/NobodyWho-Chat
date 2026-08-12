@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Text } from 'components';
 import { setAppState } from 'database';
 import { useAppState, useConversations, useStyled } from 'hooks';
-import { capitalize } from 'helpers';
+import { capitalize, haptics } from 'helpers';
 import { Conversation } from 'types';
 
 import styles from './ConversationsList.styles';
@@ -27,6 +27,7 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
         modelIdInUse: conversation.modelId,
         conversationIdInUse: conversation.id,
       });
+      haptics.medium();
       onCloseDrawer();
     },
     [onCloseDrawer],

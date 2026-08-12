@@ -42,6 +42,10 @@ import {
   defaultTtsLanguage,
   resolveTtsPrefs,
 } from './ttsVoices';
+import { resolveSttQuantization } from './sttModel';
+import { micBands, wavToEnvelope } from './audioLevels';
+
+export type { AudioBands, AudioEnvelope } from './audioLevels';
 
 export {
   getFamilyIcon,
@@ -86,4 +90,7 @@ export {
   languageCode,
   defaultTtsLanguage,
   resolveTtsPrefs,
+  resolveSttQuantization,
+  micBands,
+  wavToEnvelope,
 };

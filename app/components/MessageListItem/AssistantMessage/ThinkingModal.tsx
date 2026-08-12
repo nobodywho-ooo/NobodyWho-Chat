@@ -8,9 +8,9 @@ import {
   View,
 } from 'react-native';
 import {
-  Gesture,
   GestureDetector,
   GestureHandlerRootView,
+  usePanGesture,
 } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
@@ -61,11 +61,11 @@ export const ThinkingModal: React.FC<ThinkingModalProps> = ({
     }
   }, [thinking, translateY]);
 
-  const panGesture = Gesture.Pan()
-    .onUpdate(event => {
+  const panGesture = usePanGesture({
+    onUpdate: event => {
       translateY.value = Math.max(0, event.translationY);
-    })
-    .onEnd(event => {
+    },
+    onDeactivate: event => {
       const shouldDismiss =
         event.translationY > DISMISS_DISTANCE ||
         event.velocityY > DISMISS_VELOCITY;
@@ -74,7 +74,8 @@ export const ThinkingModal: React.FC<ThinkingModalProps> = ({
       } else {
         translateY.value = withTiming(0, { duration: 150 });
       }
-    });
+    },
+  });
 
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],

@@ -55,7 +55,15 @@ module.exports = api => {
       'react-native-worklets/plugin',
       {
         bundleMode: !isTest,
-        workletizableModules: ['remend'],
+        // Forward the `remend` import into the generated worklet so
+        // react-native-streamdown can call remend() on its `remend-processor`
+        // worklet runtime. This option was formerly named
+        // `workletizableModules: ['remend']`; worklets renamed it to
+        // `importForwarding.moduleNames`, and the old name is silently ignored
+        // (→ "[Worklets] Tried to synchronously call a Remote Function").
+        importForwarding: {
+          moduleNames: ['remend'],
+        },
       },
     ],
     ],

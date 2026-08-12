@@ -48,6 +48,8 @@ const mockDisposeChat = jest.fn(() => {
 });
 const mockCreateTts = jest.fn(async () => {});
 const mockDisposeTts = jest.fn();
+const mockCreateStt = jest.fn(async () => {});
+const mockDisposeStt = jest.fn();
 // These suites only exercise text models; mock-prefixed so the jest.mock
 // factory may reference it (out-of-scope enums are rejected otherwise).
 const mockChatPipeline = ModelPipeline.textGeneration;
@@ -60,8 +62,15 @@ jest.mock('services', () => ({
     disposeChat: mockDisposeChat,
     createTts: mockCreateTts,
     disposeTts: mockDisposeTts,
+    createStt: mockCreateStt,
+    disposeStt: mockDisposeStt,
   }),
   subscribeToolInvocations: jest.fn(() => jest.fn()),
+  // Capture the sync listener so a test can drive a voice-turn notification.
+  subscribeConversationSync: jest.fn((listener: (id: number) => void) => {
+    mockConversationSyncListener = listener;
+    return jest.fn();
+  }),
 }));
 
 // The starter selection is random; pin it so showEmptyChat can wait on a
@@ -101,9 +110,14 @@ const mockInsertMessage = insertMessage as jest.Mock;
 // background/foreground transitions directly.
 let appStateHandler: (state: AppStateStatus) => void = () => {};
 
+// Captures the conversation-sync listener so a test can simulate a voice turn
+// persisting messages (VoiceAssistantScreen → notifyConversationSync).
+let mockConversationSyncListener: (id: number) => void = () => {};
+
 beforeEach(async () => {
   mockExternalPickerActive = false;
   appStateHandler = () => {};
+  mockConversationSyncListener = () => {};
   jest
     .spyOn(AppState, 'addEventListener')
     .mockImplementation((_event, handler) => {
@@ -116,6 +130,8 @@ beforeEach(async () => {
   mockDisposeChat.mockClear();
   mockCreateTts.mockClear();
   mockDisposeTts.mockClear();
+  mockCreateStt.mockClear();
+  mockDisposeStt.mockClear();
   mockChatInstance.setChatHistory.mockReset().mockResolvedValue(undefined);
   mockChatInstance.ask.mockReset().mockImplementation(async function* () {
     yield 'hello';
@@ -129,6 +145,7 @@ beforeEach(async () => {
   await setAppState({
     modelIdInUse: undefined,
     ttsModelIdInUse: undefined,
+    sttModelIdInUse: undefined,
     conversationIdInUse: undefined,
     assistantConfig: undefined,
   });
@@ -317,6 +334,69 @@ test('forwards the chosen voice and language to a Supertonic model', async () =>
   });
 });
 
+test('loads the selected STT model on start', async () => {
+  await setAppState({ sttModelIdInUse: 11 });
+  mockGetModelById.mockResolvedValue(
+    buildModel(11, {
+      pipeline: ModelPipeline.speechToText,
+      family: 'Whisper',
+    }),
+  );
+
+  render(<ChatStackNavigator />);
+
+  await waitFor(() => expect(mockCreateStt).toHaveBeenCalled());
+  expect(mockCreateStt).toHaveBeenLastCalledWith({
+    model: expect.objectContaining({ id: 11 }),
+  });
+});
+
+test('disposes and reloads the STT engine when the transcription model changes', async () => {
+  mockGetModelById.mockResolvedValue(
+    buildModel(11, {
+      pipeline: ModelPipeline.speechToText,
+      family: 'Whisper',
+    }),
+  );
+
+  render(<ChatStackNavigator />);
+
+  // Selecting a transcription model loads it.
+  await act(async () => {
+    await setAppState({ sttModelIdInUse: 11 });
+  });
+  await waitFor(() => expect(mockCreateStt).toHaveBeenCalled());
+
+  // Clearing the slot tears the engine down without reloading.
+  await act(async () => {
+    await setAppState({ sttModelIdInUse: undefined });
+  });
+  expect(mockDisposeStt).toHaveBeenCalled();
+});
+
+test('unloads the STT engine on background and reloads it on foreground', async () => {
+  await setAppState({ sttModelIdInUse: 11 });
+  mockGetModelById.mockResolvedValue(
+    buildModel(11, {
+      pipeline: ModelPipeline.speechToText,
+      family: 'Whisper',
+    }),
+  );
+
+  render(<ChatStackNavigator />);
+  await waitFor(() => expect(mockCreateStt).toHaveBeenCalledTimes(1));
+
+  await act(async () => {
+    appStateHandler('background');
+  });
+  expect(mockDisposeStt).toHaveBeenCalledTimes(1);
+
+  await act(async () => {
+    appStateHandler('active');
+  });
+  await waitFor(() => expect(mockCreateStt).toHaveBeenCalledTimes(2));
+});
+
 test('injects restored assistant messages with an empty toolCalls array', async () => {
   mockGetConversationById.mockResolvedValue({
     id: 5,
@@ -385,6 +465,74 @@ test('reloads only the history when the in-use conversation changes', async () =
   );
   expect(mockDisposeChat).not.toHaveBeenCalled();
   expect(mockCreateChat).toHaveBeenCalledTimes(1);
+});
+
+test('a voice turn adopts a freshly created conversation without resetting the chat', async () => {
+  await setAppState({ modelIdInUse: 0 });
+
+  const screen = render(<ChatStackNavigator />);
+  await showEmptyChat(screen);
+
+  // The initial empty-history injection is the only native reset we expect.
+  await waitFor(() =>
+    expect(mockChatInstance.setChatHistory).toHaveBeenCalledTimes(1),
+  );
+
+  // The voice assistant persisted a first turn to a brand-new conversation (7).
+  mockGetMessagesByConversationId.mockResolvedValue([
+    { id: 1, conversationId: 7, role: 'user', content: 'hi', documentsPath: [] },
+    {
+      id: 2,
+      conversationId: 7,
+      role: 'assistant',
+      content: 'answer',
+      documentsPath: [],
+      toolInvocations: [],
+    },
+  ]);
+
+  await act(async () => {
+    mockConversationSyncListener(7);
+  });
+
+  // The conversation is adopted (drawer + next launch) and its history reloaded.
+  await waitFor(() =>
+    expect(mockGetMessagesByConversationId).toHaveBeenCalledWith(7),
+  );
+  expect(getAppState().conversationIdInUse).toBe(7);
+  // The shared native chat already holds the turn, so it is never re-injected.
+  expect(mockChatInstance.setChatHistory).toHaveBeenCalledTimes(1);
+  expect(mockDisposeChat).not.toHaveBeenCalled();
+  expect(mockCreateChat).toHaveBeenCalledTimes(1);
+});
+
+test('a voice turn on the in-use conversation refreshes the display only', async () => {
+  mockGetConversationById.mockResolvedValue({
+    id: 5,
+    title: 'Chat 5',
+    lastUsed: 'now',
+    modelId: 0,
+  });
+  await setAppState({ modelIdInUse: 0, conversationIdInUse: 5 });
+
+  render(<ChatStackNavigator />);
+  await waitFor(() =>
+    expect(mockGetMessagesByConversationId).toHaveBeenCalledWith(5),
+  );
+  const resetsBeforeSync = mockChatInstance.setChatHistory.mock.calls.length;
+  mockGetMessagesByConversationId.mockClear();
+
+  // A voice turn appended to the already-loaded conversation.
+  await act(async () => {
+    mockConversationSyncListener(5);
+  });
+
+  // Display is reloaded, in-use is unchanged, and the chat is not reset again.
+  await waitFor(() =>
+    expect(mockGetMessagesByConversationId).toHaveBeenCalledWith(5),
+  );
+  expect(getAppState().conversationIdInUse).toBe(5);
+  expect(mockChatInstance.setChatHistory).toHaveBeenCalledTimes(resetsBeforeSync);
 });
 
 test('switching conversations keeps the chat screen mounted (no loading flash)', async () => {

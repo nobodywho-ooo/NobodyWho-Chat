@@ -17,9 +17,9 @@ jest.mock("../../../app/components/IconButton/IconButton", () => ({ IconButton: 
 jest.mock("../../../app/screens/DrawerContentScreen/components/ConversationsList/ConversationsList", () => ({ ConversationsList: 'ConversationsList' }));
 jest.mock("../../../app/screens/ChatScreen/components/InputBar/InputBar", () => {
   const mockReact = require('react');
-  // Stub that still renders its topAccessory (the message starters live there).
-  const InputBar = ({ topAccessory, ...props }) =>
-    mockReact.createElement('InputBar', props, topAccessory);
+  // Stub that still renders its messageStarters (they live above the field).
+  const InputBar = ({ messageStarters, ...props }) =>
+    mockReact.createElement('InputBar', props, messageStarters);
   InputBar.height = 42;
   return { InputBar };
 });

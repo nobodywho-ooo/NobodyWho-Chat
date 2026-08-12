@@ -1,9 +1,9 @@
 import React from 'react';
 import { Modal, Pressable, StyleSheet } from 'react-native';
 import {
-  Gesture,
   GestureDetector,
   GestureHandlerRootView,
+  usePanGesture,
 } from 'react-native-gesture-handler';
 import Animated, {
   interpolate,
@@ -40,11 +40,11 @@ export const FullScreenImageModal: React.FC<FullScreenImageModalProps> = ({
     }
   }, [uri, translateY]);
 
-  const panGesture = Gesture.Pan()
-    .onUpdate(event => {
+  const panGesture = usePanGesture({
+    onUpdate: event => {
       translateY.value = Math.max(0, event.translationY);
-    })
-    .onEnd(event => {
+    },
+    onDeactivate: event => {
       const shouldDismiss =
         event.translationY > DISMISS_DISTANCE ||
         event.velocityY > DISMISS_VELOCITY;
@@ -53,7 +53,8 @@ export const FullScreenImageModal: React.FC<FullScreenImageModalProps> = ({
       } else {
         translateY.value = withTiming(0, { duration: 150 });
       }
-    });
+    },
+  });
 
   const imageStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],

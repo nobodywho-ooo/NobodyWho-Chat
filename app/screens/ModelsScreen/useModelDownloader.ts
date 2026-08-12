@@ -14,6 +14,7 @@ import {
   ModelDownload,
   ModelPart,
   isChatPipeline,
+  isSttPipeline,
   isTtsPipeline,
 } from 'types';
 import {
@@ -118,6 +119,11 @@ export const useModelDownloader = () => {
           ttsModelIdInUse: model.id,
           assistantConfig: { ...config, ...resolveTtsPrefs(model, config) },
         });
+      } else if (
+        isSttPipeline(model.pipeline) &&
+        getAppState().sttModelIdInUse === undefined
+      ) {
+        await setAppState({ sttModelIdInUse: model.id });
       }
 
       await deleteModelDownload(model.id);
@@ -192,7 +198,7 @@ export const useModelDownloader = () => {
           }
         }
       } catch (error) {
-        log('ModelsScreen resumeDownloads', error, { capture: true });
+        log('ModelsScreen resumeDownloads', error);
       }
     };
 

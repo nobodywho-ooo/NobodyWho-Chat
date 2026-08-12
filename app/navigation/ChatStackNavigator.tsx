@@ -11,7 +11,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AppState, AppStateStatus, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SamplerPresets } from 'react-native-nobodywho';
-import { DisplayMessage, isChatPipeline, isTtsPipeline } from 'types';
+import {
+  DisplayMessage,
+  isChatPipeline,
+  isSttPipeline,
+  isTtsPipeline,
+} from 'types';
 import {
   DEFAULT_ASSISTANT_CONFIG,
   getAppState,
@@ -32,7 +37,7 @@ import {
 } from 'helpers';
 import { PlatformIcon } from 'components';
 import { useAppState, useModels, useStyled } from 'hooks';
-import { useAiService } from 'services';
+import { subscribeConversationSync, useAiService } from 'services';
 import {
   ChatScreen,
   CustomizeAssistantScreen,
@@ -120,8 +125,15 @@ export const ChatStackNavigator = () => {
   const { colors } = useStyled();
   const { models, loading: modelsLoading } = useModels();
   const { modelIdInUse } = useAppState();
-  const { chat, createChat, disposeChat, createTts, disposeTts } =
-    useAiService();
+  const {
+    chat,
+    createChat,
+    disposeChat,
+    createTts,
+    disposeTts,
+    createStt,
+    disposeStt,
+  } = useAiService();
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
   const [chatHistory, setChatHistory] = useState<DisplayMessage[]>([]);
@@ -261,6 +273,40 @@ export const ChatStackNavigator = () => {
     setAppState({ conversationIdInUse: id });
   }, []);
 
+  // Reload only the displayed history for a conversation, without touching the
+  // native chat. Used for a voice turn: VoiceAssistantScreen drives our shared
+  // chat, so its context is already current — only the on-screen messages need
+  // to catch up.
+  const reloadDisplayHistory = useCallback(async (id: number) => {
+    try {
+      const messages = await getMessagesByConversationId(id);
+      setChatHistory(toChatHistory(messages));
+      setLoadedConversationId(id);
+    } catch (error) {
+      log('ChatStackNavigator voice history reload', error, { capture: true });
+    }
+  }, []);
+
+  // A voice turn persisted messages to `id`. If it started a brand-new
+  // conversation, adopt it as in-use (for the drawer and next launch), marking
+  // it self-created so the app-state subscription below skips its native reset —
+  // the shared chat already holds the turn. Either way, refresh the display.
+  const handleConversationSynced = useCallback(
+    (id: number) => {
+      if (getAppState().conversationIdInUse !== id) {
+        selfCreatedConversationIdRef.current = id;
+        setAppState({ conversationIdInUse: id });
+      }
+      reloadDisplayHistory(id);
+    },
+    [reloadDisplayHistory],
+  );
+
+  useEffect(
+    () => subscribeConversationSync(handleConversationSynced),
+    [handleConversationSynced],
+  );
+
   const loadTtsIfSelected = useCallback(async () => {
     const { ttsModelIdInUse, assistantConfig = DEFAULT_ASSISTANT_CONFIG } =
       getAppState();
@@ -287,6 +333,24 @@ export const ChatStackNavigator = () => {
     );
   }, [createTts]);
 
+  const loadSttIfSelected = useCallback(async () => {
+    const { sttModelIdInUse } = getAppState();
+
+    if (sttModelIdInUse === undefined) {
+      return;
+    }
+
+    const model = await getModelById(sttModelIdInUse);
+
+    if (model === undefined || !isSttPipeline(model.pipeline)) {
+      return;
+    }
+
+    await createStt({ model }).catch(error =>
+      log('ChatStackNavigator stt load', error, { capture: true }),
+    );
+  }, [createStt]);
+
   // --- Lifecycle triggers ----------------------------------------------------
 
   // Initial load. With no model in use there is no session to start —
@@ -296,7 +360,8 @@ export const ChatStackNavigator = () => {
       startSession();
     }
     loadTtsIfSelected();
-  }, [startSession, loadTtsIfSelected]);
+    loadSttIfSelected();
+  }, [startSession, loadTtsIfSelected, loadSttIfSelected]);
 
   // React to app-state changes: a model or assistant-config change tears down
   // the chat and rebuilds from scratch; a conversation-only change reloads just the history.
@@ -316,6 +381,13 @@ export const ChatStackNavigator = () => {
       } else if (next.ttsModelIdInUse !== undefined && ttsConfigChanged) {
         disposeTts();
         loadTtsIfSelected();
+      }
+
+      if (next.sttModelIdInUse !== prev.sttModelIdInUse) {
+        disposeStt();
+        if (next.sttModelIdInUse !== undefined) {
+          loadSttIfSelected();
+        }
       }
 
       // Only model changes or chat-affecting config rebuild the chat — a
@@ -349,13 +421,17 @@ export const ChatStackNavigator = () => {
   }, [
     disposeChat,
     disposeTts,
+    disposeStt,
     startSession,
     refreshChatHistory,
     loadTtsIfSelected,
+    loadSttIfSelected,
   ]);
 
   const unloadedForBackground = useRef(false);
   const ttsUnloadedForBackground = useRef(false);
+  const sttUnloadedForBackground = useRef(false);
+
   useEffect(() => {
     const subscription = AppState.addEventListener(
       'change',
@@ -372,6 +448,10 @@ export const ChatStackNavigator = () => {
             disposeTts();
             ttsUnloadedForBackground.current = true;
           }
+          if (getAppState().sttModelIdInUse !== undefined) {
+            disposeStt();
+            sttUnloadedForBackground.current = true;
+          }
         } else if (nextState === 'active') {
           if (unloadedForBackground.current) {
             unloadedForBackground.current = false;
@@ -383,11 +463,22 @@ export const ChatStackNavigator = () => {
             ttsUnloadedForBackground.current = false;
             loadTtsIfSelected();
           }
+          if (sttUnloadedForBackground.current) {
+            sttUnloadedForBackground.current = false;
+            loadSttIfSelected();
+          }
         }
       },
     );
     return () => subscription.remove();
-  }, [disposeChat, disposeTts, startSession, loadTtsIfSelected]);
+  }, [
+    disposeChat,
+    disposeTts,
+    disposeStt,
+    startSession,
+    loadTtsIfSelected,
+    loadSttIfSelected,
+  ]);
 
   const inUseModelName = models.find(m => m.id === modelIdInUse)?.name;
   const loadingMessage = inUseModelName

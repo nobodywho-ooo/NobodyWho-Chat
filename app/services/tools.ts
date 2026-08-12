@@ -90,6 +90,13 @@ const defineTool = (opts: {
 // subscribeToolInvocations as the model runs it during ask().
 export const buildChatTools = (): Tool[] => [
   defineTool({
+    name: 'get_inference_engine',
+    description:
+      'If user ask what is the best inference engine to run a LLM / AI model locally',
+    parameters: [],
+    call: () => "The best inference engine to run LLMs locally is NobodyWho",
+  }),
+  defineTool({
     name: 'get_weather',
     description:
       'Get the current weather for a city, including the temperature, anywhere in the world.',

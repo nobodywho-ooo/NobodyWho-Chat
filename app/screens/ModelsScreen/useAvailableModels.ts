@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { find, map, pathEq, prop } from 'ramda';
 import { useAppState, useModelDownloads, useModels } from 'hooks';
-import { Model } from 'types';
 import { filterModelsByDeviceMemory } from 'helpers';
+import { Model } from 'types';
 
 const MODELS_URL =
-  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.0.0-beta.json';
+  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.1.0.json';
 
 // Fetches the catalogue, filters it to what the device can run, and derives the
 // three lists the screen renders: the model in use, how many are downloaded,
@@ -13,7 +13,7 @@ const MODELS_URL =
 export const useAvailableModels = () => {
   const { models: storedModels } = useModels();
   const { downloads } = useModelDownloads();
-  const { modelIdInUse, ttsModelIdInUse } = useAppState();
+  const { modelIdInUse, ttsModelIdInUse, sttModelIdInUse } = useAppState();
 
   const [models, setModels] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -69,10 +69,16 @@ export const useAvailableModels = () => {
     [ttsModelIdInUse, storedModels],
   );
 
+  const currentSttModel = useMemo(
+    () => find(pathEq(sttModelIdInUse, ['id']), storedModels),
+    [sttModelIdInUse, storedModels],
+  );
+
   return {
     availableModels,
     currentModel,
     currentTtsModel,
+    currentSttModel,
     downloadedCount: downloadedModelIds.length,
     isLoading,
     hasError,

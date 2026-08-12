@@ -2,7 +2,11 @@ import React from 'react';
 import { renderHook, act } from '@testing-library/react-native';
 
 import { buildModel } from 'jest/factories/model';
-import { mockFromPath, mockTtsLoad } from 'jest/mock/node-modules';
+import {
+  mockFromPath,
+  mockTtsLoad,
+  mockSttConstruct,
+} from 'jest/mock/node-modules';
 import { ModelPipeline } from 'types';
 
 import {
@@ -46,6 +50,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 beforeEach(() => {
   mockFromPath.mockReset();
   mockTtsLoad.mockReset();
+  mockSttConstruct.mockReset();
 });
 
 const ttsModel = buildModel(9, {
@@ -57,6 +62,20 @@ const ttsModel = buildModel(9, {
       fileName: 'onnx/vocoder.onnx',
       type: 'tts-file',
       path: '/models/9/onnx/vocoder.onnx',
+      sizeGB: 0.1,
+    },
+  ],
+});
+
+const sttModel = buildModel(11, {
+  pipeline: ModelPipeline.speechToText,
+  family: 'Whisper',
+  parts: [
+    {
+      url: 'https://example.com/onnx/encoder_model_int8.onnx',
+      fileName: 'onnx/encoder_model_int8.onnx',
+      type: 'stt-file',
+      path: '/models/11/onnx/encoder_model_int8.onnx',
       sizeGB: 0.1,
     },
   ],
@@ -511,6 +530,77 @@ test('disposeTts destroys the engine via the teardown chain', async () => {
     await flushMicrotasks();
   });
   expect(tts.destroy).toHaveBeenCalledTimes(1);
+});
+
+test('createStt loads the engine from the model directory', async () => {
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  await act(async () => {
+    await result.current.createStt({ model: sttModel });
+  });
+
+  // Whisper is loaded from the model's own directory (folder-based source, like
+  // TTS); language is left undefined so the engine auto-detects it, and the
+  // quantization hint ("int8") is derived from the downloaded ONNX filename so
+  // the loader opens the variant that actually shipped.
+  expect(mockSttConstruct).toHaveBeenCalledWith({
+    source: '/mock-documents/models/11',
+    language: undefined,
+    quantization: 'int8',
+  });
+  expect(result.current.sttState).toBe(AiModelState.Ready);
+  expect(result.current.stt.current).toBeDefined();
+  // The chat slot is untouched.
+  expect(result.current.chatState).toBe(AiModelState.NotLoaded);
+});
+
+test('createStt refuses a non-STT model', async () => {
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  await act(async () => {
+    await expect(result.current.createStt({ model })).rejects.toThrow(
+      /is not an STT model/,
+    );
+  });
+
+  expect(mockSttConstruct).not.toHaveBeenCalled();
+});
+
+test('createStt fails loudly when an STT file is missing on disk', async () => {
+  const { File } = jest.requireMock('expo-file-system');
+  File.mockExists = false;
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  try {
+    await act(async () => {
+      await expect(
+        result.current.createStt({ model: sttModel }),
+      ).rejects.toThrow(/STT file .* missing/);
+    });
+
+    expect(mockSttConstruct).not.toHaveBeenCalled();
+    expect(result.current.sttState).toBe(AiModelState.Error);
+  } finally {
+    File.mockExists = true;
+  }
+});
+
+test('disposeStt destroys the engine via the teardown chain', async () => {
+  const { result } = renderHook(() => useAiService(), { wrapper });
+  await act(async () => {
+    await result.current.createStt({ model: sttModel });
+  });
+  const instance = result.current.stt.current;
+
+  act(() => result.current.disposeStt());
+  expect(result.current.stt.current).toBeUndefined();
+  expect(result.current.sttState).toBe(AiModelState.NotLoaded);
+
+  // The native destroy is deferred onto the load chain.
+  await act(async () => {
+    await flushMicrotasks();
+  });
+  expect(instance?.destroy).toHaveBeenCalledTimes(1);
 });
 
 test('dispose tears down both engines', async () => {

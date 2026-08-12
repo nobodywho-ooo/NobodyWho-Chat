@@ -29,11 +29,11 @@ import {
   useDrawerCoordination,
 } from './DrawerCoordination';
 
-const Drawer = createDrawerNavigator();
 const ICON_SIZE = 22;
-
 const MENU_ACTION_NEW_CHAT = 'new-chat';
 const MENU_ACTION_DELETE_CHAT = 'delete-chat';
+
+const Drawer = createDrawerNavigator();
 
 const ChatHeaderRight = () => {
   const { t } = useTranslation();
@@ -169,7 +169,9 @@ const renderDrawerContent = ({ navigation }: DrawerContentComponentProps) => (
   <>
     <DrawerStatusReporter side="left" />
     <DrawerContentScreen
+      navigation={navigation}
       onCloseDrawer={() => {
+        haptics.medium();
         navigation.closeDrawer();
       }}
     />
@@ -182,7 +184,7 @@ export const DrawerNavigator = () => {
   const { conversationIdInUse } = useAppState();
   const { conversations } = useConversations();
   const { models } = useModels();
-  const { openSide } = useDrawerCoordination();
+  const { openSide, scrollGesture } = useDrawerCoordination();
 
   const insets = useSafeAreaInsets();
 
@@ -215,7 +217,10 @@ export const DrawerNavigator = () => {
         overlayStyle: { backgroundColor: colors.shadow },
         swipeEnabled: true,
         swipeEdgeWidth: Dimensions.get('window').width,
-        configureGestureHandler: buildLeftDrawerGesture(openSide === 'left'),
+        configureGestureHandler: buildLeftDrawerGesture(
+          openSide === 'left',
+          scrollGesture,
+        ),
       }}
     >
       <Drawer.Screen

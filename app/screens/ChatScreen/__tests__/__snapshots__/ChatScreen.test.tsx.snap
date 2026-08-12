@@ -252,15 +252,20 @@ exports[`renders ChatScreen with existing messages 1`] = `
   <InputBar
     attachExpanded={false}
     hasAudio={false}
+    isRecording={false}
     isStreaming={false}
+    isTranscribing={false}
     onAttachAudio={[Function]}
     onAttachCamera={[Function]}
     onAttachExpandedChange={[Function]}
     onAttachImage={[Function]}
     onChangeText={[Function]}
     onSend={[Function]}
+    onStartDictation={[Function]}
     onStop={[Function]}
+    onStopDictation={[Function]}
     showAudioAttach={false}
+    showDictation={false}
     showImageAttach={false}
     style={
       {
@@ -329,15 +334,20 @@ exports[`renders correctly empty ChatScreen 1`] = `
   <InputBar
     attachExpanded={false}
     hasAudio={false}
+    isRecording={false}
     isStreaming={false}
+    isTranscribing={false}
     onAttachAudio={[Function]}
     onAttachCamera={[Function]}
     onAttachExpandedChange={[Function]}
     onAttachImage={[Function]}
     onChangeText={[Function]}
     onSend={[Function]}
+    onStartDictation={[Function]}
     onStop={[Function]}
+    onStopDictation={[Function]}
     showAudioAttach={false}
+    showDictation={false}
     showImageAttach={false}
     style={
       {
@@ -355,6 +365,7 @@ exports[`renders correctly empty ChatScreen 1`] = `
       }
       horizontal={true}
       keyboardShouldPersistTaps="handled"
+      onGestureUpdate_CAN_CAUSE_INFINITE_RERENDER={[Function]}
       showsHorizontalScrollIndicator={false}
       style={
         {

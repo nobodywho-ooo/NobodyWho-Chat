@@ -19,7 +19,13 @@ import {
 } from 'helpers';
 import { ModelCard, PlatformIcon, Text } from 'components';
 import { useAiService } from 'services';
-import { Model, isTtsPipeline, isChatPipeline } from 'types';
+import {
+  Model,
+  ModelPipeline,
+  isTtsPipeline,
+  isSttPipeline,
+  isChatPipeline,
+} from 'types';
 
 import styles from './DownloadedModelsScreen.styles';
 
@@ -27,8 +33,8 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { models } = useModels();
-  const { modelIdInUse, ttsModelIdInUse } = useAppState();
-  const { chat, disposeTts, disposeChat } = useAiService();
+  const { modelIdInUse, ttsModelIdInUse, sttModelIdInUse } = useAppState();
+  const { chat, disposeTts, disposeStt, disposeChat } = useAiService();
   const navigation = useNavigation();
   const route = useRoute();
   const [deleteMode, setDeleteMode] = useState(false);
@@ -53,6 +59,11 @@ export const DownloadedModelsScreen: React.FC = () => {
           await setAppState({ ttsModelIdInUse: undefined });
         }
 
+        if (sttModelIdInUse === model.id) {
+          disposeStt();
+          await setAppState({ sttModelIdInUse: undefined });
+        }
+
         if (isChatPipeline(model.pipeline)) {
           disposeChat();
         }
@@ -75,7 +86,14 @@ export const DownloadedModelsScreen: React.FC = () => {
         log('DownloadedModelsScreen handleDeleteModel', error);
       }
     },
-    [modelIdInUse, ttsModelIdInUse, disposeTts, disposeChat],
+    [
+      modelIdInUse,
+      ttsModelIdInUse,
+      sttModelIdInUse,
+      disposeTts,
+      disposeStt,
+      disposeChat,
+    ],
   );
 
   const confirmDeleteModel = useCallback(
@@ -120,6 +138,14 @@ export const DownloadedModelsScreen: React.FC = () => {
         return;
       }
 
+      if (isSttPipeline(model.pipeline)) {
+        if (sttModelIdInUse !== model.id) {
+          setAppState({ sttModelIdInUse: model.id });
+          navigation.goBack();
+        }
+        return;
+      }
+
       if (modelIdInUse !== model.id) {
         // Stop any in-flight generation before the model switch tears down
         // the current chat, so a live stream ends cleanly rather than being
@@ -137,6 +163,7 @@ export const DownloadedModelsScreen: React.FC = () => {
       confirmDeleteModel,
       modelIdInUse,
       ttsModelIdInUse,
+      sttModelIdInUse,
       chat,
       navigation,
     ],
@@ -194,27 +221,32 @@ export const DownloadedModelsScreen: React.FC = () => {
     );
   }
 
+  const inUseIdFor = (pipeline: ModelPipeline) => {
+    if (isTtsPipeline(pipeline)) {
+      return ttsModelIdInUse;
+    }
+    if (isSttPipeline(pipeline)) {
+      return sttModelIdInUse;
+    }
+
+    return modelIdInUse;
+  };
+
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
-      {models.map(model => {
-        const isSelected = isTtsPipeline(model.pipeline)
-          ? ttsModelIdInUse === model.id
-          : modelIdInUse === model.id;
-
-        return (
-          <ModelCard
-            key={model.id}
-            isDownloaded
-            deleteMode={deleteMode}
-            isSelected={isSelected}
-            model={model}
-            onPress={handleModelPress}
-          />
-        );
-      })}
+      {models.map(model => (
+        <ModelCard
+          key={model.id}
+          isDownloaded
+          deleteMode={deleteMode}
+          isSelected={inUseIdFor(model.pipeline) === model.id}
+          model={model}
+          onPress={handleModelPress}
+        />
+      ))}
     </ScrollView>
   );
 };

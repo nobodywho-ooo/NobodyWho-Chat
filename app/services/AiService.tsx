@@ -9,15 +9,23 @@ import React, {
 import {
   Chat,
   SamplerConfig,
+  STT,
   Tts,
   TtsArchitecture,
 } from 'react-native-nobodywho';
 import * as Sentry from '@sentry/react-native';
-import { downloadedPartPath, log, modelDirectoryPath, sleep } from 'helpers';
+import {
+  downloadedPartPath,
+  log,
+  modelDirectoryPath,
+  resolveSttQuantization,
+  sleep,
+} from 'helpers';
 import {
   ChatPipeline,
   Model,
   ModelPipeline,
+  isSttPipeline,
   isTtsPipeline,
   toChatPipeline,
 } from 'types';
@@ -35,11 +43,13 @@ interface AiServiceState {
   chatPipeline: ChatPipeline;
   ttsState: AiModelState;
   ttsArchitecture?: TtsArchitecture;
+  sttState: AiModelState;
 }
 
 interface AiServiceContextValue extends AiServiceState {
   chat: React.RefObject<Chat | undefined>;
   tts: React.RefObject<Tts | undefined>;
+  stt: React.RefObject<STT | undefined>;
 
   createChat: (opts: {
     model: Model;
@@ -57,6 +67,8 @@ interface AiServiceContextValue extends AiServiceState {
     language?: string;
   }) => Promise<void>;
   disposeTts: () => void;
+  createStt: (opts: { model: Model; language?: string }) => Promise<void>;
+  disposeStt: () => void;
   dispose: () => void;
 }
 
@@ -69,6 +81,7 @@ const _initialState: AiServiceState = {
   chatPipeline: ModelPipeline.textGeneration,
   ttsState: AiModelState.NotLoaded,
   ttsArchitecture: undefined,
+  sttState: AiModelState.NotLoaded,
 };
 
 // chat.destroy() is fire-and-forget: it signals the native worker thread but
@@ -90,11 +103,13 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const chatRef = useRef<Chat | undefined>(undefined);
   const ttsRef = useRef<Tts | undefined>(undefined);
+  const sttRef = useRef<STT | undefined>(undefined);
 
   // Bumped on every dispose. A createChat that resolves after its generation
   // passed must discard its instance instead of resurrecting a disposed chat.
   const chatGeneration = useRef(0);
   const ttsGeneration = useRef(0);
+  const sttGeneration = useRef(0);
 
   const nativeLoadRef = useRef<Promise<unknown> | undefined>(undefined);
 
@@ -397,15 +412,113 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     }));
   }, [enqueueTeardown]);
 
+  const createStt = useCallback(
+    async (opts: { model: Model; language?: string }) => {
+      if (sttRef.current) {
+        return;
+      }
+
+      const { model, language } = opts;
+
+      if (!isSttPipeline(model.pipeline)) {
+        throw new Error(
+          `AiService: model ${model.id} (${model.name}) is not an STT model`,
+        );
+      }
+
+      const generation = sttGeneration.current;
+      const previousLoad = nativeLoadRef.current;
+
+      const load = async () => {
+        if (previousLoad) {
+          await previousLoad;
+        }
+
+        if (generation !== sttGeneration.current || sttRef.current) {
+          return;
+        }
+
+        setState(s => ({ ...s, sttState: AiModelState.Loading }));
+
+        const missingPart = model.parts.find(
+          part => downloadedPartPath(model.id, part.fileName) === null,
+        );
+
+        if (missingPart) {
+          throw new Error(
+            `AiService: STT file ${missingPart.fileName} missing for model ${model.id} (${model.name}) — re-download required`,
+          );
+        }
+
+        // Whisper is loaded from the model's own directory (…/models/<id>),
+        // the same folder-based source TTS uses. `language` is optional: when
+        // omitted the engine auto-detects the spoken language (passing an ISO
+        // 639-1 code skips detection and is faster). `quantization` must match
+        // the ONNX variant that was downloaded (e.g. "int8"), otherwise the
+        // loader looks for the engine's default unsuffixed weights, which the
+        // model doesn't ship, and fails to load.
+        const stt = new STT({
+          source: modelDirectoryPath(model.id),
+          language,
+          quantization: resolveSttQuantization(model),
+        });
+
+        if (generation !== sttGeneration.current) {
+          try {
+            stt.destroy();
+          } catch (error) {
+            log('AiService superseded stt destroy failed', error, {
+              capture: true,
+            });
+          }
+          await sleep(TEARDOWN_SETTLE_MS);
+          return;
+        }
+
+        sttRef.current = stt;
+        setState(s => ({ ...s, sttState: AiModelState.Ready }));
+      };
+
+      const loadPromise = load();
+      nativeLoadRef.current = loadPromise.catch(() => undefined);
+
+      try {
+        await loadPromise;
+      } catch (error) {
+        log('AiService create stt', error, { capture: true });
+        if (generation === sttGeneration.current) {
+          setState(s => ({ ...s, sttState: AiModelState.Error }));
+        }
+        throw error;
+      }
+    },
+    [],
+  );
+
+  const disposeStt = useCallback(() => {
+    sttGeneration.current += 1;
+    const instance = sttRef.current;
+    sttRef.current = undefined;
+
+    if (instance) {
+      enqueueTeardown(() => instance.destroy());
+    }
+
+    setState(s => ({ ...s, sttState: AiModelState.NotLoaded }));
+  }, [enqueueTeardown]);
+
   const dispose = useCallback(() => {
     chatGeneration.current += 1;
     ttsGeneration.current += 1;
+    sttGeneration.current += 1;
     // Clear the refs BEFORE destroying so a throwing destroy() can't leave a
-    // stale instance that blocks the next createChat()/createTts().
+    // stale instance that blocks the next createChat()/createTts()/createStt().
     const chatInstance = chatRef.current;
     chatRef.current = undefined;
     const ttsInstance = ttsRef.current;
     ttsRef.current = undefined;
+    const sttInstance = sttRef.current;
+    sttRef.current = undefined;
 
     // The Chat can overlap a future chat load, so route its teardown through
     // the load chain (stop generation first, since only Chat streams).
@@ -429,6 +542,11 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       enqueueTeardown(() => ttsInstance.destroy());
     }
 
+    // Third enqueue serializes behind the tts teardown on the same chain.
+    if (sttInstance) {
+      enqueueTeardown(() => sttInstance.destroy());
+    }
+
     setState(_initialState);
   }, [enqueueTeardown]);
 
@@ -437,13 +555,25 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       ...state,
       chat: chatRef,
       tts: ttsRef,
+      stt: sttRef,
       createChat,
       disposeChat,
       createTts,
       disposeTts,
+      createStt,
+      disposeStt,
       dispose,
     }),
-    [state, createChat, disposeChat, createTts, disposeTts, dispose],
+    [
+      state,
+      createChat,
+      disposeChat,
+      createTts,
+      disposeTts,
+      createStt,
+      disposeStt,
+      dispose,
+    ],
   );
 
   return (
