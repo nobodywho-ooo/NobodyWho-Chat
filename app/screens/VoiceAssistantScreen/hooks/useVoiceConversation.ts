@@ -37,23 +37,16 @@ export type VoiceStatus =
   | 'speaking' // the answer playing back through TTS
   | 'error'; // last turn failed; tapping tries again
 
-export interface VoiceReadiness {
-  chat: boolean;
-  stt: boolean;
-  tts: boolean;
+export interface VoiceAssistantStatus {
+  isChatReady: boolean;
+  isSttReady: boolean;
+  isTtsReady: boolean;
 }
 
 export interface VoiceConversation {
   status: VoiceStatus;
-  /** The last recognised question, shown under the orb. */
-  transcript: string;
-  /** The last spoken answer (thinking stripped), shown under the orb. */
-  answer: string;
-  /** Which of the three required models are loaded. */
-  readiness: VoiceReadiness;
-  /** True while a turn is mid-flight (can't start a new capture). */
+  voiceAssistantStatus: VoiceAssistantStatus;
   isBusy: boolean;
-  /** The single button: start listening, stop-and-answer, or cancel. */
   toggle: () => void;
 }
 
@@ -83,19 +76,17 @@ export const useVoiceConversation = ({
   const { chat, stt, tts, chatState, sttState, ttsState, ttsArchitecture } =
     useAiService();
 
-  const readiness = useMemo<VoiceReadiness>(
+  const voiceAssistantStatus = useMemo<VoiceAssistantStatus>(
     () => ({
-      chat: chatState === AiModelState.Ready,
-      stt: sttState === AiModelState.Ready,
-      tts: ttsState === AiModelState.Ready,
+      isChatReady: chatState === AiModelState.Ready,
+      isSttReady: sttState === AiModelState.Ready,
+      isTtsReady: ttsState === AiModelState.Ready,
     }),
     [chatState, sttState, ttsState],
   );
-  const isReady = readiness.chat && readiness.stt && readiness.tts;
+  const isReady = voiceAssistantStatus.isChatReady && voiceAssistantStatus.isSttReady && voiceAssistantStatus.isTtsReady;
 
   const [status, setStatus] = useState<VoiceStatus>('idle');
-  const [transcript, setTranscript] = useState('');
-  const [answer, setAnswer] = useState('');
 
   // Guards the async start/stop transitions against a double tap. The rest of
   // the turn is serialised by `status` (the button dispatches on it) and by the
@@ -145,7 +136,7 @@ export const useVoiceConversation = ({
     }
   }, []);
 
-  // --- Assemble captured PCM into one contiguous buffer ----------------------
+  // Assemble captured PCM into one contiguous buffer
   const drainCapture = useCallback((): {
     samples: Int16Array;
     sampleRate: number;
@@ -155,10 +146,12 @@ export const useVoiceConversation = ({
     const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
     const samples = new Int16Array(total);
     let offset = 0;
+
     for (const chunk of chunks) {
       samples.set(chunk, offset);
       offset += chunk.length;
     }
+
     return { samples, sampleRate: sampleRateRef.current };
   }, []);
 
@@ -249,8 +242,6 @@ export const useVoiceConversation = ({
       setStatus('idle');
       return;
     }
-    setTranscript(question);
-    setAnswer('');
 
     // 2. Answer it with the shared chat model, streaming to accumulate. Capture
     // any tool calls the model makes along the way, so the persisted turn
@@ -281,7 +272,6 @@ export const useVoiceConversation = ({
 
     // Never speak the model's private reasoning.
     const spoken = stripThinkingBlocks(raw).trim();
-    setAnswer(spoken);
     if (!spoken) {
       setStatus('idle');
       return;
@@ -334,9 +324,6 @@ export const useVoiceConversation = ({
 
       chunksRef.current = [];
       sampleRateRef.current = TARGET_SAMPLE_RATE;
-
-      setTranscript('');
-      setAnswer('');
 
       // iOS needs a record-capable category before the input node can start;
       // keep it audible in silent mode too.
@@ -459,9 +446,7 @@ export const useVoiceConversation = ({
 
   return {
     status: isReady ? status : 'unavailable',
-    transcript,
-    answer,
-    readiness,
+    voiceAssistantStatus,
     isBusy,
     toggle,
   };

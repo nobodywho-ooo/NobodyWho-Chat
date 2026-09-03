@@ -40,31 +40,7 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  setupContainer: {
-    alignItems: 'center',
-    gap: Spacings.md,
-    paddingHorizontal: Spacings.md,
-  },
-  setupTitle: {
-    textAlign: 'center',
-  },
-  setupDescription: {
-    textAlign: 'center',
-  },
-  setupChecklistContainer: {
-    gap: Spacings.sm,
-    marginTop: Spacings.sm,
-  },
-  setupRowContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacings.sm,
-  },
-  setupHint: {
-    textAlign: 'center',
-    marginTop: Spacings.sm,
-  },
-  emptyContainerStyle: { 
+  emptyContainerStyle: {
     width: 40 
   } 
 });

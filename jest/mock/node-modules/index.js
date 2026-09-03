@@ -340,27 +340,29 @@ jest.mock('react-native-nobodywho', () => {
       this.opts = opts;
     }
   }
-  // Stand-in for the Whisper STT wrapper: records its constructor options (via
-  // mockSttConstruct) and returns an empty transcription, so createStt and
-  // useSttTranscription run without the native ONNX runtime. Instance methods
-  // are jest.fns so tests can assert destroy/transcribe were called.
-  class STT {
-    constructor(opts) {
-      this.opts = opts;
-      this.transcribeFile = jest.fn(() => ({
-        completed: () => Promise.resolve(''),
-      }));
-      this.transcribePcm = jest.fn(() => ({
-        completed: () => Promise.resolve(''),
-      }));
-      this.destroy = jest.fn();
-      mockSttConstruct(opts);
-    }
-  }
+  // Stand-in for the Whisper SpeechToText wrapper: records the SpeechToText.load
+  // options (via mockSttConstruct) and returns an instance that yields an empty
+  // transcription, so createStt and useSttTranscription run without the native
+  // ONNX runtime. Instance methods are jest.fns so tests can assert
+  // destroy/transcribe were called; each load resolves a fresh instance.
+  const makeSttInstance = () => ({
+    transcribeFile: jest.fn(() => ({
+      completed: () => Promise.resolve(''),
+    })),
+    transcribePcm: jest.fn(() => ({
+      completed: () => Promise.resolve(''),
+    })),
+    destroy: jest.fn(),
+  });
   return {
     Chat: { fromPath: (opts) => mockFromPath(opts) },
-    Tts: { load: (opts) => mockTtsLoad(opts) },
-    STT,
+    TextToSpeech: { load: (opts) => mockTtsLoad(opts) },
+    SpeechToText: {
+      load: async (opts) => {
+        mockSttConstruct(opts);
+        return makeSttInstance();
+      },
+    },
     Encoder: { fromPath: jest.fn() },
     CrossEncoder: { fromPath: jest.fn() },
     SamplerPresets: {

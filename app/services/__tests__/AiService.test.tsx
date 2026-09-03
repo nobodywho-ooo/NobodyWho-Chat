@@ -17,7 +17,7 @@ import {
   TEARDOWN_SETTLE_MS,
 } from '../AiService';
 
-// TTS goes through nobodywho's Tts.load (mocked in jest/mock/node-modules);
+// TTS goes through nobodywho's TextToSpeech.load (mocked in jest/mock/node-modules);
 // these tests only care that AiService drives it correctly (source path,
 // architecture, serialization, teardown).
 

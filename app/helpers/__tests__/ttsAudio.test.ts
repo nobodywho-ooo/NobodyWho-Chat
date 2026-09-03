@@ -1,4 +1,4 @@
-import { Tts } from 'react-native-nobodywho';
+import { TextToSpeech } from 'react-native-nobodywho';
 
 import { concatWavs, splitIntoChunks, synthesizeChunked } from '../ttsAudio';
 
@@ -132,7 +132,7 @@ describe('concatWavs', () => {
 describe('synthesizeChunked', () => {
   test('synthesizes short text in a single call', async () => {
     const synthesize = jest.fn(async () => buildWav([42]));
-    const synth = { synthesize } as unknown as Tts;
+    const synth = { synthesize } as unknown as TextToSpeech;
 
     const wav = await synthesizeChunked(synth, 'Hello world.');
 
@@ -150,7 +150,7 @@ describe('synthesizeChunked', () => {
       }
       return buildWav([words[0].length]);
     });
-    const synth = { synthesize } as unknown as Tts;
+    const synth = { synthesize } as unknown as TextToSpeech;
 
     const wav = await synthesizeChunked(synth, 'aa bb cc dd');
 
@@ -162,7 +162,7 @@ describe('synthesizeChunked', () => {
     const synthesize = jest.fn(async () => {
       throw new Error('backend exploded');
     });
-    const synth = { synthesize } as unknown as Tts;
+    const synth = { synthesize } as unknown as TextToSpeech;
 
     await expect(synthesizeChunked(synth, 'hello world')).rejects.toThrow(
       'backend exploded',

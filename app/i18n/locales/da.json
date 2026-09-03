@@ -274,6 +274,12 @@
     "loadingScreen": {
       "loadingModel": "Indlæser {{model}}…",
       "loadingApp": "Appen indlæses"
+    },
+    "errorScreen": {
+      "resetData": "Nulstil appdata",
+      "resetConfirmTitle": "Nulstil appdata?",
+      "resetConfirmMessage": "Dette sletter permanent din chathistorik og listen over downloadede modeller og genstarter derefter appen. Dette kan ikke fortrydes.",
+      "resetConfirm": "Nulstil"
     }
   }
 }

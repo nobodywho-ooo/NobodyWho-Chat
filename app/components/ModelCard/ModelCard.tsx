@@ -62,9 +62,9 @@ const pipelineIcon: Record<ModelPipeline, PipelineIcon> = {
     iosIconName: 'microphone',
     androidIconName: 'mic',
   },
-  [ModelPipeline.automaticSpeechRecognition]: {
-    iosIconName: 'microphone',
-    androidIconName: 'mic',
+  [ModelPipeline.voiceActivityDetection]: {
+    iosIconName: 'waveform.badge.mic',
+    androidIconName: 'record_voice_over',
   },
 };
 

@@ -4,7 +4,7 @@ export { useVoiceOrbPicture } from './useVoiceOrbPicture';
 export type { VoiceOrbOptions } from './useVoiceOrbPicture';
 export { useVoiceConversation } from './useVoiceConversation';
 export type {
+  VoiceAssistantStatus,
   VoiceConversation,
-  VoiceReadiness,
   VoiceStatus,
 } from './useVoiceConversation';

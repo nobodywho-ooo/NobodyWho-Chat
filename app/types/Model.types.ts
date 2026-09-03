@@ -47,8 +47,8 @@ export enum ModelPipeline {
   featureExtraction = "featureExtraction",
   textRanking = "textRanking",
   textToSpeech = "textToSpeech",
-  speechToText = "speech-to-text", // mirrored in backend, typo error, needs db migration
-  automaticSpeechRecognition = "automatic-speech-recognition"
+  speechToText = "speechToText",
+  voiceActivityDetection = "voiceActivityDetection"
 }
 
 export const pipelineLabel: Record<ModelPipeline, string> = {
@@ -61,7 +61,7 @@ export const pipelineLabel: Record<ModelPipeline, string> = {
   [ModelPipeline.textRanking]: 'Text ranking',
   [ModelPipeline.textToSpeech]: 'Text to Speech',
   [ModelPipeline.speechToText]: 'Speech to Text',
-  [ModelPipeline.automaticSpeechRecognition]: 'Automatic Speech Recognition',
+  [ModelPipeline.voiceActivityDetection]: 'Voice Activity Detection',
 };
 
 export type ChatPipeline =
@@ -82,8 +82,7 @@ export const isTtsPipeline = (pipeline: ModelPipeline): boolean =>
   pipeline === ModelPipeline.textToSpeech;
 
 export const isSttPipeline = (pipeline: ModelPipeline): boolean =>
-  pipeline === ModelPipeline.speechToText ||
-  pipeline === ModelPipeline.automaticSpeechRecognition;
+  pipeline === ModelPipeline.speechToText;
 
 // Only chat-capable pipelines may reach the chat backend; a non-chat model
 // (e.g. text-to-speech or speech-to-text) slipping through would be silently

@@ -274,6 +274,12 @@
     "loadingScreen": {
       "loadingModel": "Loading {{model}}…",
       "loadingApp": "App is loading..."
+    },
+    "errorScreen": {
+      "resetData": "Reset app data",
+      "resetConfirmTitle": "Reset app data?",
+      "resetConfirmMessage": "This permanently erases your chat history and the list of downloaded models, then restarts the app. This can't be undone.",
+      "resetConfirm": "Reset"
     }
   }
 }

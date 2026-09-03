@@ -9,9 +9,9 @@ import React, {
 import {
   Chat,
   SamplerConfig,
-  STT,
-  Tts,
-  TtsArchitecture,
+  SpeechToText,
+  TextToSpeech,
+  TextToSpeechArchitecture,
 } from 'react-native-nobodywho';
 import * as Sentry from '@sentry/react-native';
 import {
@@ -42,14 +42,14 @@ interface AiServiceState {
   chatState: AiModelState;
   chatPipeline: ChatPipeline;
   ttsState: AiModelState;
-  ttsArchitecture?: TtsArchitecture;
+  ttsArchitecture?: TextToSpeechArchitecture;
   sttState: AiModelState;
 }
 
 interface AiServiceContextValue extends AiServiceState {
   chat: React.RefObject<Chat | undefined>;
-  tts: React.RefObject<Tts | undefined>;
-  stt: React.RefObject<STT | undefined>;
+  tts: React.RefObject<TextToSpeech | undefined>;
+  stt: React.RefObject<SpeechToText | undefined>;
 
   createChat: (opts: {
     model: Model;
@@ -102,8 +102,8 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   const [state, setState] = useState<AiServiceState>(_initialState);
 
   const chatRef = useRef<Chat | undefined>(undefined);
-  const ttsRef = useRef<Tts | undefined>(undefined);
-  const sttRef = useRef<STT | undefined>(undefined);
+  const ttsRef = useRef<TextToSpeech | undefined>(undefined);
+  const sttRef = useRef<SpeechToText | undefined>(undefined);
 
   // Bumped on every dispose. A createChat that resolves after its generation
   // passed must discard its instance instead of resurrecting a disposed chat.
@@ -350,8 +350,9 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         // infer the architecture from the path — derive it from family
         // ("Supertonic" -> supertonic) and reuse it as the loaded architecture
         // we publish below.
-        const architecture = model.family.toLowerCase() as TtsArchitecture;
-        const tts = await Tts.load({
+        const architecture =
+          model.family.toLowerCase() as TextToSpeechArchitecture;
+        const tts = await TextToSpeech.load({
           source: modelDirectoryPath(model.id),
           architecture,
           // Load-time options (Supertonic): omitted keys keep the engine's
@@ -457,7 +458,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         // the ONNX variant that was downloaded (e.g. "int8"), otherwise the
         // loader looks for the engine's default unsuffixed weights, which the
         // model doesn't ship, and fails to load.
-        const stt = new STT({
+        const stt = await SpeechToText.load({
           source: modelDirectoryPath(model.id),
           language,
           quantization: resolveSttQuantization(model),

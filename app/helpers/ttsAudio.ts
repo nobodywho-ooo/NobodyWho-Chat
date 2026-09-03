@@ -1,4 +1,4 @@
-import { Tts } from 'react-native-nobodywho';
+import { TextToSpeech } from 'react-native-nobodywho';
 
 // Kokoro rejects any synthesize() call over ~509 phonemes (the exact cap is
 // data-driven, derived from the voice's style tensor). We can't count phonemes
@@ -73,7 +73,7 @@ export const splitIntoChunks = (text: string): string[] => {
 // Synthesize one chunk, halving it on the phoneme-cap error and retrying — the
 // character bound is a heuristic, so a dense chunk can still trip the cap.
 const synthesizeChunk = async (
-  synth: Tts,
+  synth: TextToSpeech,
   text: string,
 ): Promise<Uint8Array[]> => {
   try {
@@ -174,7 +174,7 @@ export const concatWavs = (wavs: Uint8Array[]): Uint8Array => {
 // Kokoro-only: split `text`, synthesize each chunk (retrying over the phoneme
 // cap), and stitch the results into a single WAV ready to write and play.
 export const synthesizeChunked = async (
-  synth: Tts,
+  synth: TextToSpeech,
   text: string,
 ): Promise<Uint8Array> => {
   const chunks = splitIntoChunks(text);

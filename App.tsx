@@ -10,6 +10,7 @@ import * as Sentry from '@sentry/react-native';
 import { ThemeProvider, isDarkModeEnabled } from 'context';
 import {
   initDatabase,
+  resetDatabase,
   hydrateAppState,
   getAppState,
   setAppState,
@@ -156,13 +157,28 @@ function AppLoader() {
     }
   }, []);
 
+  const reset = useCallback(async () => {
+    setDbError(false);
+    setDbReady(false);
+    try {
+      await resetDatabase();
+    } catch (error) {
+      log('App reset failed', error, { capture: true });
+    }
+    init();
+  }, [init]);
+
   useEffect(() => {
     init();
   }, [init]);
 
-  if (dbError) return <ErrorScreen onRetry={init} />;
-  if (!dbReady)
+  if (dbError) {
+    return <ErrorScreen onRetry={init} onReset={reset} />;
+  }
+
+  if (!dbReady) {
     return <LoadingScreen message={t('screens.loadingScreen.loadingApp')} />;
+  }
 
   return (
     <AiServiceProvider>

@@ -13,7 +13,7 @@ import { useTheme } from 'context';
 import { useStyled } from 'hooks';
 import { haptics } from 'helpers';
 
-import { VoiceOrb } from './components';
+import { VoiceOrb, VoiceSetup } from './components';
 import { useOrbLevels, useVoiceConversation, type VoiceStatus } from './hooks';
 
 import styles from './VoiceAssistantScreen.styles';
@@ -44,38 +44,35 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   const isDrawerOpen = useDrawerStatus() === 'open';
 
   const orb = useOrbLevels();
-  const { status, readiness, isBusy, toggle } = useVoiceConversation({
-    orb,
-    active: isDrawerOpen,
-    onPermissionDenied: () =>
-      Alert.alert(
-        t('components.inputBar.microphoneDeniedTitle'),
-        t('components.inputBar.microphoneDeniedMessage'),
-      ),
-  });
+  const { status, voiceAssistantStatus, isBusy, toggle } = useVoiceConversation(
+    {
+      orb,
+      active: isDrawerOpen,
+      onPermissionDenied: () =>
+        Alert.alert(
+          t('components.inputBar.microphoneDeniedTitle'),
+          t('components.inputBar.microphoneDeniedMessage'),
+        ),
+    },
+  );
 
   const isReady = status !== 'unavailable';
+  const isIdle = status === 'idle';
   const isActive = ACTIVE_STATUSES.includes(status);
   const showLoader = LOADING_STATUSES.includes(status);
 
-  const renderChecklistRow = (loaded: boolean, label: string) => (
-    <View style={styles.setupRowContainer}>
-      <PlatformIcon
-        iosIconName={loaded ? 'checkmark.circle.fill' : 'circle'}
-        androidIconName={loaded ? 'check_circle' : 'radio_button_unchecked'}
-        size={20}
-        color={loaded ? colors.successSurface : colors.onSurfaceVariant}
-      />
-      <Text
-        variant="body2"
-        style={{
-          color: loaded ? colors.onSurface : colors.onSurfaceVariant,
-        }}
-      >
-        {label}
-      </Text>
-    </View>
-  );
+  const accessibilityLabel = isActive
+    ? t('screens.voiceAssistant.stop')
+    : t('screens.voiceAssistant.start');
+
+  const micButtonColor = isIdle
+    ? colors.ctaContentPrimary
+    : colors.ctaContentSecondary;
+  const micButtonBackgroundColorStyle = {
+    backgroundColor: isIdle
+      ? colors.ctaSurfacePrimary
+      : colors.ctaSurfaceSecondary,
+  };
 
   return (
     <View style={styles.container}>
@@ -111,40 +108,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
             {showLoader && <ActivityIndicator color={colors.primary} />}
           </View>
         ) : (
-          <View style={styles.setupContainer}>
-            <Text variant="body1" bold style={styles.setupTitle}>
-              {t('screens.voiceAssistant.setup.title')}
-            </Text>
-            <Text
-              variant="body2"
-              style={[
-                styles.setupDescription,
-                { color: colors.onSurfaceVariant },
-              ]}
-            >
-              {t('screens.voiceAssistant.setup.description')}
-            </Text>
-            <View style={styles.setupChecklistContainer}>
-              {renderChecklistRow(
-                readiness.chat,
-                t('screens.voiceAssistant.setup.chat'),
-              )}
-              {renderChecklistRow(
-                readiness.stt,
-                t('screens.voiceAssistant.setup.stt'),
-              )}
-              {renderChecklistRow(
-                readiness.tts,
-                t('screens.voiceAssistant.setup.tts'),
-              )}
-            </View>
-            <Text
-              variant="caption"
-              style={[styles.setupHint, { color: colors.onSurfaceVariant }]}
-            >
-              {t('screens.voiceAssistant.setup.hint')}
-            </Text>
-          </View>
+          <VoiceSetup status={voiceAssistantStatus} />
         )}
       </View>
 
@@ -157,21 +121,14 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
             }}
             accessibilityRole="button"
             accessibilityState={{ busy: isBusy }}
-            accessibilityLabel={
-              isActive
-                ? t('screens.voiceAssistant.stop')
-                : t('screens.voiceAssistant.start')
-            }
-            style={[
-              styles.buttonContainer,
-              { backgroundColor: colors.primary },
-            ]}
+            accessibilityLabel={accessibilityLabel}
+            style={[styles.buttonContainer, micButtonBackgroundColorStyle]}
           >
             <PlatformIcon
               iosIconName={status !== 'idle' ? 'stop.fill' : 'mic.fill'}
               androidIconName={status !== 'idle' ? 'stop' : 'mic'}
               size={30}
-              color={colors.ctaContentPrimary}
+              color={micButtonColor}
             />
           </Pressable>
         </View>
