@@ -70,7 +70,7 @@ iOS cleanup
 make ios-clean
 ```
 
-Watchman cleanup
+Watchman/Metro cleanup
 
 ```sh
 make clean
