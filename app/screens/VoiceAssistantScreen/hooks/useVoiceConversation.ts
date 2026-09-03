@@ -7,7 +7,13 @@ import {
   useAudioStream,
 } from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
-import { log, stripThinkingBlocks, synthesizeChunked, wavToEnvelope } from 'helpers';
+import {
+  computeGenerationMetrics,
+  log,
+  stripThinkingBlocks,
+  synthesizeChunked,
+  wavToEnvelope,
+} from 'helpers';
 import { ToolInvocation } from 'types';
 import { getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
@@ -166,12 +172,15 @@ export const useVoiceConversation = ({
       question: string,
       answerText: string,
       toolInvocations: ToolInvocation[],
+      metrics: { tokensPerSecond?: number; timeToFirstToken?: number },
     ) => {
       if (!answerText.trim()) {
         return;
       }
+
       try {
         const { conversationIdInUse, modelIdInUse } = getAppState();
+        
         if (modelIdInUse === undefined) {
           return;
         }
@@ -195,6 +204,7 @@ export const useVoiceConversation = ({
           content: answerText,
           documentsPath: [],
           toolInvocations,
+          ...metrics,
         });
 
         notifyConversationSync(conversationId);
@@ -211,6 +221,7 @@ export const useVoiceConversation = ({
     const isCurrent = () => turn === turnRef.current;
 
     const { samples, sampleRate } = drainCapture();
+
     if (samples.length === 0) {
       setStatus('idle');
       return;
@@ -228,16 +239,23 @@ export const useVoiceConversation = ({
     // 1. Transcribe the captured question.
     setStatus('transcribing');
     let question: string;
+
     try {
       question = (
         await sttInstance.transcribePcm(samples, sampleRate).completed()
       ).trim();
     } catch (error) {
       log('useVoiceConversation transcribe', error, { capture: true });
-      if (isCurrent()) setStatus('error');
+      if (isCurrent()) {
+        setStatus('error');
+      }
       return;
     }
-    if (!isCurrent()) return;
+
+    if (!isCurrent()) {
+      return;
+    }
+
     if (!question) {
       setStatus('idle');
       return;
@@ -247,31 +265,56 @@ export const useVoiceConversation = ({
     // any tool calls the model makes along the way, so the persisted turn
     // reconstructs like a typed one (toModelHistory expands them on reload).
     setStatus('thinking');
-    let raw = '';
+
+    let answer = '';
+
+    const startedAt = Date.now();
+    let firstTokenAt: number | undefined;
+    let tokenCount = 0;
+
     const toolInvocations: ToolInvocation[] = [];
     const unsubscribeTools = subscribeToolInvocations(invocation =>
       toolInvocations.push(invocation),
     );
+
     try {
       for await (const token of chatInstance.ask(question)) {
-        if (!isCurrent()) return; // cancelled mid-generation
-        raw += token;
+        if (!isCurrent()) {
+          return;
+         }
+
+        if (firstTokenAt === undefined) {
+          firstTokenAt = Date.now();
+        }
+
+        tokenCount += 1;
+        answer += token;
       }
     } catch (error) {
       log('useVoiceConversation generate', error, { capture: true });
-      if (isCurrent()) setStatus('error');
+      if (isCurrent()) {
+        setStatus('error');
+      }
       return;
     } finally {
       unsubscribeTools();
     }
-    if (!isCurrent()) return;
+    if (!isCurrent()) {
+      return;
+    }
 
     // Record the completed turn so it appears in the chat screen. Persisting
     // before playback keeps the transcript even if synthesis or play fails.
-    await persistTurn(question, raw, toolInvocations);
+    await persistTurn(
+      question,
+      answer,
+      toolInvocations,
+      computeGenerationMetrics(startedAt, firstTokenAt, tokenCount),
+    );
 
-    // Never speak the model's private reasoning.
-    const spoken = stripThinkingBlocks(raw).trim();
+    
+    const spoken = stripThinkingBlocks(answer).trim();
+
     if (!spoken) {
       setStatus('idle');
       return;
@@ -302,7 +345,9 @@ export const useVoiceConversation = ({
     } catch (error) {
       log('useVoiceConversation play', error, { capture: true });
       orb.rest();
-      if (isCurrent()) setStatus('error');
+      if (isCurrent()) {
+        setStatus('error');
+      }
     }
   }, [chat, stt, tts, ttsArchitecture, drainCapture, orb, player, persistTurn]);
 
@@ -346,14 +391,18 @@ export const useVoiceConversation = ({
   }, [isReady, onPermissionDenied, stream, orb, releaseRecordingMode]);
 
   const stopAndAnswer = useCallback(async () => {
-    if (busyRef.current) return;
+    if (busyRef.current) {
+      return;
+    }
     busyRef.current = true;
+
     try {
       try {
         stream.stop();
       } catch (error) {
         log('useVoiceConversation stop stream', error);
       }
+
       await releaseRecordingMode();
       orb.rest();
       await runTurn();
@@ -381,7 +430,10 @@ export const useVoiceConversation = ({
   }, [chat, player, orb]);
 
   const toggle = useCallback(() => {
-    if (!isReady) return;
+    if (!isReady) {
+      return;
+    }
+    
     switch (status) {
       case 'idle':
       case 'error':

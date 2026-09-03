@@ -8,23 +8,15 @@ import { DisplayMessage, ToolInvocation } from 'types';
 import { getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
 import { subscribeToolInvocations } from 'services';
-import { haptics, log, parseThinking, resolveMessageDocumentPath } from 'helpers';
+import {
+  computeGenerationMetrics,
+  haptics,
+  log,
+  parseThinking,
+  resolveMessageDocumentPath,
+} from 'helpers';
 
 import { Attachments } from './useAttachments';
-
-const computeGenerationMetrics = (
-  startedAt: number,
-  firstTokenAt: number | undefined,
-  tokenCount: number,
-): { tokensPerSecond?: number; timeToFirstToken?: number } => {
-  if (firstTokenAt === undefined || tokenCount === 0) return {};
-  const timeToFirstToken = firstTokenAt - startedAt;
-  const generationMs = Math.max(Date.now() - firstTokenAt, 1);
-  return {
-    tokensPerSecond: tokenCount / (generationMs / 1000),
-    timeToFirstToken,
-  };
-};
 
 interface UseChatGenerationOptions {
   chat: React.RefObject<Chat | undefined>;

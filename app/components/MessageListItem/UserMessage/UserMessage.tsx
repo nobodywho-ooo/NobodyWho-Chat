@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
@@ -29,6 +29,29 @@ export const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
   const { content } = message;
   const documentsPath = message.documentsPath ?? [];
   const [fullScreenImage, setFullScreenImage] = useState<string | null>(null);
+
+  const [restoreOpacity, setRestoreOpacity] = useState(false);
+  const restoreTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearRestoreTimer = useCallback(() => {
+    if (restoreTimer.current !== null) {
+      clearTimeout(restoreTimer.current);
+      restoreTimer.current = null;
+    }
+  }, []);
+
+  const handlePressIn = useCallback(() => {
+    clearRestoreTimer();
+    setRestoreOpacity(false);
+    restoreTimer.current = setTimeout(() => setRestoreOpacity(true), 2000);
+  }, [clearRestoreTimer]);
+
+  const handlePressOut = useCallback(() => {
+    clearRestoreTimer();
+    setRestoreOpacity(false);
+  }, [clearRestoreTimer]);
+
+  useEffect(() => clearRestoreTimer, [clearRestoreTimer]);
 
   const renderAttachedFiles = () => {
     if (documentsPath.length === 0) {
@@ -120,10 +143,12 @@ export const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
       {content.length > 0 && (
         <Pressable
           onLongPress={handleCopyUser}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
           style={({ pressed }) => [
             styles.userBubbleContainer,
             { backgroundColor: colors.surfaceContainer },
-            pressed && styles.userBubblePressed,
+            pressed && !restoreOpacity && styles.userBubblePressed,
           ]}
         >
           <Text style={styles.text}>{content}</Text>

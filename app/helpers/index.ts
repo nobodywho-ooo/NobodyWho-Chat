@@ -44,6 +44,7 @@ import {
 } from './ttsVoices';
 import { resolveSttQuantization } from './sttModel';
 import { micBands, wavToEnvelope } from './audioLevels';
+import { computeGenerationMetrics } from './generationMetrics';
 
 export type { AudioBands, AudioEnvelope } from './audioLevels';
 
@@ -93,4 +94,5 @@ export {
   resolveSttQuantization,
   micBands,
   wavToEnvelope,
+  computeGenerationMetrics,
 };
