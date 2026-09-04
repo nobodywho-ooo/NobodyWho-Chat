@@ -307,48 +307,56 @@ export const ChatStackNavigator = () => {
     [handleConversationSynced],
   );
 
+  // Both loaders are called fire-and-forget, so every await inside them has to
+  // be guarded: the model lookup opens the database lazily and can reject when
+  // the handle is closed or the tables are being rebuilt, which is exactly what
+  // a foreground transition racing a reset looks like.
   const loadTtsIfSelected = useCallback(async () => {
-    const { ttsModelIdInUse, assistantConfig = DEFAULT_ASSISTANT_CONFIG } =
-      getAppState();
+    try {
+      const { ttsModelIdInUse, assistantConfig = DEFAULT_ASSISTANT_CONFIG } =
+        getAppState();
 
-    if (ttsModelIdInUse === undefined) {
-      return;
+      if (ttsModelIdInUse === undefined) {
+        return;
+      }
+
+      const model = await getModelById(ttsModelIdInUse);
+
+      if (model === undefined || !isTtsPipeline(model.pipeline)) {
+        return;
+      }
+      // Voice/language were resolved and stored when this model was selected (see
+      // resolveTtsPrefs at the selection sites): a Supertonic model has a
+      // concrete pair, any other engine has none. So read them straight from the
+      // config — undefined lets the engine keep its own defaults.
+      await createTts({
+        model,
+        voice: assistantConfig.ttsVoice,
+        language: assistantConfig.ttsLanguage,
+      });
+    } catch (error) {
+      log('ChatStackNavigator tts load', error, { capture: true });
     }
-
-    const model = await getModelById(ttsModelIdInUse);
-
-    if (model === undefined || !isTtsPipeline(model.pipeline)) {
-      return;
-    }
-    // Voice/language were resolved and stored when this model was selected (see
-    // resolveTtsPrefs at the selection sites): a Supertonic model has a
-    // concrete pair, any other engine has none. So read them straight from the
-    // config — undefined lets the engine keep its own defaults.
-    await createTts({
-      model,
-      voice: assistantConfig.ttsVoice,
-      language: assistantConfig.ttsLanguage,
-    }).catch(error =>
-      log('ChatStackNavigator tts load', error, { capture: true }),
-    );
   }, [createTts]);
 
   const loadSttIfSelected = useCallback(async () => {
-    const { sttModelIdInUse } = getAppState();
+    try {
+      const { sttModelIdInUse } = getAppState();
 
-    if (sttModelIdInUse === undefined) {
-      return;
+      if (sttModelIdInUse === undefined) {
+        return;
+      }
+
+      const model = await getModelById(sttModelIdInUse);
+
+      if (model === undefined || !isSttPipeline(model.pipeline)) {
+        return;
+      }
+
+      await createStt({ model });
+    } catch (error) {
+      log('ChatStackNavigator stt load', error, { capture: true });
     }
-
-    const model = await getModelById(sttModelIdInUse);
-
-    if (model === undefined || !isSttPipeline(model.pipeline)) {
-      return;
-    }
-
-    await createStt({ model }).catch(error =>
-      log('ChatStackNavigator stt load', error, { capture: true }),
-    );
   }, [createStt]);
 
   // --- Lifecycle triggers ----------------------------------------------------
@@ -367,11 +375,18 @@ export const ChatStackNavigator = () => {
   // the chat and rebuilds from scratch; a conversation-only change reloads just the history.
   useEffect(() => {
     return subscribeAppState((next, prev) => {
+      // Compare effective configs, the way mountModelAndCreateChat resolves
+      // them. assistantConfig stays undefined until something writes it, so
+      // comparing raw values would read the first write — selecting a voice
+      // model stamps the defaults in — as a change to every field.
+      const nextConfig = next.assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
+      const prevConfig = prev.assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
+
       // Supertonic voice/language live in assistantConfig but are load-time TTS
       // options, so changing them means reloading only the TTS engine.
       const ttsConfigChanged =
-        next.assistantConfig?.ttsVoice !== prev.assistantConfig?.ttsVoice ||
-        next.assistantConfig?.ttsLanguage !== prev.assistantConfig?.ttsLanguage;
+        nextConfig.ttsVoice !== prevConfig.ttsVoice ||
+        nextConfig.ttsLanguage !== prevConfig.ttsLanguage;
 
       if (next.ttsModelIdInUse !== prev.ttsModelIdInUse) {
         disposeTts();
@@ -393,14 +408,11 @@ export const ChatStackNavigator = () => {
       // Only model changes or chat-affecting config rebuild the chat — a
       // voice/language edit must not tear down the loaded chat model.
       const chatConfigChanged =
-        next.assistantConfig?.temperature !==
-          prev.assistantConfig?.temperature ||
-        next.assistantConfig?.systemPrompt !==
-          prev.assistantConfig?.systemPrompt ||
-        next.assistantConfig?.thinking !== prev.assistantConfig?.thinking ||
-        next.assistantConfig?.toolCalling !==
-          prev.assistantConfig?.toolCalling ||
-        next.assistantConfig?.contextSize !== prev.assistantConfig?.contextSize;
+        nextConfig.temperature !== prevConfig.temperature ||
+        nextConfig.systemPrompt !== prevConfig.systemPrompt ||
+        nextConfig.thinking !== prevConfig.thinking ||
+        nextConfig.toolCalling !== prevConfig.toolCalling ||
+        nextConfig.contextSize !== prevConfig.contextSize;
 
       if (next.modelIdInUse !== prev.modelIdInUse || chatConfigChanged) {
         disposeChat();

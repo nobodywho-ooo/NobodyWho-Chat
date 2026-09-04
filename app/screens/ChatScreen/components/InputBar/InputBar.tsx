@@ -300,27 +300,31 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
                     accessibilityLabel: attachButtonAccessibilityLabel,
                   })}
               </View>
-              {showDictation && !isStreaming && (
-                <View style={styles.transcriptionContainer}>
-                  {isTranscribing ? (
-                    <View style={styles.transcriptionLoaderContainer}>
-                      <ActivityIndicator
-                        size="small"
-                        color={colors.onSurface}
+
+              {showDictation &&
+                (!isStreaming || isRecording || isTranscribing) && (
+                  <View style={styles.transcriptionContainer}>
+                    {isTranscribing ? (
+                      <View style={styles.transcriptionLoaderContainer}>
+                        <ActivityIndicator
+                          size="small"
+                          color={colors.onSurface}
+                        />
+                      </View>
+                    ) : (
+                      <IconButton
+                        icon={transcribingIconButton}
+                        onPress={
+                          isRecording ? onStopDictation : onStartDictation
+                        }
+                        size={20}
+                        color={transcribingIconColor}
+                        backgroundColor={transcribingIconBackgroundColor}
+                        accessibilityLabel={transcribingIconAccessibilityLabel}
                       />
-                    </View>
-                  ) : (
-                    <IconButton
-                      icon={transcribingIconButton}
-                      onPress={isRecording ? onStopDictation : onStartDictation}
-                      size={20}
-                      color={transcribingIconColor}
-                      backgroundColor={transcribingIconBackgroundColor}
-                      accessibilityLabel={transcribingIconAccessibilityLabel}
-                    />
-                  )}
-                </View>
-              )}
+                    )}
+                  </View>
+                )}
               <IconButton
                 icon={voiceAssistantIconButton}
                 onPress={() => openDrawer('right')}

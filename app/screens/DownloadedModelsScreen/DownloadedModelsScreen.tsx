@@ -64,7 +64,7 @@ export const DownloadedModelsScreen: React.FC = () => {
           await setAppState({ sttModelIdInUse: undefined });
         }
 
-        if (isChatPipeline(model.pipeline)) {
+        if (modelIdInUse === model.id && isChatPipeline(model.pipeline)) {
           disposeChat();
         }
 

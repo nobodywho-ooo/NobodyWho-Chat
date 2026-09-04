@@ -55,7 +55,9 @@ export interface OrbLevelsController {
  * by elapsed frame time). Exactly one is active at a time, so both can write the
  * same raw drivers without contending.
  */
-export const useOrbLevels = (): OrbLevelsController => {
+export const useOrbLevels = ({
+  active: enabled = true,
+}: { active?: boolean } = {}): OrbLevelsController => {
   // Raw per-window values (mic) or per-hop samples (playback)…
   const rawLevel = useSharedValue(0);
   const rawLow = useSharedValue(0);
@@ -131,9 +133,9 @@ export const useOrbLevels = (): OrbLevelsController => {
   }, false);
 
   useEffect(() => {
-    frame.setActive(true);
+    frame.setActive(enabled);
     return () => frame.setActive(false);
-  }, [frame]);
+  }, [frame, enabled]);
 
   const feedPcm = useCallback(
     (samples: Int16Array, sampleRate: number) => {

@@ -43,7 +43,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   const orbSize = Math.min(width * 0.7, 300);
   const isDrawerOpen = useDrawerStatus() === 'open';
 
-  const orb = useOrbLevels();
+  const orb = useOrbLevels({ active: isDrawerOpen });
   const { status, voiceAssistantStatus, isBusy, toggle } = useVoiceConversation(
     {
       orb,
@@ -97,7 +97,10 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
           size={orbSize}
           color={colors.primary}
           dark={theme === 'dark'}
-          paused={!isReady}
+          // Also paused while the drawer is shut: this screen is always mounted,
+          // and an unpaused orb rebuilds and re-records its whole Skia picture
+          // every frame, off screen, for as long as the app runs.
+          paused={!isReady || !isDrawerOpen}
         />
 
         {isReady ? (

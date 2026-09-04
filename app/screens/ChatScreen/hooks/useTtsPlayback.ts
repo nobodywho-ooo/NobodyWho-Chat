@@ -20,6 +20,7 @@ const PLAYBACK_FILE = 'tts-playback.wav';
 // starting one message stops any other.
 export const useTtsPlayback = (): TtsPlayback => {
   const busyRef = useRef(false);
+  const generationRef = useRef(0);
   const { tts, ttsState, ttsArchitecture } = useAiService();
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
@@ -34,6 +35,7 @@ export const useTtsPlayback = (): TtsPlayback => {
   }, [status.didJustFinish]);
 
   const stop = useCallback(() => {
+    generationRef.current += 1;
     try {
       player.pause();
     } catch (error) {
@@ -41,6 +43,12 @@ export const useTtsPlayback = (): TtsPlayback => {
     }
     setPlayingIndex(null);
   }, [player]);
+
+  useEffect(() => {
+    return () => {
+      generationRef.current += 1;
+    };
+  }, []);
 
   const play = useCallback(
     async (index: number, text: string) => {
@@ -52,6 +60,8 @@ export const useTtsPlayback = (): TtsPlayback => {
       }
 
       busyRef.current = true;
+      const generation = ++generationRef.current;
+      const engine = tts.current;
       setLoadingIndex(index);
       try {
         // Kokoro rejects synthesize() calls over its phoneme cap, so its text
@@ -59,8 +69,14 @@ export const useTtsPlayback = (): TtsPlayback => {
         // internally, so one call handles a whole message.
         const wav =
           ttsArchitecture === 'kokoro'
-            ? await synthesizeChunked(tts.current, text)
-            : await tts.current.synthesize(text);
+            ? await synthesizeChunked(engine, text)
+            : await engine.synthesize(text);
+
+        // Stopped, unmounted, or the engine was swapped while synthesizing —
+        // the audio belongs to a state the screen has already left.
+        if (generation !== generationRef.current || tts.current !== engine) {
+          return;
+        }
 
         const file = new File(Paths.cache, PLAYBACK_FILE);
         file.write(wav);

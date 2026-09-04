@@ -13,7 +13,7 @@ import {
   pipelineIngestsAudio,
   pipelineIngestsImage,
 } from 'types';
-import { useAiService } from 'services';
+import { AiModelState, useAiService } from 'services';
 import { isAndroid } from 'helpers';
 import { Theme } from 'types';
 
@@ -49,10 +49,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const { colors } = useStyled();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { chat, chatPipeline } = useAiService();
+  const { chat, chatPipeline, ttsState, sttState } = useAiService();
   const { ttsModelIdInUse, sttModelIdInUse } = useAppState();
-  const canPlayAudio = ttsModelIdInUse !== undefined;
-  const canDictate = sttModelIdInUse !== undefined;
+
+  const canPlayAudio =
+    ttsModelIdInUse !== undefined && ttsState === AiModelState.Ready;
+  const canDictate =
+    sttModelIdInUse !== undefined && sttState === AiModelState.Ready;
   const {
     playingIndex,
     loadingIndex: audioLoadingIndex,
@@ -103,18 +106,15 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   useEffect(() => {
     setMessages(initialMessages);
+  }, [initialMessages]);
+
+  useEffect(() => {
     setConversationId(initialConversationId);
     setAttachExpanded(false);
     clearAllAttachments();
     stopAudio();
     cancelRecording();
-  }, [
-    initialMessages,
-    initialConversationId,
-    clearAllAttachments,
-    stopAudio,
-    cancelRecording,
-  ]);
+  }, [initialConversationId, clearAllAttachments, stopAudio, cancelRecording]);
 
   const scrollToEnd = useCallback((_width: number, contentHeight: number) => {
     flatListRef.current?.scrollToOffset({

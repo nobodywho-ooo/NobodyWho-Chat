@@ -108,7 +108,26 @@ function AppContent() {
 // database reset). Clear stale ids so the app degrades to the select-a-model
 // or empty-chat flows instead of dead-ending on the error screen.
 async function dropStaleIdsInUse(): Promise<void> {
-  const { modelIdInUse, conversationIdInUse } = getAppState();
+  const {
+    modelIdInUse,
+    conversationIdInUse,
+    ttsModelIdInUse,
+    sttModelIdInUse,
+  } = getAppState();
+
+  if (
+    ttsModelIdInUse !== undefined &&
+    (await getModelById(ttsModelIdInUse)) === undefined
+  ) {
+    await setAppState({ ttsModelIdInUse: undefined });
+  }
+
+  if (
+    sttModelIdInUse !== undefined &&
+    (await getModelById(sttModelIdInUse)) === undefined
+  ) {
+    await setAppState({ sttModelIdInUse: undefined });
+  }
 
   if (
     modelIdInUse !== undefined &&

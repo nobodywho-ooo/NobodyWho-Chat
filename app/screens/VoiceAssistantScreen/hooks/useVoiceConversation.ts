@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   requestRecordingPermissionsAsync,
   setAudioModeAsync,
@@ -79,6 +80,7 @@ export const useVoiceConversation = ({
   active,
   onPermissionDenied,
 }: UseVoiceConversationOptions): VoiceConversation => {
+  const { t } = useTranslation();
   const { chat, stt, tts, chatState, sttState, ttsState, ttsArchitecture } =
     useAiService();
 
@@ -102,6 +104,16 @@ export const useVoiceConversation = ({
   // (transcription, generation, synthesis) discards its result instead of
   // driving a turn the user has already moved on from.
   const turnRef = useRef(0);
+  // True only while this hook has an `ask` in flight on the shared chat. The
+  // stop flag is per chat handle, so cancelling unconditionally would also kill
+  // an answer the chat screen is streaming (the voice screen is reachable
+  // mid-generation), and the native worker runs asks one at a time anyway.
+  const generatingRef = useRef(false);
+  // True only while this hook put the shared audio session into record mode.
+  // The session is process-wide, so releasing it unconditionally would cut the
+  // input route out from under the input bar's dictation, which owns its own
+  // capture stream and never learns the mode changed.
+  const ownsRecordingModeRef = useRef(false);
 
   // Captured PCM windows and the rate the hardware actually delivered. Refs, not
   // state, so onBuffer appends without a re-render per buffer.
@@ -134,7 +146,12 @@ export const useVoiceConversation = ({
   // wholesale (not merged), so dropping it here would revert the session to the
   // .ambient category and mute the answer whenever the ringer/mute switch is on.
   // Best-effort — a failure here must not surface.
+  // Only released when this hook took it — see ownsRecordingModeRef.
   const releaseRecordingMode = useCallback(async () => {
+    if (!ownsRecordingModeRef.current) {
+      return;
+    }
+    ownsRecordingModeRef.current = false;
     try {
       await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
     } catch (error) {
@@ -173,14 +190,11 @@ export const useVoiceConversation = ({
       answerText: string,
       toolInvocations: ToolInvocation[],
       metrics: { tokensPerSecond?: number; timeToFirstToken?: number },
+      stopped = false,
     ) => {
-      if (!answerText.trim()) {
-        return;
-      }
-
       try {
         const { conversationIdInUse, modelIdInUse } = getAppState();
-        
+
         if (modelIdInUse === undefined) {
           return;
         }
@@ -192,27 +206,42 @@ export const useVoiceConversation = ({
             modelId: modelIdInUse,
           }));
 
+        // The question is always written: `ask` has already appended it to the
+        // shared chat's history, so skipping it here would leave the model
+        // answering later messages from an exchange nothing can show.
         await insertMessage({
           conversationId,
           role: 'user',
           content: question,
           documentsPath: [],
         });
-        await insertMessage({
-          conversationId,
-          role: 'assistant',
-          content: answerText,
-          documentsPath: [],
-          toolInvocations,
-          ...metrics,
-        });
+
+        if (answerText.trim()) {
+          await insertMessage({
+            conversationId,
+            role: 'assistant',
+            content: answerText,
+            documentsPath: [],
+            toolInvocations,
+            ...metrics,
+          });
+        }
+
+        if (stopped) {
+          await insertMessage({
+            conversationId,
+            role: 'system',
+            content: t('screens.chat.generationStopped'),
+            documentsPath: [],
+          });
+        }
 
         notifyConversationSync(conversationId);
       } catch (error) {
         log('useVoiceConversation persist turn', error, { capture: true });
       }
     },
-    [],
+    [t],
   );
 
   // --- Transcribe → answer → synthesize → play -------------------------------
@@ -246,13 +275,14 @@ export const useVoiceConversation = ({
       ).trim();
     } catch (error) {
       log('useVoiceConversation transcribe', error, { capture: true });
-      if (isCurrent()) {
-        setStatus('error');
-      }
+      setStatus(isCurrent() ? 'error' : 'idle');
       return;
     }
 
+    // Transcription can't be cancelled, so a turn abandoned while it ran leaves
+    // its phase on screen until it lands here. Settle back to idle now.
     if (!isCurrent()) {
+      setStatus('idle');
       return;
     }
 
@@ -277,11 +307,18 @@ export const useVoiceConversation = ({
       toolInvocations.push(invocation),
     );
 
+    let failed = false;
+
+    // From here the question is in the shared chat's history, and so is whatever
+    // the model produces — the native worker appends the assistant turn even
+    // when generation is stopped early, with no rollback.
+    generatingRef.current = true;
+
     try {
       for await (const token of chatInstance.ask(question)) {
         if (!isCurrent()) {
-          return;
-         }
+          break;
+        }
 
         if (firstTokenAt === undefined) {
           firstTokenAt = Date.now();
@@ -292,27 +329,35 @@ export const useVoiceConversation = ({
       }
     } catch (error) {
       log('useVoiceConversation generate', error, { capture: true });
-      if (isCurrent()) {
-        setStatus('error');
-      }
-      return;
+      failed = true;
     } finally {
+      generatingRef.current = false;
       unsubscribeTools();
     }
-    if (!isCurrent()) {
+
+    const metrics = computeGenerationMetrics(startedAt, firstTokenAt, tokenCount);
+
+    // A stopped or failed turn still has to reach the database, or the model
+    // would keep answering later messages from an exchange neither the chat
+    // screen nor the history on reload contains. Mirrors the typed path, which
+    // persists the partial answer plus a "generation stopped" note.
+    if (failed || !isCurrent()) {
+      await persistTurn(question, answer, toolInvocations, metrics, true);
+      setStatus(failed && isCurrent() ? 'error' : 'idle');
       return;
     }
 
     // Record the completed turn so it appears in the chat screen. Persisting
     // before playback keeps the transcript even if synthesis or play fails.
-    await persistTurn(
-      question,
-      answer,
-      toolInvocations,
-      computeGenerationMetrics(startedAt, firstTokenAt, tokenCount),
-    );
+    await persistTurn(question, answer, toolInvocations, metrics);
 
-    
+    // Persisting awaits the database, so the user may have cancelled by now —
+    // check before spending seconds synthesizing an answer nobody will hear.
+    if (!isCurrent()) {
+      setStatus('idle');
+      return;
+    }
+
     const spoken = stripThinkingBlocks(answer).trim();
 
     if (!spoken) {
@@ -329,10 +374,13 @@ export const useVoiceConversation = ({
           : await ttsInstance.synthesize(spoken);
     } catch (error) {
       log('useVoiceConversation synthesize', error, { capture: true });
-      if (isCurrent()) setStatus('error');
+      setStatus(isCurrent() ? 'error' : 'idle');
       return;
     }
-    if (!isCurrent()) return;
+    if (!isCurrent()) {
+      setStatus('idle');
+      return;
+    }
 
     // 4. Play it, driving the orb from the answer's own loudness envelope.
     try {
@@ -345,9 +393,7 @@ export const useVoiceConversation = ({
     } catch (error) {
       log('useVoiceConversation play', error, { capture: true });
       orb.rest();
-      if (isCurrent()) {
-        setStatus('error');
-      }
+      setStatus(isCurrent() ? 'error' : 'idle');
     }
   }, [chat, stt, tts, ttsArchitecture, drainCapture, orb, player, persistTurn]);
 
@@ -373,6 +419,7 @@ export const useVoiceConversation = ({
       // iOS needs a record-capable category before the input node can start;
       // keep it audible in silent mode too.
       await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      ownsRecordingModeRef.current = true;
       await stream.start();
 
       turnRef.current += 1;
@@ -413,21 +460,34 @@ export const useVoiceConversation = ({
 
   // Abandon whatever the current turn is doing and return to idle. Used for an
   // in-flight cancel (tap while transcribing/thinking) and for stopping playback.
-  const abort = useCallback(() => {
-    turnRef.current += 1;
+  // Cancel this hook's own generation, if it has one. Never call this while the
+  // chat screen owns the stream: the stop flag belongs to the chat handle, not
+  // to a turn, so it would cut short an answer being typed out there.
+  const stopOwnGeneration = useCallback(() => {
+    if (!generatingRef.current) {
+      return;
+    }
     try {
       chat.current?.stopGeneration();
     } catch (error) {
       log('useVoiceConversation stop generation', error);
     }
+  }, [chat]);
+
+  const abort = useCallback(() => {
+    turnRef.current += 1;
+    stopOwnGeneration();
     try {
       player.pause();
     } catch (error) {
       log('useVoiceConversation pause', error);
     }
     orb.rest();
-    setStatus('idle');
-  }, [chat, player, orb]);
+    // Transcription can't be cancelled, so claiming idle here would offer a mic
+    // that startListening refuses (the turn still holds busyRef). Leave the
+    // phase on screen; runTurn settles it when the abandoned work lands.
+    setStatus(current => (current === 'transcribing' ? current : 'idle'));
+  }, [stopOwnGeneration, player, orb]);
 
   const toggle = useCallback(() => {
     if (!isReady) {
@@ -465,6 +525,10 @@ export const useVoiceConversation = ({
   // the orb at rest, so reopening the screen starts clean.
   const stopAll = useCallback(() => {
     turnRef.current += 1;
+    // Without this the model would keep generating to the end of the answer off
+    // screen: dropping out of the token loop only closes the iterator, which
+    // never reaches the native worker's stop flag.
+    stopOwnGeneration();
     try {
       stream.stop();
     } catch {
@@ -478,8 +542,8 @@ export const useVoiceConversation = ({
     chunksRef.current = [];
     releaseRecordingMode();
     orb.rest();
-    setStatus('idle');
-  }, [stream, player, releaseRecordingMode, orb]);
+    setStatus(current => (current === 'transcribing' ? current : 'idle'));
+  }, [stopOwnGeneration, stream, player, releaseRecordingMode, orb]);
 
   useEffect(() => {
     if (!active || !isReady) {
