@@ -10,6 +10,8 @@
     "test-update": "jest --updateSnapshot",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "postinstall": "patch-package"
   },
   "dependencies": {

@@ -25,6 +25,7 @@ export type AppState = {
   modelIdInUse?: number;
   ttsModelIdInUse?: number;
   sttModelIdInUse?: number;
+  vadModelIdInUse?: number;
   conversationIdInUse?: number;
   assistantConfig?: AssistantConfig;
 };
@@ -90,6 +91,7 @@ export async function setAppState(patch: Partial<AppState>): Promise<void> {
     next.modelIdInUse === prev.modelIdInUse &&
     next.ttsModelIdInUse === prev.ttsModelIdInUse &&
     next.sttModelIdInUse === prev.sttModelIdInUse &&
+    next.vadModelIdInUse === prev.vadModelIdInUse &&
     next.conversationIdInUse === prev.conversationIdInUse &&
     sameAssistantConfig(next.assistantConfig, prev.assistantConfig)
   ) {

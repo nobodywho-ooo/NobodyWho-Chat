@@ -44,7 +44,9 @@ import {
 } from './ttsVoices';
 import { resolveSttQuantization } from './sttModel';
 import { micBands, wavToEnvelope } from './audioLevels';
+import { concatPcm, resamplePcm } from './pcm';
 import { computeGenerationMetrics } from './generationMetrics';
+import { parameterCountLabel } from './parameterCount';
 
 export type { AudioBands, AudioEnvelope } from './audioLevels';
 
@@ -94,5 +96,8 @@ export {
   resolveSttQuantization,
   micBands,
   wavToEnvelope,
+  concatPcm,
+  resamplePcm,
   computeGenerationMetrics,
+  parameterCountLabel,
 };

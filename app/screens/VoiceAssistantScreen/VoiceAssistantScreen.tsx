@@ -22,15 +22,16 @@ interface VoiceAssistantScreenProps {
   onCloseDrawer: () => void;
 }
 
-// Statuses that put the button into "stop / cancel" mode rather than "start".
-const ACTIVE_STATUSES: VoiceStatus[] = [
-  'listening',
-  'transcribing',
-  'thinking',
-  'speaking',
-];
+// The two phases the button can actually interrupt: the user is talking, or the
+// answer is playing back. In both the button reads "stop" rather than "start".
+const STOPPABLE_STATUSES: VoiceStatus[] = ['listening', 'speaking'];
 
-const LOADING_STATUSES: VoiceStatus[] = ['transcribing', 'thinking'];
+// The phases that run to completion: transcription, generation, and the speech
+// synthesis that follows it — each a native call with nothing to interrupt.
+// 'thinking' covers synthesis too, since the status only flips to 'speaking'
+// once the finished audio starts playing. The button is replaced by a spinner
+// throughout, rather than offering a stop that couldn't be honoured.
+const PROCESSING_STATUSES: VoiceStatus[] = ['transcribing', 'thinking'];
 
 export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   onCloseDrawer,
@@ -57,21 +58,22 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   );
 
   const isReady = status !== 'unavailable';
-  const isIdle = status === 'idle';
-  const isActive = ACTIVE_STATUSES.includes(status);
-  const showLoader = LOADING_STATUSES.includes(status);
+  const isStoppable = STOPPABLE_STATUSES.includes(status);
+  const isProcessing = PROCESSING_STATUSES.includes(status);
 
-  const accessibilityLabel = isActive
+  const accessibilityLabel = isStoppable
     ? t('screens.voiceAssistant.stop')
     : t('screens.voiceAssistant.start');
 
-  const micButtonColor = isIdle
-    ? colors.ctaContentPrimary
-    : colors.ctaContentSecondary;
+  // Stopping is the secondary action; starting (from idle, or again after an
+  // error) is the primary one.
+  const micButtonColor = isStoppable
+    ? colors.ctaContentSecondary
+    : colors.ctaContentPrimary;
   const micButtonBackgroundColorStyle = {
-    backgroundColor: isIdle
-      ? colors.ctaSurfacePrimary
-      : colors.ctaSurfaceSecondary,
+    backgroundColor: isStoppable
+      ? colors.ctaSurfaceSecondary
+      : colors.ctaSurfacePrimary,
   };
 
   return (
@@ -108,7 +110,6 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
             <Text variant="body1" bold style={styles.statusText}>
               {t(`screens.voiceAssistant.status.${status}`)}
             </Text>
-            {showLoader && <ActivityIndicator color={colors.primary} />}
           </View>
         ) : (
           <VoiceSetup status={voiceAssistantStatus} />
@@ -116,24 +117,32 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
       </View>
 
       {isReady && (
-        <View style={styles.micContainer}>
-          <Pressable
-            onPress={() => {
-              haptics.medium();
-              toggle();
-            }}
-            accessibilityRole="button"
-            accessibilityState={{ busy: isBusy }}
-            accessibilityLabel={accessibilityLabel}
-            style={[styles.buttonContainer, micButtonBackgroundColorStyle]}
-          >
-            <PlatformIcon
-              iosIconName={status !== 'idle' ? 'stop.fill' : 'mic.fill'}
-              androidIconName={status !== 'idle' ? 'stop' : 'mic'}
-              size={30}
-              color={micButtonColor}
-            />
-          </Pressable>
+        <View style={styles.actionContainer}>
+          {isProcessing ? (
+            // Laid out in the same box as the button so swapping the two doesn't
+            // move anything else on screen.
+            <View style={styles.buttonContainer}>
+              <ActivityIndicator size="large" color={colors.primary} />
+            </View>
+          ) : (
+            <Pressable
+              onPress={() => {
+                haptics.medium();
+                toggle();
+              }}
+              accessibilityRole="button"
+              accessibilityState={{ busy: isBusy }}
+              accessibilityLabel={accessibilityLabel}
+              style={[styles.buttonContainer, micButtonBackgroundColorStyle]}
+            >
+              <PlatformIcon
+                iosIconName={isStoppable ? 'stop.fill' : 'mic.fill'}
+                androidIconName={isStoppable ? 'stop' : 'mic'}
+                size={30}
+                color={micButtonColor}
+              />
+            </Pressable>
+          )}
         </View>
       )}
     </View>

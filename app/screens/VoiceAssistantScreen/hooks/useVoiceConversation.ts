@@ -10,11 +10,13 @@ import {
 import { File, Paths } from 'expo-file-system';
 import {
   computeGenerationMetrics,
+  concatPcm,
   log,
   stripThinkingBlocks,
   synthesizeChunked,
   wavToEnvelope,
 } from 'helpers';
+import { useSpeechService } from 'hooks';
 import { ToolInvocation } from 'types';
 import { getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
@@ -23,6 +25,7 @@ import {
   notifyConversationSync,
   subscribeToolInvocations,
   useAiService,
+  VAD_SAMPLE_RATE,
 } from 'services';
 
 import { OrbLevelsController } from './useOrbLevels';
@@ -36,7 +39,7 @@ const PLAYBACK_FILE = 'voice-assistant-playback.wav';
 
 // The phases of one hands-free turn, in the order they run.
 export type VoiceStatus =
-  | 'unavailable' // one of the three models isn't loaded — nothing to do
+  | 'unavailable' // one of the four models isn't loaded — nothing to do
   | 'idle' // ready; waiting for the user to tap
   | 'listening' // microphone open, capturing the question
   | 'transcribing' // Whisper turning the capture into text
@@ -48,6 +51,8 @@ export interface VoiceAssistantStatus {
   isChatReady: boolean;
   isSttReady: boolean;
   isTtsReady: boolean;
+  /** Detects when the user stops talking, which is what ends a turn. */
+  isVadReady: boolean;
 }
 
 export interface VoiceConversation {
@@ -67,13 +72,14 @@ interface UseVoiceConversationOptions {
 }
 
 /**
- * Runs one hands-free turn end to end — capture the question on the microphone,
- * transcribe it with the loaded STT model, answer it with the loaded chat model,
- * and speak the answer with the loaded TTS model — driving the orb through each
- * phase. Reuses the shared chat instance (so the assistant keeps the current
- * conversation's context) and persists each completed turn to that conversation
- * — creating one if this is the first turn — so it also shows up in the chat
- * screen (see notifyConversationSync).
+ * Runs one hands-free turn end to end — capture the question on the microphone
+ * until the voice detection model hears the user stop talking, transcribe it
+ * with the loaded STT model, answer it with the loaded chat model, and speak the
+ * answer with the loaded TTS model — driving the orb through each phase. Reuses
+ * the shared chat instance (so the assistant keeps the current conversation's
+ * context) and persists each completed turn to that conversation — creating one
+ * if this is the first turn — so it also shows up in the chat screen (see
+ * notifyConversationSync).
  */
 export const useVoiceConversation = ({
   orb,
@@ -83,16 +89,25 @@ export const useVoiceConversation = ({
   const { t } = useTranslation();
   const { chat, stt, tts, chatState, sttState, ttsState, ttsArchitecture } =
     useAiService();
+  // The fourth model the screen needs: it is what notices the user has stopped
+  // talking, which is how a turn ends here. Without it nothing would close the
+  // microphone, so `isReady` below requires it like the other three.
+  const speechService = useSpeechService();
 
   const voiceAssistantStatus = useMemo<VoiceAssistantStatus>(
     () => ({
       isChatReady: chatState === AiModelState.Ready,
       isSttReady: sttState === AiModelState.Ready,
       isTtsReady: ttsState === AiModelState.Ready,
+      isVadReady: speechService.enabled,
     }),
-    [chatState, sttState, ttsState],
+    [chatState, sttState, ttsState, speechService.enabled],
   );
-  const isReady = voiceAssistantStatus.isChatReady && voiceAssistantStatus.isSttReady && voiceAssistantStatus.isTtsReady;
+  const isReady =
+    voiceAssistantStatus.isChatReady &&
+    voiceAssistantStatus.isSttReady &&
+    voiceAssistantStatus.isTtsReady &&
+    voiceAssistantStatus.isVadReady;
 
   const [status, setStatus] = useState<VoiceStatus>('idle');
 
@@ -120,6 +135,14 @@ export const useVoiceConversation = ({
   const chunksRef = useRef<Int16Array[]>([]);
   const sampleRateRef = useRef(TARGET_SAMPLE_RATE);
 
+  // True only between the mic opening and the turn being handed off, so a
+  // buffer still in flight when the capture ends can't start a second turn.
+  const listeningRef = useRef(false);
+  // stopAndAnswer is defined below but has to be reachable from onBuffer, which
+  // is what detects the end of speech. Kept in a ref so onBuffer doesn't have to
+  // be redefined (and the auto-stop re-armed) on every render.
+  const stopAndAnswerRef = useRef<() => void>(() => undefined);
+
   const onBuffer = useCallback(
     (buffer: { data: ArrayBuffer; sampleRate: number }) => {
       const chunk = Int16Array.from(new Int16Array(buffer.data));
@@ -127,8 +150,20 @@ export const useVoiceConversation = ({
       sampleRateRef.current = buffer.sampleRate;
       // Feed the same window to the orb so it swells with the user's voice.
       orb.feedPcm(chunk, buffer.sampleRate);
+
+      // With a voice detection model loaded, the user falling silent ends the
+      // question and answering starts straight away — no second tap. Every
+      // buffer is fed to it — including the first few, which land before
+      // `startListening` has flipped the flag — so the speech it keeps matches
+      // what was recorded; only acting on the result is gated.
+      const speechEnded = speechService.push(chunk, buffer.sampleRate);
+
+      if (speechEnded && listeningRef.current) {
+        listeningRef.current = false;
+        stopAndAnswerRef.current();
+      }
     },
-    [orb],
+    [orb, speechService],
   );
 
   const { stream } = useAudioStream({
@@ -153,30 +188,36 @@ export const useVoiceConversation = ({
     }
     ownsRecordingModeRef.current = false;
     try {
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
+      await setAudioModeAsync({
+        allowsRecording: false,
+        playsInSilentMode: true,
+      });
     } catch (error) {
       log('useVoiceConversation release mode', error);
     }
   }, []);
 
-  // Assemble captured PCM into one contiguous buffer
+  // Assemble the captured question, preferring the speech the detection model
+  // kept — the same words with the silence around them trimmed off, at that
+  // model's own fixed rate — so Whisper transcribes less audio and doesn't
+  // hallucinate words into the quiet. Falls back to the unedited recording when
+  // the model never settled on any speech: the user tapped stop early, or spoke
+  // too briefly or too quietly to register.
   const drainCapture = useCallback((): {
     samples: Int16Array;
     sampleRate: number;
   } => {
     const chunks = chunksRef.current;
     chunksRef.current = [];
-    const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-    const samples = new Int16Array(total);
-    let offset = 0;
 
-    for (const chunk of chunks) {
-      samples.set(chunk, offset);
-      offset += chunk.length;
+    const speech = speechService.takeSpeechToTranscribe();
+
+    if (speech) {
+      return { samples: speech, sampleRate: VAD_SAMPLE_RATE };
     }
 
-    return { samples, sampleRate: sampleRateRef.current };
-  }, []);
+    return { samples: concatPcm(chunks), sampleRate: sampleRateRef.current };
+  }, [speechService]);
 
   // --- Persist a completed turn to the shared conversation -------------------
   // Writes the question and the answer to the conversation currently in use,
@@ -335,7 +376,11 @@ export const useVoiceConversation = ({
       unsubscribeTools();
     }
 
-    const metrics = computeGenerationMetrics(startedAt, firstTokenAt, tokenCount);
+    const metrics = computeGenerationMetrics(
+      startedAt,
+      firstTokenAt,
+      tokenCount,
+    );
 
     // A stopped or failed turn still has to reach the database, or the model
     // would keep answering later messages from an exchange neither the chat
@@ -415,33 +460,46 @@ export const useVoiceConversation = ({
 
       chunksRef.current = [];
       sampleRateRef.current = TARGET_SAMPLE_RATE;
+      speechService.reset();
 
       // iOS needs a record-capable category before the input node can start;
       // keep it audible in silent mode too.
-      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      await setAudioModeAsync({
+        allowsRecording: true,
+        playsInSilentMode: true,
+      });
       ownsRecordingModeRef.current = true;
       await stream.start();
 
       turnRef.current += 1;
       orb.listen();
+      listeningRef.current = true;
 
       setStatus('listening');
     } catch (error) {
       log('useVoiceConversation start', error);
       await releaseRecordingMode();
       orb.rest();
-      
+
       setStatus('error');
     } finally {
       busyRef.current = false;
     }
-  }, [isReady, onPermissionDenied, stream, orb, releaseRecordingMode]);
+  }, [
+    isReady,
+    onPermissionDenied,
+    stream,
+    orb,
+    releaseRecordingMode,
+    speechService,
+  ]);
 
   const stopAndAnswer = useCallback(async () => {
     if (busyRef.current) {
       return;
     }
     busyRef.current = true;
+    listeningRef.current = false;
 
     try {
       try {
@@ -458,8 +516,11 @@ export const useVoiceConversation = ({
     }
   }, [stream, releaseRecordingMode, orb, runTurn]);
 
-  // Abandon whatever the current turn is doing and return to idle. Used for an
-  // in-flight cancel (tap while transcribing/thinking) and for stopping playback.
+  // Republish the latest stopAndAnswer for the auto-stop above. Assigning during
+  // render (rather than in an effect) keeps it current even if a buffer arrives
+  // before effects flush.
+  stopAndAnswerRef.current = stopAndAnswer;
+
   // Cancel this hook's own generation, if it has one. Never call this while the
   // chat screen owns the stream: the stop flag belongs to the chat handle, not
   // to a turn, so it would cut short an answer being typed out there.
@@ -474,8 +535,12 @@ export const useVoiceConversation = ({
     }
   }, [chat]);
 
+  // Abandon the current turn and return to idle. Only reachable by tapping stop
+  // while the answer plays: the phases before that run to completion.
   const abort = useCallback(() => {
     turnRef.current += 1;
+    listeningRef.current = false;
+    speechService.reset();
     stopOwnGeneration();
     try {
       player.pause();
@@ -483,17 +548,14 @@ export const useVoiceConversation = ({
       log('useVoiceConversation pause', error);
     }
     orb.rest();
-    // Transcription can't be cancelled, so claiming idle here would offer a mic
-    // that startListening refuses (the turn still holds busyRef). Leave the
-    // phase on screen; runTurn settles it when the abandoned work lands.
-    setStatus(current => (current === 'transcribing' ? current : 'idle'));
-  }, [stopOwnGeneration, player, orb]);
+    setStatus('idle');
+  }, [stopOwnGeneration, player, orb, speechService]);
 
   const toggle = useCallback(() => {
     if (!isReady) {
       return;
     }
-    
+
     switch (status) {
       case 'idle':
       case 'error':
@@ -502,8 +564,9 @@ export const useVoiceConversation = ({
       case 'listening':
         stopAndAnswer();
         break;
-      case 'transcribing':
-      case 'thinking':
+      // Transcribing, thinking and the synthesis that follows it are absent on
+      // purpose: they run to completion, and the screen shows a spinner in
+      // place of the button while they do. Only playback can be cut short.
       case 'speaking':
         abort();
         break;
@@ -525,6 +588,7 @@ export const useVoiceConversation = ({
   // the orb at rest, so reopening the screen starts clean.
   const stopAll = useCallback(() => {
     turnRef.current += 1;
+    listeningRef.current = false;
     // Without this the model would keep generating to the end of the answer off
     // screen: dropping out of the token loop only closes the iterator, which
     // never reaches the native worker's stop flag.
@@ -540,10 +604,18 @@ export const useVoiceConversation = ({
       // nothing playing
     }
     chunksRef.current = [];
+    speechService.reset();
     releaseRecordingMode();
     orb.rest();
     setStatus(current => (current === 'transcribing' ? current : 'idle'));
-  }, [stopOwnGeneration, stream, player, releaseRecordingMode, orb]);
+  }, [
+    stopOwnGeneration,
+    stream,
+    player,
+    releaseRecordingMode,
+    orb,
+    speechService,
+  ]);
 
   useEffect(() => {
     if (!active || !isReady) {
@@ -556,9 +628,7 @@ export const useVoiceConversation = ({
   }, [stopAll]);
 
   const isBusy =
-    status === 'transcribing' ||
-    status === 'thinking' ||
-    status === 'speaking';
+    status === 'transcribing' || status === 'thinking' || status === 'speaking';
 
   return {
     status: isReady ? status : 'unavailable',

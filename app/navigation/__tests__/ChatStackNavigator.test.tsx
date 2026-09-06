@@ -50,6 +50,8 @@ const mockCreateTts = jest.fn(async () => {});
 const mockDisposeTts = jest.fn();
 const mockCreateStt = jest.fn(async () => {});
 const mockDisposeStt = jest.fn();
+const mockCreateVad = jest.fn(async () => {});
+const mockDisposeVad = jest.fn();
 // These suites only exercise text models; mock-prefixed so the jest.mock
 // factory may reference it (out-of-scope enums are rejected otherwise).
 const mockChatPipeline = ModelPipeline.textGeneration;
@@ -64,7 +66,17 @@ jest.mock('services', () => ({
     disposeTts: mockDisposeTts,
     createStt: mockCreateStt,
     disposeStt: mockDisposeStt,
+    createVad: mockCreateVad,
+    disposeVad: mockDisposeVad,
+    vad: { current: undefined },
+    vadState: 'notLoaded',
   }),
+  AiModelState: {
+    NotLoaded: 'notLoaded',
+    Loading: 'loading',
+    Ready: 'ready',
+    Error: 'error',
+  },
   subscribeToolInvocations: jest.fn(() => jest.fn()),
   // Capture the sync listener so a test can drive a voice-turn notification.
   subscribeConversationSync: jest.fn((listener: (id: number) => void) => {
@@ -132,6 +144,8 @@ beforeEach(async () => {
   mockDisposeTts.mockClear();
   mockCreateStt.mockClear();
   mockDisposeStt.mockClear();
+  mockCreateVad.mockClear();
+  mockDisposeVad.mockClear();
   mockChatInstance.setChatHistory.mockReset().mockResolvedValue(undefined);
   mockChatInstance.ask.mockReset().mockImplementation(async function* () {
     yield 'hello';
@@ -146,6 +160,7 @@ beforeEach(async () => {
     modelIdInUse: undefined,
     ttsModelIdInUse: undefined,
     sttModelIdInUse: undefined,
+    vadModelIdInUse: undefined,
     conversationIdInUse: undefined,
     assistantConfig: undefined,
   });
@@ -395,6 +410,67 @@ test('unloads the STT engine on background and reloads it on foreground', async 
     appStateHandler('active');
   });
   await waitFor(() => expect(mockCreateStt).toHaveBeenCalledTimes(2));
+});
+
+test('loads the selected VAD model on start', async () => {
+  await setAppState({ vadModelIdInUse: 12 });
+  mockGetModelById.mockResolvedValue(
+    buildModel(12, {
+      pipeline: ModelPipeline.voiceActivityDetection,
+      family: 'Silero',
+    }),
+  );
+
+  render(<ChatStackNavigator />);
+
+  await waitFor(() => expect(mockCreateVad).toHaveBeenCalled());
+  expect(mockCreateVad).toHaveBeenLastCalledWith({
+    model: expect.objectContaining({ id: 12 }),
+  });
+});
+
+test('disposes and reloads the VAD engine when the detection model changes', async () => {
+  mockGetModelById.mockResolvedValue(
+    buildModel(12, {
+      pipeline: ModelPipeline.voiceActivityDetection,
+      family: 'Silero',
+    }),
+  );
+
+  render(<ChatStackNavigator />);
+
+  await act(async () => {
+    await setAppState({ vadModelIdInUse: 12 });
+  });
+  await waitFor(() => expect(mockCreateVad).toHaveBeenCalled());
+
+  await act(async () => {
+    await setAppState({ vadModelIdInUse: undefined });
+  });
+  expect(mockDisposeVad).toHaveBeenCalled();
+});
+
+test('unloads the VAD engine on background and reloads it on foreground', async () => {
+  await setAppState({ vadModelIdInUse: 12 });
+  mockGetModelById.mockResolvedValue(
+    buildModel(12, {
+      pipeline: ModelPipeline.voiceActivityDetection,
+      family: 'Silero',
+    }),
+  );
+
+  render(<ChatStackNavigator />);
+  await waitFor(() => expect(mockCreateVad).toHaveBeenCalledTimes(1));
+
+  await act(async () => {
+    appStateHandler('background');
+  });
+  expect(mockDisposeVad).toHaveBeenCalledTimes(1);
+
+  await act(async () => {
+    appStateHandler('active');
+  });
+  await waitFor(() => expect(mockCreateVad).toHaveBeenCalledTimes(2));
 });
 
 test('injects restored assistant messages with an empty toolCalls array', async () => {

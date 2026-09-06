@@ -193,7 +193,7 @@
       "stop": "Stop",
       "status": {
         "idle": "Tap to speak",
-        "listening": "Listening…",
+        "listening": "Listening… stop when you’re done",
         "transcribing": "Transcribing",
         "thinking": "Thinking",
         "speaking": "Speaking…",
@@ -201,10 +201,11 @@
       },
       "setup": {
         "title": "Set up voice chat",
-        "description": "Hands-free chat needs three models loaded at once:",
+        "description": "Hands-free chat needs four models loaded at once:",
         "chat": "Chat model",
         "stt": "Speech-to-text model",
         "tts": "Text-to-speech model",
+        "vad": "Voice detection model",
         "hint": "Download and activate one of each, then come back."
       }
     },
@@ -226,6 +227,7 @@
       "textModelInUse": "Text model in use",
       "voiceModelInUse": "Voice model in use",
       "transcriptionModelInUse": "Transcription model in use",
+      "voiceDetectionModelInUse": "Voice detection model in use",
       "readyToUse": "Ready to use",
       "downloaded": "Downloaded",
       "modelCount_one": "{{count}} model",

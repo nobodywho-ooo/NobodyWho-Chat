@@ -29,7 +29,7 @@ export default StyleSheet.create({
   statusText: {
     textAlign: 'center',
   },
-  micContainer: {
+  actionContainer: {
     alignItems: 'center',
     paddingBottom: Spacings.xxxxl,
   },
@@ -41,6 +41,6 @@ export default StyleSheet.create({
     justifyContent: 'center',
   },
   emptyContainerStyle: {
-    width: 40 
-  } 
+    width: 40,
+  },
 });

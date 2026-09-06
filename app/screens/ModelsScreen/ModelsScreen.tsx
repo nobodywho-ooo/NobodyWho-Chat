@@ -28,6 +28,7 @@ export const ModelsScreen: React.FC = () => {
     currentModel,
     currentTtsModel,
     currentSttModel,
+    currentVadModel,
     downloadedCount,
     isLoading,
     hasError,
@@ -80,10 +81,23 @@ export const ModelsScreen: React.FC = () => {
         />
       )}
 
+      {!!currentVadModel && (
+        <InUseModel
+          model={currentVadModel}
+          title={t('screens.models.voiceDetectionModelInUse')}
+          first={!currentModel && !currentTtsModel && !currentSttModel}
+        />
+      )}
+
       {downloadedCount > 0 && (
         <DownloadedModelsLink
           count={downloadedCount}
-          first={!currentModel && !currentTtsModel && !currentSttModel}
+          first={
+            !currentModel &&
+            !currentTtsModel &&
+            !currentSttModel &&
+            !currentVadModel
+          }
           onPress={goToDownloadedModels}
         />
       )}

@@ -24,6 +24,7 @@ import {
   ModelPipeline,
   isTtsPipeline,
   isSttPipeline,
+  isVadPipeline,
   isChatPipeline,
 } from 'types';
 
@@ -33,8 +34,10 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { models } = useModels();
-  const { modelIdInUse, ttsModelIdInUse, sttModelIdInUse } = useAppState();
-  const { chat, disposeTts, disposeStt, disposeChat } = useAiService();
+  const { modelIdInUse, ttsModelIdInUse, sttModelIdInUse, vadModelIdInUse } =
+    useAppState();
+  const { chat, disposeTts, disposeStt, disposeVad, disposeChat } =
+    useAiService();
   const navigation = useNavigation();
   const route = useRoute();
   const [deleteMode, setDeleteMode] = useState(false);
@@ -64,6 +67,11 @@ export const DownloadedModelsScreen: React.FC = () => {
           await setAppState({ sttModelIdInUse: undefined });
         }
 
+        if (vadModelIdInUse === model.id) {
+          disposeVad();
+          await setAppState({ vadModelIdInUse: undefined });
+        }
+
         if (modelIdInUse === model.id && isChatPipeline(model.pipeline)) {
           disposeChat();
         }
@@ -90,8 +98,10 @@ export const DownloadedModelsScreen: React.FC = () => {
       modelIdInUse,
       ttsModelIdInUse,
       sttModelIdInUse,
+      vadModelIdInUse,
       disposeTts,
       disposeStt,
+      disposeVad,
       disposeChat,
     ],
   );
@@ -146,6 +156,14 @@ export const DownloadedModelsScreen: React.FC = () => {
         return;
       }
 
+      if (isVadPipeline(model.pipeline)) {
+        if (vadModelIdInUse !== model.id) {
+          setAppState({ vadModelIdInUse: model.id });
+          navigation.goBack();
+        }
+        return;
+      }
+
       if (modelIdInUse !== model.id) {
         // Stop any in-flight generation before the model switch tears down
         // the current chat, so a live stream ends cleanly rather than being
@@ -164,6 +182,7 @@ export const DownloadedModelsScreen: React.FC = () => {
       modelIdInUse,
       ttsModelIdInUse,
       sttModelIdInUse,
+      vadModelIdInUse,
       chat,
       navigation,
     ],
@@ -227,6 +246,9 @@ export const DownloadedModelsScreen: React.FC = () => {
     }
     if (isSttPipeline(pipeline)) {
       return sttModelIdInUse;
+    }
+    if (isVadPipeline(pipeline)) {
+      return vadModelIdInUse;
     }
 
     return modelIdInUse;

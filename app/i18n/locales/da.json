@@ -193,7 +193,7 @@
       "stop": "Stop",
       "status": {
         "idle": "Tryk for at tale",
-        "listening": "Lytter…",
+        "listening": "Lytter… tryk på stop, når du er færdig",
         "transcribing": "Transskriberer",
         "thinking": "Tænker",
         "speaking": "Taler…",
@@ -201,10 +201,11 @@
       },
       "setup": {
         "title": "Konfigurer stemmechat",
-        "description": "Håndfri chat kræver tre modeller indlæst samtidig:",
+        "description": "Håndfri chat kræver fire modeller indlæst samtidig:",
         "chat": "Chatmodel",
         "stt": "Tale-til-tekst-model",
         "tts": "Tekst-til-tale-model",
+        "vad": "Stemmedetektionsmodel",
         "hint": "Download og aktiver én af hver, og kom så tilbage."
       }
     },
@@ -226,6 +227,7 @@
       "textModelInUse": "Tekstmodel i brug",
       "voiceModelInUse": "Stemmemodel i brug",
       "transcriptionModelInUse": "Transskriptionsmodel i brug",
+      "voiceDetectionModelInUse": "Stemmedetektionsmodel i brug",
       "readyToUse": "Klar til brug",
       "downloaded": "Downloadet",
       "modelCount_one": "{{count}} model",

@@ -4,8 +4,9 @@ import {
   setAudioModeAsync,
   useAudioStream,
 } from 'expo-audio';
-import { log } from 'helpers';
-import { AiModelState, useAiService } from 'services';
+import { concatPcm, log } from 'helpers';
+import { useSpeechService } from 'hooks';
+import { AiModelState, useAiService, VAD_SAMPLE_RATE } from 'services';
 
 interface SttTranscription {
   isRecording: boolean;
@@ -26,13 +27,16 @@ const TARGET_SAMPLE_RATE = 16000;
 
 // Drives the input-bar dictation mic: records the microphone as mono int16 PCM
 // with the loaded Whisper model and hands the transcription back to the screen
-// to drop into the text field.
+// to drop into the text field. When a voice activity detection model is loaded
+// too, the recording also ends itself once the user stops talking, instead of
+// waiting for a second tap.
 export const useSttTranscription = ({
   onTranscribed,
   onPermissionDenied,
 }: SttTranscriptionOptions): SttTranscription => {
   const busyRef = useRef(false);
   const { stt, sttState } = useAiService();
+  const speechService = useSpeechService();
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
 
@@ -54,14 +58,30 @@ export const useSttTranscription = ({
   const chunksRef = useRef<Int16Array[]>([]);
   const sampleRateRef = useRef(TARGET_SAMPLE_RATE);
 
+  // stopRecording is defined below but has to be reachable from onBuffer, which
+  // is what detects the end of speech. Kept in a ref so onBuffer doesn't have to
+  // be redefined (and the auto-stop re-armed) on every render.
+  const stopRecordingRef = useRef<() => void>(() => undefined);
+
   const onBuffer = useCallback(
     (buffer: { data: ArrayBuffer; sampleRate: number }) => {
       // Copy out of the native-owned ArrayBuffer, which is reused for the next
       // window; Int16Array.from makes an owned copy we can safely retain.
-      chunksRef.current.push(Int16Array.from(new Int16Array(buffer.data)));
+      const chunk = Int16Array.from(new Int16Array(buffer.data));
+      chunksRef.current.push(chunk);
       sampleRateRef.current = buffer.sampleRate;
+
+      // With a voice detection model loaded, the user falling silent ends the
+      // dictation. Every buffer is fed to it — including the first few, which
+      // land before `startRecording` has flipped the flag — so the speech it
+      // keeps matches what was recorded; only acting on the result is gated.
+      const speechEnded = speechService.push(chunk, buffer.sampleRate);
+
+      if (speechEnded && isRecordingRef.current) {
+        stopRecordingRef.current();
+      }
     },
-    [],
+    [speechService],
   );
 
   const { stream } = useAudioStream({
@@ -102,6 +122,7 @@ export const useSttTranscription = ({
 
       chunksRef.current = [];
       sampleRateRef.current = TARGET_SAMPLE_RATE;
+      speechService.reset();
 
       // iOS needs the session switched to a record-capable category before the
       // input node can start; also keep it audible in silent mode.
@@ -114,7 +135,15 @@ export const useSttTranscription = ({
     } finally {
       busyRef.current = false;
     }
-  }, [sttState, stt, stream, onPermissionDenied, releaseRecordingMode, setRecording]);
+  }, [
+    sttState,
+    stt,
+    stream,
+    onPermissionDenied,
+    releaseRecordingMode,
+    setRecording,
+    speechService,
+  ]);
 
   const stopRecording = useCallback(async () => {
     if (busyRef.current || !isRecordingRef.current) {
@@ -129,21 +158,27 @@ export const useSttTranscription = ({
 
       const chunks = chunksRef.current;
       chunksRef.current = [];
-      const total = chunks.reduce((sum, chunk) => sum + chunk.length, 0);
-      if (total === 0 || sttState !== AiModelState.Ready || !stt.current) {
-        return;
-      }
 
-      const samples = new Int16Array(total);
-      let offset = 0;
-      for (const chunk of chunks) {
-        samples.set(chunk, offset);
-        offset += chunk.length;
+      // Prefer what the detection model kept — the same speech with the silence
+      // around it trimmed off, so Whisper transcribes less audio and doesn't
+      // hallucinate words into the quiet. It comes back at that model's own
+      // rate. Falls back to the unedited recording when no detection model is
+      // loaded, or when it never settled on any speech (too short, too quiet).
+      const speech = speechService.takeSpeechToTranscribe();
+      const samples = speech ?? concatPcm(chunks);
+      const sampleRate = speech ? VAD_SAMPLE_RATE : sampleRateRef.current;
+
+      if (
+        samples.length === 0 ||
+        sttState !== AiModelState.Ready ||
+        !stt.current
+      ) {
+        return;
       }
 
       setIsTranscribing(true);
       const text = (
-        await stt.current.transcribePcm(samples, sampleRateRef.current).completed()
+        await stt.current.transcribePcm(samples, sampleRate).completed()
       ).trim();
       if (text) {
         onTranscribed(text);
@@ -154,7 +189,20 @@ export const useSttTranscription = ({
       setIsTranscribing(false);
       busyRef.current = false;
     }
-  }, [sttState, stt, stream, onTranscribed, releaseRecordingMode, setRecording]);
+  }, [
+    sttState,
+    stt,
+    stream,
+    onTranscribed,
+    releaseRecordingMode,
+    setRecording,
+    speechService,
+  ]);
+
+  // Republish the latest stopRecording for the auto-stop above. Assigning during
+  // render (rather than in an effect) keeps it current even if a buffer arrives
+  // before effects flush.
+  stopRecordingRef.current = stopRecording;
 
   const cancelRecording = useCallback(() => {
     if (!isRecordingRef.current) {
@@ -166,9 +214,10 @@ export const useSttTranscription = ({
       log('useSttTranscription cancel', error);
     }
     chunksRef.current = [];
+    speechService.reset();
     setRecording(false);
     releaseRecordingMode();
-  }, [stream, releaseRecordingMode, setRecording]);
+  }, [stream, releaseRecordingMode, setRecording, speechService]);
 
   // If the engine is torn down while recording (model switch, backgrounding),
   // stop the capture so the microphone is released instead of staying open with

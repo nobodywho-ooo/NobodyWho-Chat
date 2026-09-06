@@ -12,6 +12,7 @@ import {
   SpeechToText,
   TextToSpeech,
   TextToSpeechArchitecture,
+  VoiceActivityDetection,
 } from 'react-native-nobodywho';
 import * as Sentry from '@sentry/react-native';
 import {
@@ -27,6 +28,7 @@ import {
   ModelPipeline,
   isSttPipeline,
   isTtsPipeline,
+  isVadPipeline,
   toChatPipeline,
 } from 'types';
 import { buildChatTools } from './tools';
@@ -44,12 +46,14 @@ interface AiServiceState {
   ttsState: AiModelState;
   ttsArchitecture?: TextToSpeechArchitecture;
   sttState: AiModelState;
+  vadState: AiModelState;
 }
 
 interface AiServiceContextValue extends AiServiceState {
   chat: React.RefObject<Chat | undefined>;
   tts: React.RefObject<TextToSpeech | undefined>;
   stt: React.RefObject<SpeechToText | undefined>;
+  vad: React.RefObject<VoiceActivityDetection | undefined>;
 
   createChat: (opts: {
     model: Model;
@@ -69,6 +73,8 @@ interface AiServiceContextValue extends AiServiceState {
   disposeTts: () => void;
   createStt: (opts: { model: Model; language?: string }) => Promise<void>;
   disposeStt: () => void;
+  createVad: (opts: { model: Model }) => Promise<void>;
+  disposeVad: () => void;
   dispose: () => void;
 }
 
@@ -82,6 +88,7 @@ const _initialState: AiServiceState = {
   ttsState: AiModelState.NotLoaded,
   ttsArchitecture: undefined,
   sttState: AiModelState.NotLoaded,
+  vadState: AiModelState.NotLoaded,
 };
 
 // chat.destroy() is fire-and-forget: it signals the native worker thread but
@@ -96,6 +103,21 @@ export const TEARDOWN_SETTLE_MS = 500;
 
 export const MULTIMODAL_CONTEXT_SIZE = 2048;
 
+// The rate the voice activity detector is told its input is in. Silero runs at
+// 16 kHz internally and the rate is fixed at load time, so every caller has to
+// feed it audio at exactly this rate (see resamplePcm) rather than whatever the
+// microphone happens to deliver — audio pushed at the wrong rate is played back
+// to the model time-stretched, which wrecks both detection and the durations
+// the silence/speech thresholds are expressed in.
+export const VAD_SAMPLE_RATE = 16000;
+
+// How long the user has to stay quiet before the detector calls the turn over.
+// The engine's own default (250 ms) fires while someone is still mid-sentence,
+// just thinking; ~0.7 s is the usual compromise between cutting people off and
+// making them wait. Everything else (threshold, minimum speech, pre-roll) keeps
+// the engine's defaults.
+export const VAD_MIN_SILENCE_MS = 700;
+
 export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
@@ -104,12 +126,14 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   const chatRef = useRef<Chat | undefined>(undefined);
   const ttsRef = useRef<TextToSpeech | undefined>(undefined);
   const sttRef = useRef<SpeechToText | undefined>(undefined);
+  const vadRef = useRef<VoiceActivityDetection | undefined>(undefined);
 
   // Bumped on every dispose. A createChat that resolves after its generation
   // passed must discard its instance instead of resurrecting a disposed chat.
   const chatGeneration = useRef(0);
   const ttsGeneration = useRef(0);
   const sttGeneration = useRef(0);
+  const vadGeneration = useRef(0);
 
   const nativeLoadRef = useRef<Promise<unknown> | undefined>(undefined);
 
@@ -508,10 +532,104 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     setState(s => ({ ...s, sttState: AiModelState.NotLoaded }));
   }, [enqueueTeardown]);
 
+  // Voice activity detection: a tiny Silero ONNX model that tells speech and
+  // silence apart, so a recording can end itself when the user stops talking
+  // instead of waiting for a tap. The voice assistant is built on it — that
+  // screen stays unavailable until one is loaded — while the input bar's
+  // dictation only uses it when there is one, and falls back to a manual stop.
+  const createVad = useCallback(async (opts: { model: Model }) => {
+    if (vadRef.current) {
+      return;
+    }
+
+    const { model } = opts;
+
+    if (!isVadPipeline(model.pipeline)) {
+      throw new Error(
+        `AiService: model ${model.id} (${model.name}) is not a VAD model`,
+      );
+    }
+
+    const generation = vadGeneration.current;
+    const previousLoad = nativeLoadRef.current;
+
+    const load = async () => {
+      if (previousLoad) {
+        await previousLoad;
+      }
+
+      if (generation !== vadGeneration.current || vadRef.current) {
+        return;
+      }
+
+      setState(s => ({ ...s, vadState: AiModelState.Loading }));
+
+      const missingPart = model.parts.find(
+        part => downloadedPartPath(model.id, part.fileName) === null,
+      );
+
+      if (missingPart) {
+        throw new Error(
+          `AiService: VAD file ${missingPart.fileName} missing for model ${model.id} (${model.name}) — re-download required`,
+        );
+      }
+
+      // Loaded from the model's own directory (…/models/<id>), the same
+      // folder-based source TTS and STT use — the loader resolves the Silero
+      // weights inside it (onnx/model.onnx, or model.onnx at the root).
+      const vad = await VoiceActivityDetection.load({
+        source: modelDirectoryPath(model.id),
+        sampleRate: VAD_SAMPLE_RATE,
+        minSilenceDurationMs: VAD_MIN_SILENCE_MS,
+      });
+
+      if (generation !== vadGeneration.current) {
+        try {
+          vad.destroy();
+        } catch (error) {
+          log('AiService superseded vad destroy failed', error, {
+            capture: true,
+          });
+        }
+        await sleep(TEARDOWN_SETTLE_MS);
+        return;
+      }
+
+      vadRef.current = vad;
+      setState(s => ({ ...s, vadState: AiModelState.Ready }));
+    };
+
+    const loadPromise = load();
+    nativeLoadRef.current = loadPromise.catch(() => undefined);
+
+    try {
+      await loadPromise;
+    } catch (error) {
+      log('AiService create vad', error, { capture: true });
+      if (generation === vadGeneration.current) {
+        setState(s => ({ ...s, vadState: AiModelState.Error }));
+      }
+      throw error;
+    }
+  }, []);
+
+  const disposeVad = useCallback(() => {
+    vadGeneration.current += 1;
+    const instance = vadRef.current;
+    vadRef.current = undefined;
+
+    if (instance) {
+      enqueueTeardown(() => instance.destroy());
+    }
+
+    setState(s => ({ ...s, vadState: AiModelState.NotLoaded }));
+  }, [enqueueTeardown]);
+
   const dispose = useCallback(() => {
     chatGeneration.current += 1;
     ttsGeneration.current += 1;
     sttGeneration.current += 1;
+    vadGeneration.current += 1;
     // Clear the refs BEFORE destroying so a throwing destroy() can't leave a
     // stale instance that blocks the next createChat()/createTts()/createStt().
     const chatInstance = chatRef.current;
@@ -520,6 +638,8 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     ttsRef.current = undefined;
     const sttInstance = sttRef.current;
     sttRef.current = undefined;
+    const vadInstance = vadRef.current;
+    vadRef.current = undefined;
 
     // The Chat can overlap a future chat load, so route its teardown through
     // the load chain (stop generation first, since only Chat streams).
@@ -548,6 +668,11 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       enqueueTeardown(() => sttInstance.destroy());
     }
 
+    // Fourth enqueue serializes behind the stt teardown on the same chain.
+    if (vadInstance) {
+      enqueueTeardown(() => vadInstance.destroy());
+    }
+
     setState(_initialState);
   }, [enqueueTeardown]);
 
@@ -557,12 +682,15 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       chat: chatRef,
       tts: ttsRef,
       stt: sttRef,
+      vad: vadRef,
       createChat,
       disposeChat,
       createTts,
       disposeTts,
       createStt,
       disposeStt,
+      createVad,
+      disposeVad,
       dispose,
     }),
     [
@@ -573,6 +701,8 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       disposeTts,
       createStt,
       disposeStt,
+      createVad,
+      disposeVad,
       dispose,
     ],
   );

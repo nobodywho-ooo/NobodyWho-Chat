@@ -84,6 +84,9 @@ export const isTtsPipeline = (pipeline: ModelPipeline): boolean =>
 export const isSttPipeline = (pipeline: ModelPipeline): boolean =>
   pipeline === ModelPipeline.speechToText;
 
+export const isVadPipeline = (pipeline: ModelPipeline): boolean =>
+  pipeline === ModelPipeline.voiceActivityDetection;
+
 // Only chat-capable pipelines may reach the chat backend; a non-chat model
 // (e.g. text-to-speech or speech-to-text) slipping through would be silently
 // loaded as a GGUF chat model and fail deep in the native layer — throw at the
@@ -92,7 +95,11 @@ export const toChatPipeline = (pipeline: ModelPipeline): ChatPipeline => {
   if (isChatPipeline(pipeline)) {
     return pipeline;
   }
-  if (isTtsPipeline(pipeline) || isSttPipeline(pipeline)) {
+  if (
+    isTtsPipeline(pipeline) ||
+    isSttPipeline(pipeline) ||
+    isVadPipeline(pipeline)
+  ) {
     throw new Error(`toChatPipeline: ${pipeline} is not a chat pipeline`);
   }
   return ModelPipeline.textGeneration;

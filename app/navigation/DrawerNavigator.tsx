@@ -17,7 +17,13 @@ import { isChatPipeline } from 'types';
 import { deleteConversation } from 'repositories';
 import { DrawerContentScreen } from 'screens';
 import { PlatformIcon, Text } from 'components';
-import { log, haptics, isIOS, capitalize } from 'helpers';
+import {
+  log,
+  haptics,
+  isIOS,
+  capitalize,
+  parameterCountLabel,
+} from 'helpers';
 import { useAppState, useConversations, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
 import { Spacings } from 'style';
@@ -133,15 +139,7 @@ const ChatHeaderTitle = ({ title }: { title: string }) => {
 
   const model = models.find(({ id }) => id === modelIdInUse);
   const modelName = model?.name;
-  const parameterCountBillions = model?.parameterCountBillions;
-  let parameterCountLabel: string | undefined = '';
-
-  if (parameterCountBillions !== undefined) {
-    parameterCountLabel =
-      parameterCountBillions >= 1
-        ? `(${parameterCountBillions}B)`
-        : `(${Math.round(parameterCountBillions * 1000)}M)`;
-  }
+  const parameterLabel = parameterCountLabel(model?.parameterCountBillions);
 
   return (
     <View style={styles.titleContainer}>
@@ -154,7 +152,7 @@ const ChatHeaderTitle = ({ title }: { title: string }) => {
           numberOfLines={1}
           style={{ color: colors.onSurfaceVariant }}
         >
-          {modelName} {parameterCountLabel}
+          {parameterLabel ? `${modelName} (${parameterLabel})` : modelName}
         </Text>
       ) : null}
     </View>

@@ -16,6 +16,7 @@ import {
   isChatPipeline,
   isSttPipeline,
   isTtsPipeline,
+  isVadPipeline,
 } from 'types';
 import {
   deleteModelDirectory,
@@ -124,6 +125,11 @@ export const useModelDownloader = () => {
         getAppState().sttModelIdInUse === undefined
       ) {
         await setAppState({ sttModelIdInUse: model.id });
+      } else if (
+        isVadPipeline(model.pipeline) &&
+        getAppState().vadModelIdInUse === undefined
+      ) {
+        await setAppState({ vadModelIdInUse: model.id });
       }
 
       await deleteModelDownload(model.id);

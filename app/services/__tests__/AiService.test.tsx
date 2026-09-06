@@ -6,6 +6,7 @@ import {
   mockFromPath,
   mockTtsLoad,
   mockSttConstruct,
+  mockVadLoad,
 } from 'jest/mock/node-modules';
 import { ModelPipeline } from 'types';
 
@@ -15,6 +16,8 @@ import {
   AiModelState,
   MULTIMODAL_CONTEXT_SIZE,
   TEARDOWN_SETTLE_MS,
+  VAD_MIN_SILENCE_MS,
+  VAD_SAMPLE_RATE,
 } from '../AiService';
 
 // TTS goes through nobodywho's TextToSpeech.load (mocked in jest/mock/node-modules);
@@ -51,6 +54,7 @@ beforeEach(() => {
   mockFromPath.mockReset();
   mockTtsLoad.mockReset();
   mockSttConstruct.mockReset();
+  mockVadLoad.mockReset();
 });
 
 const ttsModel = buildModel(9, {
@@ -63,6 +67,20 @@ const ttsModel = buildModel(9, {
       type: 'tts-file',
       path: '/models/9/onnx/vocoder.onnx',
       sizeGB: 0.1,
+    },
+  ],
+});
+
+const vadModel = buildModel(12, {
+  pipeline: ModelPipeline.voiceActivityDetection,
+  family: 'Silero',
+  parts: [
+    {
+      url: 'https://example.com/model.onnx',
+      fileName: 'model.onnx',
+      type: 'vad-file',
+      path: '/models/12/model.onnx',
+      sizeGB: 0.002,
     },
   ],
 });
@@ -628,4 +646,79 @@ test('dispose tears down both engines', async () => {
     await flushMicrotasks();
   });
   expect(tts.destroy).toHaveBeenCalledTimes(1);
+});
+
+test('createVad loads the detector from the model directory at its fixed rate', async () => {
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  await act(async () => {
+    await result.current.createVad({ model: vadModel });
+  });
+
+  // Folder-based source like TTS/STT; the rate is fixed at load time, so every
+  // caller has to resample its recording to it (see useSpeechService).
+  expect(mockVadLoad).toHaveBeenCalledWith({
+    source: '/mock-documents/models/12',
+    sampleRate: VAD_SAMPLE_RATE,
+    minSilenceDurationMs: VAD_MIN_SILENCE_MS,
+  });
+  expect(result.current.vadState).toBe(AiModelState.Ready);
+  expect(result.current.vad.current).toBeDefined();
+  // The chat slot is untouched.
+  expect(result.current.chatState).toBe(AiModelState.NotLoaded);
+});
+
+test('createVad refuses a non-VAD model', async () => {
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  await act(async () => {
+    await expect(result.current.createVad({ model })).rejects.toThrow(
+      /is not a VAD model/,
+    );
+  });
+
+  expect(mockVadLoad).not.toHaveBeenCalled();
+});
+
+test('createVad fails loudly when the VAD file is missing on disk', async () => {
+  const { File } = jest.requireMock('expo-file-system');
+  File.mockExists = false;
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  try {
+    await act(async () => {
+      await expect(
+        result.current.createVad({ model: vadModel }),
+      ).rejects.toThrow(/VAD file .* missing/);
+    });
+
+    expect(mockVadLoad).not.toHaveBeenCalled();
+    expect(result.current.vadState).toBe(AiModelState.Error);
+  } finally {
+    File.mockExists = true;
+  }
+});
+
+test('disposeVad destroys the detector via the teardown chain', async () => {
+  const { result } = renderHook(() => useAiService(), { wrapper });
+  await act(async () => {
+    await result.current.createVad({ model: vadModel });
+  });
+  const instance = result.current.vad.current;
+
+  act(() => result.current.disposeVad());
+  expect(result.current.vad.current).toBeUndefined();
+  expect(result.current.vadState).toBe(AiModelState.NotLoaded);
+
+  // The native destroy is deferred onto the load chain.
+  await act(async () => {
+    await flushMicrotasks();
+  });
+  expect(instance?.destroy).toHaveBeenCalledTimes(1);
+
+  // Wait out the settle delay the teardown chain schedules, so the suite doesn't
+  // end with its timer still pending.
+  await act(async () => {
+    await waitForTeardownSettle();
+  });
 });

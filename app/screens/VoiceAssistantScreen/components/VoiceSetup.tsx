@@ -58,6 +58,10 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
           status.isTtsReady,
           t('screens.voiceAssistant.setup.tts'),
         )}
+        {renderChecklistRow(
+          status.isVadReady,
+          t('screens.voiceAssistant.setup.vad'),
+        )}
       </View>
       <Text
         variant="caption"

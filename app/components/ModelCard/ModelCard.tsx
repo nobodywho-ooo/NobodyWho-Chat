@@ -3,7 +3,7 @@ import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
-import { getFamilyIcon } from 'helpers';
+import { getFamilyIcon, parameterCountLabel } from 'helpers';
 import { Model, ModelPipeline, pipelineLabel } from 'types';
 
 import { Text, fontSizes } from '../Text/Text';
@@ -115,10 +115,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
     ? 'downloading'
     : 'download';
 
-  const parameterCountLabel =
-    parameterCountBillions >= 1
-      ? `(${parameterCountBillions}B)`
-      : `(${Math.round(parameterCountBillions * 1000)}M)`;
+  const parameterLabel = parameterCountLabel(parameterCountBillions);
 
   return (
     <Pressable
@@ -147,13 +144,15 @@ export const ModelCard: React.FC<ModelCardProps> = ({
             >
               {name}
             </Text>
-            <Text
-              variant="body1"
-              bold
-              style={{ color: colors.onSurfaceVariant }}
-            >
-              {parameterCountLabel}
-            </Text>
+            {parameterLabel && (
+              <Text
+                variant="body1"
+                bold
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {`(${parameterLabel})`}
+              </Text>
+            )}
           </View>
           <View style={styles.pipelineContainer}>
             <PlatformIcon

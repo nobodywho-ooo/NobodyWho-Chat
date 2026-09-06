@@ -13,7 +13,8 @@ const MODELS_URL =
 export const useAvailableModels = () => {
   const { models: storedModels } = useModels();
   const { downloads } = useModelDownloads();
-  const { modelIdInUse, ttsModelIdInUse, sttModelIdInUse } = useAppState();
+  const { modelIdInUse, ttsModelIdInUse, sttModelIdInUse, vadModelIdInUse } =
+    useAppState();
 
   const [models, setModels] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -74,11 +75,17 @@ export const useAvailableModels = () => {
     [sttModelIdInUse, storedModels],
   );
 
+  const currentVadModel = useMemo(
+    () => find(pathEq(vadModelIdInUse, ['id']), storedModels),
+    [vadModelIdInUse, storedModels],
+  );
+
   return {
     availableModels,
     currentModel,
     currentTtsModel,
     currentSttModel,
+    currentVadModel,
     downloadedCount: downloadedModelIds.length,
     isLoading,
     hasError,

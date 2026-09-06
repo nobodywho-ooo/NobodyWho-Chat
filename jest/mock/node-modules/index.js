@@ -314,6 +314,7 @@ jest.mock('@shopify/flash-list', () => ({
 export const mockFromPath = jest.fn();
 export const mockTtsLoad = jest.fn();
 export const mockSttConstruct = jest.fn();
+export const mockVadLoad = jest.fn();
 export const mockDownloadModel = jest.fn(() => Promise.resolve('file://downloaded.gguf'));
 
 jest.mock('react-native-nobodywho', () => {
@@ -354,6 +355,20 @@ jest.mock('react-native-nobodywho', () => {
     })),
     destroy: jest.fn(),
   });
+  // Stand-in for the Silero voice activity detector: records the load options
+  // (via mockVadLoad) and returns an instance whose push() reports whatever a
+  // test queued on `instance.mockEvents`, defaulting to Silence, so the capture
+  // hooks run without the native ONNX runtime.
+  const makeVadInstance = () => {
+    const instance = {
+      mockEvents: [],
+      push: jest.fn(() => instance.mockEvents.shift() ?? 3),
+      finish: jest.fn(() => []),
+      segment: jest.fn(() => []),
+      destroy: jest.fn(),
+    };
+    return instance;
+  };
   return {
     Chat: { fromPath: (opts) => mockFromPath(opts) },
     TextToSpeech: { load: (opts) => mockTtsLoad(opts) },
@@ -362,6 +377,19 @@ jest.mock('react-native-nobodywho', () => {
         mockSttConstruct(opts);
         return makeSttInstance();
       },
+    },
+    VoiceActivityDetection: {
+      load: async (opts) => {
+        mockVadLoad(opts);
+        return makeVadInstance();
+      },
+    },
+    // Mirrors the generated enum's ordinals.
+    VoiceActivityDetectionEvent: {
+      Speech: 0,
+      SpeechStarted: 1,
+      SpeechEnded: 2,
+      Silence: 3,
     },
     Encoder: { fromPath: jest.fn() },
     CrossEncoder: { fromPath: jest.fn() },

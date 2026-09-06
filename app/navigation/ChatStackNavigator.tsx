@@ -16,6 +16,7 @@ import {
   isChatPipeline,
   isSttPipeline,
   isTtsPipeline,
+  isVadPipeline,
 } from 'types';
 import {
   DEFAULT_ASSISTANT_CONFIG,
@@ -133,6 +134,8 @@ export const ChatStackNavigator = () => {
     disposeTts,
     createStt,
     disposeStt,
+    createVad,
+    disposeVad,
   } = useAiService();
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
@@ -359,6 +362,26 @@ export const ChatStackNavigator = () => {
     }
   }, [createStt]);
 
+  const loadVadIfSelected = useCallback(async () => {
+    try {
+      const { vadModelIdInUse } = getAppState();
+
+      if (vadModelIdInUse === undefined) {
+        return;
+      }
+
+      const model = await getModelById(vadModelIdInUse);
+
+      if (model === undefined || !isVadPipeline(model.pipeline)) {
+        return;
+      }
+
+      await createVad({ model });
+    } catch (error) {
+      log('ChatStackNavigator vad load', error, { capture: true });
+    }
+  }, [createVad]);
+
   // --- Lifecycle triggers ----------------------------------------------------
 
   // Initial load. With no model in use there is no session to start —
@@ -369,7 +392,8 @@ export const ChatStackNavigator = () => {
     }
     loadTtsIfSelected();
     loadSttIfSelected();
-  }, [startSession, loadTtsIfSelected, loadSttIfSelected]);
+    loadVadIfSelected();
+  }, [startSession, loadTtsIfSelected, loadSttIfSelected, loadVadIfSelected]);
 
   // React to app-state changes: a model or assistant-config change tears down
   // the chat and rebuilds from scratch; a conversation-only change reloads just the history.
@@ -405,6 +429,13 @@ export const ChatStackNavigator = () => {
         }
       }
 
+      if (next.vadModelIdInUse !== prev.vadModelIdInUse) {
+        disposeVad();
+        if (next.vadModelIdInUse !== undefined) {
+          loadVadIfSelected();
+        }
+      }
+
       // Only model changes or chat-affecting config rebuild the chat — a
       // voice/language edit must not tear down the loaded chat model.
       const chatConfigChanged =
@@ -434,15 +465,18 @@ export const ChatStackNavigator = () => {
     disposeChat,
     disposeTts,
     disposeStt,
+    disposeVad,
     startSession,
     refreshChatHistory,
     loadTtsIfSelected,
     loadSttIfSelected,
+    loadVadIfSelected,
   ]);
 
   const unloadedForBackground = useRef(false);
   const ttsUnloadedForBackground = useRef(false);
   const sttUnloadedForBackground = useRef(false);
+  const vadUnloadedForBackground = useRef(false);
 
   useEffect(() => {
     const subscription = AppState.addEventListener(
@@ -464,6 +498,10 @@ export const ChatStackNavigator = () => {
             disposeStt();
             sttUnloadedForBackground.current = true;
           }
+          if (getAppState().vadModelIdInUse !== undefined) {
+            disposeVad();
+            vadUnloadedForBackground.current = true;
+          }
         } else if (nextState === 'active') {
           if (unloadedForBackground.current) {
             unloadedForBackground.current = false;
@@ -479,6 +517,10 @@ export const ChatStackNavigator = () => {
             sttUnloadedForBackground.current = false;
             loadSttIfSelected();
           }
+          if (vadUnloadedForBackground.current) {
+            vadUnloadedForBackground.current = false;
+            loadVadIfSelected();
+          }
         }
       },
     );
@@ -487,9 +529,11 @@ export const ChatStackNavigator = () => {
     disposeChat,
     disposeTts,
     disposeStt,
+    disposeVad,
     startSession,
     loadTtsIfSelected,
     loadSttIfSelected,
+    loadVadIfSelected,
   ]);
 
   const inUseModelName = models.find(m => m.id === modelIdInUse)?.name;

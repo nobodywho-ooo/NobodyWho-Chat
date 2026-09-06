@@ -1,0 +1,18 @@
+diff --git a/node_modules/expo-audio/ios/AudioModule.swift b/node_modules/expo-audio/ios/AudioModule.swift
+index d265606..733ec16 100644
+--- a/node_modules/expo-audio/ios/AudioModule.swift
++++ b/node_modules/expo-audio/ios/AudioModule.swift
+@@ -814,11 +814,11 @@ public class AudioModule: Module {
+       sessionOptions = categoryOptions
+     }
+ 
+-    if sessionOptions.isEmpty {
+-      try session.setCategory(category, mode: .default)
+-    } else {
+-      try session.setCategory(category, options: sessionOptions)
+-    }
++    // This patch is for when user is mic in voice assistant and then getting a vocal answer: it makes sure the volume of the answer is audible (without the fix we cannot hear anything)
++    try session.setCategory(category, mode: .default, options: sessionOptions)
+   }
+ 
+   private func activateSession() throws {
