@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 
-import { ToolCallModal } from '../ToolCallModal';
+import { ToolCallModal } from '../AssistantMessage/ToolCallModal';
 
 const baseProps = {
   name: 'get_weather',

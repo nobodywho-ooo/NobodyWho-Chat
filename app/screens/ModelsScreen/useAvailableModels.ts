@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { find, map, pathEq, prop } from 'ramda';
 import { useAppState, useModelDownloads, useModels } from 'hooks';
-import { Model, ModelPipeline } from 'types';
 import { filterModelsByDeviceMemory } from 'helpers';
+import { Model } from 'types';
 
 const MODELS_URL =
-  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.0.0.json';
+  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.1.0.json';
 
 // Fetches the catalogue, filters it to what the device can run, and derives the
 // three lists the screen renders: the model in use, how many are downloaded,
@@ -13,7 +13,8 @@ const MODELS_URL =
 export const useAvailableModels = () => {
   const { models: storedModels } = useModels();
   const { downloads } = useModelDownloads();
-  const { modelIdInUse, ttsModelIdInUse } = useAppState();
+  const { modelIdInUse, ttsModelIdInUse, sttModelIdInUse, vadModelIdInUse } =
+    useAppState();
 
   const [models, setModels] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -26,8 +27,7 @@ export const useAvailableModels = () => {
     try {
       const response = await fetch(MODELS_URL);
       const data: Model[] = await response.json();
-      const chatModels = data.filter(model => model.pipeline !== ModelPipeline.textToSpeech);
-      setModels(await filterModelsByDeviceMemory(chatModels));
+      setModels(await filterModelsByDeviceMemory(data));
     } catch {
       setHasError(true);
     } finally {
@@ -70,10 +70,22 @@ export const useAvailableModels = () => {
     [ttsModelIdInUse, storedModels],
   );
 
+  const currentSttModel = useMemo(
+    () => find(pathEq(sttModelIdInUse, ['id']), storedModels),
+    [sttModelIdInUse, storedModels],
+  );
+
+  const currentVadModel = useMemo(
+    () => find(pathEq(vadModelIdInUse, ['id']), storedModels),
+    [vadModelIdInUse, storedModels],
+  );
+
   return {
     availableModels,
     currentModel,
     currentTtsModel,
+    currentSttModel,
+    currentVadModel,
     downloadedCount: downloadedModelIds.length,
     isLoading,
     hasError,

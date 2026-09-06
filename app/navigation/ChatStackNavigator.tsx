@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {
   createContext,
   useCallback,
@@ -12,7 +11,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { AppState, AppStateStatus, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SamplerPresets } from 'react-native-nobodywho';
-import { DisplayMessage, isChatPipeline, isTtsPipeline } from 'types';
+import {
+  DisplayMessage,
+  isChatPipeline,
+  isSttPipeline,
+  isTtsPipeline,
+  isVadPipeline,
+} from 'types';
 import {
   DEFAULT_ASSISTANT_CONFIG,
   getAppState,
@@ -33,7 +38,7 @@ import {
 } from 'helpers';
 import { PlatformIcon } from 'components';
 import { useAppState, useModels, useStyled } from 'hooks';
-import { useAiService } from 'services';
+import { subscribeConversationSync, useAiService } from 'services';
 import {
   ChatScreen,
   CustomizeAssistantScreen,
@@ -121,8 +126,17 @@ export const ChatStackNavigator = () => {
   const { colors } = useStyled();
   const { models, loading: modelsLoading } = useModels();
   const { modelIdInUse } = useAppState();
-  const { chat, createChat, disposeChat, createTts, disposeTts } =
-    useAiService();
+  const {
+    chat,
+    createChat,
+    disposeChat,
+    createTts,
+    disposeTts,
+    createStt,
+    disposeStt,
+    createVad,
+    disposeVad,
+  } = useAiService();
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
   const [chatHistory, setChatHistory] = useState<DisplayMessage[]>([]);
@@ -262,23 +276,111 @@ export const ChatStackNavigator = () => {
     setAppState({ conversationIdInUse: id });
   }, []);
 
-  const loadTtsIfSelected = useCallback(async () => {
-    // TODO: uncomment when TTS is ready
-    return;
-
-    // const { ttsModelIdInUse } = getAppState();
-    // if (ttsModelIdInUse === undefined) {
-    //   return;
-    // }
-    // const model = await getModelById(ttsModelIdInUse);
-    // if (model === undefined || !isTtsPipeline(model.pipeline)) {
-    //   return;
-    // }
-    // await createTts({ model }).catch(error =>
-    //   log('ChatStackNavigator tts load', error, { capture: true }),
-    // );
-    // }, [createTts]);
+  // Reload only the displayed history for a conversation, without touching the
+  // native chat. Used for a voice turn: VoiceAssistantScreen drives our shared
+  // chat, so its context is already current — only the on-screen messages need
+  // to catch up.
+  const reloadDisplayHistory = useCallback(async (id: number) => {
+    try {
+      const messages = await getMessagesByConversationId(id);
+      setChatHistory(toChatHistory(messages));
+      setLoadedConversationId(id);
+    } catch (error) {
+      log('ChatStackNavigator voice history reload', error, { capture: true });
+    }
   }, []);
+
+  // A voice turn persisted messages to `id`. If it started a brand-new
+  // conversation, adopt it as in-use (for the drawer and next launch), marking
+  // it self-created so the app-state subscription below skips its native reset —
+  // the shared chat already holds the turn. Either way, refresh the display.
+  const handleConversationSynced = useCallback(
+    (id: number) => {
+      if (getAppState().conversationIdInUse !== id) {
+        selfCreatedConversationIdRef.current = id;
+        setAppState({ conversationIdInUse: id });
+      }
+      reloadDisplayHistory(id);
+    },
+    [reloadDisplayHistory],
+  );
+
+  useEffect(
+    () => subscribeConversationSync(handleConversationSynced),
+    [handleConversationSynced],
+  );
+
+  // Both loaders are called fire-and-forget, so every await inside them has to
+  // be guarded: the model lookup opens the database lazily and can reject when
+  // the handle is closed or the tables are being rebuilt, which is exactly what
+  // a foreground transition racing a reset looks like.
+  const loadTtsIfSelected = useCallback(async () => {
+    try {
+      const { ttsModelIdInUse, assistantConfig = DEFAULT_ASSISTANT_CONFIG } =
+        getAppState();
+
+      if (ttsModelIdInUse === undefined) {
+        return;
+      }
+
+      const model = await getModelById(ttsModelIdInUse);
+
+      if (model === undefined || !isTtsPipeline(model.pipeline)) {
+        return;
+      }
+      // Voice/language were resolved and stored when this model was selected (see
+      // resolveTtsPrefs at the selection sites): a Supertonic model has a
+      // concrete pair, any other engine has none. So read them straight from the
+      // config — undefined lets the engine keep its own defaults.
+      await createTts({
+        model,
+        voice: assistantConfig.ttsVoice,
+        language: assistantConfig.ttsLanguage,
+      });
+    } catch (error) {
+      log('ChatStackNavigator tts load', error, { capture: true });
+    }
+  }, [createTts]);
+
+  const loadSttIfSelected = useCallback(async () => {
+    try {
+      const { sttModelIdInUse } = getAppState();
+
+      if (sttModelIdInUse === undefined) {
+        return;
+      }
+
+      const model = await getModelById(sttModelIdInUse);
+
+      if (model === undefined || !isSttPipeline(model.pipeline)) {
+        return;
+      }
+
+      await createStt({ model });
+    } catch (error) {
+      log('ChatStackNavigator stt load', error, { capture: true });
+    }
+  }, [createStt]);
+
+  const loadVadIfSelected = useCallback(async () => {
+    try {
+      const { vadModelIdInUse } = getAppState();
+
+      if (vadModelIdInUse === undefined) {
+        return;
+      }
+
+      const model = await getModelById(vadModelIdInUse);
+
+      if (model === undefined || !isVadPipeline(model.pipeline)) {
+        return;
+      }
+
+      await createVad({ model });
+    } catch (error) {
+      log('ChatStackNavigator vad load', error, { capture: true });
+    }
+  }, [createVad]);
 
   // --- Lifecycle triggers ----------------------------------------------------
 
@@ -289,23 +391,61 @@ export const ChatStackNavigator = () => {
       startSession();
     }
     loadTtsIfSelected();
-  }, [startSession, loadTtsIfSelected]);
+    loadSttIfSelected();
+    loadVadIfSelected();
+  }, [startSession, loadTtsIfSelected, loadSttIfSelected, loadVadIfSelected]);
 
   // React to app-state changes: a model or assistant-config change tears down
   // the chat and rebuilds from scratch; a conversation-only change reloads just the history.
   useEffect(() => {
     return subscribeAppState((next, prev) => {
+      // Compare effective configs, the way mountModelAndCreateChat resolves
+      // them. assistantConfig stays undefined until something writes it, so
+      // comparing raw values would read the first write — selecting a voice
+      // model stamps the defaults in — as a change to every field.
+      const nextConfig = next.assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
+      const prevConfig = prev.assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
+
+      // Supertonic voice/language live in assistantConfig but are load-time TTS
+      // options, so changing them means reloading only the TTS engine.
+      const ttsConfigChanged =
+        nextConfig.ttsVoice !== prevConfig.ttsVoice ||
+        nextConfig.ttsLanguage !== prevConfig.ttsLanguage;
+
       if (next.ttsModelIdInUse !== prev.ttsModelIdInUse) {
         disposeTts();
         if (next.ttsModelIdInUse !== undefined) {
           loadTtsIfSelected();
         }
+      } else if (next.ttsModelIdInUse !== undefined && ttsConfigChanged) {
+        disposeTts();
+        loadTtsIfSelected();
       }
 
-      if (
-        next.modelIdInUse !== prev.modelIdInUse ||
-        next.assistantConfig !== prev.assistantConfig
-      ) {
+      if (next.sttModelIdInUse !== prev.sttModelIdInUse) {
+        disposeStt();
+        if (next.sttModelIdInUse !== undefined) {
+          loadSttIfSelected();
+        }
+      }
+
+      if (next.vadModelIdInUse !== prev.vadModelIdInUse) {
+        disposeVad();
+        if (next.vadModelIdInUse !== undefined) {
+          loadVadIfSelected();
+        }
+      }
+
+      // Only model changes or chat-affecting config rebuild the chat — a
+      // voice/language edit must not tear down the loaded chat model.
+      const chatConfigChanged =
+        nextConfig.temperature !== prevConfig.temperature ||
+        nextConfig.systemPrompt !== prevConfig.systemPrompt ||
+        nextConfig.thinking !== prevConfig.thinking ||
+        nextConfig.toolCalling !== prevConfig.toolCalling ||
+        nextConfig.contextSize !== prevConfig.contextSize;
+
+      if (next.modelIdInUse !== prev.modelIdInUse || chatConfigChanged) {
         disposeChat();
         if (next.modelIdInUse !== undefined) {
           startSession();
@@ -324,13 +464,20 @@ export const ChatStackNavigator = () => {
   }, [
     disposeChat,
     disposeTts,
+    disposeStt,
+    disposeVad,
     startSession,
     refreshChatHistory,
     loadTtsIfSelected,
+    loadSttIfSelected,
+    loadVadIfSelected,
   ]);
 
   const unloadedForBackground = useRef(false);
   const ttsUnloadedForBackground = useRef(false);
+  const sttUnloadedForBackground = useRef(false);
+  const vadUnloadedForBackground = useRef(false);
+
   useEffect(() => {
     const subscription = AppState.addEventListener(
       'change',
@@ -347,6 +494,14 @@ export const ChatStackNavigator = () => {
             disposeTts();
             ttsUnloadedForBackground.current = true;
           }
+          if (getAppState().sttModelIdInUse !== undefined) {
+            disposeStt();
+            sttUnloadedForBackground.current = true;
+          }
+          if (getAppState().vadModelIdInUse !== undefined) {
+            disposeVad();
+            vadUnloadedForBackground.current = true;
+          }
         } else if (nextState === 'active') {
           if (unloadedForBackground.current) {
             unloadedForBackground.current = false;
@@ -358,11 +513,28 @@ export const ChatStackNavigator = () => {
             ttsUnloadedForBackground.current = false;
             loadTtsIfSelected();
           }
+          if (sttUnloadedForBackground.current) {
+            sttUnloadedForBackground.current = false;
+            loadSttIfSelected();
+          }
+          if (vadUnloadedForBackground.current) {
+            vadUnloadedForBackground.current = false;
+            loadVadIfSelected();
+          }
         }
       },
     );
     return () => subscription.remove();
-  }, [disposeChat, disposeTts, startSession, loadTtsIfSelected]);
+  }, [
+    disposeChat,
+    disposeTts,
+    disposeStt,
+    disposeVad,
+    startSession,
+    loadTtsIfSelected,
+    loadSttIfSelected,
+    loadVadIfSelected,
+  ]);
 
   const inUseModelName = models.find(m => m.id === modelIdInUse)?.name;
   const loadingMessage = inUseModelName

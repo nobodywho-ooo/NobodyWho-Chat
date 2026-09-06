@@ -47,8 +47,8 @@ export enum ModelPipeline {
   featureExtraction = "featureExtraction",
   textRanking = "textRanking",
   textToSpeech = "textToSpeech",
-  speechToText = "speech-to-text",
-  automaticSpeechRecognition = "automatic-speech-recognition"
+  speechToText = "speechToText",
+  voiceActivityDetection = "voiceActivityDetection"
 }
 
 export const pipelineLabel: Record<ModelPipeline, string> = {
@@ -61,7 +61,7 @@ export const pipelineLabel: Record<ModelPipeline, string> = {
   [ModelPipeline.textRanking]: 'Text ranking',
   [ModelPipeline.textToSpeech]: 'Text to Speech',
   [ModelPipeline.speechToText]: 'Speech to Text',
-  [ModelPipeline.automaticSpeechRecognition]: 'Automatic Speech Recognition',
+  [ModelPipeline.voiceActivityDetection]: 'Voice Activity Detection',
 };
 
 export type ChatPipeline =
@@ -81,14 +81,25 @@ export const isChatPipeline = (
 export const isTtsPipeline = (pipeline: ModelPipeline): boolean =>
   pipeline === ModelPipeline.textToSpeech;
 
+export const isSttPipeline = (pipeline: ModelPipeline): boolean =>
+  pipeline === ModelPipeline.speechToText;
+
+export const isVadPipeline = (pipeline: ModelPipeline): boolean =>
+  pipeline === ModelPipeline.voiceActivityDetection;
+
 // Only chat-capable pipelines may reach the chat backend; a non-chat model
-// (e.g. text-to-speech) slipping through would be silently loaded as a GGUF
-// chat model and fail deep in the native layer — throw at the boundary instead.
+// (e.g. text-to-speech or speech-to-text) slipping through would be silently
+// loaded as a GGUF chat model and fail deep in the native layer — throw at the
+// boundary instead.
 export const toChatPipeline = (pipeline: ModelPipeline): ChatPipeline => {
   if (isChatPipeline(pipeline)) {
     return pipeline;
   }
-  if (pipeline === ModelPipeline.textToSpeech) {
+  if (
+    isTtsPipeline(pipeline) ||
+    isSttPipeline(pipeline) ||
+    isVadPipeline(pipeline)
+  ) {
     throw new Error(`toChatPipeline: ${pipeline} is not a chat pipeline`);
   }
   return ModelPipeline.textGeneration;

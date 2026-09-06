@@ -133,7 +133,12 @@
       "photo": "Photo",
       "camera": "Camera",
       "audio": "Audio",
-      "unselect": "Unselect"
+      "voiceAssistant": "Voice Assistant",
+      "unselect": "Unselect",
+      "dictate": "Dictate",
+      "stopDictation": "Stop dictation",
+      "microphoneDeniedTitle": "Microphone access needed",
+      "microphoneDeniedMessage": "Allow microphone access in Settings to dictate your messages."
     },
     "cameraCapture": {
       "permission": "Camera access is needed to take a photo.",
@@ -145,6 +150,7 @@
       "copy": "Copy",
       "playAudio": "Play audio",
       "pauseAudio": "Pause audio",
+      "stopAudio": "Stop audio",
       "viewImage": "View image",
       "closeImage": "Close image",
       "thinking": "Thinking…",
@@ -181,12 +187,34 @@
       "settings": "Settings",
       "changeModel": "Change model"
     },
+    "voiceAssistant": {
+      "title": "Voice Assistant",
+      "start": "Start listening",
+      "stop": "Stop",
+      "status": {
+        "idle": "Tap to speak",
+        "listening": "Listening… stop when you’re done",
+        "transcribing": "Transcribing",
+        "thinking": "Thinking",
+        "speaking": "Speaking…",
+        "error": "Something went wrong — tap to try again"
+      },
+      "setup": {
+        "title": "Set up voice chat",
+        "description": "Hands-free chat needs four models loaded at once:",
+        "chat": "Chat model",
+        "stt": "Speech-to-text model",
+        "tts": "Text-to-speech model",
+        "vad": "Voice detection model",
+        "hint": "Download and activate one of each, then come back."
+      }
+    },
     "settings": {
       "app": "App",
       "models": "Models",
       "manageYourModels": "Manage your models",
       "customize": "Customize",
-      "customizeSubtitle": "Configure token generation",
+      "customizeSubtitle": "Configure your assistant",
       "about": "About",
       "terms": "Terms & Conditions",
       "termsSubtitle": "Read our terms of use",
@@ -196,8 +224,10 @@
       "github": "Github"
     },
     "models": {
-      "inUse": "In use",
-      "voiceInUse": "Voice in use",
+      "textModelInUse": "Text model in use",
+      "voiceModelInUse": "Voice model in use",
+      "transcriptionModelInUse": "Transcription model in use",
+      "voiceDetectionModelInUse": "Voice detection model in use",
       "readyToUse": "Ready to use",
       "downloaded": "Downloaded",
       "modelCount_one": "{{count}} model",
@@ -231,7 +261,13 @@
       "maxTokens": "Max tokens",
       "maxTokensSubtitle": "Context size of the conversation",
       "decreaseMaxTokens": "Decrease max tokens",
-      "increaseMaxTokens": "Increase max tokens"
+      "increaseMaxTokens": "Increase max tokens",
+      "voice": "Voice",
+      "voiceSubtitle": "The speaking voice used to read messages aloud",
+      "voiceMale": "Male {{index}}",
+      "voiceFemale": "Female {{index}}",
+      "language": "Language",
+      "languageSubtitle": "The language the voice speaks"
     },
     "chat": {
       "generationFailed": "Something went wrong while generating a response.",
@@ -240,6 +276,12 @@
     "loadingScreen": {
       "loadingModel": "Loading {{model}}…",
       "loadingApp": "App is loading..."
+    },
+    "errorScreen": {
+      "resetData": "Reset app data",
+      "resetConfirmTitle": "Reset app data?",
+      "resetConfirmMessage": "This permanently erases your chat history and the list of downloaded models, then restarts the app. This can't be undone.",
+      "resetConfirm": "Reset"
     }
   }
 }

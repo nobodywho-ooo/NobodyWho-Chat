@@ -36,6 +36,31 @@ test('renders correctly ModelCard', () => {
   expect(tree).toMatchSnapshot();
 });
 
+test('labels a sub-million parameter count in thousands', () => {
+  // A voice-detection model is ~300K parameters; the millions-only label used
+  // to flatten every one of them to "(0M)".
+  const { getByText } = render(
+    <ModelCard
+      model={{
+        ...mockModel,
+        parameterCountBillions: 0.000309,
+        pipeline: ModelPipeline.voiceActivityDetection,
+      }}
+    />,
+  );
+
+  expect(getByText('(309K)')).toBeTruthy();
+});
+
+test('drops the parameter label for a model with no known count', () => {
+  const { queryByText } = render(
+    <ModelCard model={{ ...mockModel, parameterCountBillions: 0 }} />,
+  );
+
+  expect(queryByText('(0M)')).toBeNull();
+  expect(queryByText('(0K)')).toBeNull();
+});
+
 test('renders correctly ModelCard when model is downloading', () => {
   const tree = render(
     <ModelCard model={mockModel} downloadProgress={0.4} />,

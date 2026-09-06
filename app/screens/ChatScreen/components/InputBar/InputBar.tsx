@@ -1,14 +1,21 @@
 import React, { useEffect, useRef } from 'react';
-import { View, TextInput, StyleProp, ViewStyle } from 'react-native';
+import {
+  ActivityIndicator,
+  View,
+  TextInput,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { useStyled } from 'hooks';
 import { useTheme } from 'context';
 import { IconButton, IconButtonIconProps, Text } from 'components';
+import { useDrawerCoordination } from 'navigation';
+import { haptics } from 'helpers';
 import { Theme } from 'types';
 
 import { styles, INPUT_BAR_HEIGHT } from './InputBar.styles';
-import { haptics } from 'helpers';
 
 const gradientColors: Record<Theme, string[]> = {
   light: ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.9)'],
@@ -28,7 +35,7 @@ interface InputBarProps {
   onFocus?: () => void;
   onBlur?: () => void;
   style?: StyleProp<ViewStyle>;
-  topAccessory?: React.ReactNode;
+  messageStarters?: React.ReactNode;
   showImageAttach?: boolean;
   showAudioAttach?: boolean;
   imageSource?: ImageAttachSource;
@@ -36,6 +43,11 @@ interface InputBarProps {
   onAttachImage?: () => void;
   onAttachCamera?: () => void;
   onAttachAudio?: () => void;
+  showDictation?: boolean;
+  isRecording?: boolean;
+  isTranscribing?: boolean;
+  onStartDictation?: () => void;
+  onStopDictation?: () => void;
 }
 
 export const InputBar: React.FC<InputBarProps> & { height: number } = ({
@@ -49,7 +61,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   onFocus,
   onBlur,
   style,
-  topAccessory,
+  messageStarters,
   showImageAttach = false,
   showAudioAttach = false,
   imageSource,
@@ -57,10 +69,16 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   onAttachImage,
   onAttachCamera,
   onAttachAudio,
+  showDictation = false,
+  isRecording = false,
+  isTranscribing = false,
+  onStartDictation,
+  onStopDictation,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const theme = useTheme();
+  const { open: openDrawer } = useDrawerCoordination();
 
   const canAttach = showImageAttach || showAudioAttach;
   const showToggle = canAttach && !isStreaming;
@@ -108,6 +126,40 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
     borderColor: colors.border,
     borderWidth: 1,
   };
+
+  const attachButtonIcon: IconButtonIconProps = expanded
+    ? { iosIconName: 'xmark', androidIconName: 'close' }
+    : hasAttachment
+      ? {
+          iosIconName: 'paperclip',
+          androidIconName: 'attach_file',
+        }
+      : { iosIconName: 'plus', androidIconName: 'add' };
+  const transcribingIconButton: IconButtonIconProps = isRecording
+    ? {
+        iosIconName: 'stop.fill',
+        androidIconName: 'stop',
+      }
+    : { iosIconName: 'mic', androidIconName: 'mic' };
+  const voiceAssistantIconButton: IconButtonIconProps = {
+    iosIconName: 'waveform',
+    androidIconName: 'graphic_eq',
+  };
+
+  const attachButtonAccessibilityLabel = t(
+    expanded ? 'components.inputBar.closeAttach' : 'components.inputBar.attach',
+  );
+  const transcribingIconAccessibilityLabel = t(
+    isRecording
+      ? 'components.inputBar.stopDictation'
+      : 'components.inputBar.dictate',
+  );
+  const transcribingIconColor = isRecording
+    ? colors.dangerContent
+    : colors.onSurface;
+  const transcribingIconBackgroundColor = isRecording
+    ? colors.dangerSurface
+    : colors.surfaceContainer;
 
   const renderAttachButton = ({
     icon,
@@ -169,7 +221,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
 
   return (
     <View style={styles.mainContainer}>
-      {topAccessory}
+      {messageStarters}
       {expanded && (
         <View style={[styles.attachOptionsList, extraStyle]}>
           {showPhoto &&
@@ -227,26 +279,6 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
           style={styles.topGradient}
         />
         <View style={[styles.inputBarContainer, extraStyle]}>
-          <View style={styles.attachMainContainer}>
-            {showToggle &&
-              renderAttachButton({
-                icon: expanded
-                  ? { iosIconName: 'xmark', androidIconName: 'close' }
-                  : hasAttachment
-                    ? {
-                        iosIconName: 'paperclip',
-                        androidIconName: 'attach_file',
-                      }
-                    : { iosIconName: 'plus', androidIconName: 'add' },
-                active: !expanded && hasAttachment,
-                onPress: toggleAttach,
-                accessibilityLabel: t(
-                  expanded
-                    ? 'components.inputBar.closeAttach'
-                    : 'components.inputBar.attach',
-                ),
-              })}
-          </View>
           <TextInput
             style={[styles.textInput, { color: colors.onSurface }]}
             placeholder={t('components.inputBar.placeholder')}
@@ -257,12 +289,58 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
             onBlur={onBlur}
             multiline
           />
-          <InputBarAction
-            isStreaming={isStreaming}
-            value={value}
-            onSend={handleSend}
-            onStop={onStop}
-          />
+          <View style={styles.inputBarContainerBottomPart}>
+            <View style={styles.inputBarContainerBottomPartLeft}>
+              <View style={styles.attachMainContainer}>
+                {showToggle &&
+                  renderAttachButton({
+                    icon: attachButtonIcon,
+                    active: !expanded && hasAttachment,
+                    onPress: toggleAttach,
+                    accessibilityLabel: attachButtonAccessibilityLabel,
+                  })}
+              </View>
+
+              {showDictation &&
+                (!isStreaming || isRecording || isTranscribing) && (
+                  <View style={styles.transcriptionContainer}>
+                    {isTranscribing ? (
+                      <View style={styles.transcriptionLoaderContainer}>
+                        <ActivityIndicator
+                          size="small"
+                          color={colors.onSurface}
+                        />
+                      </View>
+                    ) : (
+                      <IconButton
+                        icon={transcribingIconButton}
+                        onPress={
+                          isRecording ? onStopDictation : onStartDictation
+                        }
+                        size={20}
+                        color={transcribingIconColor}
+                        backgroundColor={transcribingIconBackgroundColor}
+                        accessibilityLabel={transcribingIconAccessibilityLabel}
+                      />
+                    )}
+                  </View>
+                )}
+              <IconButton
+                icon={voiceAssistantIconButton}
+                onPress={() => openDrawer('right')}
+                size={20}
+                color={colors.onSurface}
+                backgroundColor={colors.surfaceContainer}
+                accessibilityLabel={t('components.inputBar.voiceAssistant')}
+              />
+            </View>
+            <InputBarAction
+              isStreaming={isStreaming}
+              value={value}
+              onSend={handleSend}
+              onStop={onStop}
+            />
+          </View>
         </View>
       </View>
     </View>

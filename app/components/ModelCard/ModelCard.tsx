@@ -1,26 +1,31 @@
 import React, { useCallback } from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
+import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
-import { getFamilyIcon } from 'helpers';
+import { getFamilyIcon, parameterCountLabel } from 'helpers';
 import { Model, ModelPipeline, pipelineLabel } from 'types';
+
 import { Text, fontSizes } from '../Text/Text';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
 import { Tag } from '../Tag/Tag';
 
 import styles from './ModelCard.styles';
-import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
 
 const HIGH_CPU_USAGE_SIZE_GB = 2;
 
-const pipelineIcon: Record<
-  ModelPipeline,
-  {
-    iosIconName: SFSymbolProps['name'];
-    androidIconName: MaterialSymbolProps['name'];
-  }
-> = {
+type PipelineIcon = {
+  iosIconName: SFSymbolProps['name'];
+  androidIconName: MaterialSymbolProps['name'];
+};
+
+const DEFAULT_PIPELINE_ICON: PipelineIcon = {
+  iosIconName: 'shippingbox',
+  androidIconName: 'category',
+};
+
+const pipelineIcon: Record<ModelPipeline, PipelineIcon> = {
   [ModelPipeline.textGeneration]: {
     iosIconName: 'text.bubble',
     androidIconName: 'chat',
@@ -53,15 +58,13 @@ const pipelineIcon: Record<
     iosIconName: 'speaker.wave.2',
     androidIconName: 'text_to_speech',
   },
-  // TODO: update icons
   [ModelPipeline.speechToText]: {
-    iosIconName: 'speaker.wave.2',
-    androidIconName: 'text_to_speech',
+    iosIconName: 'microphone',
+    androidIconName: 'mic',
   },
-  // TODO: update icons
-  [ModelPipeline.automaticSpeechRecognition]: {
-    iosIconName: 'speaker.wave.2',
-    androidIconName: 'text_to_speech',
+  [ModelPipeline.voiceActivityDetection]: {
+    iosIconName: 'waveform.badge.mic',
+    androidIconName: 'record_voice_over',
   },
 };
 
@@ -97,9 +100,9 @@ export const ModelCard: React.FC<ModelCardProps> = ({
     languages,
   } = model;
   const isDownloading = downloadProgress !== undefined;
-
   const FamilyIcon = getFamilyIcon(family);
   const showDownloadIcon = !isDownloaded && !isSelected && !deleteMode;
+  const icon = pipelineIcon[pipeline] ?? DEFAULT_PIPELINE_ICON;
 
   const handlePress = useCallback(() => {
     onPress?.(model);
@@ -112,10 +115,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
     ? 'downloading'
     : 'download';
 
-  const parameterCountLabel =
-    parameterCountBillions >= 1
-      ? `(${parameterCountBillions}B)`
-      : `(${Math.round(parameterCountBillions * 1000)}M)`;
+  const parameterLabel = parameterCountLabel(parameterCountBillions);
 
   return (
     <Pressable
@@ -144,18 +144,20 @@ export const ModelCard: React.FC<ModelCardProps> = ({
             >
               {name}
             </Text>
-            <Text
-              variant="body1"
-              bold
-              style={{ color: colors.onSurfaceVariant }}
-            >
-              {parameterCountLabel}
-            </Text>
+            {parameterLabel && (
+              <Text
+                variant="body1"
+                bold
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {`(${parameterLabel})`}
+              </Text>
+            )}
           </View>
           <View style={styles.pipelineContainer}>
             <PlatformIcon
-              iosIconName={pipelineIcon[pipeline].iosIconName}
-              androidIconName={pipelineIcon[pipeline].androidIconName}
+              iosIconName={icon.iosIconName}
+              androidIconName={icon.androidIconName}
               size={fontSizes.caption}
               color={colors.onSurface}
             />

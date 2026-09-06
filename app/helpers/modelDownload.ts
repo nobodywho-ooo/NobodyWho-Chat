@@ -1,6 +1,7 @@
 import { Directory, File, FileMode, Paths } from 'expo-file-system';
 
 import { toPlainPath } from './fileUri';
+import { log } from './log';
 
 // Downloaded model files live under <documents>/models/<modelId> — one
 // directory per model. Parts reconstruct the model's own file tree inside it
@@ -46,6 +47,42 @@ const modelDirectory = (modelId: number): Directory =>
 // (e.g. Tts.load's `source`) receive.
 export const modelDirectoryPath = (modelId: number): string =>
   toPlainPath(modelDirectory(modelId).uri);
+
+// Downloaded Supertonic models ship their speaker presets as individual JSON
+// files under <model dir>/voice_styles (e.g. "M1.json" … "F5.json"). Returns
+// the preset codes (basenames without ".json"), ordered male-first then by
+// number so the picker reads M1…M5, F1…F5. Returns [] when the folder is absent
+// (model not downloaded, or a model that ships no presets) or unreadable.
+const VOICE_STYLES_DIR_NAME = 'voice_styles';
+const VOICE_STYLE_EXTENSION = '.json';
+
+// Male presets sort before female; any other prefix sinks to the end.
+const voiceStyleRank = (code: string): number => {
+  const rank = ['M', 'F'].indexOf(code.charAt(0).toUpperCase());
+  return rank === -1 ? Number.MAX_SAFE_INTEGER : rank;
+};
+
+export const listVoiceStyles = (modelId: number): string[] => {
+  const dir = new Directory(modelDirectory(modelId), VOICE_STYLES_DIR_NAME);
+  if (!dir.exists) {
+    return [];
+  }
+  try {
+    return dir
+      .list()
+      .map(entry => entry.name)
+      .filter(name => name.toLowerCase().endsWith(VOICE_STYLE_EXTENSION))
+      .map(name => name.slice(0, -VOICE_STYLE_EXTENSION.length))
+      .sort(
+        (a, b) =>
+          voiceStyleRank(a) - voiceStyleRank(b) ||
+          a.localeCompare(b, undefined, { numeric: true }),
+      );
+  } catch (error) {
+    log('listVoiceStyles', error, { capture: true });
+    return [];
+  }
+};
 
 // Part fileNames come from the remote catalogue, which is parsed without
 // validation — refuse anything that could resolve outside the model directory.

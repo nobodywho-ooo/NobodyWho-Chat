@@ -10,6 +10,7 @@ import * as Sentry from '@sentry/react-native';
 import { ThemeProvider, isDarkModeEnabled } from 'context';
 import {
   initDatabase,
+  resetDatabase,
   hydrateAppState,
   getAppState,
   setAppState,
@@ -19,7 +20,7 @@ import { log } from 'helpers';
 import { useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
-import { DrawerNavigator } from 'navigation';
+import { RootDrawerNavigator } from 'navigation';
 import { useTranslation } from 'react-i18next';
 
 const unWantedError =
@@ -97,7 +98,7 @@ function AppContent() {
         translucent
       />
       <Sentry.NavigationContainer theme={navigationTheme}>
-        <DrawerNavigator />
+        <RootDrawerNavigator />
       </Sentry.NavigationContainer>
     </>
   );
@@ -107,7 +108,26 @@ function AppContent() {
 // database reset). Clear stale ids so the app degrades to the select-a-model
 // or empty-chat flows instead of dead-ending on the error screen.
 async function dropStaleIdsInUse(): Promise<void> {
-  const { modelIdInUse, conversationIdInUse } = getAppState();
+  const {
+    modelIdInUse,
+    conversationIdInUse,
+    ttsModelIdInUse,
+    sttModelIdInUse,
+  } = getAppState();
+
+  if (
+    ttsModelIdInUse !== undefined &&
+    (await getModelById(ttsModelIdInUse)) === undefined
+  ) {
+    await setAppState({ ttsModelIdInUse: undefined });
+  }
+
+  if (
+    sttModelIdInUse !== undefined &&
+    (await getModelById(sttModelIdInUse)) === undefined
+  ) {
+    await setAppState({ sttModelIdInUse: undefined });
+  }
 
   if (
     modelIdInUse !== undefined &&
@@ -156,13 +176,28 @@ function AppLoader() {
     }
   }, []);
 
+  const reset = useCallback(async () => {
+    setDbError(false);
+    setDbReady(false);
+    try {
+      await resetDatabase();
+    } catch (error) {
+      log('App reset failed', error, { capture: true });
+    }
+    init();
+  }, [init]);
+
   useEffect(() => {
     init();
   }, [init]);
 
-  if (dbError) return <ErrorScreen onRetry={init} />;
-  if (!dbReady)
+  if (dbError) {
+    return <ErrorScreen onRetry={init} onReset={reset} />;
+  }
+
+  if (!dbReady) {
     return <LoadingScreen message={t('screens.loadingScreen.loadingApp')} />;
+  }
 
   return (
     <AiServiceProvider>

@@ -1,5 +1,6 @@
 clean:
 	watchman watch-del-all && watchman shutdown-server
+	rm -rf "$TMPDIR"metro-cache "$TMPDIR"metro-file-map-*
 
 clean-cache:
 	npm start -- --reset-cache

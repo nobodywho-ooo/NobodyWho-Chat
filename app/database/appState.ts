@@ -9,6 +9,8 @@ export type AssistantConfig = {
   thinking: boolean;
   toolCalling: boolean;
   contextSize: number;
+  ttsVoice?: string;
+  ttsLanguage?: string;
 };
 
 export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
@@ -22,6 +24,8 @@ export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
 export type AppState = {
   modelIdInUse?: number;
   ttsModelIdInUse?: number;
+  sttModelIdInUse?: number;
+  vadModelIdInUse?: number;
   conversationIdInUse?: number;
   assistantConfig?: AssistantConfig;
 };
@@ -41,7 +45,9 @@ function sameAssistantConfig(
     a.systemPrompt === b.systemPrompt &&
     a.thinking === b.thinking &&
     a.toolCalling === b.toolCalling &&
-    a.contextSize === b.contextSize
+    a.contextSize === b.contextSize &&
+    a.ttsVoice === b.ttsVoice &&
+    a.ttsLanguage === b.ttsLanguage
   );
 }
 
@@ -84,6 +90,8 @@ export async function setAppState(patch: Partial<AppState>): Promise<void> {
   if (
     next.modelIdInUse === prev.modelIdInUse &&
     next.ttsModelIdInUse === prev.ttsModelIdInUse &&
+    next.sttModelIdInUse === prev.sttModelIdInUse &&
+    next.vadModelIdInUse === prev.vadModelIdInUse &&
     next.conversationIdInUse === prev.conversationIdInUse &&
     sameAssistantConfig(next.assistantConfig, prev.assistantConfig)
   ) {

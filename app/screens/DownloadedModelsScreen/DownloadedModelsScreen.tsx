@@ -8,12 +8,25 @@ import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAppState, useModels, useStyled } from 'hooks';
-import { setAppState } from 'database';
+import { DEFAULT_ASSISTANT_CONFIG, getAppState, setAppState } from 'database';
 import { deleteModel, getDocumentPathsByModelId } from 'repositories';
-import { deleteMessageDocuments, deleteModelFiles, isIOS, log } from 'helpers';
+import {
+  deleteMessageDocuments,
+  deleteModelFiles,
+  isIOS,
+  log,
+  resolveTtsPrefs,
+} from 'helpers';
 import { ModelCard, PlatformIcon, Text } from 'components';
 import { useAiService } from 'services';
-import { Model, isTtsPipeline, isChatPipeline } from 'types';
+import {
+  Model,
+  ModelPipeline,
+  isTtsPipeline,
+  isSttPipeline,
+  isVadPipeline,
+  isChatPipeline,
+} from 'types';
 
 import styles from './DownloadedModelsScreen.styles';
 
@@ -21,8 +34,10 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { models } = useModels();
-  const { modelIdInUse, ttsModelIdInUse } = useAppState();
-  const { chat, disposeTts, disposeChat } = useAiService();
+  const { modelIdInUse, ttsModelIdInUse, sttModelIdInUse, vadModelIdInUse } =
+    useAppState();
+  const { chat, disposeTts, disposeStt, disposeVad, disposeChat } =
+    useAiService();
   const navigation = useNavigation();
   const route = useRoute();
   const [deleteMode, setDeleteMode] = useState(false);
@@ -47,8 +62,18 @@ export const DownloadedModelsScreen: React.FC = () => {
           await setAppState({ ttsModelIdInUse: undefined });
         }
 
-        if (isChatPipeline(model.pipeline)) {
-          disposeChat;
+        if (sttModelIdInUse === model.id) {
+          disposeStt();
+          await setAppState({ sttModelIdInUse: undefined });
+        }
+
+        if (vadModelIdInUse === model.id) {
+          disposeVad();
+          await setAppState({ vadModelIdInUse: undefined });
+        }
+
+        if (modelIdInUse === model.id && isChatPipeline(model.pipeline)) {
+          disposeChat();
         }
 
         const filesDeleted = await deleteModelFiles(model);
@@ -69,7 +94,16 @@ export const DownloadedModelsScreen: React.FC = () => {
         log('DownloadedModelsScreen handleDeleteModel', error);
       }
     },
-    [modelIdInUse, ttsModelIdInUse, disposeTts, disposeChat],
+    [
+      modelIdInUse,
+      ttsModelIdInUse,
+      sttModelIdInUse,
+      vadModelIdInUse,
+      disposeTts,
+      disposeStt,
+      disposeVad,
+      disposeChat,
+    ],
   );
 
   const confirmDeleteModel = useCallback(
@@ -101,7 +135,30 @@ export const DownloadedModelsScreen: React.FC = () => {
 
       if (isTtsPipeline(model.pipeline)) {
         if (ttsModelIdInUse !== model.id) {
-          setAppState({ ttsModelIdInUse: model.id });
+          // Stamp the model's voice/language defaults into the config as it
+          // takes the voice slot, so the loader and picker read them directly.
+          const config =
+            getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
+          setAppState({
+            ttsModelIdInUse: model.id,
+            assistantConfig: { ...config, ...resolveTtsPrefs(model, config) },
+          });
+          navigation.goBack();
+        }
+        return;
+      }
+
+      if (isSttPipeline(model.pipeline)) {
+        if (sttModelIdInUse !== model.id) {
+          setAppState({ sttModelIdInUse: model.id });
+          navigation.goBack();
+        }
+        return;
+      }
+
+      if (isVadPipeline(model.pipeline)) {
+        if (vadModelIdInUse !== model.id) {
+          setAppState({ vadModelIdInUse: model.id });
           navigation.goBack();
         }
         return;
@@ -124,6 +181,8 @@ export const DownloadedModelsScreen: React.FC = () => {
       confirmDeleteModel,
       modelIdInUse,
       ttsModelIdInUse,
+      sttModelIdInUse,
+      vadModelIdInUse,
       chat,
       navigation,
     ],
@@ -181,27 +240,35 @@ export const DownloadedModelsScreen: React.FC = () => {
     );
   }
 
+  const inUseIdFor = (pipeline: ModelPipeline) => {
+    if (isTtsPipeline(pipeline)) {
+      return ttsModelIdInUse;
+    }
+    if (isSttPipeline(pipeline)) {
+      return sttModelIdInUse;
+    }
+    if (isVadPipeline(pipeline)) {
+      return vadModelIdInUse;
+    }
+
+    return modelIdInUse;
+  };
+
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
-      {models.map(model => {
-        const isSelected = isTtsPipeline(model.pipeline)
-          ? ttsModelIdInUse === model.id
-          : modelIdInUse === model.id;
-
-        return (
-          <ModelCard
-            key={model.id}
-            isDownloaded
-            deleteMode={deleteMode}
-            isSelected={isSelected}
-            model={model}
-            onPress={handleModelPress}
-          />
-        );
-      })}
+      {models.map(model => (
+        <ModelCard
+          key={model.id}
+          isDownloaded
+          deleteMode={deleteMode}
+          isSelected={inUseIdFor(model.pipeline) === model.id}
+          model={model}
+          onPress={handleModelPress}
+        />
+      ))}
     </ScrollView>
   );
 };

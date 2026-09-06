@@ -1,23 +1,30 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard, Pressable, View } from 'react-native';
+import { Alert, Keyboard, Pressable, View } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList, FlashListRef } from '@shopify/flash-list';
 import { BlurTargetView, BlurView } from 'expo-blur';
 import LinearGradient from 'react-native-linear-gradient';
 import { MessageListItem } from 'components';
 import { useTheme } from 'context';
-import { useStyled } from 'hooks';
+import { useAppState, useStyled } from 'hooks';
 import {
   DisplayMessage,
   pipelineIngestsAudio,
   pipelineIngestsImage,
 } from 'types';
-import { useAiService } from 'services';
+import { AiModelState, useAiService } from 'services';
 import { isAndroid } from 'helpers';
 import { Theme } from 'types';
 
 import { CameraCaptureModal, InputBar, MessageStarters } from './components';
-import { useAttachments, useChatGeneration, useKeyboardHeight } from './hooks';
+import {
+  useAttachments,
+  useChatGeneration,
+  useKeyboardHeight,
+  useSttTranscription,
+  useTtsPlayback,
+} from './hooks';
 import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
@@ -38,15 +45,43 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   messages: initialMessages,
   onConversationCreated,
 }) => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { chat, chatPipeline } = useAiService();
+  const { chat, chatPipeline, ttsState, sttState } = useAiService();
+  const { ttsModelIdInUse, sttModelIdInUse } = useAppState();
+
+  const canPlayAudio =
+    ttsModelIdInUse !== undefined && ttsState === AiModelState.Ready;
+  const canDictate =
+    sttModelIdInUse !== undefined && sttState === AiModelState.Ready;
+  const {
+    playingIndex,
+    loadingIndex: audioLoadingIndex,
+    play: playAudio,
+    stop: stopAudio,
+  } = useTtsPlayback();
+  const [inputText, setInputText] = useState('');
+  const {
+    isRecording,
+    isTranscribing,
+    startRecording,
+    stopRecording,
+    cancelRecording,
+  } = useSttTranscription({
+    onTranscribed: text =>
+      setInputText(prev => (prev.trim() ? `${prev.trimEnd()} ${text}` : text)),
+    onPermissionDenied: () =>
+      Alert.alert(
+        t('components.inputBar.microphoneDeniedTitle'),
+        t('components.inputBar.microphoneDeniedMessage'),
+      ),
+  });
   const flatListRef = useRef<FlashListRef<DisplayMessage>>(null);
   const blurTargetRef = useRef<View>(null);
   const [messages, setMessages] = useState<DisplayMessage[]>(initialMessages);
   const [conversationId, setConversationId] = useState(initialConversationId);
-  const [inputText, setInputText] = useState('');
   const [attachExpanded, setAttachExpanded] = useState(false);
 
   const { keyboardHeight, isKeyboardVisible } = useKeyboardHeight();
@@ -71,10 +106,15 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   useEffect(() => {
     setMessages(initialMessages);
+  }, [initialMessages]);
+
+  useEffect(() => {
     setConversationId(initialConversationId);
     setAttachExpanded(false);
     clearAllAttachments();
-  }, [initialMessages, initialConversationId, clearAllAttachments]);
+    stopAudio();
+    cancelRecording();
+  }, [initialConversationId, clearAllAttachments, stopAudio, cancelRecording]);
 
   const scrollToEnd = useCallback((_width: number, contentHeight: number) => {
     flatListRef.current?.scrollToOffset({
@@ -93,6 +133,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   }
 
   const listPaddingBottom = bottomOffset + InputBar.height + INPUT_BAR_PADDING;
+
+  const messageStarters = messages.length === 0 && !attachExpanded && (
+    <MessageStarters pipeline={chatPipeline} onSelect={setInputText} />
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
@@ -117,6 +161,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
               <MessageListItem
                 message={item}
                 isStreaming={isStreaming && index === messages.length - 1}
+                index={index}
+                canPlayAudio={canPlayAudio}
+                isAudioLoading={audioLoadingIndex === index}
+                isAudioPlaying={playingIndex === index}
+                onPlayAudio={playAudio}
+                onStopAudio={stopAudio}
               />
             )}
             onContentSizeChange={scrollToEnd}
@@ -159,16 +209,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         onAttachImage={attachments.handleAttachImage}
         onAttachCamera={attachments.handleAttachCamera}
         onAttachAudio={attachments.handleAttachAudio}
+        showDictation={canDictate}
+        isRecording={isRecording}
+        isTranscribing={isTranscribing}
+        onStartDictation={startRecording}
+        onStopDictation={stopRecording}
         onChangeText={setInputText}
         onSend={handleSend}
         onStop={stopStreaming}
         style={{ paddingBottom: bottomOffset }}
-        topAccessory={
-          messages.length === 0 &&
-          !attachExpanded && (
-            <MessageStarters pipeline={chatPipeline} onSelect={setInputText} />
-          )
-        }
+        messageStarters={messageStarters}
       />
       {ingestsImage && (
         <CameraCaptureModal

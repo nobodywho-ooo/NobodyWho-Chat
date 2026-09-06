@@ -45,6 +45,7 @@ describe('buildChatTools', () => {
       t => t.opts.name,
     );
     expect(names).toEqual([
+      'get_inference_engine',
       'get_weather',
       'search_wikipedia',
       'get_stock_quote',

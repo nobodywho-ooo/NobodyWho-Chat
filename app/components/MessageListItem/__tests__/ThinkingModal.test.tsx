@@ -4,7 +4,7 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { StreamdownText } from 'react-native-streamdown';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 
-import { ThinkingModal } from '../ThinkingModal';
+import { ThinkingModal } from '../AssistantMessage/ThinkingModal';
 
 const mockStreamdown = StreamdownText as unknown as jest.Mock;
 const mockEnriched = EnrichedMarkdownText as unknown as jest.Mock;
@@ -24,7 +24,9 @@ test('renders the title and the reasoning with the static renderer when not acti
 });
 
 test('uses the streaming renderer while thinking is active', () => {
-  render(<ThinkingModal thinking="streaming reasoning" active onClose={jest.fn()} />);
+  render(
+    <ThinkingModal thinking="streaming reasoning" active onClose={jest.fn()} />,
+  );
 
   expect(mockStreamdown.mock.calls[0][0].markdown).toBe('streaming reasoning');
   expect(mockEnriched).not.toHaveBeenCalled();
@@ -32,7 +34,12 @@ test('uses the streaming renderer while thinking is active', () => {
 
 test('opens a tapped link in the reasoning', () => {
   jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
-  render(<ThinkingModal thinking="see [link](https://example.com)" onClose={jest.fn()} />);
+  render(
+    <ThinkingModal
+      thinking="see [link](https://example.com)"
+      onClose={jest.fn()}
+    />,
+  );
 
   mockEnriched.mock.calls[0][0].onLinkPress({ url: 'https://example.com' });
 

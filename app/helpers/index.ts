@@ -13,6 +13,7 @@ import {
   downloadedPartPath,
   deleteModelDirectory,
   modelDirectoryPath,
+  listVoiceStyles,
 } from './modelDownload';
 import { toFileUri, toPlainPath } from './fileUri';
 import {
@@ -34,6 +35,20 @@ import {
   resolveMessageDocumentPath,
 } from './messageDocuments';
 import { toChatHistory, toModelHistory } from './chatHistory';
+import { splitIntoChunks, concatWavs, synthesizeChunked } from './ttsAudio';
+import {
+  LANGUAGE_CODES,
+  languageCode,
+  defaultTtsLanguage,
+  resolveTtsPrefs,
+} from './ttsVoices';
+import { resolveSttQuantization } from './sttModel';
+import { micBands, wavToEnvelope } from './audioLevels';
+import { concatPcm, resamplePcm } from './pcm';
+import { computeGenerationMetrics } from './generationMetrics';
+import { parameterCountLabel } from './parameterCount';
+
+export type { AudioBands, AudioEnvelope } from './audioLevels';
 
 export {
   getFamilyIcon,
@@ -42,6 +57,7 @@ export {
   downloadedPartPath,
   deleteModelDirectory,
   modelDirectoryPath,
+  listVoiceStyles,
   toFileUri,
   toPlainPath,
   filterModelsByDeviceMemory,
@@ -70,4 +86,18 @@ export {
   sleep,
   toChatHistory,
   toModelHistory,
+  splitIntoChunks,
+  concatWavs,
+  synthesizeChunked,
+  LANGUAGE_CODES,
+  languageCode,
+  defaultTtsLanguage,
+  resolveTtsPrefs,
+  resolveSttQuantization,
+  micBands,
+  wavToEnvelope,
+  concatPcm,
+  resamplePcm,
+  computeGenerationMetrics,
+  parameterCountLabel,
 };

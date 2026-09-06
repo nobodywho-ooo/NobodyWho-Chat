@@ -59,6 +59,8 @@ jest.mock('expo-file-system', () => {
       .reduce((acc, part) =>
         acc ? `${acc.replace(/\/+$/, '')}/${part.replace(/^\/+/, '')}` : part,
       );
+  // The trailing path segment of a joined uri (its file/dir name).
+  const basename = uri => uri.replace(/\/+$/, '').split('/').pop() ?? '';
   class File {
     constructor(...segs) {
       this.uri = join(segs);
@@ -68,7 +70,11 @@ jest.mock('expo-file-system', () => {
     get exists() {
       return File.mockExists;
     }
+    get name() {
+      return basename(this.uri);
+    }
     delete() {}
+    write() {}
     open() {
       return {
         readBytes: () => ({ length: 0 }),
@@ -85,12 +91,22 @@ jest.mock('expo-file-system', () => {
     constructor(...segs) {
       this.uri = join(segs);
     }
+    // Present by default; flip Directory.mockExists to false to exercise the
+    // missing-folder path. Directory.mockEntries is what list() returns.
     get exists() {
-      return true;
+      return Directory.mockExists;
+    }
+    get name() {
+      return basename(this.uri);
     }
     create() {}
     delete() {}
+    list() {
+      return Directory.mockEntries;
+    }
   }
+  Directory.mockExists = true;
+  Directory.mockEntries = [];
   const Paths = {
     document: { uri: 'file:///mock-documents/' },
     cache: { uri: 'file:///mock-cache/' },
@@ -164,6 +180,7 @@ jest.mock('expo-audio', () => {
         ref.current = {
           play: () => setPlaying(true),
           pause: () => setPlaying(false),
+          replace: jest.fn(),
           seekTo: jest.fn(),
         };
       }
@@ -174,27 +191,38 @@ jest.mock('expo-audio', () => {
       playing: player.playing,
       didJustFinish: false,
     }),
+    // Dictation capture: a stable stream whose start/stop are no-ops under Jest
+    // (no native microphone), plus the permission/session helpers the STT hook
+    // calls. useAudioStream never emits buffers here, so transcription stays inert.
+    useAudioStream: () => {
+      const ref = mockReact.useRef(null);
+      if (!ref.current) {
+        ref.current = {
+          stream: {
+            start: jest.fn().mockResolvedValue(undefined),
+            stop: jest.fn(),
+          },
+          isStreaming: false,
+        };
+      }
+      return ref.current;
+    },
+    requestRecordingPermissionsAsync: jest
+      .fn()
+      .mockResolvedValue({ granted: true, canAskAgain: true }),
+    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
   };
 });
 
 // react-native-gesture-handler's native module isn't available under Jest, and
 // the real entrypoint calls TurboModuleRegistry.getEnforcing on import. Stub the
-// pieces FullScreenImageModal uses: a chainable Gesture.Pan builder and
-// pass-through GestureDetector / GestureHandlerRootView wrappers, plus the
-// RNGH ScrollView (mapped to RN's) that MessageStarters renders.
+// pieces the modals use: the usePanGesture hook (returns the config as an inert
+// gesture) and pass-through GestureDetector / GestureHandlerRootView wrappers,
+// plus the RNGH ScrollView (mapped to RN's) that MessageStarters renders.
 jest.mock('react-native-gesture-handler', () => {
   const mockReact = require('react');
-  const chainableGesture = () => {
-    const gesture = {
-      onUpdate: () => gesture,
-      onEnd: () => gesture,
-      onStart: () => gesture,
-      onBegin: () => gesture,
-    };
-    return gesture;
-  };
   return {
-    Gesture: { Pan: chainableGesture, Tap: chainableGesture },
+    usePanGesture: config => config,
     GestureDetector: ({ children }) =>
       mockReact.createElement(mockReact.Fragment, null, children),
     GestureHandlerRootView: ({ children }) =>
@@ -218,9 +246,42 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedStyle: () => ({}),
     withTiming: value => value,
     interpolate: value => value,
+    interpolateColor: (_value, _input, output) =>
+      Array.isArray(output) ? output[0] : output,
     runOnJS: fn => fn,
+    // Voice-orb drivers: no worklet runtime under Jest, so the frame loop is a
+    // no-op handle and the derived picture is inert (Skia's Picture is mocked).
+    useFrameCallback: () => ({ setActive: jest.fn() }),
+    useDerivedValue: () => ({ value: null }),
+    useReducedMotion: () => false,
   };
 });
+
+// The voice orb renders through Skia; under Jest there's no native canvas, so
+// Canvas passes children through and Picture renders nothing.
+jest.mock('@shopify/react-native-skia', () => {
+  const mockReact = require('react');
+  return {
+    Canvas: ({ children }) =>
+      mockReact.createElement(mockReact.Fragment, null, children),
+    Picture: () => null,
+  };
+});
+
+// expo-thinking-orbs' engine is a pure-JS render loop that only runs inside the
+// reanimated worklet (mocked to never invoke it). Stub the power-user surface
+// useVoiceOrbPicture reads at hook-setup time so the screen mounts.
+jest.mock('expo-thinking-orbs', () => ({
+  MODES: new Proxy(
+    {},
+    { get: () => ({ build: () => {}, precompute: () => ({ dotCount: 0 }) }) },
+  ),
+  acquireDotBuffer: () => ({ count: 0, xs: [], ys: [], rs: [], ws: [], as: [] }),
+  buildColorLUT: () => [],
+  pickDesignSize: () => 64,
+  recordPicture: () => null,
+  resolvePreset: () => ({ mode: 'wave', speed: 1, opts: { rMin: 0.3 } }),
+}));
 
 // react-native-worklets ships ESM that Jest can't load, and its native worklet
 // runtime is absent. FullScreenImageModal only uses scheduleOnRN to hop a
@@ -251,6 +312,9 @@ jest.mock('@shopify/flash-list', () => ({
 }));
 
 export const mockFromPath = jest.fn();
+export const mockTtsLoad = jest.fn();
+export const mockSttConstruct = jest.fn();
+export const mockVadLoad = jest.fn();
 export const mockDownloadModel = jest.fn(() => Promise.resolve('file://downloaded.gguf'));
 
 jest.mock('react-native-nobodywho', () => {
@@ -277,8 +341,56 @@ jest.mock('react-native-nobodywho', () => {
       this.opts = opts;
     }
   }
+  // Stand-in for the Whisper SpeechToText wrapper: records the SpeechToText.load
+  // options (via mockSttConstruct) and returns an instance that yields an empty
+  // transcription, so createStt and useSttTranscription run without the native
+  // ONNX runtime. Instance methods are jest.fns so tests can assert
+  // destroy/transcribe were called; each load resolves a fresh instance.
+  const makeSttInstance = () => ({
+    transcribeFile: jest.fn(() => ({
+      completed: () => Promise.resolve(''),
+    })),
+    transcribePcm: jest.fn(() => ({
+      completed: () => Promise.resolve(''),
+    })),
+    destroy: jest.fn(),
+  });
+  // Stand-in for the Silero voice activity detector: records the load options
+  // (via mockVadLoad) and returns an instance whose push() reports whatever a
+  // test queued on `instance.mockEvents`, defaulting to Silence, so the capture
+  // hooks run without the native ONNX runtime.
+  const makeVadInstance = () => {
+    const instance = {
+      mockEvents: [],
+      push: jest.fn(() => instance.mockEvents.shift() ?? 3),
+      finish: jest.fn(() => []),
+      segment: jest.fn(() => []),
+      destroy: jest.fn(),
+    };
+    return instance;
+  };
   return {
     Chat: { fromPath: (opts) => mockFromPath(opts) },
+    TextToSpeech: { load: (opts) => mockTtsLoad(opts) },
+    SpeechToText: {
+      load: async (opts) => {
+        mockSttConstruct(opts);
+        return makeSttInstance();
+      },
+    },
+    VoiceActivityDetection: {
+      load: async (opts) => {
+        mockVadLoad(opts);
+        return makeVadInstance();
+      },
+    },
+    // Mirrors the generated enum's ordinals.
+    VoiceActivityDetectionEvent: {
+      Speech: 0,
+      SpeechStarted: 1,
+      SpeechEnded: 2,
+      Silence: 3,
+    },
     Encoder: { fromPath: jest.fn() },
     CrossEncoder: { fromPath: jest.fn() },
     SamplerPresets: {
@@ -356,6 +468,7 @@ jest.mock("@react-navigation/core", () => {
 jest.mock("@react-navigation/drawer", () => {
   const mockReact = require('react');
   return {
+    useDrawerStatus: () => 'open',
     createDrawerNavigator: () => ({
       Navigator: ({ children }) =>
         mockReact.createElement(mockReact.Fragment, null, children),

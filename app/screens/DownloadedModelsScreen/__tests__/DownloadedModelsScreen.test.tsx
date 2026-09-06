@@ -16,9 +16,14 @@ import { DownloadedModelsScreen } from '../DownloadedModelsScreen';
 // disposes the TTS engine before its files go away.
 const mockStopGeneration = jest.fn();
 const mockDisposeTts = jest.fn();
+const mockDisposeChat = jest.fn();
 const mockChat = { current: { stopGeneration: mockStopGeneration } };
 jest.mock('services', () => ({
-  useAiService: () => ({ chat: mockChat, disposeTts: mockDisposeTts }),
+  useAiService: () => ({
+    chat: mockChat,
+    disposeTts: mockDisposeTts,
+    disposeChat: mockDisposeChat,
+  }),
 }));
 
 // Deleting a model also clears any message attachments that belonged to its
@@ -51,6 +56,7 @@ beforeEach(() => {
   mockSetOptions.mockClear();
   mockStopGeneration.mockClear();
   mockDisposeTts.mockClear();
+  mockDisposeChat.mockClear();
   mockGoBack.mockClear();
   mockChat.current = { stopGeneration: mockStopGeneration };
   mockGetDocumentPaths.mockReset().mockResolvedValue([]);
@@ -136,6 +142,9 @@ test('delete mode: confirming the alert deletes the in-use model and clears it f
     }),
   );
 
+  // Deleting the in-use chat model tears down its loaded chat.
+  expect(mockDisposeChat).toHaveBeenCalled();
+
   // The deleted model's attachment files are looked up and cleaned up too, so
   // they don't outlive the conversations that referenced them.
   expect(mockGetDocumentPaths).toHaveBeenCalledWith(2);
@@ -181,7 +190,9 @@ test('pressing a TTS model selects it as the voice — never as the chat model',
   const screen = render(<DownloadedModelsScreen />);
   fireEvent.press(screen.UNSAFE_getByProps({ model: models[1] }), models[1]);
 
-  expect(mockSetAppState).toHaveBeenCalledWith({ ttsModelIdInUse: 7 });
+  expect(mockSetAppState).toHaveBeenCalledWith(
+    expect.objectContaining({ ttsModelIdInUse: 7 }),
+  );
   expect(mockSetAppState).not.toHaveBeenCalledWith(
     expect.objectContaining({ modelIdInUse: 7 }),
   );
