@@ -63,7 +63,7 @@ export const VoicePreferences: React.FC<VoicePreferencesProps> = ({
   };
 
   return (
-    <View>
+    <>
       {voices.length > 0 && (
         <>
           <Text bold style={styles.sectionHeader}>
@@ -105,6 +105,6 @@ export const VoicePreferences: React.FC<VoicePreferencesProps> = ({
           </View>
         </>
       )}
-    </View>
+    </>
   );
 };

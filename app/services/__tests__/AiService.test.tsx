@@ -57,6 +57,13 @@ beforeEach(() => {
   mockVadLoad.mockReset();
 });
 
+// Most tests here dispose a slot and then only flush microtasks, which leaves
+// the settle delay that dispose chained on still pending — a live timer that
+// outlives the file and makes Jest force-exit the worker ("failed to exit
+// gracefully"). One wait at the end is enough to drain every one of them: they
+// were all armed earlier, so they are all due within one settle period.
+afterAll(() => waitForTeardownSettle());
+
 const ttsModel = buildModel(9, {
   pipeline: ModelPipeline.textToSpeech,
   family: 'Supertonic',

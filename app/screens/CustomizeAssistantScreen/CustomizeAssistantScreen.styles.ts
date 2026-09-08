@@ -5,7 +5,10 @@ import { Layout, Spacings } from 'style';
 export default StyleSheet.create({
   container: {
     ...Layout.container,
+  },
+  content: {
     paddingTop: Spacings.lg,
+    paddingBottom: Spacings.xl,
   },
   sectionHeader: {
     paddingTop: Spacings.xl,
@@ -39,7 +42,7 @@ export default StyleSheet.create({
     marginTop: Spacings.xl,
   },
   switchContainer: {
-    justifyContent: 'center'
+    justifyContent: 'center',
   },
   tokenRowContainer: {
     flexDirection: 'row',

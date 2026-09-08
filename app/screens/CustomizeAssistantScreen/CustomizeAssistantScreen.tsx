@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, Switch, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   AssistantConfig,
@@ -9,9 +10,10 @@ import {
 } from 'database';
 import { useStyled } from 'hooks';
 import { IconButton, Slider, Text } from 'components';
+import { VoicePreferences } from './components';
+import { Spacings } from 'style';
 
 import styles from './CustomizeAssistantScreen.styles';
-import { VoicePreferences } from './VoicePreferences';
 
 export const TEMPERATURE_MIN = 0;
 export const TEMPERATURE_MAX = 2;
@@ -23,6 +25,7 @@ export const TOKENS_STEP = 500;
 export const CustomizeAssistantScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
+  const insets = useSafeAreaInsets();
 
   const [config, setConfig] = useState<AssistantConfig>(
     () => getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG,
@@ -60,6 +63,10 @@ export const CustomizeAssistantScreen: React.FC = () => {
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: insets.bottom + Spacings.xl },
+      ]}
       keyboardShouldPersistTaps="handled"
     >
       <Text bold>{t('screens.customizeAssistant.temperature')}</Text>
