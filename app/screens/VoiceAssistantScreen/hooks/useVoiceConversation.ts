@@ -61,6 +61,7 @@ export interface VoiceConversation {
   status: VoiceStatus;
   voiceAssistantStatus: VoiceAssistantStatus;
   isBusy: boolean;
+  hasAnswered: boolean;
   toggle: () => void;
 }
 
@@ -129,6 +130,9 @@ export const useVoiceConversation = ({
     voiceAssistantStatus.isVadReady;
 
   const [status, setStatus] = useState<VoiceStatus>('idle');
+  // Set as soon as the model has produced any answer text — a stopped or failed
+  // turn counts, since the shared chat's history keeps whatever it produced.
+  const [hasAnswered, setHasAnswered] = useState(false);
 
   // Guards the async start/stop transitions against a double tap. The rest of
   // the turn is serialised by `status` (the button dispatches on it) and by the
@@ -414,6 +418,10 @@ export const useVoiceConversation = ({
       tokenCount,
     );
 
+    if (answer.trim()) {
+      setHasAnswered(true);
+    }
+
     // A stopped or failed turn still has to reach the database, or the model
     // would keep answering later messages from an exchange neither the chat
     // screen nor the history on reload contains. Mirrors the typed path, which
@@ -678,6 +686,7 @@ export const useVoiceConversation = ({
     releaseRecordingMode();
     orb.rest();
     setStatus(current => (current === 'transcribing' ? current : 'idle'));
+    setHasAnswered(false);
   }, [
     stopOwnGeneration,
     stream,
@@ -709,6 +718,7 @@ export const useVoiceConversation = ({
     status: isReady ? status : 'unavailable',
     voiceAssistantStatus,
     isBusy,
+    hasAnswered,
     toggle,
   };
 };

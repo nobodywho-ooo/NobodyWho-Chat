@@ -190,6 +190,8 @@
     "voiceAssistant": {
       "title": "Stemmeassistent",
       "start": "Begynd at lytte",
+      "close": "Luk",
+      "preferences": "Stemmeindstillinger",
       "stop": "Stop",
       "status": {
         "idle": "Tryk for at tale",

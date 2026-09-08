@@ -9,8 +9,7 @@ import {
   setAppState,
 } from 'database';
 import { useStyled } from 'hooks';
-import { IconButton, Slider, Text } from 'components';
-import { VoicePreferences } from './components';
+import { IconButton, Slider, Text, VoicePreferences } from 'components';
 import { Spacings } from 'style';
 
 import styles from './CustomizeAssistantScreen.styles';

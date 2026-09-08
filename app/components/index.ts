@@ -11,7 +11,8 @@ import { SelectablePill } from './SelectablePill/SelectablePill';
 import { Slider } from './Slider/Slider';
 import { Tag } from './Tag/Tag';
 import { Text } from './Text/Text';
+import { VoicePreferences } from './VoicePreferences/VoicePreferences';
 
-export { Button, ProgressBar, ErrorView, IconButton, ListItem, MarkdownDocument, MessageListItem, ModelCard, PlatformIcon, SelectablePill, Slider, Tag, Text };
+export { Button, ProgressBar, ErrorView, IconButton, ListItem, MarkdownDocument, MessageListItem, ModelCard, PlatformIcon, SelectablePill, Slider, Tag, Text, VoicePreferences };
 
 export type { IconButtonIconProps };

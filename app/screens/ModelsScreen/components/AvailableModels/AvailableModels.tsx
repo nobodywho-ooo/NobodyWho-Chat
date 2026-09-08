@@ -19,6 +19,11 @@ const ALL_PIPELINES = 'all';
 
 type PipelineFilter = ModelPipeline | typeof ALL_PIPELINES;
 
+const UNORDERED = Number.MAX_SAFE_INTEGER;
+
+const byCatalogueOrder = (a: Model, b: Model) =>
+  (a.order ?? UNORDERED) - (b.order ?? UNORDERED);
+
 interface AvailableModelsProps {
   models: Model[];
   isLoading: boolean;
@@ -59,9 +64,10 @@ export const AvailableModels: React.FC<AvailableModelsProps> = ({
 
   const visibleModels = useMemo(
     () =>
-      filter === ALL_PIPELINES
-        ? models
-        : models.filter(model => model.pipeline === filter),
+      (filter === ALL_PIPELINES
+        ? [...models]
+        : models.filter(model => model.pipeline === filter)
+      ).sort(byCatalogueOrder),
     [models, filter],
   );
 

@@ -20,6 +20,13 @@ export default StyleSheet.create({
     paddingHorizontal: Spacings.xxl,
     gap: Spacings.xl,
   },
+  preferencesContainer: {
+    flex: 1,
+  },
+  preferencesContent: {
+    paddingHorizontal: Spacings.xl,
+    paddingBottom: Spacings.xxxxl,
+  },
   captionsContainer: {
     minHeight: 96,
     flexDirection: 'row',

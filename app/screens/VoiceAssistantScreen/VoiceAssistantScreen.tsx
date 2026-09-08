@@ -1,16 +1,23 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Pressable,
+  ScrollView,
   useWindowDimensions,
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useDrawerStatus } from '@react-navigation/drawer';
-import { IconButton, PlatformIcon, Text } from 'components';
+import { IconButton, PlatformIcon, Text, VoicePreferences } from 'components';
 import { useTheme } from 'context';
-import { useStyled } from 'hooks';
+import {
+  AssistantConfig,
+  DEFAULT_ASSISTANT_CONFIG,
+  getAppState,
+  setAppState,
+} from 'database';
+import { useAppState, useStyled } from 'hooks';
 import { haptics } from 'helpers';
 
 import { VoiceOrb, VoiceSetup } from './components';
@@ -41,9 +48,23 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   const orbSize = Math.min(width * 0.7, 300);
   const isDrawerOpen = useDrawerStatus() === 'open';
 
+  const [showPreferences, setShowPreferences] = useState(false);
+
+  const assistantConfig =
+    useAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
+
+  const savePreference = useCallback((patch: Partial<AssistantConfig>) => {
+    setAppState({
+      assistantConfig: {
+        ...(getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG),
+        ...patch,
+      },
+    });
+  }, []);
+
   const orb = useOrbLevels({ active: isDrawerOpen });
-  const { status, voiceAssistantStatus, isBusy, toggle } = useVoiceConversation(
-    {
+  const { status, voiceAssistantStatus, isBusy, hasAnswered, toggle } =
+    useVoiceConversation({
       orb,
       active: isDrawerOpen,
       onPermissionDenied: () =>
@@ -51,19 +72,24 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
           t('components.inputBar.microphoneDeniedTitle'),
           t('components.inputBar.microphoneDeniedMessage'),
         ),
-    },
-  );
+    });
 
   const isReady = status !== 'unavailable';
   const isStoppable = STOPPABLE_STATUSES.includes(status);
   const isProcessing = NOT_STOPPABLE_STATUSES.includes(status);
 
+  const canOpenPreferences = status === 'idle' && !hasAnswered;
+
+  useEffect(() => {
+    if (!canOpenPreferences) {
+      setShowPreferences(false);
+    }
+  }, [canOpenPreferences]);
+
   const accessibilityLabel = isStoppable
     ? t('screens.voiceAssistant.stop')
     : t('screens.voiceAssistant.start');
 
-  // Stopping is the secondary action; starting (from idle, or again after an
-  // error) is the primary one.
   const micButtonColor = isStoppable
     ? colors.ctaContentSecondary
     : colors.ctaContentPrimary;
@@ -78,69 +104,93 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
       <View style={styles.headerContainer}>
         <IconButton
           icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
-          onPress={onCloseDrawer}
+          accessibilityLabel={t('screens.voiceAssistant.close')}
+          onPress={
+            showPreferences ? () => setShowPreferences(false) : onCloseDrawer
+          }
         />
         <Text variant="h3" bold>
           {t('screens.voiceAssistant.title')}
         </Text>
         <View style={styles.headerSpacer} />
-        {/* <IconButton
-          icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
-          onPress={() => {}}
-        /> */}
-      </View>
-
-      <View style={styles.bodyContainer}>
-        <VoiceOrb
-          levels={orb.levels}
-          size={orbSize}
-          color={colors.primary}
-          dark={theme === 'dark'}
-          // Also paused while the drawer is shut: this screen is always mounted,
-          // and an unpaused orb rebuilds and re-records its whole Skia picture
-          // every frame, off screen, for as long as the app runs.
-          paused={!isReady || !isDrawerOpen}
-        />
-
-        {isReady ? (
-          <View style={styles.captionsContainer}>
-            <Text variant="body1" bold style={styles.statusText}>
-              {t(`screens.voiceAssistant.status.${status}`)}
-            </Text>
-          </View>
+        {canOpenPreferences && !showPreferences ? (
+          <IconButton
+            icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
+            accessibilityLabel={t('screens.voiceAssistant.preferences')}
+            onPress={() => setShowPreferences(true)}
+          />
         ) : (
-          <VoiceSetup status={voiceAssistantStatus} />
+          <View style={styles.headerSpacer} />
         )}
       </View>
 
-      {isReady && (
-        <View style={styles.actionContainer}>
-          {isProcessing ? (
-            // Laid out in the same box as the button so swapping the two doesn't
-            // move anything else on screen.
-            <View style={styles.buttonContainer}>
-              <ActivityIndicator size="large" color={colors.primary} />
+      {showPreferences ? (
+        <ScrollView
+          style={styles.preferencesContainer}
+          contentContainerStyle={styles.preferencesContent}
+        >
+          <VoicePreferences
+            voice={assistantConfig.ttsVoice}
+            language={assistantConfig.ttsLanguage}
+            onChange={savePreference}
+          />
+        </ScrollView>
+      ) : (
+        <>
+          <View style={styles.bodyContainer}>
+            <VoiceOrb
+              levels={orb.levels}
+              size={orbSize}
+              color={colors.primary}
+              dark={theme === 'dark'}
+              // Also paused while the drawer is shut: this screen is always
+              // mounted, and an unpaused orb rebuilds and re-records its whole
+              // Skia picture every frame, off screen, for as long as the app runs.
+              paused={!isReady || !isDrawerOpen}
+            />
+
+            {isReady ? (
+              <View style={styles.captionsContainer}>
+                <Text variant="body1" bold style={styles.statusText}>
+                  {t(`screens.voiceAssistant.status.${status}`)}
+                </Text>
+              </View>
+            ) : (
+              <VoiceSetup status={voiceAssistantStatus} />
+            )}
+          </View>
+
+          {isReady && (
+            <View style={styles.actionContainer}>
+              {isProcessing ? (
+                <View style={styles.buttonContainer}>
+                  <ActivityIndicator size="large" color={colors.primary} />
+                </View>
+              ) : (
+                <Pressable
+                  onPress={() => {
+                    haptics.medium();
+                    toggle();
+                  }}
+                  accessibilityRole="button"
+                  accessibilityState={{ busy: isBusy }}
+                  accessibilityLabel={accessibilityLabel}
+                  style={[
+                    styles.buttonContainer,
+                    micButtonBackgroundColorStyle,
+                  ]}
+                >
+                  <PlatformIcon
+                    iosIconName={isStoppable ? 'stop.fill' : 'mic.fill'}
+                    androidIconName={isStoppable ? 'stop' : 'mic'}
+                    size={30}
+                    color={micButtonColor}
+                  />
+                </Pressable>
+              )}
             </View>
-          ) : (
-            <Pressable
-              onPress={() => {
-                haptics.medium();
-                toggle();
-              }}
-              accessibilityRole="button"
-              accessibilityState={{ busy: isBusy }}
-              accessibilityLabel={accessibilityLabel}
-              style={[styles.buttonContainer, micButtonBackgroundColorStyle]}
-            >
-              <PlatformIcon
-                iosIconName={isStoppable ? 'stop.fill' : 'mic.fill'}
-                androidIconName={isStoppable ? 'stop' : 'mic'}
-                size={30}
-                color={micButtonColor}
-              />
-            </Pressable>
           )}
-        </View>
+        </>
       )}
     </View>
   );

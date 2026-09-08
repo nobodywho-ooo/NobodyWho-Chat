@@ -106,6 +106,42 @@ test('retrying from the error state invokes onRetry', () => {
   expect(onRetry).toHaveBeenCalledTimes(1);
 });
 
+// --- Catalogue order -------------------------------------------------------
+test('models carrying an "order" come first, ascending, then the rest', () => {
+  const models = [
+    buildModel(1),
+    buildModel(2, { order: 2 }),
+    buildModel(3),
+    buildModel(4, { order: 1 }),
+  ];
+  const screen = render(
+    <AvailableModels {...defaultProps} hasFetched models={models} />,
+  );
+
+  const cards = screen.UNSAFE_getAllByType('ModelCard' as never);
+  // 4 and 2 are pinned; 1 and 3 keep the order the catalogue sent them in.
+  expect(cards.map(card => card.props.model.id)).toEqual([4, 2, 1, 3]);
+});
+
+test('the order holds within a pipeline filter', () => {
+  const models = [
+    buildModel(1, { pipeline: ModelPipeline.textToSpeech }),
+    buildModel(2, { order: 1 }),
+    buildModel(3, { pipeline: ModelPipeline.textToSpeech, order: 2 }),
+    buildModel(4, { pipeline: ModelPipeline.textToSpeech, order: 1 }),
+  ];
+  const screen = render(
+    <AvailableModels {...defaultProps} hasFetched models={models} />,
+  );
+
+  fireEvent.press(
+    screen.getByLabelText(pipelineLabel[ModelPipeline.textToSpeech]),
+  );
+
+  const cards = screen.UNSAFE_getAllByType('ModelCard' as never);
+  expect(cards.map(card => card.props.model.id)).toEqual([4, 3, 1]);
+});
+
 // --- Pipeline filtering ----------------------------------------------------
 const mixedModels = [
   buildModel(1),

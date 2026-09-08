@@ -4,8 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { AssistantConfig } from 'database';
 import { ttsEngineForModel } from 'helpers';
 import { useSlotModel, useStyled } from 'hooks';
-import { SelectablePill, Text } from 'components';
 import { ModelSlot } from 'types';
+
+import { SelectablePill } from '../SelectablePill/SelectablePill';
+import { Text } from '../Text/Text';
 
 import styles from './VoicePreferences.styles';
 

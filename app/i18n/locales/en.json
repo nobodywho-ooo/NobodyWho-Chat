@@ -190,6 +190,8 @@
     "voiceAssistant": {
       "title": "Voice Assistant",
       "start": "Start listening",
+      "close": "Close",
+      "preferences": "Voice preferences",
       "stop": "Stop",
       "status": {
         "idle": "Tap to speak",

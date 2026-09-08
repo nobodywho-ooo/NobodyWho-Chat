@@ -21,6 +21,7 @@ export interface Model {
   tags: string[];
   languages: string[];
   supportedFileFormat: string[];
+  order?: number;
 }
 
 // A model part plus how far its download has got — everything needed to compute
