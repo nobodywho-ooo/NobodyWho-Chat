@@ -22,9 +22,19 @@ const STT_QUANTIZATIONS = [
 // per-model config needed). Returns undefined for an unsuffixed model, letting
 // the engine keep its own default.
 export const resolveSttQuantization = (model: Model): string | undefined => {
-  const onnxPart = model.parts.find(part =>
+  const onnxParts = model.parts.filter(part =>
     part.fileName.toLowerCase().endsWith('.onnx'),
   );
+
+  // Whisper exports ship the encoder and decoder as separate ONNX files, and
+  // not always at the same quantization. The loader's `quantization` selects
+  // the encoder's variant, so prefer that part; taking whichever .onnx happens
+  // to come first in the catalogue can hand it the decoder's suffix and send it
+  // looking for encoder weights that were never downloaded. Falls back to the
+  // only file for single-part models.
+  const onnxPart =
+    onnxParts.find(part => part.fileName.toLowerCase().includes('encoder')) ??
+    onnxParts[0];
 
   if (!onnxPart) {
     return undefined;
@@ -35,5 +45,7 @@ export const resolveSttQuantization = (model: Model): string | undefined => {
     .replace(/^.*\//, '')
     .replace(/\.onnx$/, '');
 
-  return STT_QUANTIZATIONS.find(quantization => stem.endsWith(`_${quantization}`));
+  return STT_QUANTIZATIONS.find(quantization =>
+    stem.endsWith(`_${quantization}`),
+  );
 };

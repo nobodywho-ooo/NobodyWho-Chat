@@ -2,31 +2,24 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useState,
 } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAppState, useModels, useStyled } from 'hooks';
-import { DEFAULT_ASSISTANT_CONFIG, getAppState, setAppState } from 'database';
 import { deleteModel, getDocumentPathsByModelId } from 'repositories';
-import {
-  deleteMessageDocuments,
-  deleteModelFiles,
-  isIOS,
-  log,
-  resolveTtsPrefs,
-} from 'helpers';
+import { deleteMessageDocuments, deleteModelFiles, isIOS, log } from 'helpers';
 import { ModelCard, PlatformIcon, Text } from 'components';
-import { useAiService } from 'services';
 import {
-  Model,
-  ModelPipeline,
-  isTtsPipeline,
-  isSttPipeline,
-  isVadPipeline,
-  isChatPipeline,
-} from 'types';
+  inUseModelIdForPipeline,
+  releaseSlots,
+  selectModel,
+  slotsHolding,
+  useAiService,
+} from 'services';
+import { Model, ModelPipeline, ModelSlot, isChatPipeline } from 'types';
 
 import styles from './DownloadedModelsScreen.styles';
 
@@ -34,8 +27,7 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { models } = useModels();
-  const { modelIdInUse, ttsModelIdInUse, sttModelIdInUse, vadModelIdInUse } =
-    useAppState();
+  const appState = useAppState();
   const { chat, disposeTts, disposeStt, disposeVad, disposeChat } =
     useAiService();
   const navigation = useNavigation();
@@ -52,29 +44,28 @@ export const DownloadedModelsScreen: React.FC = () => {
     }
   }, [hasModels, deleteMode]);
 
+  // Every slot's release, keyed by slot, so a new slot is a compile error here
+  // rather than a model whose files are deleted while an engine still holds it.
+  const disposeForSlot = useMemo<Record<ModelSlot, () => void>>(
+    () => ({
+      [ModelSlot.chat]: disposeChat,
+      [ModelSlot.tts]: disposeTts,
+      [ModelSlot.stt]: disposeStt,
+      [ModelSlot.vad]: disposeVad,
+    }),
+    [disposeChat, disposeTts, disposeStt, disposeVad],
+  );
+
   const handleDeleteModel = useCallback(
     async (model: Model) => {
       try {
         const documentPaths = await getDocumentPathsByModelId(model.id);
 
-        if (ttsModelIdInUse === model.id) {
-          disposeTts();
-          await setAppState({ ttsModelIdInUse: undefined });
-        }
-
-        if (sttModelIdInUse === model.id) {
-          disposeStt();
-          await setAppState({ sttModelIdInUse: undefined });
-        }
-
-        if (vadModelIdInUse === model.id) {
-          disposeVad();
-          await setAppState({ vadModelIdInUse: undefined });
-        }
-
-        if (modelIdInUse === model.id && isChatPipeline(model.pipeline)) {
-          disposeChat();
-        }
+        // Release the engines before the files go away, so nothing is mid-read
+        // when the directory is removed.
+        const held = slotsHolding(model.id, appState);
+        held.forEach(slot => disposeForSlot[slot]());
+        await releaseSlots(held.filter(slot => slot !== ModelSlot.chat));
 
         const filesDeleted = await deleteModelFiles(model);
         if (!filesDeleted) {
@@ -84,26 +75,14 @@ export const DownloadedModelsScreen: React.FC = () => {
         await deleteModel(model.id);
         await deleteMessageDocuments(documentPaths);
 
-        if (modelIdInUse === model.id) {
-          await setAppState({
-            modelIdInUse: undefined,
-            conversationIdInUse: undefined,
-          });
-        }
+        // The chat slot is cleared last: dropping it also drops the open
+        // conversation, which routes the UI away from this screen.
+        await releaseSlots(held.filter(slot => slot === ModelSlot.chat));
       } catch (error) {
         log('DownloadedModelsScreen handleDeleteModel', error);
       }
     },
-    [
-      modelIdInUse,
-      ttsModelIdInUse,
-      sttModelIdInUse,
-      vadModelIdInUse,
-      disposeTts,
-      disposeStt,
-      disposeVad,
-      disposeChat,
-    ],
+    [appState, disposeForSlot],
   );
 
   const confirmDeleteModel = useCallback(
@@ -133,59 +112,21 @@ export const DownloadedModelsScreen: React.FC = () => {
         return;
       }
 
-      if (isTtsPipeline(model.pipeline)) {
-        if (ttsModelIdInUse !== model.id) {
-          // Stamp the model's voice/language defaults into the config as it
-          // takes the voice slot, so the loader and picker read them directly.
-          const config =
-            getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
-          setAppState({
-            ttsModelIdInUse: model.id,
-            assistantConfig: { ...config, ...resolveTtsPrefs(model, config) },
-          });
-          navigation.goBack();
-        }
+      if (inUseModelIdForPipeline(model.pipeline, appState) === model.id) {
         return;
       }
 
-      if (isSttPipeline(model.pipeline)) {
-        if (sttModelIdInUse !== model.id) {
-          setAppState({ sttModelIdInUse: model.id });
-          navigation.goBack();
-        }
-        return;
-      }
-
-      if (isVadPipeline(model.pipeline)) {
-        if (vadModelIdInUse !== model.id) {
-          setAppState({ vadModelIdInUse: model.id });
-          navigation.goBack();
-        }
-        return;
-      }
-
-      if (modelIdInUse !== model.id) {
-        // Stop any in-flight generation before the model switch tears down
-        // the current chat, so a live stream ends cleanly rather than being
-        // cut off mid-token as the backend is swapped out.
+      // Stop any in-flight generation before the model switch tears down the
+      // current chat, so a live stream ends cleanly rather than being cut off
+      // mid-token as the backend is swapped out.
+      if (isChatPipeline(model.pipeline)) {
         chat.current?.stopGeneration();
-        setAppState({
-          modelIdInUse: model.id,
-          conversationIdInUse: undefined,
-        });
-        navigation.goBack();
       }
+
+      selectModel(model);
+      navigation.goBack();
     },
-    [
-      deleteMode,
-      confirmDeleteModel,
-      modelIdInUse,
-      ttsModelIdInUse,
-      sttModelIdInUse,
-      vadModelIdInUse,
-      chat,
-      navigation,
-    ],
+    [deleteMode, confirmDeleteModel, appState, chat, navigation],
   );
 
   const renderHeaderRight = useCallback(() => {
@@ -240,19 +181,8 @@ export const DownloadedModelsScreen: React.FC = () => {
     );
   }
 
-  const inUseIdFor = (pipeline: ModelPipeline) => {
-    if (isTtsPipeline(pipeline)) {
-      return ttsModelIdInUse;
-    }
-    if (isSttPipeline(pipeline)) {
-      return sttModelIdInUse;
-    }
-    if (isVadPipeline(pipeline)) {
-      return vadModelIdInUse;
-    }
-
-    return modelIdInUse;
-  };
+  const inUseIdFor = (pipeline: ModelPipeline) =>
+    inUseModelIdForPipeline(pipeline, appState);
 
   return (
     <ScrollView

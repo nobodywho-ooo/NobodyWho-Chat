@@ -77,7 +77,9 @@ describe('initDatabase', () => {
     expect(sql).toContain('CREATE TABLE messages');
     expect(sql).toContain('REFERENCES models(id) ON DELETE CASCADE');
     expect(sql).toContain('REFERENCES conversations(id) ON DELETE CASCADE');
-    expect(sql).toContain("CHECK (role IN ('user', 'assistant', 'system', 'tool'))");
+    expect(sql).toContain(
+      "CHECK (role IN ('user', 'assistant', 'system', 'tool'))",
+    );
     expect(sql).toContain("CHECK (pipeline IN ('textGeneration'");
     expect(sql).toContain(
       'CREATE INDEX idx_messages_conversation_id ON messages(conversation_id)',
@@ -88,7 +90,9 @@ describe('initDatabase', () => {
     expect(sql).toContain("'speechToText'");
     expect(sql).toContain("'voiceActivityDetection'");
 
-    // v1 -> v2 pipeline rename.
+    // v1 -> v2 pipeline rename, in `models` and in the serialized copy that
+    // pending downloads carry.
+    expect(sql).toContain('UPDATE model_downloads');
     expect(sql).toContain('PRAGMA user_version = 2');
 
     // Migrations run with foreign keys disabled so rebuilding a referenced table
@@ -117,6 +121,15 @@ describe('initDatabase', () => {
     expect(sql).toContain("WHEN 'speech-to-text' THEN 'speechToText'");
     expect(sql).toContain('DROP TABLE models');
     expect(sql).toContain('ALTER TABLE models_new RENAME TO models');
+
+    // The pipeline is also embedded in the serialized Model that a pending
+    // download carries; leaving that copy behind makes the download fail the
+    // rebuilt CHECK on resume, and the error path deletes its files.
+    expect(sql).toContain('UPDATE model_downloads');
+    expect(sql).toContain('\'"pipeline":"speech-to-text"\'');
+    expect(sql).toContain('\'"pipeline":"automatic-speech-recognition"\'');
+    expect(sql).toContain('\'"pipeline":"speechToText"\'');
+
     expect(sql).toContain('PRAGMA user_version = 2');
     expect(sql).toContain('PRAGMA foreign_keys = OFF');
     expect(sql).toContain('PRAGMA foreign_keys = ON');

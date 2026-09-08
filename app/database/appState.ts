@@ -1,4 +1,5 @@
 import { haptics, log } from 'helpers';
+import { MODEL_SLOTS } from 'types';
 import { getStorage } from './storage';
 
 const APP_STATE = 'appState';
@@ -83,15 +84,13 @@ export function subscribeAppState(listener: AppStateListener): () => void {
   };
 }
 
-
 export async function setAppState(patch: Partial<AppState>): Promise<void> {
   const prev = _state;
   const next = { ...prev, ...patch };
   if (
-    next.modelIdInUse === prev.modelIdInUse &&
-    next.ttsModelIdInUse === prev.ttsModelIdInUse &&
-    next.sttModelIdInUse === prev.sttModelIdInUse &&
-    next.vadModelIdInUse === prev.vadModelIdInUse &&
+    MODEL_SLOTS.every(
+      ({ appStateKey }) => next[appStateKey] === prev[appStateKey],
+    ) &&
     next.conversationIdInUse === prev.conversationIdInUse &&
     sameAssistantConfig(next.assistantConfig, prev.assistantConfig)
   ) {
@@ -105,7 +104,7 @@ export async function setAppState(patch: Partial<AppState>): Promise<void> {
       listener(next, prev);
       haptics.medium();
     } catch (error) {
-      log('appState listener error', error, { capture: true});
+      log('appState listener error', error, { capture: true });
     }
   });
 }

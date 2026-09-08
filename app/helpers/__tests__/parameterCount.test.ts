@@ -23,3 +23,10 @@ test('has no label for a model with no known count', () => {
   expect(parameterCountLabel(0)).toBeUndefined();
   expect(parameterCountLabel(undefined)).toBeUndefined();
 });
+
+test('promotes a count that rounds up to a million instead of labelling it 1000K', () => {
+  // Picking the unit before rounding leaves 0.9999M on the thousands branch,
+  // where it rounds to 1000 and renders as "1000K".
+  expect(parameterCountLabel(0.0009999)).toBe('1M');
+  expect(parameterCountLabel(0.0009994)).toBe('999K');
+});

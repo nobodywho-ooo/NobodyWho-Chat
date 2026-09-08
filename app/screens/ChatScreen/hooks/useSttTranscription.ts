@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  requestRecordingPermissionsAsync,
-  setAudioModeAsync,
-  useAudioStream,
-} from 'expo-audio';
-import { concatPcm, log } from 'helpers';
+import { requestRecordingPermissionsAsync, useAudioStream } from 'expo-audio';
+import { acquireRecordingMode, concatPcm, log } from 'helpers';
 import { useSpeechService } from 'hooks';
 import { AiModelState, useAiService, VAD_SAMPLE_RATE } from 'services';
 
@@ -35,8 +31,17 @@ export const useSttTranscription = ({
   onPermissionDenied,
 }: SttTranscriptionOptions): SttTranscription => {
   const busyRef = useRef(false);
-  const { stt, sttState } = useAiService();
-  const speechService = useSpeechService();
+  const { sttState, borrowStt } = useAiService();
+
+  // cancelRecording is defined below but has to be reachable from the preempt callback
+  const cancelRecordingRef = useRef<() => void>(() => undefined);
+
+  // The detector is shared with the voice assistant. If that takes it mid-turn,
+  // this recording can no longer end itself — its buffers stop being
+  // accumulated — so close the mic rather than leave it open indefinitely.
+  const speechService = useSpeechService({
+    onPreempted: () => cancelRecordingRef.current(),
+  });
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
 
@@ -52,6 +57,21 @@ export const useSttTranscription = ({
     setIsRecording(recording);
   }, []);
 
+  // Bumped by every stop and cancel. startRecording captures it and abandons
+  // itself if it changed, because a cancel landing while it awaits the
+  // permission prompt has no recording to stop yet — without this the mic opens
+  // afterwards anyway, with no effect left to close it.
+  const captureGeneration = useRef(0);
+
+  // This hook's hold on the process-wide record-mode session, when it has one.
+  const releaseModeRef = useRef<(() => Promise<void>) | undefined>(undefined);
+
+  const releaseRecordingMode = useCallback(async () => {
+    const release = releaseModeRef.current;
+    releaseModeRef.current = undefined;
+    await release?.();
+  }, []);
+
   // Captured PCM windows and the rate the hardware actually delivered. Refs, not
   // state, so the onBuffer callback appends without forcing a re-render per
   // buffer (many per second).
@@ -65,9 +85,12 @@ export const useSttTranscription = ({
 
   const onBuffer = useCallback(
     (buffer: { data: ArrayBuffer; sampleRate: number }) => {
-      // Copy out of the native-owned ArrayBuffer, which is reused for the next
-      // window; Int16Array.from makes an owned copy we can safely retain.
-      const chunk = Int16Array.from(new Int16Array(buffer.data));
+      // slice() takes an owned copy by memcpy, so retaining the window can't be
+      // affected by what the native side does with the buffer afterwards.
+      // (Int16Array.from would go through the iterator protocol and materialise
+      // a boxed array of every sample first — many times the cost, at ~10
+      // buffers a second.)
+      const chunk = new Int16Array(buffer.data).slice();
       chunksRef.current.push(chunk);
       sampleRateRef.current = buffer.sampleRate;
 
@@ -91,26 +114,16 @@ export const useSttTranscription = ({
     onBuffer,
   });
 
-  // Restore the shared audio session to playback-only so TTS read-aloud keeps
-  // working after a dictation. Keep playsInSilentMode set: on iOS the audio mode
-  // is replaced wholesale (not merged), so dropping it here would revert the
-  // session to the .ambient category and mute read-aloud whenever the ringer/mute
-  // switch is on. Best-effort — a failure here must not surface.
-  const releaseRecordingMode = useCallback(async () => {
-    try {
-      await setAudioModeAsync({ allowsRecording: false, playsInSilentMode: true });
-    } catch (error) {
-      log('useSttTranscription release mode', error);
-    }
-  }, []);
-
   const startRecording = useCallback(async () => {
     if (busyRef.current || isRecordingRef.current) {
       return;
     }
-    if (sttState !== AiModelState.Ready || !stt.current) {
+    if (sttState !== AiModelState.Ready) {
       return;
     }
+
+    const generation = captureGeneration.current;
+    const abandoned = () => generation !== captureGeneration.current;
 
     busyRef.current = true;
     try {
@@ -120,14 +133,29 @@ export const useSttTranscription = ({
         return;
       }
 
+      if (abandoned()) {
+        return;
+      }
+
       chunksRef.current = [];
       sampleRateRef.current = TARGET_SAMPLE_RATE;
       speechService.reset();
 
-      // iOS needs the session switched to a record-capable category before the
-      // input node can start; also keep it audible in silent mode.
-      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
+      releaseModeRef.current = await acquireRecordingMode();
+
+      if (abandoned()) {
+        await releaseRecordingMode();
+        return;
+      }
+
       await stream.start();
+
+      if (abandoned()) {
+        stream.stop();
+        await releaseRecordingMode();
+        return;
+      }
+
       setRecording(true);
     } catch (error) {
       log('useSttTranscription start', error);
@@ -137,7 +165,6 @@ export const useSttTranscription = ({
     }
   }, [
     sttState,
-    stt,
     stream,
     onPermissionDenied,
     releaseRecordingMode,
@@ -150,6 +177,7 @@ export const useSttTranscription = ({
       return;
     }
 
+    captureGeneration.current += 1;
     busyRef.current = true;
     try {
       stream.stop();
@@ -167,19 +195,20 @@ export const useSttTranscription = ({
       const speech = speechService.takeSpeechToTranscribe();
       const samples = speech ?? concatPcm(chunks);
       const sampleRate = speech ? VAD_SAMPLE_RATE : sampleRateRef.current;
+      speechService.release();
 
-      if (
-        samples.length === 0 ||
-        sttState !== AiModelState.Ready ||
-        !stt.current
-      ) {
+      if (samples.length === 0 || sttState !== AiModelState.Ready) {
         return;
       }
 
       setIsTranscribing(true);
+
       const text = (
-        await stt.current.transcribePcm(samples, sampleRate).completed()
-      ).trim();
+        await borrowStt(instance =>
+          instance.transcribePcm(samples, sampleRate).completed(),
+        )
+      )?.trim();
+
       if (text) {
         onTranscribed(text);
       }
@@ -191,7 +220,7 @@ export const useSttTranscription = ({
     }
   }, [
     sttState,
-    stt,
+    borrowStt,
     stream,
     onTranscribed,
     releaseRecordingMode,
@@ -205,6 +234,11 @@ export const useSttTranscription = ({
   stopRecordingRef.current = stopRecording;
 
   const cancelRecording = useCallback(() => {
+    // Bumped unconditionally: a cancel landing while startRecording is still
+    // awaiting the permission prompt has no recording to stop yet, but must
+    // still stop that start from opening the microphone behind it.
+    captureGeneration.current += 1;
+
     if (!isRecordingRef.current) {
       return;
     }
@@ -215,9 +249,12 @@ export const useSttTranscription = ({
     }
     chunksRef.current = [];
     speechService.reset();
+    speechService.release();
     setRecording(false);
     releaseRecordingMode();
   }, [stream, releaseRecordingMode, setRecording, speechService]);
+
+  cancelRecordingRef.current = cancelRecording;
 
   // If the engine is torn down while recording (model switch, backgrounding),
   // stop the capture so the microphone is released instead of staying open with

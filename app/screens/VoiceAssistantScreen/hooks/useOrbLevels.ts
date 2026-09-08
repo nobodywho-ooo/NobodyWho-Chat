@@ -2,20 +2,20 @@ import { useCallback, useEffect, useMemo } from 'react';
 import {
   useFrameCallback,
   useSharedValue,
+  type FrameInfo,
   type SharedValue,
 } from 'react-native-reanimated';
 import { AudioEnvelope, micBands } from 'helpers';
 
 // The orb's per-frame drivers, all 0–1 and all smoothed on the UI thread — read
-// them from the render worklet without a JS hop. Shape matches the reference
-// orb's VoiceLevels so useVoiceOrbPicture consumes them unchanged.
+// them from the render worklet without a JS hop. Mirrors the reference orb's
+// VoiceLevels, minus its mid band: nothing in useVoiceOrbPicture renders it, and
+// carrying it cost an accumulator per captured sample plus a follow() per frame.
 export interface VoiceLevels {
   /** Overall loudness. */
   level: SharedValue<number>;
   /** Sub-250 Hz energy — the body of a vowel. */
   low: SharedValue<number>;
-  /** 250 Hz–2 kHz energy — where speech mostly lives. */
-  mid: SharedValue<number>;
   /** Above 2 kHz — consonants and sibilance. */
   high: SharedValue<number>;
   /** Voice-activity envelope: 1 while sound is flowing, 0 in silence. */
@@ -61,13 +61,11 @@ export const useOrbLevels = ({
   // Raw per-window values (mic) or per-hop samples (playback)…
   const rawLevel = useSharedValue(0);
   const rawLow = useSharedValue(0);
-  const rawMid = useSharedValue(0);
   const rawHigh = useSharedValue(0);
 
   // …and their per-frame envelopes, smoothed on the UI thread.
   const level = useSharedValue(0);
   const low = useSharedValue(0);
-  const mid = useSharedValue(0);
   const high = useSharedValue(0);
   const active = useSharedValue(0);
   const speaking = useSharedValue(0);
@@ -77,60 +75,79 @@ export const useOrbLevels = ({
   const envelope = useSharedValue<AudioEnvelope | null>(null);
 
   const levels = useMemo<VoiceLevels>(
-    () => ({ level, low, mid, high, active }),
-    [level, low, mid, high, active],
+    () => ({ level, low, high, active }),
+    [level, low, high, active],
   );
 
-  const frame = useFrameCallback(info => {
-    'worklet';
-    let dt = info.timeSincePreviousFrame ?? 16;
-    if (dt > 100) dt = 100;
-
-    const src = source.value;
-    if (src === PLAYBACK) {
-      playheadMs.value += dt;
-      const env = envelope.value;
-      if (env && env.count > 0) {
-        const idx = Math.floor(playheadMs.value / env.hopMs);
-        if (idx >= 0 && idx < env.count) {
-          const l = env.level[idx];
-          rawLevel.value = l;
-          rawLow.value = l;
-          rawMid.value = l;
-          rawHigh.value = env.high[idx];
-        } else {
-          rawLevel.value = 0;
-          rawLow.value = 0;
-          rawMid.value = 0;
-          rawHigh.value = 0;
-        }
-      }
-    } else if (src === REST) {
-      rawLevel.value = 0;
-      rawLow.value = 0;
-      rawMid.value = 0;
-      rawHigh.value = 0;
-    }
-    // src === MIC: raw* is written from JS by feedPcm between frames.
-
-    const up = 1 - Math.exp(-dt / ATTACK_MS);
-    const down = 1 - Math.exp(-dt / RELEASE_MS);
-    const follow = (cur: number, target: number) => {
+  // Memoised on the shared values it closes over, all of which are stable for
+  // the hook's lifetime. useFrameCallback re-registers whenever the callback's
+  // identity changes, so an inline worklet would be unregistered, re-registered
+  // and re-serialised to the UI runtime on every render of this screen — and the
+  // frame after each of those arrives with no previous timestamp, dropping a
+  // phase step as a visible hitch.
+  const onFrame = useCallback(
+    (info: FrameInfo) => {
       'worklet';
-      return cur + (target - cur) * (target > cur ? up : down);
-    };
+      let dt = info.timeSincePreviousFrame ?? 16;
+      if (dt > 100) dt = 100;
 
-    const lv = follow(level.value, rawLevel.value);
-    level.value = lv;
-    low.value = follow(low.value, rawLow.value);
-    mid.value = follow(mid.value, rawMid.value);
-    high.value = follow(high.value, rawHigh.value);
+      const src = source.value;
+      if (src === PLAYBACK) {
+        playheadMs.value += dt;
+        const env = envelope.value;
+        if (env && env.count > 0) {
+          const idx = Math.floor(playheadMs.value / env.hopMs);
+          if (idx >= 0 && idx < env.count) {
+            const l = env.level[idx];
+            rawLevel.value = l;
+            rawLow.value = l;
+            rawHigh.value = env.high[idx];
+          } else {
+            rawLevel.value = 0;
+            rawLow.value = 0;
+            rawHigh.value = 0;
+          }
+        }
+      } else if (src === REST) {
+        rawLevel.value = 0;
+        rawLow.value = 0;
+        rawHigh.value = 0;
+      }
+      // src === MIC: raw* is written from JS by feedPcm between frames.
 
-    // Hysteresis: a louder sound is needed to start "speaking" than to keep it.
-    const want = lv > (speaking.value > 0.5 ? VAD_OFF : VAD_ON) ? 1 : 0;
-    speaking.value = want;
-    active.value = follow(active.value, want);
-  }, false);
+      const up = 1 - Math.exp(-dt / ATTACK_MS);
+      const down = 1 - Math.exp(-dt / RELEASE_MS);
+      const follow = (cur: number, target: number) => {
+        'worklet';
+        return cur + (target - cur) * (target > cur ? up : down);
+      };
+
+      const lv = follow(level.value, rawLevel.value);
+      level.value = lv;
+      low.value = follow(low.value, rawLow.value);
+      high.value = follow(high.value, rawHigh.value);
+
+      // Hysteresis: a louder sound is needed to start "speaking" than to keep it.
+      const want = lv > (speaking.value > 0.5 ? VAD_OFF : VAD_ON) ? 1 : 0;
+      speaking.value = want;
+      active.value = follow(active.value, want);
+    },
+    [
+      source,
+      playheadMs,
+      envelope,
+      rawLevel,
+      rawLow,
+      rawHigh,
+      level,
+      low,
+      high,
+      active,
+      speaking,
+    ],
+  );
+
+  const frame = useFrameCallback(onFrame, false);
 
   useEffect(() => {
     frame.setActive(enabled);
@@ -143,18 +160,16 @@ export const useOrbLevels = ({
       const bands = micBands(samples, sampleRate);
       rawLevel.value = bands.level;
       rawLow.value = bands.low;
-      rawMid.value = bands.mid;
       rawHigh.value = bands.high;
     },
-    [source, rawLevel, rawLow, rawMid, rawHigh],
+    [source, rawLevel, rawLow, rawHigh],
   );
 
   const zeroRaw = useCallback(() => {
     rawLevel.value = 0;
     rawLow.value = 0;
-    rawMid.value = 0;
     rawHigh.value = 0;
-  }, [rawLevel, rawLow, rawMid, rawHigh]);
+  }, [rawLevel, rawLow, rawHigh]);
 
   const listen = useCallback(() => {
     zeroRaw();

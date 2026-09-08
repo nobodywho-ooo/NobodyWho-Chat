@@ -3,7 +3,7 @@ import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
-import { getFamilyIcon, parameterCountLabel } from 'helpers';
+import { getFamilyIcon, modelSizeLabel, parameterCountLabel } from 'helpers';
 import { Model, ModelPipeline, pipelineLabel } from 'types';
 
 import { Text, fontSizes } from '../Text/Text';
@@ -182,7 +182,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
               <Tag
                 iosIconName="internaldrive"
                 androidIconName="hard_drive"
-                label={`${sizeGB} GB`}
+                label={modelSizeLabel(sizeGB)}
               />
               {languages.length > 0 && (
                 <Tag

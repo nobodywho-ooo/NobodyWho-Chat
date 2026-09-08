@@ -55,11 +55,13 @@ export const ThinkingModal: React.FC<ThinkingModalProps> = ({
     [isDarkMode, colors.onSurface],
   );
 
+  const isOpen = thinking !== null;
+
   React.useEffect(() => {
-    if (thinking !== null) {
+    if (isOpen) {
       translateY.value = 0;
     }
-  }, [thinking, translateY]);
+  }, [isOpen, translateY]);
 
   const panGesture = usePanGesture({
     onUpdate: event => {

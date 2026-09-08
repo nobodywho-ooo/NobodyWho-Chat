@@ -4,12 +4,16 @@ const SAMPLE_RATE = 16000;
 
 // Build a mono 16-bit PCM WAV from −1..1 float samples, matching what the TTS
 // engine hands back, so wavToEnvelope has a real header to walk.
-const makeWav = (samples: Float32Array, sampleRate = SAMPLE_RATE): Uint8Array => {
+const makeWav = (
+  samples: Float32Array,
+  sampleRate = SAMPLE_RATE,
+): Uint8Array => {
   const n = samples.length;
   const buffer = new ArrayBuffer(44 + n * 2);
   const view = new DataView(buffer);
   const writeStr = (offset: number, s: string) => {
-    for (let i = 0; i < s.length; i++) view.setUint8(offset + i, s.charCodeAt(i));
+    for (let i = 0; i < s.length; i++)
+      view.setUint8(offset + i, s.charCodeAt(i));
   };
 
   writeStr(0, 'RIFF');
@@ -61,7 +65,7 @@ const toInt16 = (samples: Float32Array): Int16Array => {
 describe('micBands', () => {
   it('reads silence as zero across every band', () => {
     const bands = micBands(new Int16Array(512), SAMPLE_RATE);
-    expect(bands).toEqual({ level: 0, low: 0, mid: 0, high: 0 });
+    expect(bands).toEqual({ level: 0, low: 0, high: 0 });
   });
 
   it('reports non-zero, in-range loudness for speech-band tone', () => {

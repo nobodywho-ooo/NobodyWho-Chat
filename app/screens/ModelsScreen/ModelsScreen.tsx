@@ -5,6 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useModelDownloads, useStyled } from 'hooks';
 import { Spacings } from 'style';
+import { ModelSlot } from 'types';
 
 import styles from './ModelsScreen.styles';
 import { useAvailableModels } from './useAvailableModels';
@@ -16,6 +17,13 @@ import {
   InUseModel,
 } from './components';
 
+const SLOT_TITLE_KEYS: Record<ModelSlot, string> = {
+  [ModelSlot.chat]: 'screens.models.textModelInUse',
+  [ModelSlot.tts]: 'screens.models.voiceModelInUse',
+  [ModelSlot.stt]: 'screens.models.transcriptionModelInUse',
+  [ModelSlot.vad]: 'screens.models.voiceDetectionModelInUse',
+};
+
 export const ModelsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
@@ -25,10 +33,7 @@ export const ModelsScreen: React.FC = () => {
   const { downloads } = useModelDownloads();
   const {
     availableModels,
-    currentModel,
-    currentTtsModel,
-    currentSttModel,
-    currentVadModel,
+    inUseModels,
     downloadedCount,
     isLoading,
     hasError,
@@ -58,46 +63,19 @@ export const ModelsScreen: React.FC = () => {
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
-      {!!currentModel && (
+      {inUseModels.map(({ slot, model }, index) => (
         <InUseModel
-          model={currentModel}
-          title={t('screens.models.textModelInUse')}
+          key={slot}
+          model={model}
+          title={t(SLOT_TITLE_KEYS[slot])}
+          first={index === 0}
         />
-      )}
-
-      {!!currentTtsModel && (
-        <InUseModel
-          model={currentTtsModel}
-          title={t('screens.models.voiceModelInUse')}
-          first={!currentModel}
-        />
-      )}
-
-      {!!currentSttModel && (
-        <InUseModel
-          model={currentSttModel}
-          title={t('screens.models.transcriptionModelInUse')}
-          first={!currentModel && !currentTtsModel}
-        />
-      )}
-
-      {!!currentVadModel && (
-        <InUseModel
-          model={currentVadModel}
-          title={t('screens.models.voiceDetectionModelInUse')}
-          first={!currentModel && !currentTtsModel && !currentSttModel}
-        />
-      )}
+      ))}
 
       {downloadedCount > 0 && (
         <DownloadedModelsLink
           count={downloadedCount}
-          first={
-            !currentModel &&
-            !currentTtsModel &&
-            !currentSttModel &&
-            !currentVadModel
-          }
+          first={inUseModels.length === 0}
           onPress={goToDownloadedModels}
         />
       )}

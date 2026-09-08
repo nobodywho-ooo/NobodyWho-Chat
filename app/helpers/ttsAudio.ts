@@ -1,4 +1,10 @@
-import { TextToSpeech } from 'react-native-nobodywho';
+import type {
+  TextToSpeech,
+  TextToSpeechArchitecture,
+} from 'react-native-nobodywho';
+
+import { ttsEngineForArchitecture } from './ttsEngine';
+import { findChunk } from './wav';
 
 // Kokoro rejects any synthesize() call over ~509 phonemes (the exact cap is
 // data-driven, derived from the voice's style tensor). We can't count phonemes
@@ -90,31 +96,15 @@ const synthesizeChunk = async (
   }
 };
 
-/** Locate a RIFF subchunk by id, walking word-aligned subchunk headers. */
-const findChunk = (
-  bytes: Uint8Array,
-  view: DataView,
-  id: string,
-): { offset: number; size: number } | null => {
-  let p = 12; // Skip "RIFF" + size + "WAVE".
-  while (p + 8 <= bytes.length) {
-    const cid = String.fromCharCode(
-      bytes[p],
-      bytes[p + 1],
-      bytes[p + 2],
-      bytes[p + 3],
-    );
-    const size = view.getUint32(p + 4, true);
-    if (cid === id) {
-      return { offset: p + 8, size };
-    }
-    p += 8 + size + (size % 2);
-  }
-  return null;
-};
-
 /** Concatenate the PCM payloads of several WAVs (same format) into one WAV. */
 export const concatWavs = (wavs: Uint8Array[]): Uint8Array => {
+  if (wavs.length === 0) {
+    // There is no such thing as a zero-WAV concatenation, and returning an
+    // empty buffer would just move the failure into the audio player. Callers
+    // synthesize through synthesizeSpeech, which never asks for one.
+    throw new Error('concatWavs: nothing to concatenate');
+  }
+
   if (wavs.length === 1) {
     return wavs[0];
   }
@@ -171,8 +161,8 @@ export const concatWavs = (wavs: Uint8Array[]): Uint8Array => {
   return out;
 };
 
-// Kokoro-only: split `text`, synthesize each chunk (retrying over the phoneme
-// cap), and stitch the results into a single WAV ready to write and play.
+// Split `text`, synthesize each chunk (retrying over the phoneme cap), and
+// stitch the results into a single WAV ready to write and play.
 export const synthesizeChunked = async (
   synth: TextToSpeech,
   text: string,
@@ -183,4 +173,28 @@ export const synthesizeChunked = async (
     wavs.push(...(await synthesizeChunk(synth, chunk)));
   }
   return concatWavs(wavs);
+};
+
+// Synthesize `text` with `engine`, applying whatever the loaded architecture
+// needs. Resolves to undefined when there is nothing to say, so callers skip
+// playback instead of driving the player with an empty file.
+//
+// Whether an engine needs its text chunked client-side is a property of the
+// engine (see ttsEngine.ts), not of the caller — deciding it at each call site
+// is how the read-aloud button and the voice assistant end up disagreeing about
+// long answers.
+export const synthesizeSpeech = async (
+  engine: TextToSpeech,
+  architecture: TextToSpeechArchitecture | undefined,
+  text: string,
+): Promise<Uint8Array | undefined> => {
+  const spoken = text.trim();
+
+  if (!spoken) {
+    return undefined;
+  }
+
+  return ttsEngineForArchitecture(architecture)?.needsClientChunking
+    ? synthesizeChunked(engine, spoken)
+    : engine.synthesize(spoken);
 };

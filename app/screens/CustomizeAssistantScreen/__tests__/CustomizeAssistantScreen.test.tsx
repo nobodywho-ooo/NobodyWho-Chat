@@ -3,7 +3,7 @@ import { Switch } from 'react-native';
 import { render, fireEvent, act } from '@testing-library/react-native';
 
 import { getAppState, setAppState, DEFAULT_ASSISTANT_CONFIG } from 'database';
-import { mockUseCurrentTtsModel } from 'jest/mock/hooks';
+import { mockUseSlotModel } from 'jest/mock/hooks';
 
 import {
   CustomizeAssistantScreen,
@@ -12,9 +12,9 @@ import {
 } from '../CustomizeAssistantScreen';
 
 beforeEach(async () => {
-  // The screen mounts SupertonicPreferences; with no voice model in use its
+  // The screen mounts VoicePreferences; with no voice model in use its
   // section stays hidden (the default mock already returns undefined).
-  mockUseCurrentTtsModel.mockReturnValue(undefined);
+  mockUseSlotModel.mockReturnValue(undefined);
   await setAppState({ assistantConfig: undefined });
 });
 

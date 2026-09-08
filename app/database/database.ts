@@ -87,6 +87,13 @@ const MIGRATIONS: string[][] = [
   // are remapped as they copy across. Foreign keys are disabled around the
   // migration (see initDatabase), so dropping `models` here does not cascade
   // through `conversations`/`messages`.
+  //
+  // The same value is also embedded in `model_downloads.model`, which holds a
+  // whole serialized Model so an interrupted download can be rendered before its
+  // row exists in `models` — so that copy is rewritten here too. Miss it and a
+  // download started before the rename finishes after it, calls insertModel with
+  // the old value, fails the rebuilt CHECK, and hits an error path that deletes
+  // the model directory along with the bytes just downloaded.
   [
     // Belt-and-suspenders: a rolled-back or force-quit prior attempt can't leave
     // `models_new` behind (the whole migration is one transaction), but guard
@@ -121,6 +128,17 @@ const MIGRATIONS: string[][] = [
      FROM models`,
     `DROP TABLE models`,
     `ALTER TABLE models_new RENAME TO models`,
+    // Matched as a substring rather than through json_set: the column is always
+    // written by JSON.stringify, whose output has no spaces around the
+    // separators, so the form is fixed — and unlike the JSON1 functions it
+    // cannot be compiled out from under us and fail the whole migration.
+    `UPDATE model_downloads
+     SET model = replace(
+       replace(model, '"pipeline":"speech-to-text"', '"pipeline":"speechToText"'),
+       '"pipeline":"automatic-speech-recognition"', '"pipeline":"speechToText"'
+     )
+     WHERE model LIKE '%"pipeline":"speech-to-text"%'
+        OR model LIKE '%"pipeline":"automatic-speech-recognition"%'`,
   ],
 ];
 

@@ -21,11 +21,13 @@ import {
   modelDirectoryPath,
   resolveSttQuantization,
   sleep,
+  ttsEngineForModel,
 } from 'helpers';
 import {
   ChatPipeline,
   Model,
   ModelPipeline,
+  isChatPipeline,
   isSttPipeline,
   isTtsPipeline,
   isVadPipeline,
@@ -49,32 +51,54 @@ interface AiServiceState {
   vadState: AiModelState;
 }
 
+export interface ChatOptions {
+  useGpu?: boolean;
+  systemPrompt?: string;
+  sampler?: SamplerConfig;
+  contextSize?: number;
+  thinking?: boolean;
+  toolCalling?: boolean;
+}
+
+export interface TtsOptions {
+  voice?: string;
+  language?: string;
+}
+
+export interface SttOptions {
+  language?: string;
+}
+
+// VAD takes no per-load options: its sample rate and silence threshold are
+// module constants every caller has to feed it at anyway.
+export type VadOptions = Record<never, never>;
+
 interface AiServiceContextValue extends AiServiceState {
   chat: React.RefObject<Chat | undefined>;
   tts: React.RefObject<TextToSpeech | undefined>;
   stt: React.RefObject<SpeechToText | undefined>;
   vad: React.RefObject<VoiceActivityDetection | undefined>;
 
-  createChat: (opts: {
-    model: Model;
-    useGpu?: boolean;
-    systemPrompt?: string;
-    sampler?: SamplerConfig;
-    contextSize?: number;
-    thinking?: boolean;
-    toolCalling?: boolean;
-  }) => Promise<void>;
+  createChat: (opts: ChatOptions & { model: Model }) => Promise<void>;
   disposeChat: () => void;
-  createTts: (opts: {
-    model: Model;
-    voice?: string;
-    language?: string;
-  }) => Promise<void>;
+  createTts: (opts: TtsOptions & { model: Model }) => Promise<void>;
   disposeTts: () => void;
-  createStt: (opts: { model: Model; language?: string }) => Promise<void>;
+  createStt: (opts: SttOptions & { model: Model }) => Promise<void>;
   disposeStt: () => void;
-  createVad: (opts: { model: Model }) => Promise<void>;
+  createVad: (opts: VadOptions & { model: Model }) => Promise<void>;
   disposeVad: () => void;
+
+  // Run work against a loaded engine while holding it open, so a dispose racing
+  // it waits instead of freeing the handle mid-call. Resolve to undefined when
+  // the slot isn't loaded. Neither engine can be cancelled once started, so any
+  // await against them belongs inside one of these.
+  borrowTts: <R>(
+    work: (instance: TextToSpeech) => Promise<R>,
+  ) => Promise<R | undefined>;
+  borrowStt: <R>(
+    work: (instance: SpeechToText) => Promise<R>,
+  ) => Promise<R | undefined>;
+
   dispose: () => void;
 }
 
@@ -91,14 +115,14 @@ const _initialState: AiServiceState = {
   vadState: AiModelState.NotLoaded,
 };
 
-// chat.destroy() is fire-and-forget: it signals the native worker thread but
-// returns before the llama_context / Metal buffers are actually freed, with no
+// destroy() is fire-and-forget: it signals the native worker thread but returns
+// before the llama_context / Metal buffers are actually freed, with no
 // completion signal to await. So after a teardown we yield the event loop and
-// wait this long before the next Chat.fromPath allocates — otherwise the new
-// context starts reserving Metal buffers while the old one is still releasing
-// them, which on multimodal models (large footprint) makes a buffer allocation
-// return NULL and crashes inside ggml-metal. Heuristic, not a real wait; bump
-// it if field crashes persist.
+// wait this long before the next load allocates — otherwise the new context
+// starts reserving Metal buffers while the old one is still releasing them,
+// which on multimodal models (large footprint) makes a buffer allocation return
+// NULL and crashes inside ggml-metal. Heuristic, not a real wait; bump it if
+// field crashes persist.
 export const TEARDOWN_SETTLE_MS = 500;
 
 export const MULTIMODAL_CONTEXT_SIZE = 2048;
@@ -118,32 +142,298 @@ export const VAD_SAMPLE_RATE = 16000;
 // the engine's defaults.
 export const VAD_MIN_SILENCE_MS = 700;
 
+type SlotStateKey = 'chatState' | 'ttsState' | 'sttState' | 'vadState';
+
+interface NativeInstance {
+  destroy: () => void;
+}
+
+interface SlotSpec<TInstance extends NativeInstance, TOptions> {
+  stateKey: SlotStateKey;
+  accepts: (pipeline: ModelPipeline) => boolean;
+  open: (
+    model: Model,
+    opts: TOptions,
+  ) => Promise<{ instance: TInstance; state?: Partial<AiServiceState> }>;
+  // Extra state reset alongside `<stateKey>: NotLoaded` on dispose.
+  cleared?: Partial<AiServiceState>;
+  // Interrupt in-flight work before destroy(). Only Chat can be interrupted;
+  // TTS/STT/VAD expose no cancel at all, which is what borrow() is for.
+  stop?: (instance: TInstance) => void;
+}
+
+interface NativeSlot<TInstance extends NativeInstance, TOptions> {
+  ref: React.RefObject<TInstance | undefined>;
+  create: (opts: TOptions & { model: Model }) => Promise<void>;
+  dispose: () => void;
+  borrow: <R>(
+    work: (instance: TInstance) => Promise<R>,
+  ) => Promise<R | undefined>;
+}
+
+// Names the slot in error messages and logs ("chat", "tts", …)
+const slotLabel = (stateKey: SlotStateKey): string =>
+  stateKey.replace('State', '');
+
+// A computed key over a union of literals widens to a string index signature,
+// which no longer matches AiServiceState — assert the narrow shape back.
+const slotPatch = (
+  stateKey: SlotStateKey,
+  next: AiModelState,
+): Partial<AiServiceState> => ({ [stateKey]: next }) as Partial<AiServiceState>;
+
+// Every declared part must be on disk before the folder-based loaders (TTS,
+// STT, VAD) are pointed at the model's directory — a missing weight otherwise
+// surfaces deep inside the engine as an opaque load failure.
+const requireAllParts = (model: Model): void => {
+  const missing = model.parts.find(
+    part => downloadedPartPath(model.id, part.fileName) === null,
+  );
+
+  if (missing) {
+    throw new Error(
+      `AiService: file ${missing.fileName} missing for model ${model.id} (${model.name}) — re-download required`,
+    );
+  }
+};
+
+// One native model slot: the load-serialization protocol every engine shares,
+// written once instead of copied per engine.
+//
+// Native loads must never overlap each other, and a teardown must never overlap
+// a load: either one deadlocks the worker (an endless "Loading…") or frees GPU
+// buffers under a live allocation (EXC_BAD_ACCESS inside ggml-metal). Every
+// slot therefore chains onto the single shared `nativeLoadRef` promise, and a
+// per-slot generation counter lets a load that was superseded while it waited
+// throw its instance away instead of resurrecting a disposed engine.
+const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
+  spec: SlotSpec<TInstance, TOptions>,
+  setState: React.Dispatch<React.SetStateAction<AiServiceState>>,
+  nativeLoadRef: React.RefObject<Promise<unknown> | undefined>,
+  enqueueTeardown: (teardown: () => Promise<void>) => Promise<void>,
+): NativeSlot<TInstance, TOptions> => {
+  const ref = useRef<TInstance | undefined>(undefined);
+  // Which model `ref` actually holds. Without it, "is the ref set" is the only
+  // reuse test, and two loads racing for different models leave the slot
+  // serving one while app state points at the other, permanently.
+  const loadedModelId = useRef<number | undefined>(undefined);
+  // Bumped on every dispose. A load that resolves after its generation passed
+  // must discard its instance rather than resurrect a disposed engine.
+  const generation = useRef(0);
+  // Work borrowed against the live instance. A teardown waits for it: none of
+  // these engines can be interrupted, so destroying under a running call frees
+  // the handle from under Rust.
+  const inFlight = useRef(new Set<Promise<unknown>>());
+
+  // The spec closes over fresh callbacks every render; hold it in a ref so the
+  // functions returned below stay referentially stable for the context memo.
+  const specRef = useRef(spec);
+  specRef.current = spec;
+
+  const settleInFlight = useCallback(async () => {
+    // A borrow started while we waited has to finish too. The set stops growing
+    // once the caller has cleared `ref`, after which borrow() hands nothing out.
+    while (inFlight.current.size > 0) {
+      await Promise.all([...inFlight.current]);
+    }
+  }, []);
+
+  // Free a handle we own the load chain for. Does not settle afterwards — the
+  // caller decides, because a teardown burst only needs to settle once.
+  const destroyInstance = useCallback(
+    async (instance: TInstance) => {
+      const { stateKey, stop } = specRef.current;
+      const label = slotLabel(stateKey);
+
+      await settleInFlight();
+
+      try {
+        stop?.(instance);
+      } catch (error) {
+        log(`AiService ${label} stop failed`, error, { capture: true });
+      }
+
+      try {
+        instance.destroy();
+      } catch (error) {
+        log(`AiService ${label} destroy failed`, error, { capture: true });
+      }
+    },
+    [settleInFlight],
+  );
+
+  const create = useCallback(
+    async (opts: TOptions & { model: Model }) => {
+      const { accepts, stateKey } = specRef.current;
+      const label = slotLabel(stateKey);
+      const { model } = opts;
+
+      // Already serving exactly this model — nothing to do.
+      if (ref.current && loadedModelId.current === model.id) {
+        return;
+      }
+
+      if (!accepts(model.pipeline)) {
+        throw new Error(
+          `AiService: model ${model.id} (${model.name}) is not a valid ${label} model`,
+        );
+      }
+
+      const generationAtCall = generation.current;
+      const previousLoad = nativeLoadRef.current;
+
+      const load = async () => {
+        // Wait for any in-flight load to fully settle (and release the native
+        // backend) before touching it again. When idle there is nothing to wait
+        // for, so the first load reaches the loader in the same tick.
+        if (previousLoad) {
+          await previousLoad;
+        }
+
+        // Disposed while we waited — bail before starting an unwanted load.
+        if (generationAtCall !== generation.current) {
+          return;
+        }
+
+        const stale = ref.current;
+
+        if (stale) {
+          // A sibling load got there first. Same model: reuse it. Different
+          // model: our caller's selection is the newer one, so replace it —
+          // leaving the old instance in place would make the slot's id and the
+          // live engine disagree with no way back. Safe to free here: this
+          // function owns the load chain for its whole body.
+          if (loadedModelId.current === model.id) {
+            return;
+          }
+
+          ref.current = undefined;
+          loadedModelId.current = undefined;
+          await destroyInstance(stale);
+          await sleep(TEARDOWN_SETTLE_MS);
+        }
+
+        setState(s => ({ ...s, ...slotPatch(stateKey, AiModelState.Loading) }));
+
+        const { instance, state } = await specRef.current.open(model, opts);
+
+        if (generationAtCall !== generation.current) {
+          // Disposed while loading; a newer load may already be in flight. This
+          // function owns nativeLoadRef, so it can't enqueueTeardown (it would
+          // wait on itself). The newer load awaits us through `previousLoad`,
+          // so settling here delays its loader until our buffers are freed.
+          await destroyInstance(instance);
+          await sleep(TEARDOWN_SETTLE_MS);
+          return;
+        }
+
+        ref.current = instance;
+        loadedModelId.current = model.id;
+        setState(s => ({
+          ...s,
+          ...slotPatch(stateKey, AiModelState.Ready),
+          ...state,
+        }));
+      };
+
+      // Invoke the load exactly once and publish that single promise, so the
+      // next create (or teardown) serializes behind it. Calling load() a second
+      // time here would run two native loads at once — the concurrent-load
+      // deadlock this whole chain exists to prevent. The stored handle swallows
+      // rejections so one failed load can't reject the next `previousLoad`.
+      const loadPromise = load();
+      nativeLoadRef.current = loadPromise.catch(() => undefined);
+
+      try {
+        await loadPromise;
+      } catch (error) {
+        log(`AiService create ${label}`, error, { capture: true });
+        // Only the generation that still owns the slot may surface the error; a
+        // superseded load must not flip a newer load's state to Error.
+        if (generationAtCall === generation.current) {
+          setState(s => ({ ...s, ...slotPatch(stateKey, AiModelState.Error) }));
+        }
+        throw error;
+      }
+    },
+    [destroyInstance, nativeLoadRef, setState],
+  );
+
+  const dispose = useCallback(() => {
+    const { stateKey, cleared } = specRef.current;
+
+    generation.current += 1;
+    const instance = ref.current;
+    // Cleared before the teardown runs, so a throwing destroy() can't leave a
+    // stale instance blocking the next create, and so borrow() stops handing
+    // the handle out while we are freeing it.
+    ref.current = undefined;
+    loadedModelId.current = undefined;
+
+    if (instance) {
+      enqueueTeardown(() => destroyInstance(instance));
+    }
+
+    setState(s => ({
+      ...s,
+      ...slotPatch(stateKey, AiModelState.NotLoaded),
+      ...cleared,
+    }));
+  }, [destroyInstance, enqueueTeardown, setState]);
+
+  const borrow = useCallback(
+    async <R,>(
+      work: (instance: TInstance) => Promise<R>,
+    ): Promise<R | undefined> => {
+      const instance = ref.current;
+
+      if (!instance) {
+        return undefined;
+      }
+
+      const running = work(instance);
+      // Tracked separately so a rejection here can't reject a teardown's wait —
+      // the borrower still sees the original rejection below.
+      const tracked = running.catch(() => undefined);
+      inFlight.current.add(tracked);
+
+      try {
+        return await running;
+      } finally {
+        inFlight.current.delete(tracked);
+      }
+    },
+    [],
+  );
+
+  return useMemo(
+    () => ({ ref, create, dispose, borrow }),
+    [borrow, create, dispose],
+  );
+};
+
 export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
   const [state, setState] = useState<AiServiceState>(_initialState);
 
-  const chatRef = useRef<Chat | undefined>(undefined);
-  const ttsRef = useRef<TextToSpeech | undefined>(undefined);
-  const sttRef = useRef<SpeechToText | undefined>(undefined);
-  const vadRef = useRef<VoiceActivityDetection | undefined>(undefined);
-
-  // Bumped on every dispose. A createChat that resolves after its generation
-  // passed must discard its instance instead of resurrecting a disposed chat.
-  const chatGeneration = useRef(0);
-  const ttsGeneration = useRef(0);
-  const sttGeneration = useRef(0);
-  const vadGeneration = useRef(0);
-
   const nativeLoadRef = useRef<Promise<unknown> | undefined>(undefined);
+  // How many teardowns are still queued on the chain. Only the last one in a
+  // burst pays the settle: it exists to keep the *next load* off the backend
+  // while buffers are freed, and back-to-back destroys allocate nothing. Without
+  // this, disposing all four slots (backgrounding) sleeps 4 × TEARDOWN_SETTLE_MS
+  // in series, all of which the next load has to wait out on resume.
+  const pendingTeardowns = useRef(0);
 
-  // Run a chat teardown serialized on the same chain as loads, so the next
-  // createChat's `await previousLoad` also waits out the teardown + settle
-  // delay before allocating a new context. Without this, a dispose (e.g. on
-  // backgrounding) followed by a reload (on returning) overlaps the old
-  // context's native release with the new one's Metal allocation.
-  const enqueueTeardown = useCallback((teardown: () => void) => {
+  // Run a teardown serialized on the same chain as loads, so the next create's
+  // `await previousLoad` also waits out the teardown and its settle before
+  // allocating. Without this, a dispose (on backgrounding) followed by a reload
+  // (on returning) overlaps the old context's native release with the new one's
+  // Metal allocation.
+  const enqueueTeardown = useCallback((teardown: () => Promise<void>) => {
     const previous = nativeLoadRef.current;
+    pendingTeardowns.current += 1;
+
     const barrier = (async () => {
       // Serialize behind any in-flight load before touching the backend.
       if (previous) {
@@ -151,56 +441,34 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       try {
-        teardown();
+        await teardown();
       } catch (error) {
         log('AiService teardown failed', error, { capture: true });
+      } finally {
+        pendingTeardowns.current -= 1;
       }
-      // Give the worker thread time to free the llama_context / GPU buffers
-      // before the next fromPath allocates (destroy() exposes no done signal).
-      await sleep(TEARDOWN_SETTLE_MS);
+
+      if (pendingTeardowns.current === 0) {
+        await sleep(TEARDOWN_SETTLE_MS);
+      }
     })();
-    // Publish so the next createChat (or teardown) serializes behind us; swallow
+
+    // Publish so the next create (or teardown) serializes behind us; swallow
     // rejections so one failure can't reject the next `await previousLoad`.
     nativeLoadRef.current = barrier.catch(() => undefined);
     return barrier;
   }, []);
 
-  const createChat = useCallback(
-    async (opts: {
-      model: Model;
-      useGpu?: boolean;
-      systemPrompt?: string;
-      sampler?: SamplerConfig;
-      contextSize?: number;
-      thinking?: boolean;
-      toolCalling?: boolean;
-    }) => {
-      if (chatRef.current) {
-        return;
-      }
-
-      const generation = chatGeneration.current;
-      const previousLoad = nativeLoadRef.current;
-
-      const load = async () => {
-        // Wait for any in-flight load to fully settle (and release the native
-        // backend) before touching it again. When idle there's nothing to wait
-        // for, so the first load reaches fromPath in the same tick.
-        if (previousLoad) {
-          await previousLoad;
-        }
-
-        // A dispose or a newer load superseded us while we waited — bail before
-        // starting an unwanted load. A sibling load of the same model that
-        // already produced a chat is reused rather than loaded a second time.
-        if (generation !== chatGeneration.current || chatRef.current) {
-          return;
-        }
-
-        setState(s => ({ ...s, chatState: AiModelState.Loading }));
-
-        const { model } = opts;
-
+  const chatSlot = useNativeSlot<Chat, ChatOptions>(
+    {
+      stateKey: 'chatState',
+      accepts: isChatPipeline,
+      cleared: { chatPipeline: ModelPipeline.textGeneration },
+      // Stop any in-flight generation before freeing the context, so a stream
+      // still being consumed (e.g. ChatScreen mid-send during a model switch)
+      // ends cleanly instead of having the context torn out from under it.
+      stop: instance => instance.stopGeneration(),
+      open: async (model, opts) => {
         const chatPart = model.parts.find(part => part.type === 'chat-model');
         const chatModelPath = chatPart
           ? downloadedPartPath(model.id, chatPart.fileName)
@@ -234,7 +502,7 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
             ? buildChatTools()
             : undefined;
 
-        // Multimodal contexts are capped: larger ones exhaust Metal buffer
+        // Multimodal contexts are capped: larger ones exhaust Metal buffers.
         const contextSize =
           projectionModelPath !== undefined
             ? Math.min(
@@ -243,468 +511,155 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
               )
             : opts.contextSize;
 
-        const chat = await Chat.fromPath({
+        const instance = await Chat.fromPath({
           modelPath: chatModelPath,
           projectionModelPath,
-          useGpu: opts?.useGpu ?? true,
+          useGpu: opts.useGpu ?? true,
           tools,
-          systemPrompt: opts?.systemPrompt,
-          sampler: opts?.sampler,
+          systemPrompt: opts.systemPrompt,
+          sampler: opts.sampler,
           contextSize,
           templateVariables: {
             enable_thinking: model.thinking && (opts.thinking ?? true),
           },
         });
 
-        if (generation !== chatGeneration.current) {
-          // Disposed while loading; a newer chat may already be in flight.
-          try {
-            chat.destroy();
-          } catch (error) {
-            log('AiService superseded chat destroy failed', error, {
-              capture: true,
-            });
-          }
-          // This IIFE owns nativeLoadRef, so we can't enqueueTeardown (self-wait).
-          // The newer load already awaits this IIFE via `await previousLoad`, so
-          // settling here delays its fromPath until our GPU buffers are freed.
-          await sleep(TEARDOWN_SETTLE_MS);
-          return;
-        }
-
-        chatRef.current = chat;
-        const chatPipeline = toChatPipeline(model.pipeline);
-
-        setState(s => ({
-          ...s,
-          chatState: AiModelState.Ready,
-          chatPipeline: chatPipeline,
-        }));
-      };
-
-      // Invoke the load exactly once. Publish that single promise so the next
-      // createChat serializes behind it; the stored handle swallows rejections
-      // so one failed load can't reject the next load's `await previousLoad`.
-      // (Calling load() a second time here would run two native loads at once —
-      // the concurrent-load deadlock this whole chain exists to prevent.)
-      const loadPromise = load();
-      nativeLoadRef.current = loadPromise.catch(() => undefined);
-
-      try {
-        await loadPromise;
-      } catch (error) {
-        log('AiService create chat', error, { capture: true });
-        // Only the generation that still owns the chat may surface the error; a
-        // superseded load must not flip a newer load's state to Error.
-        if (generation === chatGeneration.current) {
-          setState(s => ({ ...s, chatState: AiModelState.Error }));
-        }
-        throw error;
-      }
+        return {
+          instance,
+          state: { chatPipeline: toChatPipeline(model.pipeline) },
+        };
+      },
     },
-    [],
+    setState,
+    nativeLoadRef,
+    enqueueTeardown,
   );
 
-  const disposeChat = useCallback(() => {
-    chatGeneration.current += 1;
-    const instance = chatRef.current;
-    chatRef.current = undefined;
+  const ttsSlot = useNativeSlot<TextToSpeech, TtsOptions>(
+    {
+      stateKey: 'ttsState',
+      accepts: isTtsPipeline,
+      cleared: { ttsArchitecture: undefined },
+      open: async (model, opts) => {
+        requireAllParts(model);
 
-    if (instance) {
-      enqueueTeardown(() => {
-        // Stop any in-flight generation before freeing the context, so a stream
-        // still being consumed (e.g. ChatScreen mid-send during a model switch)
-        // ends cleanly instead of the context being torn out. destroy() runs in
-        // finally so it still happens if stopGeneration throws; enqueueTeardown's
-        // own try/catch logs whichever call throws.
-        try {
-          instance.stopGeneration();
-        } finally {
-          instance.destroy();
-        }
-      });
-    }
+        // Downloaded models live in id-named dirs (…/models/7), so the
+        // architecture can't be inferred from the path — resolve it from the
+        // catalogue family through the engine registry, which fails here with a
+        // real message rather than handing the loader an unknown string.
+        const engine = ttsEngineForModel(model);
 
-    setState(s => ({
-      ...s,
-      chatState: AiModelState.NotLoaded,
-      chatPipeline: ModelPipeline.textGeneration,
-    }));
-  }, [enqueueTeardown]);
-
-  const createTts = useCallback(
-    async (opts: { model: Model; voice?: string; language?: string }) => {
-      if (ttsRef.current) {
-        return;
-      }
-
-      const { model, voice, language } = opts;
-
-      if (!isTtsPipeline(model.pipeline)) {
-        throw new Error(
-          `AiService: model ${model.id} (${model.name}) is not a TTS model`,
-        );
-      }
-
-      const generation = ttsGeneration.current;
-      const previousLoad = nativeLoadRef.current;
-
-      const load = async () => {
-        if (previousLoad) {
-          await previousLoad;
-        }
-
-        if (generation !== ttsGeneration.current || ttsRef.current) {
-          return;
-        }
-
-        setState(s => ({ ...s, ttsState: AiModelState.Loading }));
-
-        const missingPart = model.parts.find(
-          part => downloadedPartPath(model.id, part.fileName) === null,
-        );
-
-        if (missingPart) {
+        if (!engine) {
           throw new Error(
-            `AiService: TTS file ${missingPart.fileName} missing for model ${model.id} (${model.name}) — re-download required`,
+            `AiService: unsupported TTS engine for model ${model.id} (${model.name}, family "${model.family}")`,
           );
         }
 
-        // Downloaded models live in id-named dirs (…/models/7), so we can't
-        // infer the architecture from the path — derive it from family
-        // ("Supertonic" -> supertonic) and reuse it as the loaded architecture
-        // we publish below.
-        const architecture =
-          model.family.toLowerCase() as TextToSpeechArchitecture;
-        const tts = await TextToSpeech.load({
+        const instance = await TextToSpeech.load({
           source: modelDirectoryPath(model.id),
-          architecture,
-          // Load-time options (Supertonic): omitted keys keep the engine's
-          // defaults, so a model with no voice/language selection is unaffected.
-          voice,
-          language,
+          architecture: engine.architecture,
+          // Load-time options, already resolved against this engine's own
+          // vocabulary by resolveTtsPrefs. An omitted key keeps the engine's
+          // built-in default, which is what an option it offers nothing for
+          // (pocket-tts voices) arrives here as.
+          voice: opts.voice,
+          language: opts.language,
         });
 
-        if (generation !== ttsGeneration.current) {
-          try {
-            tts.destroy();
-          } catch (error) {
-            log('AiService superseded tts destroy failed', error, {
-              capture: true,
-            });
-          }
-          await sleep(TEARDOWN_SETTLE_MS);
-          return;
-        }
-
-        ttsRef.current = tts;
-        setState(s => ({
-          ...s,
-          ttsState: AiModelState.Ready,
-          ttsArchitecture: architecture,
-        }));
-      };
-
-      const loadPromise = load();
-      nativeLoadRef.current = loadPromise.catch(() => undefined);
-
-      try {
-        await loadPromise;
-      } catch (error) {
-        log('AiService create tts', error, { capture: true });
-        if (generation === ttsGeneration.current) {
-          setState(s => ({ ...s, ttsState: AiModelState.Error }));
-        }
-        throw error;
-      }
+        return { instance, state: { ttsArchitecture: engine.architecture } };
+      },
     },
-    [],
+    setState,
+    nativeLoadRef,
+    enqueueTeardown,
   );
 
-  const disposeTts = useCallback(() => {
-    ttsGeneration.current += 1;
-    const instance = ttsRef.current;
-    ttsRef.current = undefined;
+  const sttSlot = useNativeSlot<SpeechToText, SttOptions>(
+    {
+      stateKey: 'sttState',
+      accepts: isSttPipeline,
+      open: async (model, opts) => {
+        requireAllParts(model);
 
-    if (instance) {
-      enqueueTeardown(() => instance.destroy());
-    }
-
-    setState(s => ({
-      ...s,
-      ttsState: AiModelState.NotLoaded,
-      ttsArchitecture: undefined,
-    }));
-  }, [enqueueTeardown]);
-
-  const createStt = useCallback(
-    async (opts: { model: Model; language?: string }) => {
-      if (sttRef.current) {
-        return;
-      }
-
-      const { model, language } = opts;
-
-      if (!isSttPipeline(model.pipeline)) {
-        throw new Error(
-          `AiService: model ${model.id} (${model.name}) is not an STT model`,
-        );
-      }
-
-      const generation = sttGeneration.current;
-      const previousLoad = nativeLoadRef.current;
-
-      const load = async () => {
-        if (previousLoad) {
-          await previousLoad;
-        }
-
-        if (generation !== sttGeneration.current || sttRef.current) {
-          return;
-        }
-
-        setState(s => ({ ...s, sttState: AiModelState.Loading }));
-
-        const missingPart = model.parts.find(
-          part => downloadedPartPath(model.id, part.fileName) === null,
-        );
-
-        if (missingPart) {
-          throw new Error(
-            `AiService: STT file ${missingPart.fileName} missing for model ${model.id} (${model.name}) — re-download required`,
-          );
-        }
-
-        // Whisper is loaded from the model's own directory (…/models/<id>),
-        // the same folder-based source TTS uses. `language` is optional: when
+        // Whisper is loaded from the model's own directory (…/models/<id>), the
+        // same folder-based source TTS uses. `language` is optional: when
         // omitted the engine auto-detects the spoken language (passing an ISO
         // 639-1 code skips detection and is faster). `quantization` must match
         // the ONNX variant that was downloaded (e.g. "int8"), otherwise the
         // loader looks for the engine's default unsuffixed weights, which the
         // model doesn't ship, and fails to load.
-        const stt = await SpeechToText.load({
+        const instance = await SpeechToText.load({
           source: modelDirectoryPath(model.id),
-          language,
+          language: opts.language,
           quantization: resolveSttQuantization(model),
         });
 
-        if (generation !== sttGeneration.current) {
-          try {
-            stt.destroy();
-          } catch (error) {
-            log('AiService superseded stt destroy failed', error, {
-              capture: true,
-            });
-          }
-          await sleep(TEARDOWN_SETTLE_MS);
-          return;
-        }
-
-        sttRef.current = stt;
-        setState(s => ({ ...s, sttState: AiModelState.Ready }));
-      };
-
-      const loadPromise = load();
-      nativeLoadRef.current = loadPromise.catch(() => undefined);
-
-      try {
-        await loadPromise;
-      } catch (error) {
-        log('AiService create stt', error, { capture: true });
-        if (generation === sttGeneration.current) {
-          setState(s => ({ ...s, sttState: AiModelState.Error }));
-        }
-        throw error;
-      }
+        return { instance };
+      },
     },
-    [],
+    setState,
+    nativeLoadRef,
+    enqueueTeardown,
   );
-
-  const disposeStt = useCallback(() => {
-    sttGeneration.current += 1;
-    const instance = sttRef.current;
-    sttRef.current = undefined;
-
-    if (instance) {
-      enqueueTeardown(() => instance.destroy());
-    }
-
-    setState(s => ({ ...s, sttState: AiModelState.NotLoaded }));
-  }, [enqueueTeardown]);
 
   // Voice activity detection: a tiny Silero ONNX model that tells speech and
   // silence apart, so a recording can end itself when the user stops talking
   // instead of waiting for a tap. The voice assistant is built on it — that
   // screen stays unavailable until one is loaded — while the input bar's
   // dictation only uses it when there is one, and falls back to a manual stop.
-  const createVad = useCallback(async (opts: { model: Model }) => {
-    if (vadRef.current) {
-      return;
-    }
+  const vadSlot = useNativeSlot<VoiceActivityDetection, VadOptions>(
+    {
+      stateKey: 'vadState',
+      accepts: isVadPipeline,
+      open: async model => {
+        requireAllParts(model);
 
-    const { model } = opts;
+        // Loaded from the model's own directory (…/models/<id>), the same
+        // folder-based source TTS and STT use — the loader resolves the Silero
+        // weights inside it (onnx/model.onnx, or model.onnx at the root).
+        const instance = await VoiceActivityDetection.load({
+          source: modelDirectoryPath(model.id),
+          sampleRate: VAD_SAMPLE_RATE,
+          minSilenceDurationMs: VAD_MIN_SILENCE_MS,
+        });
 
-    if (!isVadPipeline(model.pipeline)) {
-      throw new Error(
-        `AiService: model ${model.id} (${model.name}) is not a VAD model`,
-      );
-    }
-
-    const generation = vadGeneration.current;
-    const previousLoad = nativeLoadRef.current;
-
-    const load = async () => {
-      if (previousLoad) {
-        await previousLoad;
-      }
-
-      if (generation !== vadGeneration.current || vadRef.current) {
-        return;
-      }
-
-      setState(s => ({ ...s, vadState: AiModelState.Loading }));
-
-      const missingPart = model.parts.find(
-        part => downloadedPartPath(model.id, part.fileName) === null,
-      );
-
-      if (missingPart) {
-        throw new Error(
-          `AiService: VAD file ${missingPart.fileName} missing for model ${model.id} (${model.name}) — re-download required`,
-        );
-      }
-
-      // Loaded from the model's own directory (…/models/<id>), the same
-      // folder-based source TTS and STT use — the loader resolves the Silero
-      // weights inside it (onnx/model.onnx, or model.onnx at the root).
-      const vad = await VoiceActivityDetection.load({
-        source: modelDirectoryPath(model.id),
-        sampleRate: VAD_SAMPLE_RATE,
-        minSilenceDurationMs: VAD_MIN_SILENCE_MS,
-      });
-
-      if (generation !== vadGeneration.current) {
-        try {
-          vad.destroy();
-        } catch (error) {
-          log('AiService superseded vad destroy failed', error, {
-            capture: true,
-          });
-        }
-        await sleep(TEARDOWN_SETTLE_MS);
-        return;
-      }
-
-      vadRef.current = vad;
-      setState(s => ({ ...s, vadState: AiModelState.Ready }));
-    };
-
-    const loadPromise = load();
-    nativeLoadRef.current = loadPromise.catch(() => undefined);
-
-    try {
-      await loadPromise;
-    } catch (error) {
-      log('AiService create vad', error, { capture: true });
-      if (generation === vadGeneration.current) {
-        setState(s => ({ ...s, vadState: AiModelState.Error }));
-      }
-      throw error;
-    }
-  }, []);
-
-  const disposeVad = useCallback(() => {
-    vadGeneration.current += 1;
-    const instance = vadRef.current;
-    vadRef.current = undefined;
-
-    if (instance) {
-      enqueueTeardown(() => instance.destroy());
-    }
-
-    setState(s => ({ ...s, vadState: AiModelState.NotLoaded }));
-  }, [enqueueTeardown]);
+        return { instance };
+      },
+    },
+    setState,
+    nativeLoadRef,
+    enqueueTeardown,
+  );
 
   const dispose = useCallback(() => {
-    chatGeneration.current += 1;
-    ttsGeneration.current += 1;
-    sttGeneration.current += 1;
-    vadGeneration.current += 1;
-    // Clear the refs BEFORE destroying so a throwing destroy() can't leave a
-    // stale instance that blocks the next createChat()/createTts()/createStt().
-    const chatInstance = chatRef.current;
-    chatRef.current = undefined;
-    const ttsInstance = ttsRef.current;
-    ttsRef.current = undefined;
-    const sttInstance = sttRef.current;
-    sttRef.current = undefined;
-    const vadInstance = vadRef.current;
-    vadRef.current = undefined;
-
-    // The Chat can overlap a future chat load, so route its teardown through
-    // the load chain (stop generation first, since only Chat streams).
-    if (chatInstance) {
-      enqueueTeardown(() => {
-        // Stop any in-flight generation before freeing the context (only Chat
-        // streams). destroy() runs in finally so it still happens if
-        // stopGeneration throws — otherwise the native context leaks and the
-        // backend is never released for the next load. enqueueTeardown's own
-        // try/catch logs whichever call throws.
-        try {
-          chatInstance.stopGeneration();
-        } finally {
-          chatInstance.destroy();
-        }
-      });
-    }
-
-    // Second enqueue serializes behind the chat teardown on the same chain.
-    if (ttsInstance) {
-      enqueueTeardown(() => ttsInstance.destroy());
-    }
-
-    // Third enqueue serializes behind the tts teardown on the same chain.
-    if (sttInstance) {
-      enqueueTeardown(() => sttInstance.destroy());
-    }
-
-    // Fourth enqueue serializes behind the stt teardown on the same chain.
-    if (vadInstance) {
-      enqueueTeardown(() => vadInstance.destroy());
-    }
-
-    setState(_initialState);
-  }, [enqueueTeardown]);
+    // Each slot clears its ref synchronously and enqueues its teardown on the
+    // shared chain, so they free in this order and only the last one settles.
+    chatSlot.dispose();
+    ttsSlot.dispose();
+    sttSlot.dispose();
+    vadSlot.dispose();
+  }, [chatSlot, ttsSlot, sttSlot, vadSlot]);
 
   const value = useMemo<AiServiceContextValue>(
     () => ({
       ...state,
-      chat: chatRef,
-      tts: ttsRef,
-      stt: sttRef,
-      vad: vadRef,
-      createChat,
-      disposeChat,
-      createTts,
-      disposeTts,
-      createStt,
-      disposeStt,
-      createVad,
-      disposeVad,
+      chat: chatSlot.ref,
+      tts: ttsSlot.ref,
+      stt: sttSlot.ref,
+      vad: vadSlot.ref,
+      createChat: chatSlot.create,
+      disposeChat: chatSlot.dispose,
+      createTts: ttsSlot.create,
+      disposeTts: ttsSlot.dispose,
+      createStt: sttSlot.create,
+      disposeStt: sttSlot.dispose,
+      createVad: vadSlot.create,
+      disposeVad: vadSlot.dispose,
+      borrowTts: ttsSlot.borrow,
+      borrowStt: sttSlot.borrow,
       dispose,
     }),
-    [
-      state,
-      createChat,
-      disposeChat,
-      createTts,
-      disposeTts,
-      createStt,
-      disposeStt,
-      createVad,
-      disposeVad,
-      dispose,
-    ],
+    [state, chatSlot, ttsSlot, sttSlot, vadSlot, dispose],
   );
 
   return (

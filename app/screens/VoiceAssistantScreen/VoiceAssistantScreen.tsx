@@ -86,7 +86,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
         <Text variant="h3" bold>
           {t('screens.voiceAssistant.title')}
         </Text>
-        <View style={styles.emptyContainerStyle} />
+        <View style={styles.headerSpacer} />
         {/* <IconButton
           icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
           onPress={() => {}}

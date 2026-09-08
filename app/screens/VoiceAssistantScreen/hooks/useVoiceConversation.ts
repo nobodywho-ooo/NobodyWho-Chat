@@ -2,18 +2,18 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   requestRecordingPermissionsAsync,
-  setAudioModeAsync,
   useAudioPlayer,
   useAudioPlayerStatus,
   useAudioStream,
 } from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
 import {
+  acquireRecordingMode,
   computeGenerationMetrics,
   concatPcm,
   log,
   stripThinkingBlocks,
-  synthesizeChunked,
+  synthesizeSpeech,
   wavToEnvelope,
 } from 'helpers';
 import { useSpeechService } from 'hooks';
@@ -87,12 +87,29 @@ export const useVoiceConversation = ({
   onPermissionDenied,
 }: UseVoiceConversationOptions): VoiceConversation => {
   const { t } = useTranslation();
-  const { chat, stt, tts, chatState, sttState, ttsState, ttsArchitecture } =
-    useAiService();
+  const {
+    chat,
+    chatState,
+    sttState,
+    ttsState,
+    ttsArchitecture,
+    borrowStt,
+    borrowTts,
+  } = useAiService();
+
+  // stopAll is defined below but has to be reachable from the preempt callback.
+  // Kept in a ref so the speech service never has to be re-armed.
+  const stopAllRef = useRef<() => void>(() => undefined);
+
   // The fourth model the screen needs: it is what notices the user has stopped
   // talking, which is how a turn ends here. Without it nothing would close the
-  // microphone, so `isReady` below requires it like the other three.
-  const speechService = useSpeechService();
+  // microphone, so `isReady` below requires it like the other three. The
+  // detector is shared with the input bar's dictation; if that takes it, this
+  // turn can no longer end itself, so give the microphone up rather than listen
+  // forever.
+  const speechService = useSpeechService({
+    onPreempted: () => stopAllRef.current(),
+  });
 
   const voiceAssistantStatus = useMemo<VoiceAssistantStatus>(
     () => ({
@@ -124,11 +141,15 @@ export const useVoiceConversation = ({
   // an answer the chat screen is streaming (the voice screen is reachable
   // mid-generation), and the native worker runs asks one at a time anyway.
   const generatingRef = useRef(false);
-  // True only while this hook put the shared audio session into record mode.
-  // The session is process-wide, so releasing it unconditionally would cut the
-  // input route out from under the input bar's dictation, which owns its own
-  // capture stream and never learns the mode changed.
-  const ownsRecordingModeRef = useRef(false);
+  // This hook's hold on the process-wide record-mode session, when it has one.
+  // Reference-counted in helpers/audioSession, so releasing here can't cut the
+  // input route out from under the input bar's dictation.
+  const releaseModeRef = useRef<(() => Promise<void>) | undefined>(undefined);
+
+  // `active` read from an async callback that started before the screen left
+  // the stage. Assigned during render so it is never a render behind.
+  const activeRef = useRef(active);
+  activeRef.current = active;
 
   // Captured PCM windows and the rate the hardware actually delivered. Refs, not
   // state, so onBuffer appends without a re-render per buffer.
@@ -145,7 +166,9 @@ export const useVoiceConversation = ({
 
   const onBuffer = useCallback(
     (buffer: { data: ArrayBuffer; sampleRate: number }) => {
-      const chunk = Int16Array.from(new Int16Array(buffer.data));
+      // slice() copies by memcpy; Int16Array.from would go through the
+      // iterator protocol and box every sample first, ~10 times a second.
+      const chunk = new Int16Array(buffer.data).slice();
       chunksRef.current.push(chunk);
       sampleRateRef.current = buffer.sampleRate;
       // Feed the same window to the orb so it swells with the user's voice.
@@ -176,25 +199,12 @@ export const useVoiceConversation = ({
   const player = useAudioPlayer();
   const playerStatus = useAudioPlayerStatus(player);
 
-  // Restore the shared audio session to playback-only so the answer can route to
-  // the speaker. Keep playsInSilentMode set: on iOS the audio mode is replaced
-  // wholesale (not merged), so dropping it here would revert the session to the
-  // .ambient category and mute the answer whenever the ringer/mute switch is on.
-  // Best-effort — a failure here must not surface.
-  // Only released when this hook took it — see ownsRecordingModeRef.
+  // Give up this hook's hold on record mode, so the answer can route back to
+  // the speaker once no one else is still capturing.
   const releaseRecordingMode = useCallback(async () => {
-    if (!ownsRecordingModeRef.current) {
-      return;
-    }
-    ownsRecordingModeRef.current = false;
-    try {
-      await setAudioModeAsync({
-        allowsRecording: false,
-        playsInSilentMode: true,
-      });
-    } catch (error) {
-      log('useVoiceConversation release mode', error);
-    }
+    const release = releaseModeRef.current;
+    releaseModeRef.current = undefined;
+    await release?.();
   }, []);
 
   // Assemble the captured question, preferring the speech the detection model
@@ -227,6 +237,11 @@ export const useVoiceConversation = ({
   // then lets the chat root display it (and adopt a freshly created conversation).
   const persistTurn = useCallback(
     async (
+      // Captured when the turn started, not read back from app state here: a
+      // model switch mid-generation rewrites those ids, and re-reading them
+      // would file this exchange under whichever model happened to be selected
+      // by the time the database write ran.
+      target: { conversationId?: number; modelId: number },
       question: string,
       answerText: string,
       toolInvocations: ToolInvocation[],
@@ -234,17 +249,11 @@ export const useVoiceConversation = ({
       stopped = false,
     ) => {
       try {
-        const { conversationIdInUse, modelIdInUse } = getAppState();
-
-        if (modelIdInUse === undefined) {
-          return;
-        }
-
         const conversationId =
-          conversationIdInUse ??
+          target.conversationId ??
           (await insertConversation({
             title: question,
-            modelId: modelIdInUse,
+            modelId: target.modelId,
           }));
 
         // The question is always written: `ask` has already appended it to the
@@ -297,23 +306,44 @@ export const useVoiceConversation = ({
       return;
     }
 
-    const sttInstance = stt.current;
     const chatInstance = chat.current;
-    const ttsInstance = tts.current;
 
-    if (!sttInstance || !chatInstance || !ttsInstance) {
+    if (!chatInstance) {
       setStatus('idle');
       return;
     }
 
-    // 1. Transcribe the captured question.
+    // Where this turn will be filed. Read once, up front, so the whole turn is
+    // attributed to the model that actually answers it (see persistTurn).
+    const { conversationIdInUse, modelIdInUse } = getAppState();
+
+    if (modelIdInUse === undefined) {
+      setStatus('idle');
+      return;
+    }
+
+    const target = {
+      conversationId: conversationIdInUse,
+      modelId: modelIdInUse,
+    };
+
+    // 1. Transcribe the captured question. Borrowed rather than read off the
+    // ref: transcription can't be cancelled, so a dispose racing it has to wait
+    // for it rather than free the engine mid-call.
     setStatus('transcribing');
     let question: string;
 
     try {
-      question = (
-        await sttInstance.transcribePcm(samples, sampleRate).completed()
-      ).trim();
+      const transcript = await borrowStt(instance =>
+        instance.transcribePcm(samples, sampleRate).completed(),
+      );
+
+      if (transcript === undefined) {
+        setStatus('idle');
+        return;
+      }
+
+      question = transcript.trim();
     } catch (error) {
       log('useVoiceConversation transcribe', error, { capture: true });
       setStatus(isCurrent() ? 'error' : 'idle');
@@ -387,14 +417,21 @@ export const useVoiceConversation = ({
     // screen nor the history on reload contains. Mirrors the typed path, which
     // persists the partial answer plus a "generation stopped" note.
     if (failed || !isCurrent()) {
-      await persistTurn(question, answer, toolInvocations, metrics, true);
+      await persistTurn(
+        target,
+        question,
+        answer,
+        toolInvocations,
+        metrics,
+        true,
+      );
       setStatus(failed && isCurrent() ? 'error' : 'idle');
       return;
     }
 
     // Record the completed turn so it appears in the chat screen. Persisting
     // before playback keeps the transcript even if synthesis or play fails.
-    await persistTurn(question, answer, toolInvocations, metrics);
+    await persistTurn(target, question, answer, toolInvocations, metrics);
 
     // Persisting awaits the database, so the user may have cancelled by now —
     // check before spending seconds synthesizing an answer nobody will hear.
@@ -410,19 +447,20 @@ export const useVoiceConversation = ({
       return;
     }
 
-    // 3. Synthesize the answer to a WAV.
-    let wav: Uint8Array;
+    // 3. Synthesize the answer to a WAV. Whether the engine needs its text
+    // chunked client-side is a property of the engine, resolved inside
+    // synthesizeSpeech so this path and the read-aloud button can't disagree.
+    let wav: Uint8Array | undefined;
     try {
-      wav =
-        ttsArchitecture === 'kokoro'
-          ? await synthesizeChunked(ttsInstance, spoken)
-          : await ttsInstance.synthesize(spoken);
+      wav = await borrowTts(engine =>
+        synthesizeSpeech(engine, ttsArchitecture, spoken),
+      );
     } catch (error) {
       log('useVoiceConversation synthesize', error, { capture: true });
       setStatus(isCurrent() ? 'error' : 'idle');
       return;
     }
-    if (!isCurrent()) {
+    if (wav === undefined || !isCurrent()) {
       setStatus('idle');
       return;
     }
@@ -440,7 +478,16 @@ export const useVoiceConversation = ({
       orb.rest();
       setStatus(isCurrent() ? 'error' : 'idle');
     }
-  }, [chat, stt, tts, ttsArchitecture, drainCapture, orb, player, persistTurn]);
+  }, [
+    chat,
+    borrowStt,
+    borrowTts,
+    ttsArchitecture,
+    drainCapture,
+    orb,
+    player,
+    persistTurn,
+  ]);
 
   // --- Button transitions ----------------------------------------------------
   const startListening = useCallback(async () => {
@@ -450,6 +497,13 @@ export const useVoiceConversation = ({
 
     busyRef.current = true;
 
+    // Bumped up front, so a stop landing while the awaits below are in flight
+    // is visible here. Without it a cancel during the permission prompt is
+    // ignored, the microphone opens behind the closed screen, and no effect is
+    // left to close it — the turn then runs to completion off-stage.
+    const turn = ++turnRef.current;
+    const abandoned = () => turn !== turnRef.current || !activeRef.current;
+
     try {
       const { granted } = await requestRecordingPermissionsAsync();
 
@@ -458,20 +512,29 @@ export const useVoiceConversation = ({
         return;
       }
 
+      if (abandoned()) {
+        return;
+      }
+
       chunksRef.current = [];
       sampleRateRef.current = TARGET_SAMPLE_RATE;
       speechService.reset();
 
-      // iOS needs a record-capable category before the input node can start;
-      // keep it audible in silent mode too.
-      await setAudioModeAsync({
-        allowsRecording: true,
-        playsInSilentMode: true,
-      });
-      ownsRecordingModeRef.current = true;
+      releaseModeRef.current = await acquireRecordingMode();
+
+      if (abandoned()) {
+        await releaseRecordingMode();
+        return;
+      }
+
       await stream.start();
 
-      turnRef.current += 1;
+      if (abandoned()) {
+        stream.stop();
+        await releaseRecordingMode();
+        return;
+      }
+
       orb.listen();
       listeningRef.current = true;
 
@@ -605,6 +668,7 @@ export const useVoiceConversation = ({
     }
     chunksRef.current = [];
     speechService.reset();
+    speechService.release();
     releaseRecordingMode();
     orb.rest();
     setStatus(current => (current === 'transcribing' ? current : 'idle'));
@@ -616,6 +680,8 @@ export const useVoiceConversation = ({
     orb,
     speechService,
   ]);
+
+  stopAllRef.current = stopAll;
 
   useEffect(() => {
     if (!active || !isReady) {

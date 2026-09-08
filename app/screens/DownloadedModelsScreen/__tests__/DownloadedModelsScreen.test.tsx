@@ -6,7 +6,11 @@ import { getDocumentPathsByModelId } from 'repositories';
 import { deleteMessageDocuments } from 'helpers';
 import { mockSetAppState } from 'jest/mock/database';
 import { mockUseAppState, mockUseModels } from 'jest/mock/hooks';
-import { mockGoBack, mockSetOptions, mockUseRoute } from 'jest/mock/node-modules';
+import {
+  mockGoBack,
+  mockSetOptions,
+  mockUseRoute,
+} from 'jest/mock/node-modules';
 import { buildModel } from 'jest/factories/model';
 
 import { DownloadedModelsScreen } from '../DownloadedModelsScreen';
@@ -16,13 +20,21 @@ import { DownloadedModelsScreen } from '../DownloadedModelsScreen';
 // disposes the TTS engine before its files go away.
 const mockStopGeneration = jest.fn();
 const mockDisposeTts = jest.fn();
+const mockDisposeStt = jest.fn();
+const mockDisposeVad = jest.fn();
 const mockDisposeChat = jest.fn();
 const mockChat = { current: { stopGeneration: mockStopGeneration } };
+// Only the native-backed engine handles are stubbed; the selection helpers
+// (which slot a pipeline takes, what a delete has to release) are real logic
+// this screen is the main caller of, so they stay unmocked.
 jest.mock('services', () => ({
+  ...jest.requireActual('services'),
   useAiService: () => ({
     chat: mockChat,
-    disposeTts: mockDisposeTts,
     disposeChat: mockDisposeChat,
+    disposeTts: mockDisposeTts,
+    disposeStt: mockDisposeStt,
+    disposeVad: mockDisposeVad,
   }),
 }));
 
@@ -173,7 +185,9 @@ test('without canDelete (drawer entry) deletion is unavailable', () => {
   // No delete toggle is rendered in the header (no trash icon).
   const headerRight = mockSetOptions.mock.calls.at(-1)![0].headerRight;
   const header = render(headerRight());
-  expect(header.UNSAFE_queryAllByProps({ iosIconName: 'trash' })).toHaveLength(0);
+  expect(header.UNSAFE_queryAllByProps({ iosIconName: 'trash' })).toHaveLength(
+    0,
+  );
 
   alertSpy.mockRestore();
 });
@@ -212,12 +226,12 @@ test('the checkmark reflects each pipeline against its own in-use slot', () => {
   mockUseAppState.mockReturnValue({ modelIdInUse: 1, ttsModelIdInUse: 7 });
 
   const screen = render(<DownloadedModelsScreen />);
-  expect(
-    screen.UNSAFE_getByProps({ model: models[0] }).props.isSelected,
-  ).toBe(true);
-  expect(
-    screen.UNSAFE_getByProps({ model: models[1] }).props.isSelected,
-  ).toBe(true);
+  expect(screen.UNSAFE_getByProps({ model: models[0] }).props.isSelected).toBe(
+    true,
+  );
+  expect(screen.UNSAFE_getByProps({ model: models[1] }).props.isSelected).toBe(
+    true,
+  );
 });
 
 test('deleting the selected voice model disposes the engine and clears the slot', async () => {
@@ -243,7 +257,9 @@ test('deleting the selected voice model disposes the engine and clears the slot'
   });
 
   await waitFor(() =>
-    expect(mockSetAppState).toHaveBeenCalledWith({ ttsModelIdInUse: undefined }),
+    expect(mockSetAppState).toHaveBeenCalledWith({
+      ttsModelIdInUse: undefined,
+    }),
   );
   // The engine teardown is enqueued before the files are removed.
   expect(mockDisposeTts).toHaveBeenCalled();

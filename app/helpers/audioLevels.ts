@@ -1,3 +1,5 @@
+import { findChunk, tagAt } from './wav';
+
 // Turns raw audio into the 0–1 loudness drivers that animate the voice orb.
 //
 // Two sources feed the orb (see useOrbLevels):
@@ -28,7 +30,6 @@ const HIGH_TRIM_DB = 12;
 export interface AudioBands {
   level: number;
   low: number;
-  mid: number;
   high: number;
 }
 
@@ -65,9 +66,9 @@ const analyseBands = (
   read: (i: number) => number,
   n: number,
   sampleRate: number,
-): { level: number; low: number; mid: number; high: number } => {
+): { level: number; low: number; high: number } => {
   if (n <= 0) {
-    return { level: 0, low: 0, mid: 0, high: 0 };
+    return { level: 0, low: 0, high: 0 };
   }
 
   const aLow = poleCoefficient(LOW_HZ, sampleRate);
@@ -77,7 +78,6 @@ const analyseBands = (
   let lp2 = 0;
   let sum = 0;
   let sumLow = 0;
-  let sumMid = 0;
   let sumHigh = 0;
 
   for (let i = 0; i < n; i++) {
@@ -85,18 +85,15 @@ const analyseBands = (
     lp1 += aLow * (x - lp1);
     lp2 += aMid * (x - lp2);
     const bLow = lp1;
-    const bMid = lp2 - lp1;
     const bHigh = x - lp2;
     sum += x * x;
     sumLow += bLow * bLow;
-    sumMid += bMid * bMid;
     sumHigh += bHigh * bHigh;
   }
 
   return {
     level: Math.sqrt(sum / n),
     low: Math.sqrt(sumLow / n),
-    mid: Math.sqrt(sumMid / n),
     high: Math.sqrt(sumHigh / n),
   };
 };
@@ -113,7 +110,6 @@ export const micBands = (
   return {
     level: normalize(rms.level),
     low: normalize(rms.low),
-    mid: normalize(rms.mid),
     high: normalize(rms.high, HIGH_TRIM_DB),
   };
 };
@@ -123,27 +119,6 @@ interface DecodedWav {
   /** Mono, −1..1. */
   samples: Float32Array;
 }
-
-// Read a four-char little-endian tag.
-const tagAt = (bytes: Uint8Array, p: number): string =>
-  String.fromCharCode(bytes[p], bytes[p + 1], bytes[p + 2], bytes[p + 3]);
-
-// Locate a RIFF subchunk by id, walking word-aligned subchunk headers.
-const findChunk = (
-  bytes: Uint8Array,
-  view: DataView,
-  id: string,
-): { offset: number; size: number } | null => {
-  let p = 12; // Skip "RIFF" + size + "WAVE".
-  while (p + 8 <= bytes.length) {
-    const size = view.getUint32(p + 4, true);
-    if (tagAt(bytes, p) === id) {
-      return { offset: p + 8, size };
-    }
-    p += 8 + size + (size % 2);
-  }
-  return null;
-};
 
 // Decode a WAV (PCM int16, or IEEE float32) to a mono −1..1 stream. Returns null
 // on anything it doesn't recognise, so callers can degrade to a silent orb

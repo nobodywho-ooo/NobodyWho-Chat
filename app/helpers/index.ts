@@ -13,7 +13,8 @@ import {
   downloadedPartPath,
   deleteModelDirectory,
   modelDirectoryPath,
-  listVoiceStyles,
+  listModelFiles,
+  listModelSubdirectories,
 } from './modelDownload';
 import { toFileUri, toPlainPath } from './fileUri';
 import {
@@ -35,20 +36,31 @@ import {
   resolveMessageDocumentPath,
 } from './messageDocuments';
 import { toChatHistory, toModelHistory } from './chatHistory';
-import { splitIntoChunks, concatWavs, synthesizeChunked } from './ttsAudio';
 import {
-  LANGUAGE_CODES,
-  languageCode,
-  defaultTtsLanguage,
-  resolveTtsPrefs,
-} from './ttsVoices';
+  splitIntoChunks,
+  concatWavs,
+  synthesizeChunked,
+  synthesizeSpeech,
+} from './ttsAudio';
+import { resolveTtsPrefs } from './ttsVoices';
 import { resolveSttQuantization } from './sttModel';
+import {
+  ttsEngineForArchitecture,
+  ttsEngineForFamily,
+  ttsEngineForModel,
+} from './ttsEngine';
 import { micBands, wavToEnvelope } from './audioLevels';
 import { concatPcm, resamplePcm } from './pcm';
+import {
+  acquireRecordingMode,
+  resetRecordingModeForTests,
+} from './audioSession';
 import { computeGenerationMetrics } from './generationMetrics';
 import { parameterCountLabel } from './parameterCount';
+import { modelSizeLabel } from './modelSize';
 
 export type { AudioBands, AudioEnvelope } from './audioLevels';
+export type { TtsEngine, TtsLanguageOption } from './ttsEngine';
 
 export {
   getFamilyIcon,
@@ -57,7 +69,8 @@ export {
   downloadedPartPath,
   deleteModelDirectory,
   modelDirectoryPath,
-  listVoiceStyles,
+  listModelFiles,
+  listModelSubdirectories,
   toFileUri,
   toPlainPath,
   filterModelsByDeviceMemory,
@@ -89,15 +102,19 @@ export {
   splitIntoChunks,
   concatWavs,
   synthesizeChunked,
-  LANGUAGE_CODES,
-  languageCode,
-  defaultTtsLanguage,
+  synthesizeSpeech,
   resolveTtsPrefs,
   resolveSttQuantization,
+  ttsEngineForArchitecture,
+  ttsEngineForFamily,
+  ttsEngineForModel,
   micBands,
   wavToEnvelope,
   concatPcm,
   resamplePcm,
+  acquireRecordingMode,
+  resetRecordingModeForTests,
   computeGenerationMetrics,
   parameterCountLabel,
+  modelSizeLabel,
 };

@@ -11,7 +11,7 @@ import { useStyled } from 'hooks';
 import { IconButton, Slider, Text } from 'components';
 
 import styles from './CustomizeAssistantScreen.styles';
-import { SupertonicPreferences } from './SupertonicPreferences';
+import { VoicePreferences } from './VoicePreferences';
 
 export const TEMPERATURE_MIN = 0;
 export const TEMPERATURE_MAX = 2;
@@ -187,7 +187,7 @@ export const CustomizeAssistantScreen: React.FC = () => {
         </View>
       </View>
 
-      <SupertonicPreferences
+      <VoicePreferences
         voice={config.ttsVoice}
         language={config.ttsLanguage}
         onChange={savePreference}

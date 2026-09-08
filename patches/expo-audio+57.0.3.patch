@@ -11,7 +11,10 @@ index d265606..733ec16 100644
 -    } else {
 -      try session.setCategory(category, options: sessionOptions)
 -    }
-+    // This patch is for when user is mic in voice assistant and then getting a vocal answer: it makes sure the volume of the answer is audible (without the fix we cannot hear anything)
++    // Always pass an explicit mode. AudioStream.start() puts the shared session
++    // in .measurement (raw, unprocessed capture) and setCategory(_:options:)
++    // leaves the mode alone, so playback after any recording stayed in
++    // .measurement and came out barely audible.
 +    try session.setCategory(category, mode: .default, options: sessionOptions)
    }
  

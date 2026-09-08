@@ -13,12 +13,13 @@ import { useTranslation } from 'react-i18next';
 import { SamplerPresets } from 'react-native-nobodywho';
 import {
   DisplayMessage,
+  Model,
+  ModelSlot,
   isChatPipeline,
-  isSttPipeline,
-  isTtsPipeline,
-  isVadPipeline,
+  modelSlotSpec,
 } from 'types';
 import {
+  AssistantConfig,
   DEFAULT_ASSISTANT_CONFIG,
   getAppState,
   setAppState,
@@ -310,77 +311,77 @@ export const ChatStackNavigator = () => {
     [handleConversationSynced],
   );
 
-  // Both loaders are called fire-and-forget, so every await inside them has to
-  // be guarded: the model lookup opens the database lazily and can reject when
-  // the handle is closed or the tables are being rebuilt, which is exactly what
-  // a foreground transition racing a reset looks like.
-  const loadTtsIfSelected = useCallback(async () => {
+  // The engines that load straight from their own app-state slot, as opposed to
+  // the chat model, whose load goes through startSession (history, system
+  // prompt, sampler). Driving them from one table keeps the three lifecycle
+  // sites — first load, app-state change, and background/foreground — from
+  // drifting apart, which is how a slot ends up loading on launch but never
+  // coming back after a resume.
+  const auxSlots = useMemo(
+    () => [
+      {
+        slot: ModelSlot.tts,
+        dispose: disposeTts,
+        create: (model: Model) => {
+          // Voice/language were resolved and stored when this model was
+          // selected (see resolveTtsPrefs at the selection sites), each in the
+          // vocabulary its engine accepts. Read them straight from the config —
+          // undefined lets the engine keep its own default for that option.
+          const { assistantConfig = DEFAULT_ASSISTANT_CONFIG } = getAppState();
+          return createTts({
+            model,
+            voice: assistantConfig.ttsVoice,
+            language: assistantConfig.ttsLanguage,
+          });
+        },
+        // Voice and language live in assistantConfig but are load-time options,
+        // so an edit to either has to reload the engine even though the
+        // selected model is unchanged.
+        configChanged: (next: AssistantConfig, prev: AssistantConfig) =>
+          next.ttsVoice !== prev.ttsVoice ||
+          next.ttsLanguage !== prev.ttsLanguage,
+      },
+      {
+        slot: ModelSlot.stt,
+        dispose: disposeStt,
+        create: (model: Model) => createStt({ model }),
+      },
+      {
+        slot: ModelSlot.vad,
+        dispose: disposeVad,
+        create: (model: Model) => createVad({ model }),
+      },
+    ],
+    [createTts, createStt, createVad, disposeTts, disposeStt, disposeVad],
+  );
+
+  type AuxSlot = (typeof auxSlots)[number];
+
+  // Called fire-and-forget from all three lifecycle sites, so every await inside
+  // has to be guarded: the model lookup opens the database lazily and can reject
+  // when the handle is closed or the tables are being rebuilt, which is exactly
+  // what a foreground transition racing a reset looks like.
+  const loadAuxSlot = useCallback(async (entry: AuxSlot) => {
+    const { appStateKey, accepts } = modelSlotSpec(entry.slot);
+
     try {
-      const { ttsModelIdInUse, assistantConfig = DEFAULT_ASSISTANT_CONFIG } =
-        getAppState();
+      const modelId = getAppState()[appStateKey];
 
-      if (ttsModelIdInUse === undefined) {
+      if (modelId === undefined) {
         return;
       }
 
-      const model = await getModelById(ttsModelIdInUse);
+      const model = await getModelById(modelId);
 
-      if (model === undefined || !isTtsPipeline(model.pipeline)) {
+      if (model === undefined || !accepts(model.pipeline)) {
         return;
       }
-      // Voice/language were resolved and stored when this model was selected (see
-      // resolveTtsPrefs at the selection sites): a Supertonic model has a
-      // concrete pair, any other engine has none. So read them straight from the
-      // config — undefined lets the engine keep its own defaults.
-      await createTts({
-        model,
-        voice: assistantConfig.ttsVoice,
-        language: assistantConfig.ttsLanguage,
-      });
+
+      await entry.create(model);
     } catch (error) {
-      log('ChatStackNavigator tts load', error, { capture: true });
+      log(`ChatStackNavigator ${entry.slot} load`, error, { capture: true });
     }
-  }, [createTts]);
-
-  const loadSttIfSelected = useCallback(async () => {
-    try {
-      const { sttModelIdInUse } = getAppState();
-
-      if (sttModelIdInUse === undefined) {
-        return;
-      }
-
-      const model = await getModelById(sttModelIdInUse);
-
-      if (model === undefined || !isSttPipeline(model.pipeline)) {
-        return;
-      }
-
-      await createStt({ model });
-    } catch (error) {
-      log('ChatStackNavigator stt load', error, { capture: true });
-    }
-  }, [createStt]);
-
-  const loadVadIfSelected = useCallback(async () => {
-    try {
-      const { vadModelIdInUse } = getAppState();
-
-      if (vadModelIdInUse === undefined) {
-        return;
-      }
-
-      const model = await getModelById(vadModelIdInUse);
-
-      if (model === undefined || !isVadPipeline(model.pipeline)) {
-        return;
-      }
-
-      await createVad({ model });
-    } catch (error) {
-      log('ChatStackNavigator vad load', error, { capture: true });
-    }
-  }, [createVad]);
+  }, []);
 
   // --- Lifecycle triggers ----------------------------------------------------
 
@@ -390,10 +391,8 @@ export const ChatStackNavigator = () => {
     if (getAppState().modelIdInUse !== undefined) {
       startSession();
     }
-    loadTtsIfSelected();
-    loadSttIfSelected();
-    loadVadIfSelected();
-  }, [startSession, loadTtsIfSelected, loadSttIfSelected, loadVadIfSelected]);
+    auxSlots.forEach(loadAuxSlot);
+  }, [startSession, auxSlots, loadAuxSlot]);
 
   // React to app-state changes: a model or assistant-config change tears down
   // the chat and rebuilds from scratch; a conversation-only change reloads just the history.
@@ -406,35 +405,24 @@ export const ChatStackNavigator = () => {
       const nextConfig = next.assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
       const prevConfig = prev.assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
 
-      // Supertonic voice/language live in assistantConfig but are load-time TTS
-      // options, so changing them means reloading only the TTS engine.
-      const ttsConfigChanged =
-        nextConfig.ttsVoice !== prevConfig.ttsVoice ||
-        nextConfig.ttsLanguage !== prevConfig.ttsLanguage;
+      auxSlots.forEach(entry => {
+        const { appStateKey } = modelSlotSpec(entry.slot);
+        const selected = next[appStateKey];
+        const modelChanged = selected !== prev[appStateKey];
+        const optionsChanged =
+          selected !== undefined &&
+          (entry.configChanged?.(nextConfig, prevConfig) ?? false);
 
-      if (next.ttsModelIdInUse !== prev.ttsModelIdInUse) {
-        disposeTts();
-        if (next.ttsModelIdInUse !== undefined) {
-          loadTtsIfSelected();
+        if (!modelChanged && !optionsChanged) {
+          return;
         }
-      } else if (next.ttsModelIdInUse !== undefined && ttsConfigChanged) {
-        disposeTts();
-        loadTtsIfSelected();
-      }
 
-      if (next.sttModelIdInUse !== prev.sttModelIdInUse) {
-        disposeStt();
-        if (next.sttModelIdInUse !== undefined) {
-          loadSttIfSelected();
-        }
-      }
+        entry.dispose();
 
-      if (next.vadModelIdInUse !== prev.vadModelIdInUse) {
-        disposeVad();
-        if (next.vadModelIdInUse !== undefined) {
-          loadVadIfSelected();
+        if (selected !== undefined) {
+          loadAuxSlot(entry);
         }
-      }
+      });
 
       // Only model changes or chat-affecting config rebuild the chat — a
       // voice/language edit must not tear down the loaded chat model.
@@ -461,22 +449,13 @@ export const ChatStackNavigator = () => {
         refreshChatHistory();
       }
     });
-  }, [
-    disposeChat,
-    disposeTts,
-    disposeStt,
-    disposeVad,
-    startSession,
-    refreshChatHistory,
-    loadTtsIfSelected,
-    loadSttIfSelected,
-    loadVadIfSelected,
-  ]);
+  }, [disposeChat, startSession, refreshChatHistory, auxSlots, loadAuxSlot]);
 
-  const unloadedForBackground = useRef(false);
-  const ttsUnloadedForBackground = useRef(false);
-  const sttUnloadedForBackground = useRef(false);
-  const vadUnloadedForBackground = useRef(false);
+  // Which slots this component released on the way to the background, so the
+  // resume reloads exactly those. A set keyed by slot rather than one boolean
+  // ref per engine: a new slot then needs no matching ref, and a forgotten one
+  // can't leave an engine unloaded after a resume with nothing to notice it.
+  const unloadedForBackground = useRef(new Set<ModelSlot>());
 
   useEffect(() => {
     const subscription = AppState.addEventListener(
@@ -486,55 +465,39 @@ export const ChatStackNavigator = () => {
           if (isExternalPickerActive()) {
             return;
           }
+
           if (getAppState().modelIdInUse !== undefined) {
             disposeChat();
-            unloadedForBackground.current = true;
+            unloadedForBackground.current.add(ModelSlot.chat);
           }
-          if (getAppState().ttsModelIdInUse !== undefined) {
-            disposeTts();
-            ttsUnloadedForBackground.current = true;
-          }
-          if (getAppState().sttModelIdInUse !== undefined) {
-            disposeStt();
-            sttUnloadedForBackground.current = true;
-          }
-          if (getAppState().vadModelIdInUse !== undefined) {
-            disposeVad();
-            vadUnloadedForBackground.current = true;
-          }
+
+          auxSlots.forEach(entry => {
+            const { appStateKey } = modelSlotSpec(entry.slot);
+
+            if (getAppState()[appStateKey] !== undefined) {
+              entry.dispose();
+              unloadedForBackground.current.add(entry.slot);
+            }
+          });
         } else if (nextState === 'active') {
-          if (unloadedForBackground.current) {
-            unloadedForBackground.current = false;
+          const unloaded = unloadedForBackground.current;
+
+          if (unloaded.delete(ModelSlot.chat)) {
             if (getAppState().modelIdInUse !== undefined) {
               startSession();
             }
           }
-          if (ttsUnloadedForBackground.current) {
-            ttsUnloadedForBackground.current = false;
-            loadTtsIfSelected();
-          }
-          if (sttUnloadedForBackground.current) {
-            sttUnloadedForBackground.current = false;
-            loadSttIfSelected();
-          }
-          if (vadUnloadedForBackground.current) {
-            vadUnloadedForBackground.current = false;
-            loadVadIfSelected();
-          }
+
+          auxSlots.forEach(entry => {
+            if (unloaded.delete(entry.slot)) {
+              loadAuxSlot(entry);
+            }
+          });
         }
       },
     );
     return () => subscription.remove();
-  }, [
-    disposeChat,
-    disposeTts,
-    disposeStt,
-    disposeVad,
-    startSession,
-    loadTtsIfSelected,
-    loadSttIfSelected,
-    loadVadIfSelected,
-  ]);
+  }, [disposeChat, startSession, auxSlots, loadAuxSlot]);
 
   const inUseModelName = models.find(m => m.id === modelIdInUse)?.name;
   const loadingMessage = inUseModelName

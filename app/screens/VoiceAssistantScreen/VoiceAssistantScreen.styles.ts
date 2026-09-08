@@ -40,7 +40,7 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyContainerStyle: {
+  headerSpacer: {
     width: 40,
   },
 });

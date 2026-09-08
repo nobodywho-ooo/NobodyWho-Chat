@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { find, map, pathEq, prop } from 'ramda';
+import { map, prop } from 'ramda';
 import { useAppState, useModelDownloads, useModels } from 'hooks';
 import { filterModelsByDeviceMemory } from 'helpers';
-import { Model } from 'types';
+import { MODEL_SLOTS, Model } from 'types';
 
 const MODELS_URL =
   'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.1.0.json';
 
 // Fetches the catalogue, filters it to what the device can run, and derives the
-// three lists the screen renders: the model in use, how many are downloaded,
-// and which remain available (not already downloaded or downloading).
+// three lists the screen renders: the models in use (one per occupied slot),
+// how many are downloaded, and which remain available (not already downloaded
+// or downloading).
 export const useAvailableModels = () => {
   const { models: storedModels } = useModels();
   const { downloads } = useModelDownloads();
-  const { modelIdInUse, ttsModelIdInUse, sttModelIdInUse, vadModelIdInUse } =
-    useAppState();
+  const appState = useAppState();
 
   const [models, setModels] = useState<Model[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,32 +60,20 @@ export const useAvailableModels = () => {
     [models, downloadedModelIds, downloadingModelIds],
   );
 
-  const currentModel = useMemo(
-    () => find(pathEq(modelIdInUse, ['id']), storedModels),
-    [modelIdInUse, storedModels],
-  );
-
-  const currentTtsModel = useMemo(
-    () => find(pathEq(ttsModelIdInUse, ['id']), storedModels),
-    [ttsModelIdInUse, storedModels],
-  );
-
-  const currentSttModel = useMemo(
-    () => find(pathEq(sttModelIdInUse, ['id']), storedModels),
-    [sttModelIdInUse, storedModels],
-  );
-
-  const currentVadModel = useMemo(
-    () => find(pathEq(vadModelIdInUse, ['id']), storedModels),
-    [vadModelIdInUse, storedModels],
+  const inUseModels = useMemo(
+    () =>
+      MODEL_SLOTS.flatMap(({ slot, appStateKey }) => {
+        const model = storedModels.find(
+          candidate => candidate.id === appState[appStateKey],
+        );
+        return model ? [{ slot, model }] : [];
+      }),
+    [storedModels, appState],
   );
 
   return {
     availableModels,
-    currentModel,
-    currentTtsModel,
-    currentSttModel,
-    currentVadModel,
+    inUseModels,
     downloadedCount: downloadedModelIds.length,
     isLoading,
     hasError,

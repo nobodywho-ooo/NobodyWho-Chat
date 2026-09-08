@@ -48,41 +48,59 @@ const modelDirectory = (modelId: number): Directory =>
 export const modelDirectoryPath = (modelId: number): string =>
   toPlainPath(modelDirectory(modelId).uri);
 
-// Downloaded Supertonic models ship their speaker presets as individual JSON
-// files under <model dir>/voice_styles (e.g. "M1.json" … "F5.json"). Returns
-// the preset codes (basenames without ".json"), ordered male-first then by
-// number so the picker reads M1…M5, F1…F5. Returns [] when the folder is absent
-// (model not downloaded, or a model that ships no presets) or unreadable.
-const VOICE_STYLES_DIR_NAME = 'voice_styles';
-const VOICE_STYLE_EXTENSION = '.json';
+// A TTS model ships the voices (and, for pocket-tts, the language bundles) it
+// actually supports as files inside its own folder, so the picker enumerates
+// them from disk rather than from a hardcoded list — see the per-engine
+// vocabularies in ttsEngine.ts. Names are returned numerically-aware sorted so
+// "M10" follows "M2", and [] when the folder is absent (model not downloaded,
+// or one that ships no such folder) or unreadable.
+const listEntries = (
+  modelId: number,
+  dirName: string,
+  pick: (entry: File | Directory) => string | undefined,
+): string[] => {
+  const dir = new Directory(modelDirectory(modelId), dirName);
 
-// Male presets sort before female; any other prefix sinks to the end.
-const voiceStyleRank = (code: string): number => {
-  const rank = ['M', 'F'].indexOf(code.charAt(0).toUpperCase());
-  return rank === -1 ? Number.MAX_SAFE_INTEGER : rank;
-};
-
-export const listVoiceStyles = (modelId: number): string[] => {
-  const dir = new Directory(modelDirectory(modelId), VOICE_STYLES_DIR_NAME);
   if (!dir.exists) {
     return [];
   }
+
   try {
     return dir
       .list()
-      .map(entry => entry.name)
-      .filter(name => name.toLowerCase().endsWith(VOICE_STYLE_EXTENSION))
-      .map(name => name.slice(0, -VOICE_STYLE_EXTENSION.length))
-      .sort(
-        (a, b) =>
-          voiceStyleRank(a) - voiceStyleRank(b) ||
-          a.localeCompare(b, undefined, { numeric: true }),
-      );
+      .map(pick)
+      .filter((name): name is string => name !== undefined)
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   } catch (error) {
-    log('listVoiceStyles', error, { capture: true });
+    log('listModelFolder', error, { capture: true });
     return [];
   }
 };
+
+// The basenames of the files in `<model dir>/<dirName>` carrying `extension`,
+// with the extension stripped: Supertonic's voice_styles/M1.json → "M1",
+// Kokoro's voices/bf_emma.safetensors → "bf_emma". Anything else in the folder
+// (READMEs, licences) is skipped.
+export const listModelFiles = (
+  modelId: number,
+  dirName: string,
+  extension: string,
+): string[] =>
+  listEntries(modelId, dirName, entry =>
+    entry instanceof File && entry.name.toLowerCase().endsWith(extension)
+      ? entry.name.slice(0, -extension.length)
+      : undefined,
+  );
+
+// The subdirectory names in `<model dir>/<dirName>` — pocket-tts ships one
+// per language bundle (onnx/english_2026-04, onnx/german, …).
+export const listModelSubdirectories = (
+  modelId: number,
+  dirName: string,
+): string[] =>
+  listEntries(modelId, dirName, entry =>
+    entry instanceof Directory ? entry.name : undefined,
+  );
 
 // Part fileNames come from the remote catalogue, which is parsed without
 // validation — refuse anything that could resolve outside the model directory.
@@ -328,7 +346,8 @@ export const downloadModelPart = async (
         idempotent: true,
         signal,
         headers: { Range: `bytes=${offset}-${end}` },
-        onProgress: ({ bytesWritten }) => onProgress(offset + bytesWritten, total),
+        onProgress: ({ bytesWritten }) =>
+          onProgress(offset + bytesWritten, total),
       });
 
       // The server must honor the range: the chunk should be exactly the window

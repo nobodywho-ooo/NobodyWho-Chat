@@ -13,7 +13,7 @@
 // The whole thing stays on the UI thread; React never re-renders while sound is
 // flowing. The only local change from the demo is where VoiceLevels comes from.
 
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import type { SkPicture } from '@shopify/react-native-skia';
 import {
   MODES,
@@ -30,6 +30,7 @@ import {
   useReducedMotion,
   useSharedValue,
   type DerivedValue,
+  type FrameInfo,
 } from 'react-native-reanimated';
 
 import type { VoiceLevels } from './useOrbLevels';
@@ -103,16 +104,27 @@ export function useVoiceOrbPicture({
     phase.value = 0;
   }, [state, designSize, phase]);
 
-  const frame = useFrameCallback(info => {
-    'worklet';
-    let dt = info.timeSincePreviousFrame ?? 0;
-    if (dt > MAX_DT_MS) dt = MAX_DT_MS;
-    const r = reactSV.value;
-    // At r = 0 this is exactly 1 — the shipped tempo. At r = 1 it runs 0.55× in
-    // silence and up to ~2× on a loud syllable.
-    const tempo = 1 - 0.45 * r + r * (0.45 * active.value + 1.0 * level.value);
-    phase.value += (dt / 1000) * speedSV.value * tempo;
-  }, false);
+  // Memoised on the shared values it closes over, all stable for the hook's
+  // lifetime. useFrameCallback re-registers whenever the callback's identity
+  // changes, so an inline worklet would be torn down and re-serialised to the UI
+  // runtime on every render — and the first frame after each of those has no
+  // previous timestamp, so dt is 0 and the phase step is dropped.
+  const onFrame = useCallback(
+    (info: FrameInfo) => {
+      'worklet';
+      let dt = info.timeSincePreviousFrame ?? 0;
+      if (dt > MAX_DT_MS) dt = MAX_DT_MS;
+      const r = reactSV.value;
+      // At r = 0 this is exactly 1 — the shipped tempo. At r = 1 it runs 0.55×
+      // in silence and up to ~2× on a loud syllable.
+      const tempo =
+        1 - 0.45 * r + r * (0.45 * active.value + 1.0 * level.value);
+      phase.value += (dt / 1000) * speedSV.value * tempo;
+    },
+    [reactSV, active, level, phase, speedSV],
+  );
+
+  const frame = useFrameCallback(onFrame, false);
 
   useEffect(() => {
     frame.setActive(!paused && !reduced);

@@ -9,9 +9,12 @@ export const parameterCountLabel = (
     return `${parameterCountBillions}B`;
   }
 
-  const millions = parameterCountBillions * 1000;
+  // Round to thousands first, then pick the unit from the rounded value.
+  // Choosing the unit from the unrounded number instead lets a count just under
+  // a million (0.9999M) stay on the "K" branch and render as "1000K".
+  const thousands = Math.round(parameterCountBillions * 1_000_000);
 
-  return millions >= 1
-    ? `${Math.round(millions)}M`
-    : `${Math.round(millions * 1000)}K`;
+  return thousands >= 1000
+    ? `${Math.round(thousands / 1000)}M`
+    : `${thousands}K`;
 };

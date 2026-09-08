@@ -50,7 +50,7 @@ npm run android
 npm run iOS
 ```
 
-**Note:** 
+**Note:**
 
 For iOS, if you have issues with metro, run `npm start` and then run the project on Xcode.
 
@@ -70,10 +70,12 @@ iOS cleanup
 make ios-clean
 ```
 
-Watchman/Metro cleanup
+Watchman/Metro/Cache cleanup
 
 ```sh
-make clean
+make clean-metro
+make clean-watchman
+make clean-cache
 ```
 
 ### 4. Build the App

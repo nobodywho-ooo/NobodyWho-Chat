@@ -116,6 +116,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     cancelRecording();
   }, [initialConversationId, clearAllAttachments, stopAudio, cancelRecording]);
 
+  // Switching models => Drop the attachments whenever the pipeline's capabilities change,
+  useEffect(() => {
+    setAttachExpanded(false);
+    clearAllAttachments();
+  }, [ingestsImage, ingestsAudio, clearAllAttachments]);
+
   const scrollToEnd = useCallback((_width: number, contentHeight: number) => {
     flatListRef.current?.scrollToOffset({
       offset: contentHeight,

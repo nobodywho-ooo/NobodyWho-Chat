@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
-import { log, synthesizeChunked } from 'helpers';
+import { log, synthesizeSpeech } from 'helpers';
 import { AiModelState, useAiService } from 'services';
 
 interface TtsPlayback {
@@ -21,7 +21,7 @@ const PLAYBACK_FILE = 'tts-playback.wav';
 export const useTtsPlayback = (): TtsPlayback => {
   const busyRef = useRef(false);
   const generationRef = useRef(0);
-  const { tts, ttsState, ttsArchitecture } = useAiService();
+  const { ttsState, ttsArchitecture, borrowTts } = useAiService();
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
   const [playingIndex, setPlayingIndex] = useState<number | null>(null);
 
@@ -55,27 +55,20 @@ export const useTtsPlayback = (): TtsPlayback => {
       if (busyRef.current) {
         return;
       }
-      if (ttsState !== AiModelState.Ready || !tts.current) {
+      if (ttsState !== AiModelState.Ready) {
         return;
       }
 
       busyRef.current = true;
       const generation = ++generationRef.current;
-      const engine = tts.current;
       setLoadingIndex(index);
       try {
-        // Kokoro rejects synthesize() calls over its phoneme cap, so its text
-        // is chunked and the WAVs stitched together; Supertonic chunks
-        // internally, so one call handles a whole message.
-        const wav =
-          ttsArchitecture === 'kokoro'
-            ? await synthesizeChunked(engine, text)
-            : await engine.synthesize(text);
+        const wav = await borrowTts(engine =>
+          synthesizeSpeech(engine, ttsArchitecture, text),
+        );
 
-        // Stopped, unmounted, or the engine was swapped while synthesizing —
-        // the audio belongs to a state the screen has already left.
-        if (generation !== generationRef.current || tts.current !== engine) {
-          return;
+        if (wav === undefined || generation !== generationRef.current) {
+          return; // Stopped or unmounted while synthesizing => do nothing
         }
 
         const file = new File(Paths.cache, PLAYBACK_FILE);
@@ -94,7 +87,7 @@ export const useTtsPlayback = (): TtsPlayback => {
         busyRef.current = false;
       }
     },
-    [tts, ttsState, ttsArchitecture, player],
+    [borrowTts, ttsState, ttsArchitecture, player],
   );
 
   return { loadingIndex, playingIndex, play, stop };

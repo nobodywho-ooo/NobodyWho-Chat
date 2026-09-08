@@ -17,6 +17,7 @@ import {
 } from 'database';
 import { getConversationById, getModelById } from 'repositories';
 import { log } from 'helpers';
+import { MODEL_SLOTS } from 'types';
 import { useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
@@ -108,26 +109,21 @@ function AppContent() {
 // database reset). Clear stale ids so the app degrades to the select-a-model
 // or empty-chat flows instead of dead-ending on the error screen.
 async function dropStaleIdsInUse(): Promise<void> {
-  const {
-    modelIdInUse,
-    conversationIdInUse,
-    ttsModelIdInUse,
-    sttModelIdInUse,
-  } = getAppState();
+  const state = getAppState();
 
-  if (
-    ttsModelIdInUse !== undefined &&
-    (await getModelById(ttsModelIdInUse)) === undefined
-  ) {
-    await setAppState({ ttsModelIdInUse: undefined });
+  for (const { appStateKey } of MODEL_SLOTS) {
+    if (appStateKey === 'modelIdInUse') {
+      continue; // handle bellow for loop
+    }
+
+    const modelId = state[appStateKey];
+
+    if (modelId !== undefined && (await getModelById(modelId)) === undefined) {
+      await setAppState({ [appStateKey]: undefined });
+    }
   }
 
-  if (
-    sttModelIdInUse !== undefined &&
-    (await getModelById(sttModelIdInUse)) === undefined
-  ) {
-    await setAppState({ sttModelIdInUse: undefined });
-  }
+  const { modelIdInUse, conversationIdInUse } = state;
 
   if (
     modelIdInUse !== undefined &&
