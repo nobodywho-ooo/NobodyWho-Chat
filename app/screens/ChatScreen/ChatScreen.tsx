@@ -152,7 +152,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         accessible={false}
       />
       <BlurTargetView ref={blurTargetRef} style={styles.blurTargetContainer}>
-        {messages.length > 0 && (
+        {messages.length > 0 ? (
           <FlashList
             ref={flatListRef}
             data={messages}
@@ -179,6 +179,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode={isAndroid ? 'on-drag' : 'interactive'}
           />
+        ) : (
+          <Pressable style={styles.emptyArea} onPress={Keyboard.dismiss} />
         )}
       </BlurTargetView>
       {attachExpanded && (

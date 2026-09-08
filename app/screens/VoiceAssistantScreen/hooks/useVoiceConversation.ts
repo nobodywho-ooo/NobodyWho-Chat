@@ -9,6 +9,7 @@ import {
 import { File, Paths } from 'expo-file-system';
 import {
   acquireRecordingMode,
+  cleanTranscript,
   computeGenerationMetrics,
   concatPcm,
   log,
@@ -44,6 +45,7 @@ export type VoiceStatus =
   | 'listening' // microphone open, capturing the question
   | 'transcribing' // Whisper turning the capture into text
   | 'thinking' // the chat model generating an answer
+  | 'synthesizing' // TTS turning the finished answer into audio
   | 'speaking' // the answer playing back through TTS
   | 'error'; // last turn failed; tapping tries again
 
@@ -343,7 +345,7 @@ export const useVoiceConversation = ({
         return;
       }
 
-      question = transcript.trim();
+      question = cleanTranscript(transcript);
     } catch (error) {
       log('useVoiceConversation transcribe', error, { capture: true });
       setStatus(isCurrent() ? 'error' : 'idle');
@@ -450,6 +452,10 @@ export const useVoiceConversation = ({
     // 3. Synthesize the answer to a WAV. Whether the engine needs its text
     // chunked client-side is a property of the engine, resolved inside
     // synthesizeSpeech so this path and the read-aloud button can't disagree.
+    // Long answers take seconds here, so this gets its own phase rather than
+    // leaving "thinking" on screen after the model has finished thinking.
+    setStatus('synthesizing');
+
     let wav: Uint8Array | undefined;
     try {
       wav = await borrowTts(engine =>
@@ -627,9 +633,9 @@ export const useVoiceConversation = ({
       case 'listening':
         stopAndAnswer();
         break;
-      // Transcribing, thinking and the synthesis that follows it are absent on
-      // purpose: they run to completion, and the screen shows a spinner in
-      // place of the button while they do. Only playback can be cut short.
+      // Transcribing, thinking and synthesizing are absent on purpose: they run
+      // to completion, and the screen shows a spinner in place of the button
+      // while they do. Only playback can be cut short.
       case 'speaking':
         abort();
         break;
@@ -694,7 +700,10 @@ export const useVoiceConversation = ({
   }, [stopAll]);
 
   const isBusy =
-    status === 'transcribing' || status === 'thinking' || status === 'speaking';
+    status === 'transcribing' ||
+    status === 'thinking' ||
+    status === 'synthesizing' ||
+    status === 'speaking';
 
   return {
     status: isReady ? status : 'unavailable',

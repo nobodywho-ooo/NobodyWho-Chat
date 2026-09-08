@@ -39,4 +39,7 @@ export default StyleSheet.create({
   listContent: {
     paddingBottom: Spacings.md,
   },
+  emptyArea: {
+    flex: 1,
+  },
 });

@@ -44,6 +44,7 @@ import {
 } from './ttsAudio';
 import { resolveTtsPrefs } from './ttsVoices';
 import { resolveSttQuantization } from './sttModel';
+import { cleanTranscript } from './transcript';
 import {
   ttsEngineForArchitecture,
   ttsEngineForFamily,
@@ -105,6 +106,7 @@ export {
   synthesizeSpeech,
   resolveTtsPrefs,
   resolveSttQuantization,
+  cleanTranscript,
   ttsEngineForArchitecture,
   ttsEngineForFamily,
   ttsEngineForModel,

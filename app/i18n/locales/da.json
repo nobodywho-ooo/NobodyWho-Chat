@@ -193,9 +193,10 @@
       "stop": "Stop",
       "status": {
         "idle": "Tryk for at tale",
-        "listening": "Lytter… tryk på stop, når du er færdig",
-        "transcribing": "Transskriberer",
-        "thinking": "Tænker",
+        "listening": "Lytter…",
+        "transcribing": "Transskriberer…",
+        "thinking": "Tænker…",
+        "synthesizing": "Genererer tale…",
         "speaking": "Taler…",
         "error": "Noget gik galt — tryk for at prøve igen"
       },
@@ -205,7 +206,7 @@
         "chat": "Chatmodel",
         "stt": "Tale-til-tekst-model",
         "tts": "Tekst-til-tale-model",
-        "vad": "Stemmedetektionsmodel",
+        "vad": "Detektion af stemmeaktivitet model",
         "hint": "Download og aktiver én af hver, og kom så tilbage."
       }
     },

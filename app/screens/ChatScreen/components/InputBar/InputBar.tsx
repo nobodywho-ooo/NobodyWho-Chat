@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
+  Keyboard,
   View,
   TextInput,
   StyleProp,
@@ -16,6 +17,8 @@ import { haptics } from 'helpers';
 import { Theme } from 'types';
 
 import { styles, INPUT_BAR_HEIGHT } from './InputBar.styles';
+
+const KEYBOARD_HIDE_TIMEOUT = 400;
 
 const gradientColors: Record<Theme, string[]> = {
   light: ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.9)'],
@@ -113,6 +116,37 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
     haptics.medium();
     onAttachExpandedChange(!attachExpanded);
   };
+
+  // Undoes the wait below (drops the listener and the timeout) — set only while
+  // an open is pending on the keyboard, so it doubles as "is one pending".
+  const cancelPendingOpen = useRef<(() => void) | undefined>(undefined);
+
+  const openVoiceAssistant = () => {
+    if (!Keyboard.isVisible()) {
+      openDrawer('right');
+      return;
+    }
+
+    cancelPendingOpen.current?.();
+
+    const open = () => {
+      cancelPendingOpen.current?.();
+      openDrawer('right');
+    };
+
+    const subscription = Keyboard.addListener('keyboardDidHide', open);
+    const timeout = setTimeout(open, KEYBOARD_HIDE_TIMEOUT);
+
+    cancelPendingOpen.current = () => {
+      cancelPendingOpen.current = undefined;
+      subscription.remove();
+      clearTimeout(timeout);
+    };
+
+    Keyboard.dismiss();
+  };
+
+  useEffect(() => () => cancelPendingOpen.current?.(), []);
 
   const handleSend = () => {
     if (attachExpanded) {
@@ -327,7 +361,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
                 )}
               <IconButton
                 icon={voiceAssistantIconButton}
-                onPress={() => openDrawer('right')}
+                onPress={openVoiceAssistant}
                 size={20}
                 color={colors.onSurface}
                 backgroundColor={colors.surfaceContainer}

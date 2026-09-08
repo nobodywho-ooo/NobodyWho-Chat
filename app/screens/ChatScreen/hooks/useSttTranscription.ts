@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { requestRecordingPermissionsAsync, useAudioStream } from 'expo-audio';
-import { acquireRecordingMode, concatPcm, log } from 'helpers';
+import { acquireRecordingMode, cleanTranscript, concatPcm, log } from 'helpers';
 import { useSpeechService } from 'hooks';
 import { AiModelState, useAiService, VAD_SAMPLE_RATE } from 'services';
 
@@ -203,11 +203,11 @@ export const useSttTranscription = ({
 
       setIsTranscribing(true);
 
-      const text = (
+      const text = cleanTranscript(
         await borrowStt(instance =>
           instance.transcribePcm(samples, sampleRate).completed(),
-        )
-      )?.trim();
+        ),
+      );
 
       if (text) {
         onTranscribed(text);

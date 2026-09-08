@@ -193,9 +193,10 @@
       "stop": "Stop",
       "status": {
         "idle": "Tap to speak",
-        "listening": "Listening… stop when you’re done",
+        "listening": "Listening…",
         "transcribing": "Transcribing",
         "thinking": "Thinking",
+        "synthesizing": "Generating speech…",
         "speaking": "Speaking…",
         "error": "Something went wrong — tap to try again"
       },
@@ -205,7 +206,7 @@
         "chat": "Chat model",
         "stt": "Speech-to-text model",
         "tts": "Text-to-speech model",
-        "vad": "Voice detection model",
+        "vad": "Voice Activity Detection model",
         "hint": "Download and activate one of each, then come back."
       }
     },

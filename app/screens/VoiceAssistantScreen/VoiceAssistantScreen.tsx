@@ -22,16 +22,13 @@ interface VoiceAssistantScreenProps {
   onCloseDrawer: () => void;
 }
 
-// The two phases the button can actually interrupt: the user is talking, or the
-// answer is playing back. In both the button reads "stop" rather than "start".
 const STOPPABLE_STATUSES: VoiceStatus[] = ['listening', 'speaking'];
 
-// The phases that run to completion: transcription, generation, and the speech
-// synthesis that follows it — each a native call with nothing to interrupt.
-// 'thinking' covers synthesis too, since the status only flips to 'speaking'
-// once the finished audio starts playing. The button is replaced by a spinner
-// throughout, rather than offering a stop that couldn't be honoured.
-const PROCESSING_STATUSES: VoiceStatus[] = ['transcribing', 'thinking'];
+const NOT_STOPPABLE_STATUSES: VoiceStatus[] = [
+  'transcribing',
+  'thinking',
+  'synthesizing',
+];
 
 export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   onCloseDrawer,
@@ -59,7 +56,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
 
   const isReady = status !== 'unavailable';
   const isStoppable = STOPPABLE_STATUSES.includes(status);
-  const isProcessing = PROCESSING_STATUSES.includes(status);
+  const isProcessing = NOT_STOPPABLE_STATUSES.includes(status);
 
   const accessibilityLabel = isStoppable
     ? t('screens.voiceAssistant.stop')
