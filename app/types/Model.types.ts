@@ -32,8 +32,7 @@ export interface ModelDownloadPart extends ModelPart {
 }
 
 export interface ModelDownload {
-  // Snapshot of the model being downloaded, so it can be rendered before it
-  // exists in the `models` table.
+  // Snapshot of the model being downloaded, so it can be rendered before it exists in the `models` table.
   model: Model;
   // Per-part download progress; the source of truth for the overall progress.
   partsProgress: ModelDownloadPart[];
