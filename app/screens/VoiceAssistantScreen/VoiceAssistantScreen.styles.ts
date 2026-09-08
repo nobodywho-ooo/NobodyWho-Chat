@@ -47,7 +47,12 @@ export default StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    paddingHorizontal: Spacings.sm,
+  },
   headerSpacer: {
-    width: 40,
+    width: 36,
   },
 });

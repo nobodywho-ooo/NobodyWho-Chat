@@ -109,10 +109,9 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
             showPreferences ? () => setShowPreferences(false) : onCloseDrawer
           }
         />
-        <Text variant="h3" bold>
+        <Text variant="h3" bold numberOfLines={1} style={styles.headerTitle}>
           {t('screens.voiceAssistant.title')}
         </Text>
-        <View style={styles.headerSpacer} />
         {canOpenPreferences && !showPreferences ? (
           <IconButton
             icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
