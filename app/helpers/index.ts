@@ -6,6 +6,7 @@ import { getMarkdownStyle } from './markdown';
 import { parseThinking, stripThinkingBlocks } from './thinking';
 import { haptics } from './haptics';
 import { getFamilyIcon } from './familyIcon';
+import { getPipelineIcon } from './pipelineIcon';
 import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
 import {
@@ -62,9 +63,11 @@ import { modelSizeLabel } from './modelSize';
 
 export type { AudioBands, AudioEnvelope } from './audioLevels';
 export type { TtsEngine, TtsLanguageOption } from './ttsEngine';
+export type { PipelineIcon } from './pipelineIcon';
 
 export {
   getFamilyIcon,
+  getPipelineIcon,
   deleteModelFiles,
   downloadModelPart,
   downloadedPartPath,

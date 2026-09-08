@@ -225,16 +225,14 @@
       "github": "Github"
     },
     "models": {
-      "textModelInUse": "Tekstmodel i brug",
-      "voiceModelInUse": "Stemmemodel i brug",
-      "transcriptionModelInUse": "Transskriptionsmodel i brug",
-      "voiceDetectionModelInUse": "Stemmedetektionsmodel i brug",
+      "inUse": "I brug",
       "readyToUse": "Klar til brug",
       "downloaded": "Downloadet",
       "modelCount_one": "{{count}} model",
       "modelCount_other": "{{count}} modeller",
       "downloading": "Downloader...",
       "availableToDownload": "Tilgængelig til download",
+      "allPipelines": "Alle modeller",
       "errorCannotGetModelsAtTheMoment": "Kan ikke hente modellerne i øjeblikket",
       "youHaveDownloadedAllTheModels": "Du har downloadet alle modellerne.",
       "chooseModelTitle": "Vælg den rigtige model",

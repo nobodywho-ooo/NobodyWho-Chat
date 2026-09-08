@@ -1,5 +1,76 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`SelectablePill renders a pill with an icon 1`] = `
+<View
+  accessibilityLabel="Text to Speech"
+  accessibilityRole="button"
+  accessibilityState={
+    {
+      "busy": undefined,
+      "checked": undefined,
+      "disabled": undefined,
+      "expanded": undefined,
+      "selected": false,
+    }
+  }
+  accessibilityValue={
+    {
+      "max": undefined,
+      "min": undefined,
+      "now": undefined,
+      "text": undefined,
+    }
+  }
+  accessible={true}
+  collapsable={false}
+  focusable={true}
+  hitSlop={4}
+  onBlur={[Function]}
+  onClick={[Function]}
+  onFocus={[Function]}
+  onResponderGrant={[Function]}
+  onResponderMove={[Function]}
+  onResponderRelease={[Function]}
+  onResponderTerminate={[Function]}
+  onResponderTerminationRequest={[Function]}
+  onStartShouldSetResponder={[Function]}
+  style={
+    [
+      {
+        "alignItems": "center",
+        "borderRadius": 999,
+        "borderWidth": 1,
+        "flexDirection": "row",
+        "gap": 4,
+        "paddingHorizontal": 12,
+        "paddingVertical": 8,
+      },
+      {
+        "backgroundColor": "#f7f7f7",
+        "borderColor": "#e1e1e1",
+      },
+      false,
+    ]
+  }
+>
+  <PlatformIcon
+    androidIconName="text_to_speech"
+    color="#000000"
+    iosIconName="speaker.wave.2"
+    size={16}
+  />
+  <Text
+    style={
+      {
+        "color": "#000000",
+      }
+    }
+  >
+    Text to Speech
+  </Text>
+</View>
+`;
+
 exports[`SelectablePill renders a selected pill 1`] = `
 <View
   accessibilityLabel="Male 1"
@@ -37,8 +108,11 @@ exports[`SelectablePill renders a selected pill 1`] = `
   style={
     [
       {
+        "alignItems": "center",
         "borderRadius": 999,
         "borderWidth": 1,
+        "flexDirection": "row",
+        "gap": 4,
         "paddingHorizontal": 12,
         "paddingVertical": 8,
       },
@@ -99,8 +173,11 @@ exports[`SelectablePill renders an unselected pill 1`] = `
   style={
     [
       {
+        "alignItems": "center",
         "borderRadius": 999,
         "borderWidth": 1,
+        "flexDirection": "row",
+        "gap": 4,
         "paddingHorizontal": 12,
         "paddingVertical": 8,
       },

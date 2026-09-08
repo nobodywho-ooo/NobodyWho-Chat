@@ -62,11 +62,11 @@ export const useAvailableModels = () => {
 
   const inUseModels = useMemo(
     () =>
-      MODEL_SLOTS.flatMap(({ slot, appStateKey }) => {
+      MODEL_SLOTS.flatMap(({ appStateKey }) => {
         const model = storedModels.find(
           candidate => candidate.id === appState[appStateKey],
         );
-        return model ? [{ slot, model }] : [];
+        return model ? [model] : [];
       }),
     [storedModels, appState],
   );

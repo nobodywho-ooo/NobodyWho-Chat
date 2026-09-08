@@ -5,7 +5,6 @@ import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useModelDownloads, useStyled } from 'hooks';
 import { Spacings } from 'style';
-import { ModelSlot } from 'types';
 
 import styles from './ModelsScreen.styles';
 import { useAvailableModels } from './useAvailableModels';
@@ -14,15 +13,8 @@ import {
   AvailableModels,
   DownloadedModelsLink,
   DownloadingModels,
-  InUseModel,
+  InUseModels,
 } from './components';
-
-const SLOT_TITLE_KEYS: Record<ModelSlot, string> = {
-  [ModelSlot.chat]: 'screens.models.textModelInUse',
-  [ModelSlot.tts]: 'screens.models.voiceModelInUse',
-  [ModelSlot.stt]: 'screens.models.transcriptionModelInUse',
-  [ModelSlot.vad]: 'screens.models.voiceDetectionModelInUse',
-};
 
 export const ModelsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -63,14 +55,7 @@ export const ModelsScreen: React.FC = () => {
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
-      {inUseModels.map(({ slot, model }, index) => (
-        <InUseModel
-          key={slot}
-          model={model}
-          title={t(SLOT_TITLE_KEYS[slot])}
-          first={index === 0}
-        />
-      ))}
+      {inUseModels.length > 0 && <InUseModels models={inUseModels} />}
 
       {downloadedCount > 0 && (
         <DownloadedModelsLink

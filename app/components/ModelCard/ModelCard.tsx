@@ -3,8 +3,13 @@ import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
-import { getFamilyIcon, modelSizeLabel, parameterCountLabel } from 'helpers';
-import { Model, ModelPipeline, pipelineLabel } from 'types';
+import {
+  getFamilyIcon,
+  getPipelineIcon,
+  modelSizeLabel,
+  parameterCountLabel,
+} from 'helpers';
+import { Model, pipelineLabel } from 'types';
 
 import { Text, fontSizes } from '../Text/Text';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
@@ -14,59 +19,6 @@ import { Tag } from '../Tag/Tag';
 import styles from './ModelCard.styles';
 
 const HIGH_CPU_USAGE_SIZE_GB = 2;
-
-type PipelineIcon = {
-  iosIconName: SFSymbolProps['name'];
-  androidIconName: MaterialSymbolProps['name'];
-};
-
-const DEFAULT_PIPELINE_ICON: PipelineIcon = {
-  iosIconName: 'shippingbox',
-  androidIconName: 'category',
-};
-
-const pipelineIcon: Record<ModelPipeline, PipelineIcon> = {
-  [ModelPipeline.textGeneration]: {
-    iosIconName: 'text.bubble',
-    androidIconName: 'chat',
-  },
-  [ModelPipeline.imageToImage]: {
-    iosIconName: 'photo',
-    androidIconName: 'image',
-  },
-  [ModelPipeline.imageTextToText]: {
-    iosIconName: 'photo.on.rectangle',
-    androidIconName: 'photo_library',
-  },
-  [ModelPipeline.audioTextToText]: {
-    iosIconName: 'waveform',
-    androidIconName: 'graphic_eq',
-  },
-  [ModelPipeline.imageAudioTextToText]: {
-    iosIconName: 'square.grid.2x2',
-    androidIconName: 'dashboard',
-  },
-  [ModelPipeline.featureExtraction]: {
-    iosIconName: 'magnifyingglass',
-    androidIconName: 'search',
-  },
-  [ModelPipeline.textRanking]: {
-    iosIconName: 'list.number',
-    androidIconName: 'format_list_numbered',
-  },
-  [ModelPipeline.textToSpeech]: {
-    iosIconName: 'speaker.wave.2',
-    androidIconName: 'text_to_speech',
-  },
-  [ModelPipeline.speechToText]: {
-    iosIconName: 'microphone',
-    androidIconName: 'mic',
-  },
-  [ModelPipeline.voiceActivityDetection]: {
-    iosIconName: 'waveform.badge.mic',
-    androidIconName: 'record_voice_over',
-  },
-};
 
 interface ModelCardProps {
   style?: StyleProp<ViewStyle>;
@@ -102,7 +54,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
   const isDownloading = downloadProgress !== undefined;
   const FamilyIcon = getFamilyIcon(family);
   const showDownloadIcon = !isDownloaded && !isSelected && !deleteMode;
-  const icon = pipelineIcon[pipeline] ?? DEFAULT_PIPELINE_ICON;
+  const icon = getPipelineIcon(pipeline);
 
   const handlePress = useCallback(() => {
     onPress?.(model);

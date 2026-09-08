@@ -225,16 +225,14 @@
       "github": "Github"
     },
     "models": {
-      "textModelInUse": "Text model in use",
-      "voiceModelInUse": "Voice model in use",
-      "transcriptionModelInUse": "Transcription model in use",
-      "voiceDetectionModelInUse": "Voice detection model in use",
+      "inUse": "In use",
       "readyToUse": "Ready to use",
       "downloaded": "Downloaded",
       "modelCount_one": "{{count}} model",
       "modelCount_other": "{{count}} models",
       "downloading": "Downloading...",
       "availableToDownload": "Available to download",
+      "allPipelines": "All models",
       "errorCannotGetModelsAtTheMoment": "Cannot get the models at the moment",
       "youHaveDownloadedAllTheModels": "You have downloaded all the models.",
       "chooseModelTitle": "Choosing the Right Model",
