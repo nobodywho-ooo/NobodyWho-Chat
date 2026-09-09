@@ -74,6 +74,7 @@ exports[`renders correctly InputBar 1`] = `
       }
     >
       <TextInput
+        editable={true}
         multiline={true}
         onChangeText={[Function]}
         placeholder="components.inputBar.placeholder"
@@ -123,6 +124,7 @@ exports[`renders correctly InputBar 1`] = `
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            disabled={false}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -136,6 +138,7 @@ exports[`renders correctly InputBar 1`] = `
         <IconButton
           backgroundColor="#b0c1cb"
           color="#FFFFFF"
+          disabled={false}
           icon={
             {
               "androidIconName": "arrow_upward",
@@ -225,6 +228,7 @@ exports[`renders correctly InputBar when streaming 1`] = `
       }
     >
       <TextInput
+        editable={true}
         multiline={true}
         onChangeText={[Function]}
         placeholder="components.inputBar.placeholder"
@@ -274,6 +278,7 @@ exports[`renders correctly InputBar when streaming 1`] = `
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            disabled={false}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -287,6 +292,7 @@ exports[`renders correctly InputBar when streaming 1`] = `
         <IconButton
           backgroundColor="#ebebeb"
           color="#000000"
+          disabled={false}
           icon={
             {
               "androidIconName": "stop",
@@ -376,6 +382,7 @@ exports[`renders correctly InputBar with value 1`] = `
       }
     >
       <TextInput
+        editable={true}
         multiline={true}
         onChangeText={[Function]}
         placeholder="components.inputBar.placeholder"
@@ -425,6 +432,7 @@ exports[`renders correctly InputBar with value 1`] = `
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            disabled={false}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -438,6 +446,7 @@ exports[`renders correctly InputBar with value 1`] = `
         <IconButton
           backgroundColor="#628395"
           color="#FFFFFF"
+          disabled={false}
           icon={
             {
               "androidIconName": "arrow_upward",
@@ -527,6 +536,7 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
       }
     >
       <TextInput
+        editable={true}
         multiline={true}
         onChangeText={[Function]}
         placeholder="components.inputBar.placeholder"
@@ -583,6 +593,7 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
                 accessibilityLabel="components.inputBar.attach"
                 backgroundColor="#ebebeb"
                 color="#000000"
+                disabled={false}
                 icon={
                   {
                     "androidIconName": "add",
@@ -598,6 +609,7 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            disabled={false}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -611,6 +623,7 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
         <IconButton
           backgroundColor="#b0c1cb"
           color="#FFFFFF"
+          disabled={false}
           icon={
             {
               "androidIconName": "arrow_upward",

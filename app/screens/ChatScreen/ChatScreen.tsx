@@ -38,12 +38,14 @@ interface ChatScreenProps {
   conversationId: number | undefined;
   messages: DisplayMessage[];
   onConversationCreated: (conversationId: number) => void;
+  disabled?: boolean;
 }
 
 export const ChatScreen: React.FC<ChatScreenProps> = ({
   conversationId: initialConversationId,
   messages: initialMessages,
   onConversationCreated,
+  disabled = false,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
@@ -141,7 +143,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const listPaddingBottom = bottomOffset + InputBar.height + INPUT_BAR_PADDING;
 
   const messageStarters = messages.length === 0 && !attachExpanded && (
-    <MessageStarters pipeline={chatPipeline} onSelect={setInputText} />
+    <MessageStarters
+      pipeline={chatPipeline}
+      onSelect={setInputText}
+      disabled={disabled}
+    />
   );
 
   return (
@@ -208,6 +214,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       <InputBar
         value={inputText}
         isStreaming={isStreaming}
+        disabled={disabled}
         attachExpanded={attachExpanded}
         onAttachExpandedChange={setAttachExpanded}
         showImageAttach={ingestsImage}

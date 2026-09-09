@@ -31,6 +31,7 @@ export type ImageAttachSource = 'photo' | 'camera';
 interface InputBarProps {
   value: string;
   isStreaming: boolean;
+  disabled?: boolean;
   attachExpanded: boolean;
   onAttachExpandedChange: (expanded: boolean) => void;
   onChangeText: (text: string) => void;
@@ -57,6 +58,7 @@ interface InputBarProps {
 export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   value,
   isStreaming,
+  disabled = false,
   attachExpanded,
   onAttachExpandedChange,
   onChangeText,
@@ -223,6 +225,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
       <IconButton
         icon={icon}
         onPress={onPress}
+        disabled={disabled}
         size={20}
         color={active ? colors.ctaContentPrimary : colors.onSurface}
         backgroundColor={
@@ -250,6 +253,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
       <IconButton
         icon={icon}
         onPress={onPress}
+        disabled={disabled}
         size={20}
         color={active ? colors.ctaContentPrimary : colors.onSurface}
         backgroundColor={
@@ -331,6 +335,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
             placeholder={t('components.inputBar.placeholder')}
             placeholderTextColor="#999"
             value={value}
+            editable={!disabled}
             onChangeText={onChangeText}
             onFocus={onFocus}
             onBlur={onBlur}
@@ -364,6 +369,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
                         onPress={
                           isRecording ? onStopDictation : onStartDictation
                         }
+                        disabled={disabled}
                         size={20}
                         color={transcribingIconColor}
                         backgroundColor={transcribingIconBackgroundColor}
@@ -375,6 +381,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
               <IconButton
                 icon={voiceAssistantIconButton}
                 onPress={openVoiceAssistant}
+                disabled={disabled}
                 size={20}
                 color={colors.onSurface}
                 backgroundColor={colors.surfaceContainer}
@@ -383,6 +390,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
             </View>
             <InputBarAction
               isStreaming={isStreaming}
+              disabled={disabled}
               value={value}
               onSend={handleSend}
               onStop={onStop}
@@ -398,6 +406,7 @@ InputBar.height = INPUT_BAR_HEIGHT;
 
 interface InputBarActionProps {
   isStreaming: boolean;
+  disabled: boolean;
   value: string;
   onSend: () => void;
   onStop: () => void;
@@ -405,6 +414,7 @@ interface InputBarActionProps {
 
 const InputBarAction: React.FC<InputBarActionProps> = ({
   isStreaming,
+  disabled,
   value,
   onSend,
   onStop,
@@ -436,6 +446,7 @@ const InputBarAction: React.FC<InputBarActionProps> = ({
     <IconButton
       icon={icon}
       onPress={isStreaming ? onStop : onSend}
+      disabled={disabled}
       size={20}
       color={color}
       backgroundColor={backgroundColor}

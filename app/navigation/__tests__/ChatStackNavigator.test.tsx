@@ -269,6 +269,51 @@ test('disposes and rebuilds the chat when the in-use model changes', async () =>
   });
 });
 
+test('a model switch keeps the chat on screen, inert, behind a loading toast', async () => {
+  mockUseModels.mockReturnValue({
+    models: [buildModel(0), buildModel(1)],
+    loading: false,
+  });
+  mockGetModelById.mockImplementation(async (id: number) => buildModel(id));
+  await setAppState({ modelIdInUse: 0 });
+
+  const screen = render(<ChatStackNavigator />);
+  await showEmptyChat(screen);
+  expect(screen.UNSAFE_getByType(InputBar as never).props.disabled).toBe(false);
+
+  // Hold the next load open so the loading state is observable.
+  let finishLoad = () => {};
+  mockCreateChat.mockImplementationOnce(
+    () =>
+      new Promise<void>(resolve => {
+        finishLoad = () => {
+          mockChatRef.current = mockChatInstance;
+          resolve();
+        };
+      }),
+  );
+
+  await act(async () => {
+    await setAppState({ modelIdInUse: 1 });
+  });
+
+  // No full-screen spinner takes over: the chat is still on screen, the load
+  // reports itself in a toast, and nothing can be typed or sent into a chat
+  // that isn't loaded yet.
+  expect(
+    screen.getByText('components.messageStarters.planParisTrip.title'),
+  ).toBeTruthy();
+  expect(screen.getByText('screens.loadingScreen.loadingModel')).toBeTruthy();
+  expect(screen.UNSAFE_getByType(InputBar as never).props.disabled).toBe(true);
+
+  await act(async () => {
+    finishLoad();
+  });
+
+  expect(screen.queryByText('screens.loadingScreen.loadingModel')).toBeNull();
+  expect(screen.UNSAFE_getByType(InputBar as never).props.disabled).toBe(false);
+});
+
 test('disposes and rebuilds the chat when the assistant config changes', async () => {
   await setAppState({ modelIdInUse: 0 });
 
@@ -608,7 +653,13 @@ test('a voice turn adopts a freshly created conversation without resetting the c
 
   // The voice assistant persisted a first turn to a brand-new conversation (7).
   mockGetMessagesByConversationId.mockResolvedValue([
-    { id: 1, conversationId: 7, role: 'user', content: 'hi', documentsPath: [] },
+    {
+      id: 1,
+      conversationId: 7,
+      role: 'user',
+      content: 'hi',
+      documentsPath: [],
+    },
     {
       id: 2,
       conversationId: 7,
@@ -660,7 +711,9 @@ test('a voice turn on the in-use conversation refreshes the display only', async
     expect(mockGetMessagesByConversationId).toHaveBeenCalledWith(5),
   );
   expect(getAppState().conversationIdInUse).toBe(5);
-  expect(mockChatInstance.setChatHistory).toHaveBeenCalledTimes(resetsBeforeSync);
+  expect(mockChatInstance.setChatHistory).toHaveBeenCalledTimes(
+    resetsBeforeSync,
+  );
 });
 
 test('switching conversations keeps the chat screen mounted (no loading flash)', async () => {

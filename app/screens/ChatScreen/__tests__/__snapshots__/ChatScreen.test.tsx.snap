@@ -251,6 +251,7 @@ exports[`renders ChatScreen with existing messages 1`] = `
   </RCTScrollView>
   <InputBar
     attachExpanded={false}
+    disabled={false}
     hasAudio={false}
     isRecording={false}
     isStreaming={false}
@@ -369,6 +370,7 @@ exports[`renders correctly empty ChatScreen 1`] = `
   />
   <InputBar
     attachExpanded={false}
+    disabled={false}
     hasAudio={false}
     isRecording={false}
     isStreaming={false}
@@ -417,7 +419,7 @@ exports[`renders correctly empty ChatScreen 1`] = `
             {
               "busy": undefined,
               "checked": undefined,
-              "disabled": undefined,
+              "disabled": false,
               "expanded": undefined,
               "selected": undefined,
             }
@@ -482,7 +484,7 @@ exports[`renders correctly empty ChatScreen 1`] = `
             {
               "busy": undefined,
               "checked": undefined,
-              "disabled": undefined,
+              "disabled": false,
               "expanded": undefined,
               "selected": undefined,
             }

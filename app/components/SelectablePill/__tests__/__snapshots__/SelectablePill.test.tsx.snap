@@ -63,6 +63,7 @@ exports[`SelectablePill renders a pill with an icon 1`] = `
     style={
       {
         "color": "#000000",
+        "paddingLeft": 4,
       }
     }
   >
@@ -128,6 +129,7 @@ exports[`SelectablePill renders a selected pill 1`] = `
     style={
       {
         "color": "#FFFFFF",
+        "paddingLeft": undefined,
       }
     }
   >
@@ -193,6 +195,7 @@ exports[`SelectablePill renders an unselected pill 1`] = `
     style={
       {
         "color": "#000000",
+        "paddingLeft": undefined,
       }
     }
   >

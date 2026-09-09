@@ -35,11 +35,13 @@ export const scrollGestureStore = {
 interface MessageStartersProps {
   pipeline: ChatPipeline;
   onSelect: (body: string) => void;
+  disabled?: boolean;
 }
 
 export const MessageStarters: React.FC<MessageStartersProps> = ({
   pipeline,
   onSelect,
+  disabled = false,
 }) => {
   const { t } = useTranslation();
   const starterIds = useMemo(() => pickStarterIds(pipeline), [pipeline]);
@@ -66,6 +68,7 @@ export const MessageStarters: React.FC<MessageStartersProps> = ({
           subtitle={t(`components.messageStarters.${id}.subtitle`)}
           body={t(`components.messageStarters.${id}.body`)}
           onPress={onSelect}
+          disabled={disabled}
         />
       ))}
     </ScrollView>

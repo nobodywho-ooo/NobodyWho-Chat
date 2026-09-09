@@ -102,8 +102,8 @@ test('pressing a model puts it in use, clear the conversation', () => {
     modelIdInUse: 2,
     conversationIdInUse: undefined,
   });
-  // The screen dismisses itself so the user returns to the chat.
-  expect(mockGoBack).toHaveBeenCalled();
+  // The screen stays open so another slot can be picked in the same visit.
+  expect(mockGoBack).not.toHaveBeenCalled();
 });
 
 test('pressing the already-in-use model does nothing (no switch, no dismiss)', () => {
@@ -212,7 +212,8 @@ test('pressing a TTS model selects it as the voice — never as the chat model',
   );
   // Selecting a voice doesn't touch the running chat.
   expect(mockStopGeneration).not.toHaveBeenCalled();
-  expect(mockGoBack).toHaveBeenCalled();
+  // Nor does it dismiss the screen — a chat model can be picked next.
+  expect(mockGoBack).not.toHaveBeenCalled();
 });
 
 test('the checkmark reflects each pipeline against its own in-use slot', () => {

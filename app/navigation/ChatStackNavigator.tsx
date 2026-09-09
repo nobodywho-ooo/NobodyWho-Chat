@@ -8,7 +8,13 @@ import React, {
   useState,
 } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { AppState, AppStateStatus, Pressable } from 'react-native';
+import {
+  AppState,
+  AppStateStatus,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SamplerPresets } from 'react-native-nobodywho';
 import {
@@ -37,7 +43,7 @@ import {
   toChatHistory,
   toModelHistory,
 } from 'helpers';
-import { PlatformIcon } from 'components';
+import { PlatformIcon, Toast } from 'components';
 import { useAppState, useModels, useStyled } from 'hooks';
 import { subscribeConversationSync, useAiService } from 'services';
 import {
@@ -63,6 +69,8 @@ enum SessionStatus {
 }
 
 type LoadedConversationId = number | undefined;
+
+const EMPTY_HISTORY: DisplayMessage[] = [];
 
 interface ChatRootContextValue {
   modelsLoading: boolean;
@@ -95,7 +103,7 @@ const ChatRootScreen = () => {
   const ctx = useContext(ChatRootContext);
 
   if (ctx.modelsLoading) {
-    return <LoadingScreen message={ctx.loadingMessage} />;
+    return <LoadingScreen />;
   }
 
   if (!ctx.hasModels) {
@@ -105,21 +113,23 @@ const ChatRootScreen = () => {
     return <NoModelSelectedScreen />;
   }
 
-  switch (ctx.status) {
-    case SessionStatus.Ready:
-      return (
-        <ChatScreen
-          conversationId={ctx.conversationId}
-          messages={ctx.chatHistory}
-          onConversationCreated={ctx.onConversationCreated}
-        />
-      );
-    case SessionStatus.Error:
-      return <ErrorScreen onRetry={ctx.onRetry} />;
-    case SessionStatus.Loading:
-    default:
-      return <LoadingScreen message={ctx.loadingMessage} />;
+  if (ctx.status === SessionStatus.Error) {
+    return <ErrorScreen onRetry={ctx.onRetry} />;
   }
+
+  const loading = ctx.status === SessionStatus.Loading;
+
+  return (
+    <View style={styles.chatRoot}>
+      <ChatScreen
+        conversationId={ctx.conversationId}
+        messages={ctx.chatHistory}
+        onConversationCreated={ctx.onConversationCreated}
+        disabled={loading}
+      />
+      <Toast visible={loading} message={ctx.loadingMessage} loading />
+    </View>
+  );
 };
 
 export const ChatStackNavigator = () => {
@@ -140,7 +150,8 @@ export const ChatStackNavigator = () => {
   } = useAiService();
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
-  const [chatHistory, setChatHistory] = useState<DisplayMessage[]>([]);
+  const [chatHistory, setChatHistory] =
+    useState<DisplayMessage[]>(EMPTY_HISTORY);
   const [loadedConversationId, setLoadedConversationId] =
     useState<LoadedConversationId>(undefined);
   const selfCreatedConversationIdRef = useRef<LoadedConversationId>(undefined);
@@ -191,7 +202,7 @@ export const ChatStackNavigator = () => {
     const { modelIdInUse: modelId, conversationIdInUse } = getAppState();
     if (conversationIdInUse === undefined) {
       await chat.current.setChatHistory([]);
-      setChatHistory([]);
+      setChatHistory(EMPTY_HISTORY);
       setLoadedConversationId(undefined);
       return;
     }
@@ -632,3 +643,9 @@ export const ChatStackNavigator = () => {
     </ChatRootContext.Provider>
   );
 };
+
+const styles = StyleSheet.create({
+  chatRoot: {
+    flex: 1,
+  },
+});

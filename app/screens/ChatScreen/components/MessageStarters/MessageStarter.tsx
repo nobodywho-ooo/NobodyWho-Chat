@@ -10,6 +10,7 @@ interface MessageStarterProps {
   subtitle: string;
   body: string;
   onPress: (body: string) => void;
+  disabled?: boolean;
 }
 
 export const MessageStarter: React.FC<MessageStarterProps> = ({
@@ -17,6 +18,7 @@ export const MessageStarter: React.FC<MessageStarterProps> = ({
   subtitle,
   body,
   onPress,
+  disabled = false,
 }) => {
   const { colors } = useStyled();
 
@@ -25,6 +27,7 @@ export const MessageStarter: React.FC<MessageStarterProps> = ({
       accessibilityRole="button"
       accessibilityLabel={`${title} ${subtitle}`}
       onPress={() => onPress(body)}
+      disabled={disabled}
       style={({ pressed }) => [
         styles.starterContainer,
         { backgroundColor: colors.surfaceContainer },

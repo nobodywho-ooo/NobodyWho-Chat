@@ -280,7 +280,7 @@
       "generationStopped": "Generering stoppet."
     },
     "loadingScreen": {
-      "loadingModel": "Indlæser {{model}}…",
+      "loadingModel": "Indlæser {{model}}",
       "loadingApp": "Appen indlæses"
     },
     "errorScreen": {

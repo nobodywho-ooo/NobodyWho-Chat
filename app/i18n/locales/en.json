@@ -280,7 +280,7 @@
       "generationStopped": "Generation stopped."
     },
     "loadingScreen": {
-      "loadingModel": "Loading {{model}}…",
+      "loadingModel": "Loading {{model}}",
       "loadingApp": "App is loading..."
     },
     "errorScreen": {
