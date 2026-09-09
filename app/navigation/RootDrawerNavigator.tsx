@@ -6,7 +6,7 @@ import {
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import { VoiceAssistantScreen } from 'screens';
-import { haptics, isIOS } from 'helpers';
+import { isIOS } from 'helpers';
 import { useStyled } from 'hooks';
 import { Spacings } from 'style';
 
@@ -58,12 +58,7 @@ const renderVoiceAssistant = ({ navigation }: DrawerContentComponentProps) => (
   <>
     <DrawerStatusReporter side="right" />
     <DrawerOpenerReporter side="right" navigation={navigation} />
-    <VoiceAssistantScreen
-      onCloseDrawer={() => {
-        haptics.medium();
-        navigation.closeDrawer();
-      }}
-    />
+    <VoiceAssistantScreen onCloseDrawer={() => navigation.closeDrawer()} />
   </>
 );
 
@@ -107,9 +102,6 @@ const RootDrawer = () => {
             // Disabled while the left drawer is open so its close gesture wins.
             openSide !== 'left',
         })}
-        listeners={{
-          transitionEnd: () => haptics.medium(),
-        }}
       />
     </Drawer.Navigator>
   );

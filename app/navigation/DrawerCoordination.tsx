@@ -18,6 +18,7 @@ import type {
   NativeGesture,
   PanGestureConfig,
 } from 'react-native-gesture-handler';
+import { haptics } from 'helpers';
 
 import { scrollGestureStore } from '../screens/ChatScreen/components/MessageStarters/MessageStarters';
 
@@ -126,14 +127,31 @@ export const DrawerCoordinationProvider: FC<{ children: ReactNode }> = ({
 };
 
 // Rendered inside a drawer's content (so useDrawerStatus resolves that drawer's
-// status) to publish its open/closed state up to the coordination context.
+// status) to publish its open/closed state up to the coordination context, and
+// to buzz on every open and close — a swipe lands here the moment it commits,
+// which is also what the drawer animates from.
+//
+// The navigator's own `transitionEnd` event can't drive this: the drawer emits
+// it against the navigator's state key, while a screen's `listeners` only ever
+// receive events targeted at their own route key, so nothing is delivered.
 export const DrawerStatusReporter: FC<{ side: Side }> = ({ side }) => {
   const status = useDrawerStatus();
   const { reportStatus } = useDrawerCoordination();
+  // Seeded with the first status so mounting is never mistaken for a change.
+  const previousStatus = useRef(status);
 
   useEffect(() => {
     reportStatus(side, status === 'open');
   }, [side, status, reportStatus]);
+
+  useEffect(() => {
+    if (previousStatus.current === status) {
+      return;
+    }
+
+    previousStatus.current = status;
+    haptics.medium();
+  }, [status]);
 
   return null;
 };

@@ -1,10 +1,10 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, FC } from 'react';
 import { FlatList, ListRenderItem, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Text } from 'components';
 import { setAppState } from 'database';
 import { useAppState, useConversations, useStyled } from 'hooks';
-import { capitalize, haptics } from 'helpers';
+import { capitalize } from 'helpers';
 import { Conversation } from 'types';
 
 import styles from './ConversationsList.styles';
@@ -13,7 +13,7 @@ interface ConversationsListProps {
   onCloseDrawer: () => void;
 }
 
-export const ConversationsList: React.FC<ConversationsListProps> = ({
+export const ConversationsList: FC<ConversationsListProps> = ({
   onCloseDrawer,
 }) => {
   const { t } = useTranslation();
@@ -27,7 +27,6 @@ export const ConversationsList: React.FC<ConversationsListProps> = ({
         modelIdInUse: conversation.modelId,
         conversationIdInUse: conversation.id,
       });
-      haptics.medium();
       onCloseDrawer();
     },
     [onCloseDrawer],

@@ -17,7 +17,7 @@ import { isChatPipeline } from 'types';
 import { deleteConversation } from 'repositories';
 import { DrawerContentScreen } from 'screens';
 import { PlatformIcon, Text } from 'components';
-import { log, haptics, isIOS, capitalize, parameterCountLabel } from 'helpers';
+import { log, isIOS, capitalize, parameterCountLabel } from 'helpers';
 import { useAppState, useConversations, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
 import { Spacings } from 'style';
@@ -162,10 +162,7 @@ const renderDrawerContent = ({ navigation }: DrawerContentComponentProps) => (
     <DrawerStatusReporter side="left" />
     <DrawerContentScreen
       navigation={navigation}
-      onCloseDrawer={() => {
-        haptics.medium();
-        navigation.closeDrawer();
-      }}
+      onCloseDrawer={() => navigation.closeDrawer()}
     />
   </>
 );
@@ -235,9 +232,6 @@ export const DrawerNavigator = () => {
                 ? renderChatHeaderRight
                 : undefined,
           };
-        }}
-        listeners={{
-          transitionEnd: () => haptics.medium(),
         }}
       />
     </Drawer.Navigator>

@@ -9,7 +9,6 @@ import { ActionButton, ConversationsList } from './components';
 import { useAiService } from 'services';
 import { useTheme } from 'context';
 import { useModels } from 'hooks';
-import { haptics } from 'helpers';
 import { Theme } from 'types';
 
 import styles from './DrawerContentScreen.styles';
@@ -38,7 +37,6 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
   const handleSettingsPress = useCallback(() => {
     chat.current?.stopGeneration();
     navigation.navigate('Chat', { screen: 'SettingsScreen' });
-    haptics.medium();
     closeDrawer();
   }, [navigation, chat, closeDrawer]);
 
@@ -48,13 +46,11 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
       screen: 'DownloadedModelsScreen',
       params: { canDelete: false },
     });
-    haptics.medium();
     closeDrawer();
   }, [navigation, chat, closeDrawer]);
 
   const handleNewChatPress = useCallback(() => {
     setAppState({ conversationIdInUse: undefined });
-    haptics.medium();
     closeDrawer();
   }, [closeDrawer]);
 
@@ -66,10 +62,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         </Text>
         <IconButton
           icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
-          onPress={() => {
-            haptics.medium();
-            closeDrawer();
-          }}
+          onPress={closeDrawer}
         />
       </View>
 
