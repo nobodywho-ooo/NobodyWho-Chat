@@ -70,7 +70,7 @@ enum SessionStatus {
 
 type LoadedConversationId = number | undefined;
 
-const EMPTY_HISTORY: DisplayMessage[] = [];
+const emptyHistory = (): DisplayMessage[] => [];
 
 interface ChatRootContextValue {
   modelsLoading: boolean;
@@ -151,7 +151,7 @@ export const ChatStackNavigator = () => {
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
   const [chatHistory, setChatHistory] =
-    useState<DisplayMessage[]>(EMPTY_HISTORY);
+    useState<DisplayMessage[]>(emptyHistory);
   const [loadedConversationId, setLoadedConversationId] =
     useState<LoadedConversationId>(undefined);
   const selfCreatedConversationIdRef = useRef<LoadedConversationId>(undefined);
@@ -202,7 +202,7 @@ export const ChatStackNavigator = () => {
     const { modelIdInUse: modelId, conversationIdInUse } = getAppState();
     if (conversationIdInUse === undefined) {
       await chat.current.setChatHistory([]);
-      setChatHistory(EMPTY_HISTORY);
+      setChatHistory(emptyHistory());
       setLoadedConversationId(undefined);
       return;
     }
@@ -283,8 +283,15 @@ export const ChatStackNavigator = () => {
   // The screen already displays that conversation, so we record it as loaded
   // (making the subscription below skip a reload) and persist it for the drawer
   // and next launch — without touching chatHistory, so the screen never remounts.
+  //
+  // Recording it as loaded is what lets a later New Chat or delete land: those
+  // only clear conversationIdInUse, and the reload that follows hands the screen
+  // an empty history for no conversation. Left pointing at none, this state
+  // would make that reload indistinguishable from where we already were, and the
+  // screen would keep showing the conversation it created.
   const handleConversationCreated = useCallback((id: number) => {
     selfCreatedConversationIdRef.current = id;
+    setLoadedConversationId(id);
     setAppState({ conversationIdInUse: id });
   }, []);
 

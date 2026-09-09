@@ -14,6 +14,7 @@ import {
   insertConversation,
   insertMessage,
 } from 'repositories';
+import { ChatScreen } from 'screens';
 
 import { ChatStackNavigator } from '../ChatStackNavigator';
 
@@ -184,6 +185,16 @@ const showEmptyChat = (screen: ReturnType<typeof render>) =>
       screen.getByText('components.messageStarters.planParisTrip.title'),
     ).toBeTruthy();
   });
+
+// Type a message into the input bar and send it, the way the user opens a
+// conversation the chat screen has to create for itself.
+const sendMessage = async (screen: ReturnType<typeof render>, text: string) => {
+  const bar = screen.UNSAFE_getByType(InputBar as never);
+  act(() => bar.props.onChangeText(text));
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onSend();
+  });
+};
 
 test('shows NoModelDownloadedScreen when no model is downloaded', () => {
   mockUseModels.mockReturnValue({ models: [], loading: false });
@@ -904,4 +915,67 @@ test('does not unload on background when no model is in use', async () => {
 
   expect(mockDisposeChat).not.toHaveBeenCalled();
   expect(mockCreateChat).not.toHaveBeenCalled();
+});
+
+// Both header-menu actions (New Chat, Delete Chat) only clear
+// conversationIdInUse — see DrawerNavigator — so these two drive that write on a
+// conversation the chat screen created for its first message, which is the state
+// the bug needed: the navigator had loaded no conversation and an empty history,
+// while the screen held both.
+test('New Chat clears a conversation the screen created itself', async () => {
+  await setAppState({ modelIdInUse: 0 });
+
+  const screen = render(<ChatStackNavigator />);
+  await showEmptyChat(screen);
+  await sendMessage(screen, 'first message');
+
+  expect(getAppState().conversationIdInUse).toBe(9);
+  expect(screen.getByText('first message')).toBeTruthy();
+  // The navigator records the conversation the screen created as the one it has
+  // loaded. Left pointing at none, the reload below would hand the screen the
+  // same "no conversation, empty history" it was already given on launch.
+  expect(screen.UNSAFE_getByType(ChatScreen).props.conversationId).toBe(9);
+
+  // What both header-menu actions do.
+  await act(async () => {
+    await setAppState({ conversationIdInUse: undefined });
+  });
+
+  expect(
+    screen.UNSAFE_getByType(ChatScreen).props.conversationId,
+  ).toBeUndefined();
+
+  // The turn is off the screen and the empty state is back — the title saying
+  // "New Chat" while the old conversation stays on screen was the bug.
+  expect(screen.queryByText('first message')).toBeNull();
+  await showEmptyChat(screen);
+  // The native chat was reset too, so the model no longer holds the turn.
+  expect(mockChatInstance.setChatHistory).toHaveBeenLastCalledWith([]);
+});
+
+test('a message after Delete Chat starts a new conversation, not the deleted one', async () => {
+  await setAppState({ modelIdInUse: 0 });
+
+  const screen = render(<ChatStackNavigator />);
+  await showEmptyChat(screen);
+  await sendMessage(screen, 'first message');
+
+  // Delete Chat clears the conversation in use, then deletes the row.
+  await act(async () => {
+    await setAppState({ conversationIdInUse: undefined });
+  });
+
+  mockInsertConversation.mockClear().mockResolvedValue(10);
+  mockInsertMessage.mockClear();
+
+  await sendMessage(screen, 'second message');
+
+  // The screen no longer holds the deleted conversation, so this message opens
+  // a fresh one instead of being written into rows that are gone.
+  expect(mockInsertConversation).toHaveBeenCalledTimes(1);
+  expect(mockInsertMessage).toHaveBeenNthCalledWith(
+    1,
+    expect.objectContaining({ conversationId: 10, content: 'second message' }),
+  );
+  expect(getAppState().conversationIdInUse).toBe(10);
 });
