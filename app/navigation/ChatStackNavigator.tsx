@@ -344,7 +344,16 @@ export const ChatStackNavigator = () => {
       {
         slot: ModelSlot.stt,
         dispose: disposeStt,
-        create: (model: Model) => createStt({ model }),
+        create: (model: Model) => {
+          // Undefined is the automatic setting: the engine then detects the
+          // spoken language on every transcription, which a fixed code skips.
+          const { assistantConfig = DEFAULT_ASSISTANT_CONFIG } = getAppState();
+          return createStt({ model, language: assistantConfig.sttLanguage });
+        },
+        // Like the TTS options above, the language is fixed at load time, so
+        // changing it has to reload the engine on an unchanged model.
+        configChanged: (next: AssistantConfig, prev: AssistantConfig) =>
+          next.sttLanguage !== prev.sttLanguage,
       },
       {
         slot: ModelSlot.vad,

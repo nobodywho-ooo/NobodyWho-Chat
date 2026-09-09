@@ -135,12 +135,8 @@ export const MULTIMODAL_CONTEXT_SIZE = 2048;
 // the silence/speech thresholds are expressed in.
 export const VAD_SAMPLE_RATE = 16000;
 
-// How long the user has to stay quiet before the detector calls the turn over.
-// The engine's own default (250 ms) fires while someone is still mid-sentence,
-// just thinking; ~0.7 s is the usual compromise between cutting people off and
-// making them wait. Everything else (threshold, minimum speech, pre-roll) keeps
-// the engine's defaults.
-export const VAD_MIN_SILENCE_MS = 700;
+// How long the user has to stay quiet before the detector calls the turn over
+export const VAD_MIN_SILENCE_MS = 1500;
 
 type SlotStateKey = 'chatState' | 'ttsState' | 'sttState' | 'vadState';
 

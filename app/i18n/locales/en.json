@@ -263,12 +263,17 @@
       "maxTokensSubtitle": "Context size of the conversation",
       "decreaseMaxTokens": "Decrease max tokens",
       "increaseMaxTokens": "Increase max tokens",
+      "textToSpeech": "Text To Speech",
       "voice": "Voice",
       "voiceSubtitle": "The speaking voice used to read messages aloud",
       "voiceMale": "Male {{index}}",
       "voiceFemale": "Female {{index}}",
       "language": "Language",
-      "languageSubtitle": "The language the voice speaks"
+      "languageSubtitle": "The language the voice speaks",
+      "speechToText": "Speech To Text",
+      "sttLanguage": "Language",
+      "sttLanguageSubtitle": "The language you speak. Picking one skips detection and transcribes faster.",
+      "sttLanguageAutomatic": "Automatic"
     },
     "chat": {
       "generationFailed": "Something went wrong while generating a response.",

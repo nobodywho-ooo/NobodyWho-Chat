@@ -263,12 +263,17 @@
       "maxTokensSubtitle": "Samtalens kontekststørrelse",
       "decreaseMaxTokens": "Reducér maks. tokens",
       "increaseMaxTokens": "Forøg maks. tokens",
+      "textToSpeech": "Tekst til tale",
       "voice": "Stemme",
       "voiceSubtitle": "Stemmen der læser beskeder højt",
       "voiceMale": "Mand {{index}}",
       "voiceFemale": "Kvinde {{index}}",
       "language": "Sprog",
-      "languageSubtitle": "Sproget stemmen taler"
+      "languageSubtitle": "Sproget stemmen taler",
+      "speechToText": "Tale til tekst",
+      "sttLanguage": "Sprog",
+      "sttLanguageSubtitle": "Sproget du taler. Vælger du ét, springes registreringen over, og transskriberingen bliver hurtigere.",
+      "sttLanguageAutomatic": "Automatisk"
     },
     "chat": {
       "generationFailed": "Noget gik galt under genereringen af et svar.",

@@ -45,6 +45,7 @@ import {
 } from './ttsAudio';
 import { resolveTtsPrefs } from './ttsVoices';
 import { resolveSttQuantization } from './sttModel';
+import { STT_LANGUAGE_OPTIONS, WHISPER_LANGUAGES } from './sttLanguages';
 import { cleanTranscript } from './transcript';
 import {
   ttsEngineForArchitecture,
@@ -63,6 +64,7 @@ import { modelSizeLabel } from './modelSize';
 
 export type { AudioBands, AudioEnvelope } from './audioLevels';
 export type { TtsEngine, TtsLanguageOption } from './ttsEngine';
+export type { SttLanguageOption } from './sttLanguages';
 export type { PipelineIcon } from './pipelineIcon';
 
 export {
@@ -109,6 +111,8 @@ export {
   synthesizeSpeech,
   resolveTtsPrefs,
   resolveSttQuantization,
+  STT_LANGUAGE_OPTIONS,
+  WHISPER_LANGUAGES,
   cleanTranscript,
   ttsEngineForArchitecture,
   ttsEngineForFamily,

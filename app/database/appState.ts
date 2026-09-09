@@ -12,6 +12,7 @@ export type AssistantConfig = {
   contextSize: number;
   ttsVoice?: string;
   ttsLanguage?: string;
+  sttLanguage?: string;
 };
 
 export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
@@ -41,6 +42,7 @@ function sameAssistantConfig(
   if (a === undefined || b === undefined) {
     return false;
   }
+
   return (
     a.temperature === b.temperature &&
     a.systemPrompt === b.systemPrompt &&
@@ -48,7 +50,8 @@ function sameAssistantConfig(
     a.toolCalling === b.toolCalling &&
     a.contextSize === b.contextSize &&
     a.ttsVoice === b.ttsVoice &&
-    a.ttsLanguage === b.ttsLanguage
+    a.ttsLanguage === b.ttsLanguage &&
+    a.sttLanguage === b.sttLanguage
   );
 }
 

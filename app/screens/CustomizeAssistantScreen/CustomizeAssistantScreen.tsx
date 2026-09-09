@@ -9,7 +9,13 @@ import {
   setAppState,
 } from 'database';
 import { useStyled } from 'hooks';
-import { IconButton, Slider, Text, VoicePreferences } from 'components';
+import {
+  IconButton,
+  Slider,
+  SpeechToTextPreferences,
+  Text,
+  TextToSpeechPreferences,
+} from 'components';
 import { Spacings } from 'style';
 
 import styles from './CustomizeAssistantScreen.styles';
@@ -193,9 +199,14 @@ export const CustomizeAssistantScreen: React.FC = () => {
         </View>
       </View>
 
-      <VoicePreferences
+      <TextToSpeechPreferences
         voice={config.ttsVoice}
         language={config.ttsLanguage}
+        onChange={savePreference}
+      />
+
+      <SpeechToTextPreferences
+        language={config.sttLanguage}
         onChange={savePreference}
       />
     </ScrollView>

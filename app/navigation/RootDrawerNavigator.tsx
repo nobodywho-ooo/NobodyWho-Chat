@@ -70,7 +70,7 @@ const renderVoiceAssistant = ({ navigation }: DrawerContentComponentProps) => (
 const RootDrawer = () => {
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
-  const { openSide, scrollGesture } = useDrawerCoordination();
+  const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
 
   return (
     <Drawer.Navigator
@@ -94,6 +94,7 @@ const RootDrawer = () => {
         configureGestureHandler: buildRightDrawerGesture(
           openSide === 'right',
           scrollGesture,
+          swipeExclusion,
         ),
       }}
     >
@@ -107,7 +108,7 @@ const RootDrawer = () => {
             openSide !== 'left',
         })}
         listeners={{
-          transitionEnd: () => haptics.soft(),
+          transitionEnd: () => haptics.medium(),
         }}
       />
     </Drawer.Navigator>

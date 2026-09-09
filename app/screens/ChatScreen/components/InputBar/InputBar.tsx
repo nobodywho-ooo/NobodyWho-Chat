@@ -1,8 +1,9 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
   View,
+  type LayoutChangeEvent,
   TextInput,
   StyleProp,
   ViewStyle,
@@ -81,7 +82,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   const { t } = useTranslation();
   const { colors } = useStyled();
   const theme = useTheme();
-  const { open: openDrawer } = useDrawerCoordination();
+  const { open: openDrawer, reportSwipeExclusion } = useDrawerCoordination();
 
   const canAttach = showImageAttach || showAudioAttach;
   const showToggle = canAttach && !isStreaming;
@@ -147,6 +148,18 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   };
 
   useEffect(() => () => cancelPendingOpen.current?.(), []);
+
+  // This container holds everything the bar can grow to — the message starters,
+  // the attach options, the field itself — and it's pinned to the bottom of the
+  // screen (the keyboard inset arrives as its padding), so its height is exactly
+  // the strip the drawer swipes have to ignore. See DrawerCoordination.
+  const handleLayout = useCallback(
+    ({ nativeEvent }: LayoutChangeEvent) =>
+      reportSwipeExclusion(nativeEvent.layout.height),
+    [reportSwipeExclusion],
+  );
+
+  useEffect(() => () => reportSwipeExclusion(0), [reportSwipeExclusion]);
 
   const handleSend = () => {
     if (attachExpanded) {
@@ -254,7 +267,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   );
 
   return (
-    <View style={styles.mainContainer}>
+    <View style={styles.mainContainer} onLayout={handleLayout}>
       {messageStarters}
       {expanded && (
         <View style={[styles.attachOptionsList, extraStyle]}>

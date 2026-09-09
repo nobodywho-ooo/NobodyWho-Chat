@@ -1,4 +1,15 @@
-import * as React from 'react';
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useSyncExternalStore,
+  useState,
+  FC,
+  ReactNode,
+} from 'react';
 import {
   useDrawerStatus,
   type DrawerContentComponentProps,
@@ -20,26 +31,33 @@ interface CoordinationValue {
   // The MessageStarters horizontal scroll gesture, when mounted, so the drawer
   // pan can require it to fail before activating (Android scroll coordination).
   scrollGesture: NativeGesture | null;
+  // Height of the bottom strip the drawer swipes must keep their hands off, so
+  // a drag inside the input bar never pulls a drawer in with it. Reported by
+  // the input bar, which measures itself.
+  swipeExclusion: number;
+  reportSwipeExclusion: (height: number) => void;
 }
 
-const DrawerCoordinationContext = React.createContext<CoordinationValue>({
+const DrawerCoordinationContext = createContext<CoordinationValue>({
   openSide: null,
   reportStatus: () => undefined,
   registerOpener: () => undefined,
   open: () => undefined,
   scrollGesture: null,
+  swipeExclusion: 0,
+  reportSwipeExclusion: () => undefined,
 });
 
 export const useDrawerCoordination = () =>
-  React.useContext(DrawerCoordinationContext);
+  useContext(DrawerCoordinationContext);
 
-export const DrawerCoordinationProvider: React.FC<{
-  children: React.ReactNode;
-}> = ({ children }) => {
-  const [openSide, setOpenSide] = React.useState<Side | null>(null);
-  const openersRef = React.useRef<Partial<Record<Side, () => void>>>({});
+export const DrawerCoordinationProvider: FC<{ children: ReactNode }> = ({
+  children,
+}) => {
+  const [openSide, setOpenSide] = useState<Side | null>(null);
+  const openersRef = useRef<Partial<Record<Side, () => void>>>({});
 
-  const reportStatus = React.useCallback((side: Side, open: boolean) => {
+  const reportStatus = useCallback((side: Side, open: boolean) => {
     setOpenSide(prev => {
       if (open) {
         return side;
@@ -50,7 +68,7 @@ export const DrawerCoordinationProvider: React.FC<{
     });
   }, []);
 
-  const registerOpener = React.useCallback(
+  const registerOpener = useCallback(
     (side: Side, open: (() => void) | null) => {
       if (open) {
         openersRef.current[side] = open;
@@ -61,18 +79,43 @@ export const DrawerCoordinationProvider: React.FC<{
     [],
   );
 
-  const open = React.useCallback((side: Side) => {
+  const open = useCallback((side: Side) => {
     openersRef.current[side]?.();
   }, []);
 
-  const scrollGesture = React.useSyncExternalStore(
+  const [swipeExclusion, setSwipeExclusion] = useState(0);
+
+  // Rounded and compared before storing: a layout pass reports subpixel heights
+  // and fires on every keyboard move, and each change re-renders both drawers.
+  const reportSwipeExclusion = useCallback((height: number) => {
+    const rounded = Math.round(height);
+    setSwipeExclusion(prev => (prev === rounded ? prev : rounded));
+  }, []);
+
+  const scrollGesture = useSyncExternalStore(
     scrollGestureStore.subscribe,
     scrollGestureStore.getSnapshot,
   );
 
-  const value = React.useMemo(
-    () => ({ openSide, reportStatus, registerOpener, open, scrollGesture }),
-    [openSide, reportStatus, registerOpener, open, scrollGesture],
+  const value = useMemo(
+    () => ({
+      openSide,
+      reportStatus,
+      registerOpener,
+      open,
+      scrollGesture,
+      swipeExclusion,
+      reportSwipeExclusion,
+    }),
+    [
+      openSide,
+      reportStatus,
+      registerOpener,
+      open,
+      scrollGesture,
+      swipeExclusion,
+      reportSwipeExclusion,
+    ],
   );
 
   return (
@@ -84,11 +127,11 @@ export const DrawerCoordinationProvider: React.FC<{
 
 // Rendered inside a drawer's content (so useDrawerStatus resolves that drawer's
 // status) to publish its open/closed state up to the coordination context.
-export const DrawerStatusReporter: React.FC<{ side: Side }> = ({ side }) => {
+export const DrawerStatusReporter: FC<{ side: Side }> = ({ side }) => {
   const status = useDrawerStatus();
   const { reportStatus } = useDrawerCoordination();
 
-  React.useEffect(() => {
+  useEffect(() => {
     reportStatus(side, status === 'open');
   }, [side, status, reportStatus]);
 
@@ -99,15 +142,15 @@ export const DrawerStatusReporter: React.FC<{ side: Side }> = ({ side }) => {
 // to register an imperative open handle with the coordination context. The
 // latest navigation is read through a ref so the registered handle stays stable
 // across the navigation object's re-renders.
-export const DrawerOpenerReporter: React.FC<{
+export const DrawerOpenerReporter: FC<{
   side: Side;
   navigation: DrawerContentComponentProps['navigation'];
 }> = ({ side, navigation }) => {
   const { registerOpener } = useDrawerCoordination();
-  const navigationRef = React.useRef(navigation);
+  const navigationRef = useRef(navigation);
   navigationRef.current = navigation;
 
-  React.useEffect(() => {
+  useEffect(() => {
     registerOpener(side, () => navigationRef.current.openDrawer());
     return () => registerOpener(side, null);
   }, [side, registerOpener]);
@@ -119,24 +162,65 @@ const OPEN_THRESHOLD = 10;
 // A bound the drag can never reach, disabling activation in that direction.
 const NEVER = 10000;
 
+// Both drawers open on a swipe started anywhere on screen (swipeEdgeWidth is the
+// full window width), so a drag across the input bar — dragging a text selection
+// to copy it, most visibly — used to pull a drawer halfway in before snapping
+// back. Shrinking the pan's activation area from the bottom keeps it from ever
+// receiving those touches: RNGH tests a negative hitSlop inset before it starts
+// processing a touch stream, natively, so nothing peeks while JS catches up.
+//
+// Only while the drawer is closed. Once it's open the whole screen has to stay
+// available for the drag that closes it again.
+const excludeBottom = (
+  hitSlop: PanGestureConfig['hitSlop'],
+  exclusion: number,
+): PanGestureConfig['hitSlop'] => {
+  if (exclusion <= 0) {
+    return hitSlop;
+  }
+
+  // The drawer's own hitSlop is the `{ left | right, width }` form that scopes
+  // the swipe to swipeEdgeWidth — kept, with the bottom inset added. The cast is
+  // for RNGH's type, which models the edge and the width/height forms as
+  // alternatives even though the native side reads each key on its own.
+  return {
+    ...(typeof hitSlop === 'object' && hitSlop !== null ? hitSlop : {}),
+    bottom: -exclusion,
+  } as PanGestureConfig['hitSlop'];
+};
+
 // Left drawer: right-ward drag opens; when open, a left-ward drag closes it.
 export const buildLeftDrawerGesture =
-  (isOpen: boolean, scrollGesture: NativeGesture | null) =>
+  (
+    isOpen: boolean,
+    scrollGesture: NativeGesture | null,
+    swipeExclusion: number,
+  ) =>
   (gesture: PanGestureConfig): PanGestureConfig => ({
     ...gesture,
     activeOffsetX: isOpen
       ? [-OPEN_THRESHOLD, OPEN_THRESHOLD]
       : [-NEVER, OPEN_THRESHOLD],
     requireToFail: scrollGesture ?? undefined,
+    hitSlop: isOpen
+      ? gesture.hitSlop
+      : excludeBottom(gesture.hitSlop, swipeExclusion),
   });
 
 // Right drawer: left-ward drag opens; when open, a right-ward drag closes it.
 export const buildRightDrawerGesture =
-  (isOpen: boolean, scrollGesture: NativeGesture | null) =>
+  (
+    isOpen: boolean,
+    scrollGesture: NativeGesture | null,
+    swipeExclusion: number,
+  ) =>
   (gesture: PanGestureConfig): PanGestureConfig => ({
     ...gesture,
     activeOffsetX: isOpen
       ? [-OPEN_THRESHOLD, OPEN_THRESHOLD]
       : [-OPEN_THRESHOLD, NEVER],
     requireToFail: scrollGesture ?? undefined,
+    hitSlop: isOpen
+      ? gesture.hitSlop
+      : excludeBottom(gesture.hitSlop, swipeExclusion),
   });

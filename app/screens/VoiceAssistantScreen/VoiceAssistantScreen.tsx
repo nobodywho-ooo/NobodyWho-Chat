@@ -9,7 +9,13 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useDrawerStatus } from '@react-navigation/drawer';
-import { IconButton, PlatformIcon, Text, VoicePreferences } from 'components';
+import {
+  IconButton,
+  PlatformIcon,
+  SpeechToTextPreferences,
+  Text,
+  TextToSpeechPreferences,
+} from 'components';
 import { useTheme } from 'context';
 import {
   AssistantConfig,
@@ -128,9 +134,14 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
           style={styles.preferencesContainer}
           contentContainerStyle={styles.preferencesContent}
         >
-          <VoicePreferences
+          <TextToSpeechPreferences
             voice={assistantConfig.ttsVoice}
             language={assistantConfig.ttsLanguage}
+            onChange={savePreference}
+          />
+
+          <SpeechToTextPreferences
+            language={assistantConfig.sttLanguage}
             onChange={savePreference}
           />
         </ScrollView>

@@ -9,19 +9,17 @@ import { ModelSlot } from 'types';
 import { SelectablePill } from '../SelectablePill/SelectablePill';
 import { Text } from '../Text/Text';
 
-import styles from './VoicePreferences.styles';
+import styles from './TextToSpeechPreferences.styles';
 
-interface VoicePreferencesProps {
+interface TextToSpeechPreferencesProps {
   voice?: string;
   language?: string;
   onChange: (patch: Partial<AssistantConfig>) => void;
 }
 
-export const VoicePreferences: React.FC<VoicePreferencesProps> = ({
-  voice,
-  language,
-  onChange,
-}) => {
+export const TextToSpeechPreferences: React.FC<
+  TextToSpeechPreferencesProps
+> = ({ voice, language, onChange }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const currentTtsModel = useSlotModel(ModelSlot.tts);
@@ -66,6 +64,10 @@ export const VoicePreferences: React.FC<VoicePreferencesProps> = ({
 
   return (
     <>
+      <Text variant="h3" bold style={styles.blockHeader}>
+        {t('screens.customizeAssistant.textToSpeech')}
+      </Text>
+
       {voices.length > 0 && (
         <>
           <Text bold style={styles.sectionHeader}>

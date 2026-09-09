@@ -96,8 +96,9 @@ test.each<VoiceStatus>(['idle', 'error'])(
 );
 
 // --- Voice preferences -----------------------------------------------------
-// A Supertonic model with one known language is enough for VoicePreferences to
-// render a section; it bows out entirely when the in-use model offers nothing.
+// A Supertonic model with one known language is enough for
+// TextToSpeechPreferences to render a section; it bows out entirely when the
+// in-use model offers nothing.
 const ttsModel = buildModel(7, {
   pipeline: ModelPipeline.textToSpeech,
   family: 'Supertonic',

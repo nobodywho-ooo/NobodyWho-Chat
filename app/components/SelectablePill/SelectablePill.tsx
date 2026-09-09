@@ -6,6 +6,7 @@ import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import type { IconButtonIconProps } from '../IconButton/IconButton';
 
 import styles from './SelectablePill.styles';
+import { Spacings } from 'style';
 
 interface SelectablePillProps {
   label: string;
@@ -57,7 +58,9 @@ export const SelectablePill: React.FC<SelectablePillProps> = ({
           color={contentColor}
         />
       )}
-      <Text style={{ color: contentColor }}>{label}</Text>
+      <Text style={{ color: contentColor, paddingLeft: icon && Spacings.xs }}>
+        {label}
+      </Text>
     </Pressable>
   );
 };

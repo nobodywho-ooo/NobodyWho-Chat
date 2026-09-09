@@ -366,6 +366,58 @@ test('loads the selected STT model on start', async () => {
   });
 });
 
+test('forwards the chosen transcription language to the STT engine', async () => {
+  await setAppState({
+    sttModelIdInUse: 11,
+    assistantConfig: { ...DEFAULT_ASSISTANT_CONFIG, sttLanguage: 'da' },
+  });
+  mockGetModelById.mockResolvedValue(
+    buildModel(11, {
+      pipeline: ModelPipeline.speechToText,
+      family: 'Whisper',
+    }),
+  );
+
+  render(<ChatStackNavigator />);
+
+  await waitFor(() => expect(mockCreateStt).toHaveBeenCalled());
+  expect(mockCreateStt).toHaveBeenLastCalledWith({
+    model: expect.objectContaining({ id: 11 }),
+    language: 'da',
+  });
+});
+
+test('reloads the STT engine when the transcription language changes', async () => {
+  // The language is fixed at load time, so switching it has to tear the engine
+  // down and reopen it even though the selected model is unchanged.
+  await setAppState({
+    sttModelIdInUse: 11,
+    assistantConfig: { ...DEFAULT_ASSISTANT_CONFIG, sttLanguage: 'da' },
+  });
+  mockGetModelById.mockResolvedValue(
+    buildModel(11, {
+      pipeline: ModelPipeline.speechToText,
+      family: 'Whisper',
+    }),
+  );
+
+  render(<ChatStackNavigator />);
+  await waitFor(() => expect(mockCreateStt).toHaveBeenCalledTimes(1));
+
+  await act(async () => {
+    await setAppState({
+      assistantConfig: { ...DEFAULT_ASSISTANT_CONFIG, sttLanguage: undefined },
+    });
+  });
+
+  expect(mockDisposeStt).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(mockCreateStt).toHaveBeenCalledTimes(2));
+  expect(mockCreateStt).toHaveBeenLastCalledWith({
+    model: expect.objectContaining({ id: 11 }),
+    language: undefined,
+  });
+});
+
 test('disposes and reloads the STT engine when the transcription model changes', async () => {
   mockGetModelById.mockResolvedValue(
     buildModel(11, {

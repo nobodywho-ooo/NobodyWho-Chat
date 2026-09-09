@@ -3,7 +3,9 @@ import { Switch } from 'react-native';
 import { render, fireEvent, act } from '@testing-library/react-native';
 
 import { getAppState, setAppState, DEFAULT_ASSISTANT_CONFIG } from 'database';
+import { buildModel } from 'jest/factories/model';
 import { mockUseSlotModel } from 'jest/mock/hooks';
+import { ModelPipeline } from 'types';
 
 import {
   CustomizeAssistantScreen,
@@ -12,8 +14,8 @@ import {
 } from '../CustomizeAssistantScreen';
 
 beforeEach(async () => {
-  // The screen mounts VoicePreferences; with no voice model in use its
-  // section stays hidden (the default mock already returns undefined).
+  // The screen mounts the voice preference blocks; with no model in either
+  // slot they stay hidden (the default mock already returns undefined).
   mockUseSlotModel.mockReturnValue(undefined);
   await setAppState({ assistantConfig: undefined });
 });
@@ -110,5 +112,44 @@ test('pending changes are persisted when the screen closes', async () => {
   expect(getAppState().assistantConfig).toEqual({
     ...DEFAULT_ASSISTANT_CONFIG,
     systemPrompt: 'You are a pirate.',
+  });
+});
+
+// --- Speech to text --------------------------------------------------------
+// The language is a load-time option, so picking one here has to reach the
+// stored config: that is what the navigator reloads the engine from.
+describe('with a transcription model in use', () => {
+  beforeEach(() => {
+    // Whisper matches no TTS engine, so only the speech-to-text block renders.
+    mockUseSlotModel.mockReturnValue(
+      buildModel(11, {
+        pipeline: ModelPipeline.speechToText,
+        family: 'Whisper',
+      }),
+    );
+  });
+
+  test('picking a language persists its Whisper code', async () => {
+    const screen = await renderScreen();
+
+    fireEvent.press(screen.getByLabelText('Danish'));
+
+    expect(getAppState().assistantConfig).toEqual({
+      ...DEFAULT_ASSISTANT_CONFIG,
+      sttLanguage: 'da',
+    });
+  });
+
+  test('picking Automatic clears the language back to auto-detection', async () => {
+    await setAppState({
+      assistantConfig: { ...DEFAULT_ASSISTANT_CONFIG, sttLanguage: 'da' },
+    });
+    const screen = await renderScreen();
+
+    fireEvent.press(
+      screen.getByLabelText('screens.customizeAssistant.sttLanguageAutomatic'),
+    );
+
+    expect(getAppState().assistantConfig?.sttLanguage).toBeUndefined();
   });
 });

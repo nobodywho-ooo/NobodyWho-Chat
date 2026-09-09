@@ -2,6 +2,7 @@
 
 exports[`renders correctly InputBar 1`] = `
 <View
+  onLayout={[Function]}
   style={
     {
       "bottom": 0,
@@ -152,6 +153,7 @@ exports[`renders correctly InputBar 1`] = `
 
 exports[`renders correctly InputBar when streaming 1`] = `
 <View
+  onLayout={[Function]}
   style={
     {
       "bottom": 0,
@@ -302,6 +304,7 @@ exports[`renders correctly InputBar when streaming 1`] = `
 
 exports[`renders correctly InputBar with value 1`] = `
 <View
+  onLayout={[Function]}
   style={
     {
       "bottom": 0,
@@ -452,6 +455,7 @@ exports[`renders correctly InputBar with value 1`] = `
 
 exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
 <View
+  onLayout={[Function]}
   style={
     {
       "bottom": 0,

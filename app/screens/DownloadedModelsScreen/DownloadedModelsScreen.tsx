@@ -124,9 +124,8 @@ export const DownloadedModelsScreen: React.FC = () => {
       }
 
       selectModel(model);
-      navigation.goBack();
     },
-    [deleteMode, confirmDeleteModel, appState, chat, navigation],
+    [deleteMode, confirmDeleteModel, appState, chat],
   );
 
   const renderHeaderRight = useCallback(() => {

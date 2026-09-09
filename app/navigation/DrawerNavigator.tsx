@@ -17,13 +17,7 @@ import { isChatPipeline } from 'types';
 import { deleteConversation } from 'repositories';
 import { DrawerContentScreen } from 'screens';
 import { PlatformIcon, Text } from 'components';
-import {
-  log,
-  haptics,
-  isIOS,
-  capitalize,
-  parameterCountLabel,
-} from 'helpers';
+import { log, haptics, isIOS, capitalize, parameterCountLabel } from 'helpers';
 import { useAppState, useConversations, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
 import { Spacings } from 'style';
@@ -182,7 +176,7 @@ export const DrawerNavigator = () => {
   const { conversationIdInUse } = useAppState();
   const { conversations } = useConversations();
   const { models } = useModels();
-  const { openSide, scrollGesture } = useDrawerCoordination();
+  const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
 
   const insets = useSafeAreaInsets();
 
@@ -218,6 +212,7 @@ export const DrawerNavigator = () => {
         configureGestureHandler: buildLeftDrawerGesture(
           openSide === 'left',
           scrollGesture,
+          swipeExclusion,
         ),
       }}
     >
@@ -242,7 +237,7 @@ export const DrawerNavigator = () => {
           };
         }}
         listeners={{
-          transitionEnd: () => haptics.soft(),
+          transitionEnd: () => haptics.medium(),
         }}
       />
     </Drawer.Navigator>
