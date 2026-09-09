@@ -176,6 +176,22 @@ export const DrawerOpenerReporter: FC<{
   return null;
 };
 
+// react-native-drawer-layout slides the drawer 20px into view 160ms after the
+// touch goes down (PEEK_DELAY / PEEK_DISTANCE in its Drawer.native), as a hint
+// that a drawer is there, then springs it back when the touch ends. Both pans
+// receive every touch on the chat — swipeEdgeWidth spans the window — so any
+// touch-and-hold peeked both drawers at once. The long press that starts a text
+// selection in a message is exactly such a hold, which is why both slid in and
+// back out again mid-selection.
+//
+// Dropping the library's onBegin drops the peek with it. The only other thing it
+// does is record touchStartX, which offsets a drag that starts beside a narrower
+// drawer; both drawers here are full-width, so that offset always clamps to zero
+// and nothing else reads the value.
+const skipPeek = () => {
+  'worklet';
+};
+
 const OPEN_THRESHOLD = 10;
 // A bound the drag can never reach, disabling activation in that direction.
 const NEVER = 10000;
@@ -216,6 +232,7 @@ export const buildLeftDrawerGesture =
   ) =>
   (gesture: PanGestureConfig): PanGestureConfig => ({
     ...gesture,
+    onBegin: skipPeek,
     activeOffsetX: isOpen
       ? [-OPEN_THRESHOLD, OPEN_THRESHOLD]
       : [-NEVER, OPEN_THRESHOLD],
@@ -234,6 +251,7 @@ export const buildRightDrawerGesture =
   ) =>
   (gesture: PanGestureConfig): PanGestureConfig => ({
     ...gesture,
+    onBegin: skipPeek,
     activeOffsetX: isOpen
       ? [-OPEN_THRESHOLD, OPEN_THRESHOLD]
       : [-OPEN_THRESHOLD, NEVER],

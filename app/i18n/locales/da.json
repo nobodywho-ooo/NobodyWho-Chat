@@ -204,7 +204,7 @@
       },
       "setup": {
         "title": "Konfigurer stemmechat",
-        "description": "Håndfri chat kræver fire modeller indlæst samtidig:",
+        "description": "Der skal indlæses fire modeller på én gang",
         "chat": "Chatmodel",
         "stt": "Tale-til-tekst-model",
         "tts": "Tekst-til-tale-model",

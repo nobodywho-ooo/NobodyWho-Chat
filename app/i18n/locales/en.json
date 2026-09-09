@@ -204,7 +204,7 @@
       },
       "setup": {
         "title": "Set up voice chat",
-        "description": "Hands-free chat needs four models loaded at once:",
+        "description": "You need four models loaded at once",
         "chat": "Chat model",
         "stt": "Speech-to-text model",
         "tts": "Text-to-speech model",
