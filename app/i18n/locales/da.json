@@ -204,7 +204,7 @@
       },
       "setup": {
         "title": "Konfigurer stemmechat",
-        "description": "Der skal indlæses fire modeller på én gang",
+        "description": "Der skal indlæses fire modeller på én gang.",
         "chat": "Chatmodel",
         "stt": "Tale-til-tekst-model",
         "tts": "Tekst-til-tale-model",
