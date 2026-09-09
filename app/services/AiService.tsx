@@ -138,6 +138,22 @@ export const VAD_SAMPLE_RATE = 16000;
 // How long the user has to stay quiet before the detector calls the turn over
 export const VAD_MIN_SILENCE_MS = 1500;
 
+// How sure of speech a frame has to make Silero, and for how long, before the
+// detector confirms someone has started talking.
+//
+// Both are set explicitly because the engine's defaults (0.5 over 250 ms) are
+// tuned for close, deliberate speech and quietly miss the rest: 250 ms is eight
+// 32 ms frames that must *all* clear the threshold, since one frame below it
+// sends the debouncer straight back to silence, and normal speech dips that far
+// between syllables. Missing the start is not a partial failure either — the
+// detector only reports the end of speech it confirmed the beginning of, so a
+// turn it never hears start is a turn it can never end, and the microphone
+// stays open with `push` reporting nothing but silence. nobodywho's own
+// detection test has to loosen these same two values to 0.3 over 90 ms to
+// confirm speech on an ordinary recording; these follow it.
+export const VAD_THRESHOLD = 0.3;
+export const VAD_MIN_SPEECH_MS = 90;
+
 type SlotStateKey = 'chatState' | 'ttsState' | 'sttState' | 'vadState';
 
 interface NativeInstance {
@@ -616,6 +632,8 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
         const instance = await VoiceActivityDetection.load({
           source: modelDirectoryPath(model.id),
           sampleRate: VAD_SAMPLE_RATE,
+          threshold: VAD_THRESHOLD,
+          minSpeechDurationMs: VAD_MIN_SPEECH_MS,
           minSilenceDurationMs: VAD_MIN_SILENCE_MS,
         });
 

@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  requestRecordingPermissionsAsync,
   useAudioPlayer,
   useAudioPlayerStatus,
   useAudioStream,
@@ -13,6 +12,8 @@ import {
   computeGenerationMetrics,
   concatPcm,
   log,
+  MAX_RECORDING_MS,
+  requestMicrophonePermission,
   stripThinkingBlocks,
   synthesizeSpeech,
   wavToEnvelope,
@@ -169,6 +170,30 @@ export const useVoiceConversation = ({
   // is what detects the end of speech. Kept in a ref so onBuffer doesn't have to
   // be redefined (and the auto-stop re-armed) on every render.
   const stopAndAnswerRef = useRef<() => void>(() => undefined);
+
+  // The backstop that closes the microphone when the detector doesn't — see
+  // MAX_RECORDING_MS. Armed as the capture opens and cleared by every path that
+  // closes it, so a turn that ends normally never reaches it.
+  const capTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+
+  const clearRecordingCap = useCallback(() => {
+    if (capTimerRef.current !== undefined) {
+      clearTimeout(capTimerRef.current);
+      capTimerRef.current = undefined;
+    }
+  }, []);
+
+  const armRecordingCap = useCallback(() => {
+    clearRecordingCap();
+    capTimerRef.current = setTimeout(() => {
+      capTimerRef.current = undefined;
+      log(`useVoiceConversation: capture hit the ${MAX_RECORDING_MS} ms cap`);
+      listeningRef.current = false;
+      stopAndAnswerRef.current();
+    }, MAX_RECORDING_MS);
+  }, [clearRecordingCap]);
 
   const onBuffer = useCallback(
     (buffer: { data: ArrayBuffer; sampleRate: number }) => {
@@ -519,7 +544,7 @@ export const useVoiceConversation = ({
     const abandoned = () => turn !== turnRef.current || !activeRef.current;
 
     try {
-      const { granted } = await requestRecordingPermissionsAsync();
+      const { granted } = await requestMicrophonePermission();
 
       if (!granted) {
         onPermissionDenied?.();
@@ -551,6 +576,7 @@ export const useVoiceConversation = ({
 
       orb.listen();
       listeningRef.current = true;
+      armRecordingCap();
 
       setStatus('listening');
     } catch (error) {
@@ -569,6 +595,7 @@ export const useVoiceConversation = ({
     orb,
     releaseRecordingMode,
     speechService,
+    armRecordingCap,
   ]);
 
   const stopAndAnswer = useCallback(async () => {
@@ -577,6 +604,7 @@ export const useVoiceConversation = ({
     }
     busyRef.current = true;
     listeningRef.current = false;
+    clearRecordingCap();
 
     try {
       try {
@@ -591,7 +619,7 @@ export const useVoiceConversation = ({
     } finally {
       busyRef.current = false;
     }
-  }, [stream, releaseRecordingMode, orb, runTurn]);
+  }, [stream, releaseRecordingMode, orb, runTurn, clearRecordingCap]);
 
   // Republish the latest stopAndAnswer for the auto-stop above. Assigning during
   // render (rather than in an effect) keeps it current even if a buffer arrives
@@ -617,6 +645,7 @@ export const useVoiceConversation = ({
   const abort = useCallback(() => {
     turnRef.current += 1;
     listeningRef.current = false;
+    clearRecordingCap();
     speechService.reset();
     stopOwnGeneration();
     try {
@@ -626,7 +655,7 @@ export const useVoiceConversation = ({
     }
     orb.rest();
     setStatus('idle');
-  }, [stopOwnGeneration, player, orb, speechService]);
+  }, [stopOwnGeneration, player, orb, speechService, clearRecordingCap]);
 
   const toggle = useCallback(() => {
     if (!isReady) {
@@ -666,6 +695,7 @@ export const useVoiceConversation = ({
   const stopAll = useCallback(() => {
     turnRef.current += 1;
     listeningRef.current = false;
+    clearRecordingCap();
     // Without this the model would keep generating to the end of the answer off
     // screen: dropping out of the token loop only closes the iterator, which
     // never reaches the native worker's stop flag.
@@ -694,6 +724,7 @@ export const useVoiceConversation = ({
     releaseRecordingMode,
     orb,
     speechService,
+    clearRecordingCap,
   ]);
 
   stopAllRef.current = stopAll;

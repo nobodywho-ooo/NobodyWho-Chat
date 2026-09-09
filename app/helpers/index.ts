@@ -27,8 +27,11 @@ import {
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,
-  isExternalPickerActive,
 } from './mediaPicker';
+import {
+  isForegroundHeld,
+  resetForegroundHoldForTests,
+} from './foregroundHold';
 import {
   deleteMessageDocuments,
   messageDocumentName,
@@ -56,6 +59,8 @@ import { micBands, wavToEnvelope } from './audioLevels';
 import { concatPcm, resamplePcm } from './pcm';
 import {
   acquireRecordingMode,
+  MAX_RECORDING_MS,
+  requestMicrophonePermission,
   resetRecordingModeForTests,
 } from './audioSession';
 import { computeGenerationMetrics } from './generationMetrics';
@@ -84,7 +89,8 @@ export {
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,
-  isExternalPickerActive,
+  isForegroundHeld,
+  resetForegroundHoldForTests,
   deleteMessageDocuments,
   messageDocumentName,
   messageDocumentKind,
@@ -122,6 +128,8 @@ export {
   concatPcm,
   resamplePcm,
   acquireRecordingMode,
+  MAX_RECORDING_MS,
+  requestMicrophonePermission,
   resetRecordingModeForTests,
   computeGenerationMetrics,
   parameterCountLabel,

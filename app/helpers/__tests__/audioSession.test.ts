@@ -1,17 +1,29 @@
-import { setAudioModeAsync } from 'expo-audio';
+import {
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+} from 'expo-audio';
 
 import {
   acquireRecordingMode,
+  requestMicrophonePermission,
   resetRecordingModeForTests,
 } from '../audioSession';
+import {
+  isForegroundHeld,
+  resetForegroundHoldForTests,
+} from '../foregroundHold';
 
 (globalThis as unknown as { __DEV__: boolean }).__DEV__ = false;
 
 const mockSetAudioMode = setAudioModeAsync as jest.Mock;
 
+const mockRequestPermissions = requestRecordingPermissionsAsync as jest.Mock;
+
 beforeEach(() => {
   resetRecordingModeForTests();
+  resetForegroundHoldForTests();
   mockSetAudioMode.mockReset().mockResolvedValue(undefined);
+  mockRequestPermissions.mockReset().mockResolvedValue({ granted: true });
 });
 
 test('switches the session into record mode for the first holder only', async () => {
@@ -89,4 +101,47 @@ test('a failing release still gives up the hold', async () => {
     allowsRecording: true,
     playsInSilentMode: true,
   });
+});
+
+// --- Microphone permission -------------------------------------------------
+
+test('holds the foreground while the permission prompt is up', async () => {
+  // Hold the prompt open to observe the window Android reports as
+  // 'background': the navigator frees every model on that event, so a turn
+  // waiting on the permission it just asked for would be torn down by its own
+  // prompt — and the user would land back on a reloading screen.
+  let grant: (result: unknown) => void = () => {};
+  mockRequestPermissions.mockReturnValue(
+    new Promise(resolve => {
+      grant = resolve;
+    }),
+  );
+
+  expect(isForegroundHeld()).toBe(false);
+
+  const pending = requestMicrophonePermission();
+  expect(isForegroundHeld()).toBe(true);
+
+  grant({ granted: true });
+  await expect(pending).resolves.toEqual({ granted: true });
+
+  expect(isForegroundHeld()).toBe(false);
+});
+
+test('releases the hold when the permission is refused', async () => {
+  mockRequestPermissions.mockResolvedValue({ granted: false });
+
+  await expect(requestMicrophonePermission()).resolves.toEqual({
+    granted: false,
+  });
+  expect(isForegroundHeld()).toBe(false);
+});
+
+test('releases the hold when the prompt throws', async () => {
+  mockRequestPermissions.mockRejectedValue(new Error('no permission module'));
+
+  await expect(requestMicrophonePermission()).rejects.toThrow(
+    'no permission module',
+  );
+  expect(isForegroundHeld()).toBe(false);
 });

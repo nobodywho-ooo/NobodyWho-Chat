@@ -39,7 +39,7 @@ import {
 import {
   log,
   isIOS,
-  isExternalPickerActive,
+  isForegroundHeld,
   toChatHistory,
   toModelHistory,
 } from 'helpers';
@@ -482,7 +482,7 @@ export const ChatStackNavigator = () => {
       'change',
       (nextState: AppStateStatus) => {
         if (nextState === 'background') {
-          if (isExternalPickerActive()) {
+          if (isForegroundHeld()) {
             return;
           }
 

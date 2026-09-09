@@ -25,6 +25,11 @@ export interface SpeechService {
    * Returns false while the person is still talking, or hasn't started yet, and
    * true on the single call where the detector concludes they have finished
    * speaking. That `true` is the cue to close the microphone and transcribe.
+   *
+   * It can also never come back true: the detector only reports the end of
+   * speech it confirmed the beginning of, so a turn it never hears start is a
+   * turn it cannot end. Callers must bound the capture themselves — see
+   * MAX_RECORDING_MS.
    */
   push: (chunk: Int16Array, sampleRate: number) => boolean;
 
@@ -111,10 +116,18 @@ export const useSpeechService = (
     const holder = holderRef.current;
 
     if (owner !== holder) {
+      // Leave the detector unclaimed while the previous holder is told to stop,
+      // and only then take it. Its stop path takes and releases the detector
+      // itself (both consumers reset and release as they close the microphone),
+      // so claiming it first would have it handed straight back to us mid-call
+      // — leaving `owner` pointing at whoever ran last instead of at the turn
+      // the user just asked for, and every push of that turn inert.
       const previous = owner;
-      owner = holder;
+      owner = undefined;
       previous?.onPreempted?.();
     }
+
+    owner = holder;
 
     try {
       vad.current?.finish();

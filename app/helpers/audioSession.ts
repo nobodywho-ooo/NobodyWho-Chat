@@ -1,6 +1,29 @@
-import { setAudioModeAsync } from 'expo-audio';
+import {
+  requestRecordingPermissionsAsync,
+  setAudioModeAsync,
+} from 'expo-audio';
 
+import { holdForeground } from './foregroundHold';
 import { log } from './log';
+
+// How long the microphone may stay open on one turn before a capture path
+// closes it itself. Nothing else is guaranteed to: with no detection model
+// loaded a recording only ends when the user taps stop, and with one loaded the
+// detector reports the end of speech only when it confirmed the beginning, so a
+// turn it never hears start is a turn it can never end — the microphone then
+// stays open indefinitely with the recording running. Long enough that it is
+// never reached by anyone actually speaking a question or dictating a message;
+// it exists so a capture that has stopped making progress recovers on its own
+// rather than being left to the user to notice.
+export const MAX_RECORDING_MS = 60000;
+
+// Ask for the microphone, with the foreground held for as long as the system
+// prompt is up. On Android that prompt takes the screen and reaches AppState as
+// 'background', which would otherwise unload every model and abandon the turn
+// that asked for the microphone in the first place — the user grants the
+// permission and lands back on a reloading screen instead of a live microphone.
+export const requestMicrophonePermission = (): Promise<{ granted: boolean }> =>
+  holdForeground(requestRecordingPermissionsAsync);
 
 // The audio session is process-wide, but two features hold the microphone: the
 // input bar's dictation and the voice assistant, which is always mounted as the

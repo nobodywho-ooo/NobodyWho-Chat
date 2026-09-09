@@ -102,13 +102,14 @@ jest.mock('repositories', () => ({
   insertMessage: jest.fn(),
 }));
 
-// Drive whether one of our own system pickers (photo library / document picker)
-// is on screen, so a test can assert the navigator distinguishes that from a
-// real background. Everything else in 'helpers' stays real.
-let mockExternalPickerActive = false;
+// Drive whether a system dialog the app launched (photo library, document
+// picker, microphone permission prompt) is on screen, so a test can assert the
+// navigator distinguishes that from a real background. Everything else in
+// 'helpers' stays real.
+let mockForegroundHeld = false;
 jest.mock('helpers', () => ({
   ...jest.requireActual('helpers'),
-  isExternalPickerActive: () => mockExternalPickerActive,
+  isForegroundHeld: () => mockForegroundHeld,
 }));
 
 const mockGetModelById = getModelById as jest.Mock;
@@ -127,7 +128,7 @@ let appStateHandler: (state: AppStateStatus) => void = () => {};
 let mockConversationSyncListener: (id: number) => void = () => {};
 
 beforeEach(async () => {
-  mockExternalPickerActive = false;
+  mockForegroundHeld = false;
   appStateHandler = () => {};
   mockConversationSyncListener = () => {};
   jest
@@ -843,24 +844,26 @@ test('unloads the chat on background and rebuilds it on foreground', async () =>
   await waitFor(() => expect(mockCreateChat).toHaveBeenCalledTimes(2));
 });
 
-test('keeps the model resident when our own picker backgrounds the app', async () => {
+test('keeps the model resident when a dialog we launched backgrounds the app', async () => {
   await setAppState({ modelIdInUse: 0 });
 
   const screen = render(<ChatStackNavigator />);
   await showEmptyChat(screen);
   expect(mockCreateChat).toHaveBeenCalledTimes(1);
 
-  // Opening the photo library / document picker pauses our Activity, which RN
-  // reports as 'background' — but the model must stay loaded so the composing
-  // ChatScreen (its text + attachment) survives the round trip.
-  mockExternalPickerActive = true;
+  // Opening the photo library / document picker — or the microphone permission
+  // prompt — pauses our Activity, which RN reports as 'background'. The model
+  // must stay loaded across it: the composing ChatScreen (its text +
+  // attachment) has to survive the round trip, and a voice turn waiting on the
+  // permission it just asked for would otherwise be torn down by its own prompt.
+  mockForegroundHeld = true;
   await act(async () => {
     appStateHandler('background');
   });
   expect(mockDisposeChat).not.toHaveBeenCalled();
 
   // Returning from the picker must not rebuild the model either.
-  mockExternalPickerActive = false;
+  mockForegroundHeld = false;
   await act(async () => {
     appStateHandler('active');
   });

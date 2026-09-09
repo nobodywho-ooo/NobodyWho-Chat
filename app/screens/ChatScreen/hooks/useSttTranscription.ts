@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { requestRecordingPermissionsAsync, useAudioStream } from 'expo-audio';
-import { acquireRecordingMode, cleanTranscript, concatPcm, log } from 'helpers';
+import { useAudioStream } from 'expo-audio';
+import {
+  acquireRecordingMode,
+  cleanTranscript,
+  concatPcm,
+  log,
+  MAX_RECORDING_MS,
+  requestMicrophonePermission,
+} from 'helpers';
 import { useSpeechService } from 'hooks';
 import { AiModelState, useAiService, VAD_SAMPLE_RATE } from 'services';
 
@@ -83,6 +90,32 @@ export const useSttTranscription = ({
   // be redefined (and the auto-stop re-armed) on every render.
   const stopRecordingRef = useRef<() => void>(() => undefined);
 
+  // The backstop that closes the microphone when nothing else does — see
+  // MAX_RECORDING_MS. Armed as the capture opens and cleared by every path that
+  // closes it, so a turn that ends normally never reaches it.
+  const capTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+
+  const clearRecordingCap = useCallback(() => {
+    if (capTimerRef.current !== undefined) {
+      clearTimeout(capTimerRef.current);
+      capTimerRef.current = undefined;
+    }
+  }, []);
+
+  const armRecordingCap = useCallback(() => {
+    clearRecordingCap();
+    capTimerRef.current = setTimeout(() => {
+      capTimerRef.current = undefined;
+      log(`useSttTranscription: capture hit the ${MAX_RECORDING_MS} ms cap`);
+      stopRecordingRef.current();
+    }, MAX_RECORDING_MS);
+  }, [clearRecordingCap]);
+
+  // Don't leave a timer running past the screen.
+  useEffect(() => clearRecordingCap, [clearRecordingCap]);
+
   const onBuffer = useCallback(
     (buffer: { data: ArrayBuffer; sampleRate: number }) => {
       // slice() takes an owned copy by memcpy, so retaining the window can't be
@@ -127,7 +160,7 @@ export const useSttTranscription = ({
 
     busyRef.current = true;
     try {
-      const { granted } = await requestRecordingPermissionsAsync();
+      const { granted } = await requestMicrophonePermission();
       if (!granted) {
         onPermissionDenied?.();
         return;
@@ -157,6 +190,7 @@ export const useSttTranscription = ({
       }
 
       setRecording(true);
+      armRecordingCap();
     } catch (error) {
       log('useSttTranscription start', error);
       await releaseRecordingMode();
@@ -170,6 +204,7 @@ export const useSttTranscription = ({
     releaseRecordingMode,
     setRecording,
     speechService,
+    armRecordingCap,
   ]);
 
   const stopRecording = useCallback(async () => {
@@ -179,6 +214,7 @@ export const useSttTranscription = ({
 
     captureGeneration.current += 1;
     busyRef.current = true;
+    clearRecordingCap();
     try {
       stream.stop();
       setRecording(false);
@@ -226,6 +262,7 @@ export const useSttTranscription = ({
     releaseRecordingMode,
     setRecording,
     speechService,
+    clearRecordingCap,
   ]);
 
   // Republish the latest stopRecording for the auto-stop above. Assigning during
@@ -238,6 +275,7 @@ export const useSttTranscription = ({
     // awaiting the permission prompt has no recording to stop yet, but must
     // still stop that start from opening the microphone behind it.
     captureGeneration.current += 1;
+    clearRecordingCap();
 
     if (!isRecordingRef.current) {
       return;
@@ -252,7 +290,13 @@ export const useSttTranscription = ({
     speechService.release();
     setRecording(false);
     releaseRecordingMode();
-  }, [stream, releaseRecordingMode, setRecording, speechService]);
+  }, [
+    stream,
+    releaseRecordingMode,
+    setRecording,
+    speechService,
+    clearRecordingCap,
+  ]);
 
   cancelRecordingRef.current = cancelRecording;
 

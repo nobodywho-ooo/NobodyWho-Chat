@@ -7,6 +7,7 @@ import {
   TextInput,
   StyleProp,
   ViewStyle,
+  Pressable,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
@@ -261,12 +262,14 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
         }
         accessibilityLabel={accessibilityLabel}
       />
-      <Text
-        variant="body2"
-        style={[styles.attachLabel, { color: colors.onSurface }]}
-      >
-        {label}
-      </Text>
+      <Pressable onPress={onPress}>
+        <Text
+          variant="body2"
+          style={[styles.attachLabel, { color: colors.onSurface }]}
+        >
+          {label}
+        </Text>
+      </Pressable>
     </View>
   );
 

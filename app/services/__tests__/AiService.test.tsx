@@ -17,7 +17,9 @@ import {
   MULTIMODAL_CONTEXT_SIZE,
   TEARDOWN_SETTLE_MS,
   VAD_MIN_SILENCE_MS,
+  VAD_MIN_SPEECH_MS,
   VAD_SAMPLE_RATE,
+  VAD_THRESHOLD,
 } from '../AiService';
 
 // TTS goes through nobodywho's TextToSpeech.load (mocked in jest/mock/node-modules);
@@ -668,10 +670,14 @@ test('createVad loads the detector from the model directory at its fixed rate', 
   });
 
   // Folder-based source like TTS/STT; the rate is fixed at load time, so every
-  // caller has to resample its recording to it (see useSpeechService).
+  // caller has to resample its recording to it (see useSpeechService). The
+  // detection thresholds are all passed explicitly — the engine's defaults miss
+  // ordinary speech, and a start it never confirms is an end it never reports.
   expect(mockVadLoad).toHaveBeenCalledWith({
     source: '/mock-documents/models/12',
     sampleRate: VAD_SAMPLE_RATE,
+    threshold: VAD_THRESHOLD,
+    minSpeechDurationMs: VAD_MIN_SPEECH_MS,
     minSilenceDurationMs: VAD_MIN_SILENCE_MS,
   });
   expect(result.current.vadState).toBe(AiModelState.Ready);
