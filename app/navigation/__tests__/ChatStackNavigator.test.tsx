@@ -4,6 +4,7 @@ import { render, act, waitFor } from '@testing-library/react-native';
 
 import { mockUseModels } from 'jest/mock/hooks';
 import { buildModel } from 'jest/factories/model';
+import { buildConversation } from 'jest/factories/conversation';
 import { ModelPipeline } from 'types';
 import { getAppState, setAppState, DEFAULT_ASSISTANT_CONFIG } from 'database';
 import { InputBar } from '../../screens/ChatScreen/components/InputBar/InputBar';
@@ -924,6 +925,11 @@ test('does not unload on background when no model is in use', async () => {
 // while the screen held both.
 test('New Chat clears a conversation the screen created itself', async () => {
   await setAppState({ modelIdInUse: 0 });
+  // Each of the turn's writes checks its conversation still exists (see
+  // useChatGeneration), and the one the send below opens does.
+  mockGetConversationById.mockResolvedValue(
+    buildConversation(9, { modelId: 0 }),
+  );
 
   const screen = render(<ChatStackNavigator />);
   await showEmptyChat(screen);
@@ -955,6 +961,11 @@ test('New Chat clears a conversation the screen created itself', async () => {
 
 test('a message after Delete Chat starts a new conversation, not the deleted one', async () => {
   await setAppState({ modelIdInUse: 0 });
+  // The rows that exist, since the turn's writes check for their conversation.
+  const rows = new Map([[9, buildConversation(9, { modelId: 0 })]]);
+  mockGetConversationById.mockImplementation(async (id: number) =>
+    rows.get(id),
+  );
 
   const screen = render(<ChatStackNavigator />);
   await showEmptyChat(screen);
@@ -964,8 +975,10 @@ test('a message after Delete Chat starts a new conversation, not the deleted one
   await act(async () => {
     await setAppState({ conversationIdInUse: undefined });
   });
+  rows.delete(9);
 
   mockInsertConversation.mockClear().mockResolvedValue(10);
+  rows.set(10, buildConversation(10, { modelId: 0 }));
   mockInsertMessage.mockClear();
 
   await sendMessage(screen, 'second message');

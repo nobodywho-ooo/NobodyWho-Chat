@@ -3,9 +3,16 @@ import { render, act } from '@testing-library/react-native';
 import { Prompt } from 'react-native-nobodywho';
 import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
 
+import { MessageListItem } from 'components';
+import { buildConversation } from 'jest/factories/conversation';
+
 import { InputBar } from '../components/InputBar/InputBar';
 import { CameraCaptureModal } from '../components/CameraCaptureModal/CameraCaptureModal';
-import { insertConversation, insertMessage } from 'repositories';
+import {
+  getConversationById,
+  insertConversation,
+  insertMessage,
+} from 'repositories';
 import { ModelPipeline } from 'types';
 import {
   mockGetDocumentAsync,
@@ -59,10 +66,12 @@ jest.mock('services', () => ({
 }));
 
 jest.mock('repositories', () => ({
+  getConversationById: jest.fn(),
   insertConversation: jest.fn(),
   insertMessage: jest.fn(),
 }));
 
+const mockGetConversationById = getConversationById as jest.Mock;
 const mockInsertConversation = insertConversation as jest.Mock;
 const mockInsertMessage = insertMessage as jest.Mock;
 
@@ -87,6 +96,11 @@ beforeEach(() => {
   mockImageSaveAsync.mockReset().mockResolvedValue({
     uri: 'file:///tmp/IMG_0111.png',
   });
+  // Every write checks its conversation still exists before inserting; by
+  // default it does, and the delete tests below take the row away mid-turn.
+  mockGetConversationById
+    .mockReset()
+    .mockResolvedValue(buildConversation(7, { modelId: 0 }));
   mockInsertConversation.mockReset().mockResolvedValue(42);
   mockInsertMessage.mockReset().mockResolvedValue(1);
   mockGetInfo.mockReset().mockResolvedValue({ exists: false });
@@ -580,4 +594,112 @@ test('a generation error persists the partial answer and a "failed" system messa
     role: 'system',
     content: 'screens.chat.generationFailed',
   });
+});
+
+// Delete Chat halts generation and deletes the conversation without waiting for
+// the turn to settle (see DrawerNavigator), so the rest of a turn can run with
+// its conversation already gone. `messages` has an ON DELETE CASCADE foreign key
+// and the database opens with PRAGMA foreign_keys = ON, so these tests take the
+// row away AND make the insert reject the way SQLite would.
+const deleteConversationMidStream = () => {
+  mockGetConversationById.mockResolvedValue(undefined);
+  mockInsertMessage.mockRejectedValue(
+    new Error('FOREIGN KEY constraint failed'),
+  );
+};
+
+test('a delete mid-stream drops the answer instead of writing it into rows that are gone', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+  mockChat.ask.mockImplementation(() =>
+    (async function* () {
+      yield 'partial';
+      deleteConversationMidStream();
+    })(),
+  );
+
+  // A throw here would escape handleSend, which nothing awaits in the app.
+  await send(screen, 'hi');
+
+  // Only the user message, written before the delete, made it to the database.
+  const roles = mockInsertMessage.mock.calls.map(([m]) => m.role);
+  expect(roles).toEqual(['user']);
+  // And the turn released the input bar rather than leaving it mid-answer.
+  expect(screen.UNSAFE_getByType(InputBar as never).props.isStreaming).toBe(
+    false,
+  );
+});
+
+test('a delete after Stop leaves no "stopped" note behind', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+  mockChat.ask.mockImplementation(() =>
+    (async function* () {
+      yield 'partial';
+      screen.UNSAFE_getByType(InputBar as never).props.onStop();
+      deleteConversationMidStream();
+    })(),
+  );
+
+  await send(screen, 'hi');
+
+  // The note belongs to a conversation that no longer exists, so it is neither
+  // persisted nor appended to the chat that replaced it on screen.
+  const roles = mockInsertMessage.mock.calls.map(([m]) => m.role);
+  expect(roles).not.toContain('system');
+  expect(screen.queryByText('screens.chat.generationStopped')).toBeNull();
+});
+
+test('a conversation deleted before the first write is never asked for an answer', async () => {
+  mockGetConversationById.mockResolvedValue(undefined);
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  expect(mockInsertMessage).not.toHaveBeenCalled();
+  // Nothing could hold the answer, so the model is not put to work for it.
+  expect(mockChat.ask).not.toHaveBeenCalled();
+  expect(screen.UNSAFE_getByType(InputBar as never).props.isStreaming).toBe(
+    false,
+  );
+});
+
+test('a persistence failure that is not a delete still finishes the turn', async () => {
+  // A write can fail with the conversation intact (a closed database on the way
+  // to the background, a full disk). The answer stays on screen and the turn
+  // ends normally instead of the failure cascading out of handleSend.
+  mockInsertMessage.mockRejectedValue(new Error('disk I/O error'));
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  const items = screen.UNSAFE_getAllByType(MessageListItem);
+  expect(items[items.length - 1].props.message.content).toBe('Hello world');
+  expect(screen.UNSAFE_getByType(InputBar as never).props.isStreaming).toBe(
+    false,
+  );
 });
