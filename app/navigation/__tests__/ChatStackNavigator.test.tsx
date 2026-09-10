@@ -180,12 +180,17 @@ const defaultCreateChatOpts = {
 
 // An empty chat offers the message starters above the input bar; wait for the
 // chat screen to mount and confirm that empty state is visible.
-const showEmptyChat = (screen: ReturnType<typeof render>) =>
-  waitFor(() => {
+const showEmptyChat = async (screen: ReturnType<typeof render>) => {
+  await waitFor(() => {
     expect(
       screen.getByText('components.messageStarters.planParisTrip.title'),
     ).toBeTruthy();
   });
+  // The starters render before the navigator has finished building the
+  // session; flush the trailing history/conversation updates inside act() so
+  // they don't land after the test ends.
+  await act(async () => {});
+};
 
 // Type a message into the input bar and send it, the way the user opens a
 // conversation the chat screen has to create for itself.

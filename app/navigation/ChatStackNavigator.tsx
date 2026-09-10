@@ -1,4 +1,5 @@
 import React, {
+  RefObject,
   createContext,
   useCallback,
   useContext,
@@ -8,6 +9,7 @@ import React, {
   useState,
 } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { BlurTargetView } from 'expo-blur';
 import {
   AppState,
   AppStateStatus,
@@ -101,6 +103,11 @@ const ChatRootContext =
 
 const ChatRootScreen = () => {
   const ctx = useContext(ChatRootContext);
+  const [blurTargetNode, setBlurTargetNode] = useState<View | null>(null);
+  const blurTarget = useMemo(
+    () => ({ current: blurTargetNode }),
+    [blurTargetNode],
+  );
 
   if (ctx.modelsLoading) {
     return <LoadingScreen />;
@@ -121,13 +128,23 @@ const ChatRootScreen = () => {
 
   return (
     <View style={styles.chatRoot}>
-      <ChatScreen
-        conversationId={ctx.conversationId}
-        messages={ctx.chatHistory}
-        onConversationCreated={ctx.onConversationCreated}
-        disabled={loading}
+      <BlurTargetView
+        ref={setBlurTargetNode as unknown as RefObject<View | null>}
+        style={styles.chatRoot}
+      >
+        <ChatScreen
+          conversationId={ctx.conversationId}
+          messages={ctx.chatHistory}
+          onConversationCreated={ctx.onConversationCreated}
+          disabled={loading}
+        />
+      </BlurTargetView>
+      <Toast
+        visible={loading}
+        message={ctx.loadingMessage}
+        loading
+        blurTarget={blurTarget}
       />
-      <Toast visible={loading} message={ctx.loadingMessage} loading />
     </View>
   );
 };

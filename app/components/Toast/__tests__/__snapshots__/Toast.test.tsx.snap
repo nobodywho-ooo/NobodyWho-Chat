@@ -25,28 +25,41 @@ exports[`Toast renders the message when visible 1`] = `
           "alignItems": "center",
           "borderRadius": 20,
           "borderWidth": 1,
-          "elevation": 2,
           "flexDirection": "row",
           "gap": 8,
           "maxWidth": "90%",
+          "overflow": "hidden",
           "paddingHorizontal": 12,
           "paddingVertical": 8,
           "shadowOffset": {
             "height": 2,
             "width": 0,
           },
-          "shadowOpacity": 0.6,
-          "shadowRadius": 10,
         },
         {
-          "backgroundColor": "#ebebeb",
-          "borderColor": "#e1e1e1",
-          "shadowColor": "rgba(44, 44, 44, 0.24)",
+          "borderColor": "#acacac",
         },
         {},
       ]
     }
   >
+    <View
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "opacity": 0.55,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+          {
+            "backgroundColor": "#ebebeb",
+          },
+        ]
+      }
+    />
     <Text
       numberOfLines={2}
       style={

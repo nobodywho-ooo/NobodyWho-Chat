@@ -1,10 +1,12 @@
-import React, { useEffect } from 'react';
+import React, { RefObject, useEffect } from 'react';
 import { ActivityIndicator, StyleProp, View, ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+import { BlurView } from 'expo-blur';
+import { useTheme } from 'context';
 import { useStyled } from 'hooks';
 
 import { Text } from '../Text/Text';
@@ -13,12 +15,15 @@ import styles from './Toast.styles';
 
 const ENTER_DURATION = 200;
 const ENTER_OFFSET = -12;
+const BLUR_INTENSITY = 12;
+const BLUR_REDUCTION_FACTOR = 4;
 
 interface ToastProps {
   visible: boolean;
   message: string;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
+  blurTarget?: RefObject<View | null>;
 }
 
 export const Toast: React.FC<ToastProps> = ({
@@ -26,8 +31,10 @@ export const Toast: React.FC<ToastProps> = ({
   message,
   loading = false,
   style,
+  blurTarget,
 }) => {
   const { colors } = useStyled();
+  const theme = useTheme();
   const progress = useSharedValue(0);
 
   useEffect(() => {
@@ -53,15 +60,25 @@ export const Toast: React.FC<ToastProps> = ({
         style={[
           styles.toast,
           {
-            backgroundColor: colors.surfaceContainer,
-            borderColor: colors.border,
-            shadowColor: colors.shadow,
+            borderColor: colors.borderSecondary,
+            // shadowColor: colors.shadow,
           },
           animatedStyle,
         ]}
         accessibilityRole="alert"
         accessibilityLiveRegion="polite"
       >
+        <BlurView
+          style={styles.blurFill}
+          intensity={BLUR_INTENSITY}
+          tint={theme}
+          blurMethod="dimezisBlurViewSdk31Plus"
+          blurReductionFactor={BLUR_REDUCTION_FACTOR}
+          blurTarget={blurTarget}
+        />
+        <View
+          style={[styles.tint, { backgroundColor: colors.surfaceContainer }]}
+        />
         {loading && <ActivityIndicator size="small" color={colors.primary} />}
         <Text
           variant="body2"
