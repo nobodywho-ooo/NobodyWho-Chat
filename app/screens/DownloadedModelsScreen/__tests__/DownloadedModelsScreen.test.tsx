@@ -166,6 +166,40 @@ test('delete mode: confirming the alert deletes the in-use model and clears it f
   alertSpy.mockRestore();
 });
 
+test('a failed attachment cleanup still releases the deleted chat model', async () => {
+  // The model row is gone by then, so leaving modelIdInUse pointing at it makes
+  // every later conversation insert fail its foreign key for the rest of the
+  // session (app state is a separate store — nothing cascades into it, and only
+  // the next launch sweeps stale ids). Nothing may sit between the row delete
+  // and this release.
+  const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const models = [buildModel(1), buildModel(2)];
+  mockUseModels.mockReturnValue({ models });
+  mockUseAppState.mockReturnValue({ modelIdInUse: 2 });
+  mockGetDocumentPaths.mockResolvedValue(['a.png']);
+  mockDeleteMessageDocuments.mockRejectedValue(new Error('unlink failed'));
+
+  const screen = render(<DownloadedModelsScreen />);
+  act(() => headerToggle().props.onPress());
+  act(() =>
+    screen.UNSAFE_getByProps({ model: models[1] }).props.onPress(models[1]),
+  );
+
+  const buttons = alertSpy.mock.calls.at(-1)![2]!;
+  await act(async () => {
+    buttons.find(button => button.style === 'destructive')!.onPress?.();
+  });
+
+  await waitFor(() =>
+    expect(mockSetAppState).toHaveBeenCalledWith({
+      modelIdInUse: undefined,
+      conversationIdInUse: undefined,
+    }),
+  );
+
+  alertSpy.mockRestore();
+});
+
 test('without canDelete (drawer entry) deletion is unavailable', () => {
   const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   mockUseRoute.mockReturnValue({ params: { canDelete: false } });

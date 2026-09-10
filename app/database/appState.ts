@@ -103,13 +103,18 @@ export async function setAppState(patch: Partial<AppState>): Promise<void> {
   }
   _state = next;
   await getStorage().setItem(APP_STATE, JSON.stringify(next));
+
+  if (
+    next[CHAT_SLOT_KEY] !== prev[CHAT_SLOT_KEY] &&
+    next[CHAT_SLOT_KEY] !== undefined
+  ) {
+    haptics.medium();
+  }
+
   // One throwing listener must not starve the others or reject setAppState.
   _listeners.forEach(listener => {
     try {
       listener(next, prev);
-      if (next[CHAT_SLOT_KEY] !== prev[CHAT_SLOT_KEY]) {
-        haptics.medium();
-      }
     } catch (error) {
       log('appState listener error', error, { capture: true });
     }

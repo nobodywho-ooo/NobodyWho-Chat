@@ -42,15 +42,24 @@ export async function getDocumentPathsByModelId(
   );
 }
 
+// Resolves to undefined when the conversation is gone — the caller's turn was
+// filed against a conversation that has since been deleted (by Delete chat, or
+// by the ON DELETE CASCADE from deleting its model). The parent check is an
+// EXISTS inside the insert rather than a caller-side pre-check: a conversation
+// can be deleted between a check and the write — a voice turn persists many
+// seconds after it captured its target — and the foreign key would then throw
+// `FOREIGN KEY constraint failed`. One statement leaves no window, and a
+// vanished conversation makes this a no-op instead of an error.
 export async function insertMessage(
   message: Omit<ChatMessage, 'id' | 'timestamp'>,
-): Promise<number> {
+): Promise<number | undefined> {
   const db = getDatabase();
-  let insertId = 0;
+  let insertId: number | undefined;
   await db.transaction(async tx => {
     const result = await tx.execute(
       `INSERT INTO messages (conversation_id, role, content, tokens_per_second, time_to_first_token, documents_path, tool_invocations)
-      VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      SELECT ?, ?, ?, ?, ?, ?, ?
+      WHERE EXISTS (SELECT 1 FROM conversations WHERE id = ?)`,
       [
         message.conversationId,
         message.role,
@@ -59,8 +68,16 @@ export async function insertMessage(
         message.timeToFirstToken ?? null,
         JSON.stringify(message.documentsPath),
         JSON.stringify(message.toolInvocations ?? []),
+        message.conversationId,
       ],
     );
+
+    // rowsAffected, never insertId: last_insert_rowid() keeps the previous
+    // successful insert's id when a statement inserts nothing, so insertId
+    // would hand back a live rowid belonging to another conversation's message.
+    if ((result.rowsAffected ?? 0) === 0) {
+      return;
+    }
     insertId = result.insertId!;
 
     await tx.execute(

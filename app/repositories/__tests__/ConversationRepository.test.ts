@@ -84,15 +84,38 @@ describe('getConversationById', () => {
 
 describe('insertConversation', () => {
   test('inserts the conversation and returns the new id', async () => {
-    db.execute.mockResolvedValue({ insertId: 42, rows: [] });
+    db.execute.mockResolvedValue({ insertId: 42, rows: [], rowsAffected: 1 });
 
     const id = await insertConversation({ title: 'New', modelId: 5 });
 
+    // The model id is bound twice: once as the value, once for the EXISTS
+    // guard that keeps a deleted model from raising a foreign key error.
     expect(db.execute).toHaveBeenCalledWith(
-      'INSERT INTO conversations (title, model_id) VALUES (?, ?)',
-      ['New', 5],
+      expect.stringContaining('INSERT INTO conversations'),
+      ['New', 5, 5],
     );
     expect(id).toBe(42);
+  });
+
+  test('guards the insert on the model still existing', async () => {
+    db.execute.mockResolvedValue({ insertId: 42, rows: [], rowsAffected: 1 });
+
+    await insertConversation({ title: 'New', modelId: 5 });
+
+    expect(db.execute).toHaveBeenCalledWith(
+      expect.stringContaining('WHERE EXISTS (SELECT 1 FROM models WHERE id = ?)'),
+      expect.anything(),
+    );
+  });
+
+  test('resolves to undefined when the model is gone', async () => {
+    // insertId is deliberately populated: on a no-op SQLite reports the
+    // previous insert's rowid, so only rowsAffected can be trusted here.
+    db.execute.mockResolvedValue({ insertId: 42, rows: [], rowsAffected: 0 });
+
+    await expect(
+      insertConversation({ title: 'New', modelId: 5 }),
+    ).resolves.toBeUndefined();
   });
 });
 

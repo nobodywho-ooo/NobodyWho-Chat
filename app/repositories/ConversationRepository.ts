@@ -36,17 +36,28 @@ export async function getConversationById(
   return result.rows.length > 0 ? rowToConversation(result.rows[0]) : undefined;
 }
 
+// Resolves to undefined when the model is gone — `modelIdInUse` outlives the
+// row it points at for the rest of a session when a delete fails part-way
+// (app state lives in a separate store, so ON DELETE CASCADE can't clear it and
+// only dropStaleIdsInUse at the next launch would). Guarded by an EXISTS inside
+// the insert for the same reason as insertMessage: no check-then-write window,
+// and a deleted model makes this a no-op rather than a foreign key error.
 export async function insertConversation(
   conversation: Omit<Conversation, 'id' | 'lastUsed'>,
-): Promise<number> {
+): Promise<number | undefined> {
   const db = getDatabase();
-  let insertId = 0;
+  let insertId: number | undefined;
   await db.transaction(async tx => {
     const result = await tx.execute(
-      `INSERT INTO conversations (title, model_id) VALUES (?, ?)`,
-      [conversation.title, conversation.modelId],
+      `INSERT INTO conversations (title, model_id)
+      SELECT ?, ?
+      WHERE EXISTS (SELECT 1 FROM models WHERE id = ?)`,
+      [conversation.title, conversation.modelId, conversation.modelId],
     );
-    insertId = result.insertId!;
+    // See insertMessage: insertId stays stale on a no-op, rowsAffected does not.
+    if ((result.rowsAffected ?? 0) > 0) {
+      insertId = result.insertId!;
+    }
   });
   return insertId;
 }

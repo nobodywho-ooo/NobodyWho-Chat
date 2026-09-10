@@ -1,6 +1,7 @@
 import { renderHook, act } from '@testing-library/react-native';
 
 import { insertMessage } from 'repositories';
+import { notifyConversationSync } from 'services';
 import { resetRecordingModeForTests, synthesizeSpeech } from 'helpers';
 
 import { useVoiceConversation } from '../hooks/useVoiceConversation';
@@ -110,6 +111,7 @@ jest.mock('expo-audio', () => ({
 
 const mockSynthesizeSpeech = synthesizeSpeech as jest.Mock;
 const mockInsertMessage = insertMessage as jest.Mock;
+const mockNotifyConversationSync = notifyConversationSync as jest.Mock;
 
 // Stable across renders, the way the screen's useOrbLevels controller is: the
 // turn's callbacks close over it.
@@ -183,7 +185,8 @@ beforeEach(() => {
     .mockReset()
     .mockReturnValue(Int16Array.from([1, 2, 3]));
   mockSynthesizeSpeech.mockClear();
-  mockInsertMessage.mockClear();
+  mockInsertMessage.mockReset().mockResolvedValue(1);
+  mockNotifyConversationSync.mockClear();
   mockPlayer.play.mockClear();
   mockPlayer.pause.mockClear();
   mockStream.start.mockClear();
@@ -239,6 +242,26 @@ test('closing the screen mid-answer stops the generation and never speaks it', a
   // note, like the typed path.
   const roles = mockInsertMessage.mock.calls.map(([m]) => m.role);
   expect(roles).toEqual(['user', 'assistant', 'system']);
+});
+
+test('a turn whose conversation was deleted mid-answer stops writing it', async () => {
+  // Delete chat can land anywhere in a turn — it runs for seconds across
+  // transcribe, generate, synthesize and play. insertMessage guards itself on
+  // the parent row, so a deleted conversation makes the write a no-op instead
+  // of raising `FOREIGN KEY constraint failed` out of persistTurn.
+  mockInsertMessage.mockResolvedValue(undefined);
+
+  const { result } = renderConversation();
+
+  await startListening(result);
+  await stopTalking(result);
+
+  // The question is attempted — that attempt is what discovers the row is gone
+  // — and the rest of the turn is dropped rather than half-written.
+  const roles = mockInsertMessage.mock.calls.map(([m]) => m.role);
+  expect(roles).toEqual(['user']);
+  // And nothing is announced to the chat root, which has no rows to show.
+  expect(mockNotifyConversationSync).not.toHaveBeenCalled();
 });
 
 test('closing the screen while transcribing never asks the model', async () => {

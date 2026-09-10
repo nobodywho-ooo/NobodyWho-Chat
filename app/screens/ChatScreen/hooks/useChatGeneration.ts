@@ -6,11 +6,7 @@ import { FlashListRef } from '@shopify/flash-list';
 
 import { ChatMessage, DisplayMessage, ToolInvocation } from 'types';
 import { getAppState } from 'database';
-import {
-  getConversationById,
-  insertConversation,
-  insertMessage,
-} from 'repositories';
+import { insertConversation, insertMessage } from 'repositories';
 import { subscribeToolInvocations } from 'services';
 import {
   computeGenerationMetrics,
@@ -117,6 +113,17 @@ export function useChatGeneration({
       ? await insertConversation({ title: userInput, modelId: modelIdInUse })
       : conversationId;
 
+    // The model was deleted between this chat mounting and the send landing:
+    // there is nothing to file the conversation under, and the chat root is
+    // already routing away. Drop the two optimistic messages rather than
+    // leaving them on screen above a chat that can never answer them.
+    if (id === undefined) {
+      log('ChatScreen send: model', modelIdInUse, 'no longer exists');
+      setMessages(prev => prev.slice(0, -2));
+      setIsStreaming(false);
+      return;
+    }
+
     if (isNewConversation) {
       setConversationId(id);
       onConversationCreated(id);
@@ -128,13 +135,15 @@ export function useChatGeneration({
       message: Omit<ChatMessage, 'id' | 'timestamp' | 'conversationId'>,
     ): Promise<PersistOutcome> => {
       try {
-        if ((await getConversationById(id)) === undefined) {
-          return 'gone';
-        }
+        // No pre-check: insertMessage is a no-op when the conversation is gone,
+        // which closes the window a check-then-write left open (and saves a
+        // query per message).
+        const insertId = await insertMessage({
+          conversationId: id,
+          ...message,
+        });
 
-        await insertMessage({ conversationId: id, ...message });
-
-        return 'written';
+        return insertId === undefined ? 'gone' : 'written';
       } catch (error) {
         log('ChatScreen message persistence failed', error, { capture: true });
 

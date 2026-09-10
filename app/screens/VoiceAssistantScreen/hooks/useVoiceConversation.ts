@@ -287,15 +287,29 @@ export const useVoiceConversation = ({
             modelId: target.modelId,
           }));
 
+        // The target captured at the start of the turn can be gone by now — a
+        // turn runs for seconds across transcribe, generate, synthesize and
+        // play, and Delete chat (or deleting the model, which cascades) can
+        // land anywhere in there. Both writes below no-op in that case rather
+        // than raising `FOREIGN KEY constraint failed`, so bail on the first
+        // one instead of half-writing a turn into a conversation nothing shows.
+        if (conversationId === undefined) {
+          return;
+        }
+
         // The question is always written: `ask` has already appended it to the
         // shared chat's history, so skipping it here would leave the model
         // answering later messages from an exchange nothing can show.
-        await insertMessage({
+        const questionId = await insertMessage({
           conversationId,
           role: 'user',
           content: question,
           documentsPath: [],
         });
+
+        if (questionId === undefined) {
+          return;
+        }
 
         if (answerText.trim()) {
           await insertMessage({

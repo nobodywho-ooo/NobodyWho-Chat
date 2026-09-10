@@ -128,7 +128,7 @@ describe('getDocumentPathsByModelId', () => {
 
 describe('insertMessage', () => {
   test('inserts the message and returns the new id', async () => {
-    db.execute.mockResolvedValue({ insertId: 11, rows: [] });
+    db.execute.mockResolvedValue({ insertId: 11, rows: [], rowsAffected: 1 });
 
     const id = await insertMessage({
       conversationId: 2,
@@ -139,13 +139,13 @@ describe('insertMessage', () => {
 
     expect(db.execute).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO messages'),
-      [2, 'user', 'hi', null, null, '["/a"]', '[]'],
+      [2, 'user', 'hi', null, null, '["/a"]', '[]', 2],
     );
     expect(id).toBe(11);
   });
 
   test('bumps the conversation last_used in the same transaction', async () => {
-    db.execute.mockResolvedValue({ insertId: 11, rows: [] });
+    db.execute.mockResolvedValue({ insertId: 11, rows: [], rowsAffected: 1 });
 
     await insertMessage({
       conversationId: 2,
@@ -161,7 +161,7 @@ describe('insertMessage', () => {
   });
 
   test('persists provided performance metrics', async () => {
-    db.execute.mockResolvedValue({ insertId: 12, rows: [] });
+    db.execute.mockResolvedValue({ insertId: 12, rows: [], rowsAffected: 1 });
 
     await insertMessage({
       conversationId: 2,
@@ -180,11 +180,12 @@ describe('insertMessage', () => {
       3,
       '[]',
       '[]',
+      2,
     ]);
   });
 
   test('serializes the assistant tool invocations', async () => {
-    db.execute.mockResolvedValue({ insertId: 13, rows: [] });
+    db.execute.mockResolvedValue({ insertId: 13, rows: [], rowsAffected: 1 });
 
     await insertMessage({
       conversationId: 2,
@@ -201,8 +202,44 @@ describe('insertMessage', () => {
     });
 
     const params = db.execute.mock.calls[0][1] as unknown[];
-    expect(params[params.length - 1]).toBe(
+    expect(params[6]).toBe(
       '[{"name":"get_weather","arguments":{"city":"Paris"},"result":"{\\"temperatureCelsius\\":12}"}]',
+    );
+  });
+});
+
+describe('insertMessage — deleted conversation', () => {
+  // The EXISTS guard makes the insert a no-op instead of raising
+  // `FOREIGN KEY constraint failed`, which is what callers map to 'gone'.
+  beforeEach(() => {
+    // insertId stays populated on a no-op — SQLite's last_insert_rowid() keeps
+    // the previous successful insert's id — so only rowsAffected says nothing
+    // was written. A mock that omits it would hide a regression here.
+    db.execute.mockResolvedValue({ insertId: 11, rows: [], rowsAffected: 0 });
+  });
+
+  test('resolves to undefined rather than throwing', async () => {
+    await expect(
+      insertMessage({
+        conversationId: 99,
+        role: 'user',
+        content: 'hi',
+        documentsPath: [],
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  test('does not bump last_used for a conversation that is gone', async () => {
+    await insertMessage({
+      conversationId: 99,
+      role: 'user',
+      content: 'hi',
+      documentsPath: [],
+    });
+
+    expect(db.execute).not.toHaveBeenCalledWith(
+      expect.stringContaining('UPDATE conversations'),
+      expect.anything(),
     );
   });
 });

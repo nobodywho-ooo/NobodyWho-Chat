@@ -73,11 +73,18 @@ export const DownloadedModelsScreen: React.FC = () => {
         }
 
         await deleteModel(model.id);
-        await deleteMessageDocuments(documentPaths);
 
         // The chat slot is cleared last: dropping it also drops the open
-        // conversation, which routes the UI away from this screen.
+        // conversation, which routes the UI away from this screen. Nothing may
+        // sit between the row delete and this release — a throw in between
+        // strands modelIdInUse pointing at a model that no longer exists for
+        // the rest of the session (app state is a separate store, so the
+        // ON DELETE CASCADE can't clear it and only dropStaleIdsInUse at the
+        // next launch would).
         await releaseSlots(held.filter(slot => slot === ModelSlot.chat));
+
+        // Best-effort orphan cleanup, so a failure here can't strand the slot.
+        await deleteMessageDocuments(documentPaths);
       } catch (error) {
         log('DownloadedModelsScreen handleDeleteModel', error);
       }
