@@ -22,5 +22,6 @@ export const getMarkdownStyle = (
     list: { color },
     math: { color },
     inlineMath: { color },
+    thematicBreak: { color: '#444444' },
   };
 };
