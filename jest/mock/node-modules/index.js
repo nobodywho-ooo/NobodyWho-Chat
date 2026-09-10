@@ -110,6 +110,9 @@ jest.mock('expo-file-system', () => {
   const Paths = {
     document: { uri: 'file:///mock-documents/' },
     cache: { uri: 'file:///mock-cache/' },
+    // Free space the pre-download disk-space check reads. Plenty by default;
+    // assign to it in a test to exercise the not-enough-space path.
+    availableDiskSpace: 64 * 1024 ** 3,
   };
   const FileMode = {
     ReadWrite: 'rw',

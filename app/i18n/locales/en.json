@@ -241,7 +241,9 @@
       "chooseModelMessage": "Model sizes are defined by their parameter count (e.g., 0.6B, 1,2B...). While bigger models are often smarter, they demand more resources and slow down performance. Therefore, if you don’t have a recent phone, start with a smaller model to ensure smooth performance.",
       "stopDownloadTitle": "Stop this download?",
       "stopDownloadMessage": "The download will be cancelled and its progress discarded. You can start it again at any time.",
-      "stopDownload": "Stop download"
+      "stopDownload": "Stop download",
+      "notEnoughSpaceTitle": "Not enough storage",
+      "notEnoughSpaceMessage": "{{name}} needs {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again."
     },
     "downloadedModels": {
       "noModelDownloaded": "No model downloaded",
@@ -277,7 +279,8 @@
     },
     "chat": {
       "generationFailed": "Something went wrong while generating a response.",
-      "generationStopped": "Generation stopped."
+      "generationStopped": "Generation stopped.",
+      "attachmentFailedMessage": "The attachment couldn’t be added. {{error}}"
     },
     "loadingScreen": {
       "loadingModel": "Loading {{model}}",

@@ -22,6 +22,11 @@ import {
   filterModelsByDeviceMemory,
   modelRequiredMemoryGB,
 } from './deviceMemory';
+import {
+  availableDiskSpaceGB,
+  checkDiskSpaceForModel,
+  modelDownloadSizeGB,
+} from './diskSpace';
 import { sleep } from './async';
 import {
   captureImageToMessageDocuments,
@@ -71,6 +76,7 @@ export type { AudioBands, AudioEnvelope } from './audioLevels';
 export type { TtsEngine, TtsLanguageOption } from './ttsEngine';
 export type { SttLanguageOption } from './sttLanguages';
 export type { PipelineIcon } from './pipelineIcon';
+export type { DiskSpaceCheck } from './diskSpace';
 
 export {
   getFamilyIcon,
@@ -86,6 +92,9 @@ export {
   toPlainPath,
   filterModelsByDeviceMemory,
   modelRequiredMemoryGB,
+  availableDiskSpaceGB,
+  checkDiskSpaceForModel,
+  modelDownloadSizeGB,
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,

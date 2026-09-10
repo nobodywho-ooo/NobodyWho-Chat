@@ -9,7 +9,14 @@ import {
   insertModel,
 } from 'repositories';
 import { Model, ModelDownload, ModelPart } from 'types';
-import { deleteModelDirectory, downloadModelPart, log } from 'helpers';
+import type { DiskSpaceCheck } from 'helpers';
+import {
+  checkDiskSpaceForModel,
+  deleteModelDirectory,
+  downloadModelPart,
+  log,
+  modelSizeLabel,
+} from 'helpers';
 import { selectModelIfSlotFree } from 'services';
 
 const DOWNLOAD_THROTTLE = 0.01; // 1% step
@@ -106,8 +113,28 @@ export const useModelDownloader = () => {
     }
   }, []);
 
+  const warnNotEnoughSpace = useCallback(
+    (model: Model, check: DiskSpaceCheck) =>
+      Alert.alert(
+        t('screens.models.notEnoughSpaceTitle'),
+        t('screens.models.notEnoughSpaceMessage', {
+          name: model.name,
+          required: modelSizeLabel(check.requiredGB),
+          available: modelSizeLabel(check.availableGB ?? 0),
+        }),
+      ),
+    [t],
+  );
+
   const startDownload = useCallback(
     async (model: Model) => {
+      const spaceCheck = checkDiskSpaceForModel(model);
+
+      if (!spaceCheck.fits) {
+        warnNotEnoughSpace(model, spaceCheck);
+        return;
+      }
+
       const created = await createModelDownload(model);
       if (!created) {
         return;
@@ -118,7 +145,7 @@ export const useModelDownloader = () => {
         partsProgress: model.parts.map(part => ({ ...part, progress: 0 })),
       });
     },
-    [runDownload],
+    [runDownload, warnNotEnoughSpace],
   );
 
   const stopDownload = useCallback((model: Model) => {

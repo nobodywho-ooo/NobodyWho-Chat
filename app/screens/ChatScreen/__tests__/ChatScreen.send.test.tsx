@@ -1,4 +1,5 @@
 import React from 'react';
+import { Alert } from 'react-native';
 import { render, act } from '@testing-library/react-native';
 import { Prompt } from 'react-native-nobodywho';
 import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
@@ -495,6 +496,34 @@ test('cancelling the image picker attaches nothing', async () => {
   expect(mockChat.ask).toHaveBeenCalledWith('hello');
   const userCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'user');
   expect(userCall?.[0].documentsPath).toEqual([]);
+});
+
+test('a failing image picker alerts with the error and attaches nothing', async () => {
+  mockChatPipeline = ModelPipeline.imageTextToText;
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  mockLaunchImageLibraryAsync.mockRejectedValue(new Error('no photo access'));
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+  });
+
+  expect(alert).toHaveBeenCalledWith(
+    'common.somethingWentWrong',
+    'screens.chat.attachmentFailedMessage',
+  );
+
+  // The failure is surfaced, not attached: the send stays a bare text prompt.
+  await send(screen, 'hello');
+  expect(mockChat.ask).toHaveBeenCalledWith('hello');
+  alert.mockRestore();
 });
 
 test('a plain text send carries no documents even when multimodal is ready', async () => {

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard } from 'react-native';
+import { Alert, Keyboard } from 'react-native';
+import { useTranslation } from 'react-i18next';
 
 import {
   captureImageToMessageDocuments,
@@ -18,6 +19,15 @@ export interface AttachedDocuments {
   imageSource?: ImageAttachSource;
   audioPath?: string;
 }
+
+const ERROR_SNIPPET_LENGTH = 120;
+
+const errorSnippet = (error: unknown): string => {
+  const message = error instanceof Error ? error.message : String(error);
+  return message.length > ERROR_SNIPPET_LENGTH
+    ? `${message.slice(0, ERROR_SNIPPET_LENGTH)}…`
+    : message;
+};
 
 export const pendingDocumentPaths = (
   documents: AttachedDocuments | null,
@@ -47,6 +57,7 @@ export function useAttachments({
   ingestsImage,
   ingestsAudio,
 }: UseAttachmentsOptions): Attachments {
+  const { t } = useTranslation();
   const [attachedDocuments, setAttachedDocuments] =
     useState<AttachedDocuments | null>(null);
   const [cameraVisible, setCameraVisible] = useState(false);
@@ -62,6 +73,19 @@ export function useAttachments({
       }
     };
   }, []);
+
+  // Picking, capturing and copying an attachment all fail silently otherwise —
+  // the user taps, nothing appears, and there is nothing to report.
+  const alertAttachmentFailed = useCallback(
+    (error: unknown) =>
+      Alert.alert(
+        t('common.somethingWentWrong'),
+        t('screens.chat.attachmentFailedMessage', {
+          error: errorSnippet(error),
+        }),
+      ),
+    [t],
+  );
 
   const clearAllAttachments = useCallback(() => {
     const orphans = pendingDocumentPaths(attachedDocumentsRef.current);
@@ -114,6 +138,7 @@ export function useAttachments({
       }
     } catch (error) {
       log('ChatScreen attach image failed', error, { capture: true });
+      alertAttachmentFailed(error);
     }
   };
 
@@ -144,6 +169,7 @@ export function useAttachments({
       haptics.light();
     } catch (error) {
       log('ChatScreen capture image failed', error, { capture: true });
+      alertAttachmentFailed(error);
     }
   };
 
@@ -168,6 +194,7 @@ export function useAttachments({
       }
     } catch (error) {
       log('ChatScreen attach audio failed', error, { capture: true });
+      alertAttachmentFailed(error);
     }
   };
 

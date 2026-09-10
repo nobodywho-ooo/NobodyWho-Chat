@@ -1,4 +1,5 @@
-import { renderHook, waitFor } from '@testing-library/react-native';
+import { Alert } from 'react-native';
+import { act, renderHook, waitFor } from '@testing-library/react-native';
 
 import {
   createModelDownload,
@@ -8,7 +9,11 @@ import {
   updateModelDownloadParts,
 } from 'repositories';
 import { getAppState, setAppState } from 'database';
-import { deleteModelDirectory, downloadModelPart } from 'helpers';
+import {
+  checkDiskSpaceForModel,
+  deleteModelDirectory,
+  downloadModelPart,
+} from 'helpers';
 import { ModelPipeline } from 'types';
 import { buildModel } from 'jest/factories/model';
 
@@ -32,6 +37,14 @@ jest.mock('helpers', () => ({
   downloadModelPart: jest.fn(),
   deleteModelDirectory: jest.fn(),
   log: jest.fn(),
+  // Unit-tested in diskSpace.test.ts; here the default is a device with room,
+  // and a test flips it to exercise the refusal.
+  checkDiskSpaceForModel: jest.fn(() => ({
+    fits: true,
+    requiredGB: 1.5,
+    availableGB: 64,
+  })),
+  modelSizeLabel: jest.fn((sizeGB: number) => `${sizeGB} GB`),
   // Unit-tested in ttsVoices.test.ts; here we only care that the auto-select
   // spreads its result into the persisted config.
   resolveTtsPrefs: jest.fn(() => ({})),
@@ -42,6 +55,7 @@ const mockDeleteModelDownload = deleteModelDownload as jest.Mock;
 const mockInsertModel = insertModel as jest.Mock;
 const mockDownloadModelPart = downloadModelPart as jest.Mock;
 const mockDeleteModelDirectory = deleteModelDirectory as jest.Mock;
+const mockCheckDiskSpaceForModel = checkDiskSpaceForModel as jest.Mock;
 const mockSetAppState = setAppState as jest.Mock;
 
 // A pending download for a single-part model, keyed by a unique id per test so
@@ -75,6 +89,11 @@ beforeEach(() => {
   (updateModelDownloadParts as jest.Mock).mockResolvedValue(undefined);
   (setAppState as jest.Mock).mockResolvedValue(undefined);
   (getAppState as jest.Mock).mockReturnValue({ modelIdInUse: 1 });
+  mockCheckDiskSpaceForModel.mockReturnValue({
+    fits: true,
+    requiredGB: 1.5,
+    availableGB: 64,
+  });
 });
 
 test('keeps the pending download on a transient error so it can resume later', async () => {
@@ -156,4 +175,55 @@ test('a failing insert drops the download row and files instead of retrying fore
   await waitFor(() => expect(mockDeleteModelDownload).toHaveBeenCalledWith(105));
   expect(mockDeleteModelDirectory).toHaveBeenCalledWith(105);
   expect(mockSetAppState).not.toHaveBeenCalled();
+});
+
+describe('startDownload disk-space guard', () => {
+  const model = () => buildModel(106, { name: 'Tiny', sizeGB: 4 });
+
+  test('refuses a model that does not fit and tells the user', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockCheckDiskSpaceForModel.mockReturnValue({
+      fits: false,
+      requiredGB: 4.5,
+      availableGB: 1,
+    });
+
+    const { result } = renderHook(() => useModelDownloader());
+    await act(async () => {
+      await result.current.startDownload(model());
+    });
+
+    expect(alert).toHaveBeenCalledWith(
+      'screens.models.notEnoughSpaceTitle',
+      'screens.models.notEnoughSpaceMessage',
+    );
+    expect(createModelDownload).not.toHaveBeenCalled();
+    expect(mockDownloadModelPart).not.toHaveBeenCalled();
+  });
+
+  test('starts the download when the model fits', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockDownloadModelPart.mockResolvedValue('/docs/models/106/model.gguf');
+
+    const { result } = renderHook(() => useModelDownloader());
+    await act(async () => {
+      await result.current.startDownload(
+        buildModel(106, {
+          parts: [
+            {
+              url: 'https://x/model.gguf',
+              fileName: 'model.gguf',
+              type: 'chat-model',
+              path: '',
+              sizeGB: 1,
+            },
+          ],
+        }),
+      );
+    });
+
+    expect(alert).not.toHaveBeenCalled();
+    expect(createModelDownload).toHaveBeenCalled();
+    expect(mockDownloadModelPart).toHaveBeenCalled();
+  });
 });
