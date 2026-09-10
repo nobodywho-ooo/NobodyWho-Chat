@@ -29,6 +29,9 @@ import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
 
+const BLUR_INTENSITY = isAndroid ? 40 : 16;
+const BLUR_REDUCTION_FACTOR = 5;
+
 const gradientColors: Record<Theme, string[]> = {
   light: ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.9)'],
   dark: ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 0.9)'],
@@ -158,36 +161,43 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         accessible={false}
       />
       <BlurTargetView ref={blurTargetRef} style={styles.blurTargetContainer}>
-        {messages.length > 0 ? (
-          <FlashList
-            ref={flatListRef}
-            data={messages}
-            style={styles.listContainer}
-            contentContainerStyle={[
-              styles.listContent,
-              { paddingBottom: listPaddingBottom },
-            ]}
-            keyExtractor={(_, index) => index.toString()}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item, index }) => (
-              <MessageListItem
-                message={item}
-                isStreaming={isStreaming && index === messages.length - 1}
-                index={index}
-                canPlayAudio={canPlayAudio}
-                isAudioLoading={audioLoadingIndex === index}
-                isAudioPlaying={playingIndex === index}
-                onPlayAudio={playAudio}
-                onStopAudio={stopAudio}
-              />
-            )}
-            onContentSizeChange={scrollToEnd}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode={isAndroid ? 'on-drag' : 'interactive'}
-          />
-        ) : (
-          <Pressable style={styles.emptyArea} onPress={Keyboard.dismiss} />
-        )}
+        <View
+          style={[
+            styles.blurTargetContent,
+            { backgroundColor: colors.surface },
+          ]}
+        >
+          {messages.length > 0 ? (
+            <FlashList
+              ref={flatListRef}
+              data={messages}
+              style={styles.listContainer}
+              contentContainerStyle={[
+                styles.listContent,
+                { paddingBottom: listPaddingBottom },
+              ]}
+              keyExtractor={(_, index) => index.toString()}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item, index }) => (
+                <MessageListItem
+                  message={item}
+                  isStreaming={isStreaming && index === messages.length - 1}
+                  index={index}
+                  canPlayAudio={canPlayAudio}
+                  isAudioLoading={audioLoadingIndex === index}
+                  isAudioPlaying={playingIndex === index}
+                  onPlayAudio={playAudio}
+                  onStopAudio={stopAudio}
+                />
+              )}
+              onContentSizeChange={scrollToEnd}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode={isAndroid ? 'on-drag' : 'interactive'}
+            />
+          ) : (
+            <Pressable style={styles.emptyArea} onPress={Keyboard.dismiss} />
+          )}
+        </View>
       </BlurTargetView>
       {attachExpanded && (
         <Pressable
@@ -197,9 +207,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         >
           <BlurView
             style={styles.blurFill}
-            intensity={16}
+            intensity={BLUR_INTENSITY}
             tint={theme}
             blurMethod="dimezisBlurViewSdk31Plus"
+            blurReductionFactor={BLUR_REDUCTION_FACTOR}
             blurTarget={blurTargetRef}
           />
           <LinearGradient

@@ -54,153 +54,83 @@ exports[`renders ChatScreen with existing messages 1`] = `
       }
     }
   />
-  <RCTScrollView
-    contentContainerStyle={
-      [
-        {
-          "paddingBottom": 12,
-        },
-        {
-          "paddingBottom": NaN,
-        },
-      ]
-    }
-    data={
-      [
-        {
-          "content": "Hello there",
-          "role": "user",
-        },
-        {
-          "content": "Hi! How can I help you?",
-          "role": "assistant",
-        },
-      ]
-    }
-    getItem={[Function]}
-    getItemCount={[Function]}
-    keyExtractor={[Function]}
-    keyboardDismissMode="interactive"
-    keyboardShouldPersistTaps="handled"
-    onContentSizeChange={[Function]}
-    onLayout={[Function]}
-    onMomentumScrollBegin={[Function]}
-    onMomentumScrollEnd={[Function]}
-    onScroll={[Function]}
-    onScrollBeginDrag={[Function]}
-    onScrollEndDrag={[Function]}
-    removeClippedSubviews={false}
-    renderItem={[Function]}
-    scrollEventThrottle={0.0001}
-    showsVerticalScrollIndicator={false}
-    stickyHeaderIndices={[]}
+  <View
     style={
-      {
-        "flex": 1,
-      }
+      [
+        {
+          "flex": 1,
+          "paddingHorizontal": 16,
+        },
+        {
+          "backgroundColor": "#FFFFFF",
+        },
+      ]
     }
-    viewabilityConfigCallbackPairs={[]}
   >
-    <View>
-      <View
-        onFocusCapture={[Function]}
-        onLayout={[Function]}
-        style={null}
-      >
+    <RCTScrollView
+      contentContainerStyle={
+        [
+          {
+            "paddingBottom": 12,
+          },
+          {
+            "paddingBottom": NaN,
+          },
+        ]
+      }
+      data={
+        [
+          {
+            "content": "Hello there",
+            "role": "user",
+          },
+          {
+            "content": "Hi! How can I help you?",
+            "role": "assistant",
+          },
+        ]
+      }
+      getItem={[Function]}
+      getItemCount={[Function]}
+      keyExtractor={[Function]}
+      keyboardDismissMode="interactive"
+      keyboardShouldPersistTaps="handled"
+      onContentSizeChange={[Function]}
+      onLayout={[Function]}
+      onMomentumScrollBegin={[Function]}
+      onMomentumScrollEnd={[Function]}
+      onScroll={[Function]}
+      onScrollBeginDrag={[Function]}
+      onScrollEndDrag={[Function]}
+      removeClippedSubviews={false}
+      renderItem={[Function]}
+      scrollEventThrottle={0.0001}
+      showsVerticalScrollIndicator={false}
+      stickyHeaderIndices={[]}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+      viewabilityConfigCallbackPairs={[]}
+    >
+      <View>
         <View
-          style={
-            {
-              "alignItems": "flex-end",
-              "alignSelf": "flex-end",
-              "marginVertical": 12,
-              "maxWidth": "90%",
-            }
-          }
-        >
-          <View
-            accessibilityState={
-              {
-                "busy": undefined,
-                "checked": undefined,
-                "disabled": undefined,
-                "expanded": undefined,
-                "selected": undefined,
-              }
-            }
-            accessibilityValue={
-              {
-                "max": undefined,
-                "min": undefined,
-                "now": undefined,
-                "text": undefined,
-              }
-            }
-            accessible={true}
-            collapsable={false}
-            focusable={true}
-            onBlur={[Function]}
-            onClick={[Function]}
-            onFocus={[Function]}
-            onResponderGrant={[Function]}
-            onResponderMove={[Function]}
-            onResponderRelease={[Function]}
-            onResponderTerminate={[Function]}
-            onResponderTerminationRequest={[Function]}
-            onStartShouldSetResponder={[Function]}
-            style={
-              [
-                {
-                  "borderRadius": 16,
-                  "paddingHorizontal": 16,
-                  "paddingVertical": 12,
-                },
-                {
-                  "backgroundColor": "#ebebeb",
-                },
-                false,
-              ]
-            }
-          >
-            <Text
-              style={
-                {
-                  "fontSize": 15,
-                  "lineHeight": 22,
-                }
-              }
-            >
-              Hello there
-            </Text>
-          </View>
-        </View>
-      </View>
-      <View
-        onFocusCapture={[Function]}
-        onLayout={[Function]}
-        style={null}
-      >
-        <View
-          style={
-            {
-              "marginTop": 12,
-              "marginVertical": 12,
-            }
-          }
+          onFocusCapture={[Function]}
+          onLayout={[Function]}
+          style={null}
         >
           <View
             style={
               {
-                "alignItems": "center",
-                "flexDirection": "row",
-                "flexWrap": "wrap",
-                "gap": 16,
-                "marginTop": 12,
+                "alignItems": "flex-end",
+                "alignSelf": "flex-end",
+                "marginVertical": 12,
+                "maxWidth": "90%",
               }
             }
           >
             <View
-              accessibilityLabel="components.messageListItem.copy"
-              accessibilityRole="button"
               accessibilityState={
                 {
                   "busy": undefined,
@@ -221,7 +151,6 @@ exports[`renders ChatScreen with existing messages 1`] = `
               accessible={true}
               collapsable={false}
               focusable={true}
-              hitSlop={8}
               onBlur={[Function]}
               onClick={[Function]}
               onFocus={[Function]}
@@ -233,22 +162,107 @@ exports[`renders ChatScreen with existing messages 1`] = `
               onStartShouldSetResponder={[Function]}
               style={
                 [
+                  {
+                    "borderRadius": 16,
+                    "paddingHorizontal": 16,
+                    "paddingVertical": 12,
+                  },
+                  {
+                    "backgroundColor": "#ebebeb",
+                  },
                   false,
                 ]
               }
             >
-              <PlatformIcon
-                androidIconName="content_copy"
-                color="#7c7c7c"
-                iosIconName="doc.on.doc"
-                size={16}
-              />
+              <Text
+                style={
+                  {
+                    "fontSize": 15,
+                    "lineHeight": 22,
+                  }
+                }
+              >
+                Hello there
+              </Text>
+            </View>
+          </View>
+        </View>
+        <View
+          onFocusCapture={[Function]}
+          onLayout={[Function]}
+          style={null}
+        >
+          <View
+            style={
+              {
+                "marginTop": 12,
+                "marginVertical": 12,
+              }
+            }
+          >
+            <View
+              style={
+                {
+                  "alignItems": "center",
+                  "flexDirection": "row",
+                  "flexWrap": "wrap",
+                  "gap": 16,
+                  "marginTop": 12,
+                }
+              }
+            >
+              <View
+                accessibilityLabel="components.messageListItem.copy"
+                accessibilityRole="button"
+                accessibilityState={
+                  {
+                    "busy": undefined,
+                    "checked": undefined,
+                    "disabled": undefined,
+                    "expanded": undefined,
+                    "selected": undefined,
+                  }
+                }
+                accessibilityValue={
+                  {
+                    "max": undefined,
+                    "min": undefined,
+                    "now": undefined,
+                    "text": undefined,
+                  }
+                }
+                accessible={true}
+                collapsable={false}
+                focusable={true}
+                hitSlop={8}
+                onBlur={[Function]}
+                onClick={[Function]}
+                onFocus={[Function]}
+                onResponderGrant={[Function]}
+                onResponderMove={[Function]}
+                onResponderRelease={[Function]}
+                onResponderTerminate={[Function]}
+                onResponderTerminationRequest={[Function]}
+                onStartShouldSetResponder={[Function]}
+                style={
+                  [
+                    false,
+                  ]
+                }
+              >
+                <PlatformIcon
+                  androidIconName="content_copy"
+                  color="#7c7c7c"
+                  iosIconName="doc.on.doc"
+                  size={16}
+                />
+              </View>
             </View>
           </View>
         </View>
       </View>
-    </View>
-  </RCTScrollView>
+    </RCTScrollView>
+  </View>
   <InputBar
     attachExpanded={false}
     disabled={false}
@@ -333,41 +347,55 @@ exports[`renders correctly empty ChatScreen 1`] = `
     }
   />
   <View
-    accessibilityState={
-      {
-        "busy": undefined,
-        "checked": undefined,
-        "disabled": undefined,
-        "expanded": undefined,
-        "selected": undefined,
-      }
-    }
-    accessibilityValue={
-      {
-        "max": undefined,
-        "min": undefined,
-        "now": undefined,
-        "text": undefined,
-      }
-    }
-    accessible={true}
-    collapsable={false}
-    focusable={true}
-    onBlur={[Function]}
-    onClick={[Function]}
-    onFocus={[Function]}
-    onResponderGrant={[Function]}
-    onResponderMove={[Function]}
-    onResponderRelease={[Function]}
-    onResponderTerminate={[Function]}
-    onResponderTerminationRequest={[Function]}
-    onStartShouldSetResponder={[Function]}
     style={
-      {
-        "flex": 1,
-      }
+      [
+        {
+          "flex": 1,
+          "paddingHorizontal": 16,
+        },
+        {
+          "backgroundColor": "#FFFFFF",
+        },
+      ]
     }
-  />
+  >
+    <View
+      accessibilityState={
+        {
+          "busy": undefined,
+          "checked": undefined,
+          "disabled": undefined,
+          "expanded": undefined,
+          "selected": undefined,
+        }
+      }
+      accessibilityValue={
+        {
+          "max": undefined,
+          "min": undefined,
+          "now": undefined,
+          "text": undefined,
+        }
+      }
+      accessible={true}
+      collapsable={false}
+      focusable={true}
+      onBlur={[Function]}
+      onClick={[Function]}
+      onFocus={[Function]}
+      onResponderGrant={[Function]}
+      onResponderMove={[Function]}
+      onResponderRelease={[Function]}
+      onResponderTerminate={[Function]}
+      onResponderTerminationRequest={[Function]}
+      onStartShouldSetResponder={[Function]}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    />
+  </View>
   <InputBar
     attachExpanded={false}
     disabled={false}
