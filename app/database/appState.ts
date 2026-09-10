@@ -1,8 +1,10 @@
 import { haptics, log } from 'helpers';
-import { MODEL_SLOTS } from 'types';
+import { MODEL_SLOTS, ModelSlot, modelSlotSpec } from 'types';
 import { getStorage } from './storage';
 
 const APP_STATE = 'appState';
+
+const CHAT_SLOT_KEY = modelSlotSpec(ModelSlot.chat).appStateKey;
 
 export type AssistantConfig = {
   temperature: number;
@@ -105,7 +107,9 @@ export async function setAppState(patch: Partial<AppState>): Promise<void> {
   _listeners.forEach(listener => {
     try {
       listener(next, prev);
-      haptics.medium();
+      if (next[CHAT_SLOT_KEY] !== prev[CHAT_SLOT_KEY]) {
+        haptics.medium();
+      }
     } catch (error) {
       log('appState listener error', error, { capture: true });
     }

@@ -216,7 +216,12 @@ export const useSttTranscription = ({
     busyRef.current = true;
     clearRecordingCap();
     try {
-      stream.stop();
+      try {
+        stream.stop();
+      } catch (error) {
+        log('useSttTranscription stop stream', error);
+      }
+
       setRecording(false);
       await releaseRecordingMode();
 

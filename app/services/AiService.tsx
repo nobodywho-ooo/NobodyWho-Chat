@@ -323,6 +323,15 @@ const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
           loadedModelId.current = undefined;
           await destroyInstance(stale);
           await sleep(TEARDOWN_SETTLE_MS);
+
+          // Freeing the old engine takes a teardown plus a settle, which is
+          // long enough for a dispose to land in the middle of it. Re-checked
+          // here so that dispose's NotLoaded is the last word: announcing
+          // Loading past it would leave the slot claiming a load that the
+          // superseded exit below then abandons without ever clearing.
+          if (generationAtCall !== generation.current) {
+            return;
+          }
         }
 
         setState(s => ({ ...s, ...slotPatch(stateKey, AiModelState.Loading) }));
@@ -336,6 +345,15 @@ const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
           // so settling here delays its loader until our buffers are freed.
           await destroyInstance(instance);
           await sleep(TEARDOWN_SETTLE_MS);
+          // Undo the Loading we announced above, or the slot keeps claiming a
+          // load nobody is running. Unconditional despite a newer load possibly
+          // waiting: it is chained behind us on nativeLoadRef, so its own
+          // Loading is published after this and wins.
+          setState(s => ({
+            ...s,
+            ...slotPatch(stateKey, AiModelState.NotLoaded),
+            ...specRef.current.cleared,
+          }));
           return;
         }
 

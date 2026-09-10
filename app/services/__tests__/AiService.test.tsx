@@ -80,6 +80,21 @@ const ttsModel = buildModel(9, {
   ],
 });
 
+// A second TTS model, for the tests that swap one engine for another.
+const otherTtsModel = buildModel(10, {
+  pipeline: ModelPipeline.textToSpeech,
+  family: 'Supertonic',
+  parts: [
+    {
+      url: 'https://example.com/onnx/vocoder.onnx',
+      fileName: 'onnx/vocoder.onnx',
+      type: 'tts-file',
+      path: '/models/10/onnx/vocoder.onnx',
+      sizeGB: 0.1,
+    },
+  ],
+});
+
 const vadModel = buildModel(12, {
   pipeline: ModelPipeline.voiceActivityDetection,
   family: 'Silero',
@@ -750,20 +765,6 @@ test('a load for a different model replaces the one already in the slot', async 
   const second = { synthesize: jest.fn(), destroy: jest.fn() };
   mockTtsLoad.mockResolvedValueOnce(first).mockResolvedValueOnce(second);
 
-  const otherTtsModel = buildModel(10, {
-    pipeline: ModelPipeline.textToSpeech,
-    family: 'Supertonic',
-    parts: [
-      {
-        url: 'https://example.com/onnx/vocoder.onnx',
-        fileName: 'onnx/vocoder.onnx',
-        type: 'tts-file',
-        path: '/models/10/onnx/vocoder.onnx',
-        sizeGB: 0.1,
-      },
-    ],
-  });
-
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   // Two loads for different models race without an intervening dispose, so both
@@ -783,6 +784,44 @@ test('a load for a different model replaces the one already in the slot', async 
   expect(first.destroy).toHaveBeenCalledTimes(1);
   expect(result.current.tts.current).toBe(second);
   expect(result.current.ttsState).toBe(AiModelState.Ready);
+});
+
+test('a dispose during a replacement teardown leaves the slot unloaded, not loading', async () => {
+  const first = { synthesize: jest.fn(), destroy: jest.fn() };
+  const second = { synthesize: jest.fn(), destroy: jest.fn() };
+  mockTtsLoad.mockResolvedValueOnce(first).mockResolvedValueOnce(second);
+
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  await act(async () => {
+    await result.current.createTts({ model: ttsModel });
+  });
+  expect(result.current.ttsState).toBe(AiModelState.Ready);
+
+  // Swapping in another model frees the old engine first — a destroy plus a
+  // settle delay — which is a wide enough window for a dispose to land in the
+  // middle of it (the voice model deselected, or the app backgrounded).
+  await act(async () => {
+    const swapping = result.current.createTts({ model: otherTtsModel });
+    await flushMicrotasks();
+    expect(first.destroy).toHaveBeenCalledTimes(1);
+
+    result.current.disposeTts();
+    await swapping;
+  });
+
+  // The abandoned swap must not announce a load it is about to walk away from.
+  // Left at Loading, the slot claims a load nobody is running: nothing
+  // re-triggers one, and the voice assistant reports the model as still coming
+  // up for the rest of the session.
+  expect(result.current.ttsState).toBe(AiModelState.NotLoaded);
+  expect(result.current.tts.current).toBeUndefined();
+  expect(result.current.ttsArchitecture).toBeUndefined();
+
+  // It also stops before loading the replacement at all, rather than allocating
+  // an engine only to destroy it again.
+  expect(mockTtsLoad).toHaveBeenCalledTimes(1);
+  expect(second.destroy).not.toHaveBeenCalled();
 });
 
 test('a repeat load of the model already in the slot is reused, not reloaded', async () => {

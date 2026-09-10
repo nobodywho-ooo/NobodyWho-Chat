@@ -62,6 +62,75 @@ test('releasing twice does not drop another holder', async () => {
   expect(mockSetAudioMode).toHaveBeenCalledTimes(2);
 });
 
+// Lets every queued microtask run, so "no switch has been issued yet" is a
+// real observation rather than one made before the queue drained.
+const settleQueue = () => new Promise<void>(resolve => setImmediate(resolve));
+
+test('queues switches so a release cannot overtake a later acquire', async () => {
+  const release = await acquireRecordingMode();
+  mockSetAudioMode.mockClear();
+
+  // Hold the release's switch to playback open. Counting holders never ordered
+  // these native calls, so this switch used to be able to resolve *after* the
+  // acquire below — leaving the session playback-only with a stream open, which
+  // stays open but delivers no buffers.
+  let settleRelease: () => void = () => {};
+  mockSetAudioMode.mockImplementationOnce(
+    () =>
+      new Promise<void>(resolve => {
+        settleRelease = () => resolve();
+      }),
+  );
+
+  const releasing = release();
+  await settleQueue();
+  expect(mockSetAudioMode).toHaveBeenCalledTimes(1);
+  expect(mockSetAudioMode).toHaveBeenLastCalledWith({
+    allowsRecording: false,
+    playsInSilentMode: true,
+  });
+
+  // A new holder arrives while that switch is still in flight. Its own switch
+  // has to wait rather than race the one already running.
+  const acquiring = acquireRecordingMode();
+  await settleQueue();
+  expect(mockSetAudioMode).toHaveBeenCalledTimes(1);
+
+  settleRelease();
+  await releasing;
+  const secondRelease = await acquiring;
+
+  // Only now does record mode go out, and it is the last word — so the
+  // acquire's caller can open its stream on a session that is really on it.
+  expect(mockSetAudioMode).toHaveBeenCalledTimes(2);
+  expect(mockSetAudioMode).toHaveBeenLastCalledWith({
+    allowsRecording: true,
+    playsInSilentMode: true,
+  });
+
+  await secondRelease();
+});
+
+test('re-issues a switch after one fails rather than assuming it landed', async () => {
+  const release = await acquireRecordingMode();
+  mockSetAudioMode.mockClear();
+
+  // A rejected switch may have applied partially or not at all, so the mode the
+  // session is on is unknown from here — the next sync must not skip as
+  // redundant on the strength of what the failed one was asked for.
+  mockSetAudioMode.mockRejectedValueOnce(new Error('session busy'));
+  await release();
+
+  const second = await acquireRecordingMode();
+  expect(mockSetAudioMode).toHaveBeenCalledTimes(2);
+  expect(mockSetAudioMode).toHaveBeenLastCalledWith({
+    allowsRecording: true,
+    playsInSilentMode: true,
+  });
+
+  await second();
+});
+
 test('keeps playsInSilentMode set in both directions', async () => {
   const release = await acquireRecordingMode();
   await release();

@@ -102,11 +102,14 @@ test('pressing a model puts it in use, clear the conversation', () => {
     modelIdInUse: 2,
     conversationIdInUse: undefined,
   });
-  // The screen stays open so another slot can be picked in the same visit.
+  // Selecting a model deliberately does NOT dismiss the screen: each slot has
+  // its own model, so the user picks a chat model and a voice in one visit and
+  // leaves by the header's back button. Pinned here because re-adding the
+  // goBack() this screen used to call would silently undo that.
   expect(mockGoBack).not.toHaveBeenCalled();
 });
 
-test('pressing the already-in-use model does nothing (no switch, no dismiss)', () => {
+test('pressing the already-in-use model does not switch', () => {
   const models = [buildModel(1), buildModel(2)];
   mockUseModels.mockReturnValue({ models });
   mockUseAppState.mockReturnValue({ modelIdInUse: 2 });
@@ -115,7 +118,6 @@ test('pressing the already-in-use model does nothing (no switch, no dismiss)', (
   fireEvent.press(screen.UNSAFE_getByProps({ model: models[1] }), models[1]);
 
   expect(mockSetAppState).not.toHaveBeenCalled();
-  expect(mockGoBack).not.toHaveBeenCalled();
 });
 
 test('delete mode: confirming the alert deletes the in-use model and clears it from use', async () => {
@@ -212,8 +214,6 @@ test('pressing a TTS model selects it as the voice — never as the chat model',
   );
   // Selecting a voice doesn't touch the running chat.
   expect(mockStopGeneration).not.toHaveBeenCalled();
-  // Nor does it dismiss the screen — a chat model can be picked next.
-  expect(mockGoBack).not.toHaveBeenCalled();
 });
 
 test('the checkmark reflects each pipeline against its own in-use slot', () => {
