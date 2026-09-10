@@ -328,7 +328,21 @@ export const useVoiceConversation = ({
   // --- Transcribe → answer → synthesize → play -------------------------------
   const runTurn = useCallback(async () => {
     const turn = turnRef.current;
-    const isCurrent = () => turn === turnRef.current;
+    // A closed screen abandons the turn as surely as a cancel does, so the stage
+    // is part of every phase boundary below rather than only of stopAll. The
+    // token alone would miss a turn handed over *after* the screen closed —
+    // stopAndAnswer awaits the audio session before calling us, and a turn that
+    // starts after stopAll bumped the token captures the new one and reads as
+    // current for the rest of its life.
+    const isCurrent = () => turn === turnRef.current && activeRef.current;
+
+    // Nothing below can be called off once it has started: nobodywho gives
+    // transcription and synthesis no cancel, only generation. So an abandoned
+    // turn must not start them in the first place.
+    if (!isCurrent()) {
+      setStatus('idle');
+      return;
+    }
 
     const { samples, sampleRate } = drainCapture();
 
@@ -492,7 +506,7 @@ export const useVoiceConversation = ({
     let wav: Uint8Array | undefined;
     try {
       wav = await borrowTts(engine =>
-        synthesizeSpeech(engine, ttsArchitecture, spoken),
+        synthesizeSpeech(engine, ttsArchitecture, spoken, isCurrent),
       );
     } catch (error) {
       log('useVoiceConversation synthesize', error, { capture: true });

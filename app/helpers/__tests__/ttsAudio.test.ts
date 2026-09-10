@@ -110,7 +110,9 @@ describe('concatWavs', () => {
     expect(tag(out, 0)).toBe('RIFF');
     expect(tag(out, 8)).toBe('WAVE');
     // The combined data chunk is the two payloads back to back.
-    expect(Array.from(readDataChunk(out))).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(Array.from(readDataChunk(out))).toEqual([
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+    ]);
 
     // The RIFF chunk size matches the actual byte length.
     const view = new DataView(out.buffer);
@@ -120,7 +122,10 @@ describe('concatWavs', () => {
   test('throws when the first WAV has no fmt chunk', () => {
     const bogus = Uint8Array.from([
       ...'RIFF'.split('').map(c => c.charCodeAt(0)),
-      0, 0, 0, 0,
+      0,
+      0,
+      0,
+      0,
       ...'WAVE'.split('').map(c => c.charCodeAt(0)),
     ]);
     expect(() => concatWavs([bogus, buildWav([1])])).toThrow(/fmt/);
@@ -137,7 +142,7 @@ describe('synthesizeChunked', () => {
     const wav = await synthesizeChunked(synth, 'Hello world.');
 
     expect(synthesize).toHaveBeenCalledTimes(1);
-    expect(Array.from(readDataChunk(wav))).toEqual([42]);
+    expect(Array.from(readDataChunk(wav!))).toEqual([42]);
   });
 
   test('halves a chunk that trips the phoneme cap and stitches the result', async () => {
@@ -155,7 +160,39 @@ describe('synthesizeChunked', () => {
     const wav = await synthesizeChunked(synth, 'aa bb cc dd');
 
     // Four words -> four successful single-word syntheses, concatenated.
-    expect(Array.from(readDataChunk(wav))).toEqual([2, 2, 2, 2]);
+    expect(Array.from(readDataChunk(wav!))).toEqual([2, 2, 2, 2]);
+  });
+
+  test('stops between chunks once the caller has moved on', async () => {
+    // Long enough to split into several chunks, so there is a boundary to stop
+    // at: the caller (voice screen closing, read-aloud stopped) polls false
+    // after the first one.
+    const text = `${'aa '.repeat(MAX_CHUNK_CHARS)}. ${'bb '.repeat(MAX_CHUNK_CHARS)}.`;
+    const synthesize = jest.fn(async () => buildWav([7]));
+    const synth = { synthesize } as unknown as TextToSpeech;
+
+    let live = true;
+    const wav = await synthesizeChunked(synth, text, () => {
+      const wasLive = live;
+      live = false;
+      return wasLive;
+    });
+
+    // The chunk already in flight finishes — there is no cancelling a native
+    // synthesize — but the rest is never started, and half an answer is not
+    // handed back to be spoken.
+    expect(synthesize).toHaveBeenCalledTimes(1);
+    expect(wav).toBeUndefined();
+  });
+
+  test('never starts synthesizing for a caller that has already moved on', async () => {
+    const synthesize = jest.fn(async () => buildWav([7]));
+    const synth = { synthesize } as unknown as TextToSpeech;
+
+    const wav = await synthesizeChunked(synth, 'Hello world.', () => false);
+
+    expect(synthesize).not.toHaveBeenCalled();
+    expect(wav).toBeUndefined();
   });
 
   test('rethrows a non-phoneme error without retrying', async () => {

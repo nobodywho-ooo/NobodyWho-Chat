@@ -64,7 +64,12 @@ export const useTtsPlayback = (): TtsPlayback => {
       setLoadingIndex(index);
       try {
         const wav = await borrowTts(engine =>
-          synthesizeSpeech(engine, ttsArchitecture, text),
+          synthesizeSpeech(
+            engine,
+            ttsArchitecture,
+            text,
+            () => generation === generationRef.current,
+          ),
         );
 
         if (wav === undefined || generation !== generationRef.current) {

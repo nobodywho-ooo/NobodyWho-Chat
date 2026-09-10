@@ -163,13 +163,23 @@ export const concatWavs = (wavs: Uint8Array[]): Uint8Array => {
 
 // Split `text`, synthesize each chunk (retrying over the phoneme cap), and
 // stitch the results into a single WAV ready to write and play.
+//
+// `shouldContinue` is polled before each chunk: a long answer is seconds of
+// work per chunk, and a caller that has moved on (the voice screen closed, the
+// read-aloud button stopped) would only throw the result away. A false answer
+// abandons the rest and resolves to undefined rather than half an answer, which
+// is not worth speaking.
 export const synthesizeChunked = async (
   synth: TextToSpeech,
   text: string,
-): Promise<Uint8Array> => {
+  shouldContinue?: () => boolean,
+): Promise<Uint8Array | undefined> => {
   const chunks = splitIntoChunks(text);
   const wavs: Uint8Array[] = [];
   for (const chunk of chunks) {
+    if (shouldContinue?.() === false) {
+      return undefined;
+    }
     wavs.push(...(await synthesizeChunk(synth, chunk)));
   }
   return concatWavs(wavs);
@@ -183,10 +193,16 @@ export const synthesizeChunked = async (
 // engine (see ttsEngine.ts), not of the caller — deciding it at each call site
 // is how the read-aloud button and the voice assistant end up disagreeing about
 // long answers.
+//
+// `shouldContinue`, when given, cuts a client-chunked synthesis short between
+// chunks (see synthesizeChunked). An engine that chunks internally is one
+// native call with no way to interrupt it — nobodywho's TextToSpeech has no
+// cancel — so there the predicate can only be ignored.
 export const synthesizeSpeech = async (
   engine: TextToSpeech,
   architecture: TextToSpeechArchitecture | undefined,
   text: string,
+  shouldContinue?: () => boolean,
 ): Promise<Uint8Array | undefined> => {
   const spoken = text.trim();
 
@@ -195,6 +211,6 @@ export const synthesizeSpeech = async (
   }
 
   return ttsEngineForArchitecture(architecture)?.needsClientChunking
-    ? synthesizeChunked(engine, spoken)
+    ? synthesizeChunked(engine, spoken, shouldContinue)
     : engine.synthesize(spoken);
 };
