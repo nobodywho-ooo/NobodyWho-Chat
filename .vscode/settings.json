@@ -2,5 +2,15 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.enablePromptUseWorkspaceTsdk": true,
   "eslint.validate": ["typescript", "typescriptreact"],
-  "eslint.lintTask.enable": true
+  "eslint.lintTask.enable": true,
+  // Format on save with Prettier, reading .prettierrc.js. The formatter has to
+  // be named per language: several installed extensions can format TS/JS, and
+  // when none is pinned VS Code can't choose and silently formats nothing.
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+  "[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" }
 }

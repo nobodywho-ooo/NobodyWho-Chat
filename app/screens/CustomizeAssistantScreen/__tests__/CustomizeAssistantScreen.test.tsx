@@ -1,8 +1,11 @@
 import React from 'react';
 import { Switch } from 'react-native';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render, fireEvent, act } from '@testing-library/react-native';
 
 import { getAppState, setAppState, DEFAULT_ASSISTANT_CONFIG } from 'database';
+import { buildModel } from 'jest/factories/model';
+import { mockUseSlotModel } from 'jest/mock/hooks';
+import { ModelPipeline } from 'types';
 
 import {
   CustomizeAssistantScreen,
@@ -11,15 +14,25 @@ import {
 } from '../CustomizeAssistantScreen';
 
 beforeEach(async () => {
+  // The screen mounts the voice preference blocks; with no model in either
+  // slot they stay hidden (the default mock already returns undefined).
+  mockUseSlotModel.mockReturnValue(undefined);
   await setAppState({ assistantConfig: undefined });
 });
 
-test('renders correctly CustomizeAssistantScreen', () => {
-  expect(render(<CustomizeAssistantScreen />).toJSON()).toMatchSnapshot();
+const renderScreen = async () => {
+  const screen = render(<CustomizeAssistantScreen />);
+  await act(async () => {});
+  return screen;
+};
+
+test('renders correctly CustomizeAssistantScreen', async () => {
+  const screen = await renderScreen();
+  expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('toggling thinking persists the config', () => {
-  const screen = render(<CustomizeAssistantScreen />);
+test('toggling thinking persists the config', async () => {
+  const screen = await renderScreen();
 
   const [thinkingSwitch] = screen.UNSAFE_getAllByType(Switch);
   fireEvent(thinkingSwitch, 'valueChange', false);
@@ -30,8 +43,8 @@ test('toggling thinking persists the config', () => {
   });
 });
 
-test('toggling tool calling persists the config', () => {
-  const screen = render(<CustomizeAssistantScreen />);
+test('toggling tool calling persists the config', async () => {
+  const screen = await renderScreen();
 
   const [, toolCallingSwitch] = screen.UNSAFE_getAllByType(Switch);
   fireEvent(toolCallingSwitch, 'valueChange', false);
@@ -42,8 +55,8 @@ test('toggling tool calling persists the config', () => {
   });
 });
 
-test('the stepper changes max tokens by 500 and clamps at the minimum', () => {
-  const screen = render(<CustomizeAssistantScreen />);
+test('the stepper changes max tokens by 500 and clamps at the minimum', async () => {
+  const screen = await renderScreen();
 
   // The default is already at the maximum, so increasing is a no-op.
   const plus = screen.getByLabelText(
@@ -69,8 +82,8 @@ test('the stepper changes max tokens by 500 and clamps at the minimum', () => {
   expect(getAppState().assistantConfig?.contextSize).toBe(TOKENS_MIN);
 });
 
-test('editing the system prompt persists on end editing', () => {
-  const screen = render(<CustomizeAssistantScreen />);
+test('editing the system prompt persists on end editing', async () => {
+  const screen = await renderScreen();
 
   const input = screen.getByPlaceholderText(
     'screens.customizeAssistant.systemPromptPlaceholder',
@@ -86,8 +99,8 @@ test('editing the system prompt persists on end editing', () => {
   });
 });
 
-test('pending changes are persisted when the screen closes', () => {
-  const screen = render(<CustomizeAssistantScreen />);
+test('pending changes are persisted when the screen closes', async () => {
+  const screen = await renderScreen();
 
   const input = screen.getByPlaceholderText(
     'screens.customizeAssistant.systemPromptPlaceholder',
@@ -99,5 +112,44 @@ test('pending changes are persisted when the screen closes', () => {
   expect(getAppState().assistantConfig).toEqual({
     ...DEFAULT_ASSISTANT_CONFIG,
     systemPrompt: 'You are a pirate.',
+  });
+});
+
+// --- Speech to text --------------------------------------------------------
+// The language is a load-time option, so picking one here has to reach the
+// stored config: that is what the navigator reloads the engine from.
+describe('with a transcription model in use', () => {
+  beforeEach(() => {
+    // Whisper matches no TTS engine, so only the speech-to-text block renders.
+    mockUseSlotModel.mockReturnValue(
+      buildModel(11, {
+        pipeline: ModelPipeline.speechToText,
+        family: 'Whisper',
+      }),
+    );
+  });
+
+  test('picking a language persists its Whisper code', async () => {
+    const screen = await renderScreen();
+
+    fireEvent.press(screen.getByLabelText('Danish'));
+
+    expect(getAppState().assistantConfig).toEqual({
+      ...DEFAULT_ASSISTANT_CONFIG,
+      sttLanguage: 'da',
+    });
+  });
+
+  test('picking Automatic clears the language back to auto-detection', async () => {
+    await setAppState({
+      assistantConfig: { ...DEFAULT_ASSISTANT_CONFIG, sttLanguage: 'da' },
+    });
+    const screen = await renderScreen();
+
+    fireEvent.press(
+      screen.getByLabelText('screens.customizeAssistant.sttLanguageAutomatic'),
+    );
+
+    expect(getAppState().assistantConfig?.sttLanguage).toBeUndefined();
   });
 });

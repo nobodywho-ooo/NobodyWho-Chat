@@ -6,7 +6,11 @@ import { getDocumentPathsByModelId } from 'repositories';
 import { deleteMessageDocuments } from 'helpers';
 import { mockSetAppState } from 'jest/mock/database';
 import { mockUseAppState, mockUseModels } from 'jest/mock/hooks';
-import { mockGoBack, mockSetOptions, mockUseRoute } from 'jest/mock/node-modules';
+import {
+  mockGoBack,
+  mockSetOptions,
+  mockUseRoute,
+} from 'jest/mock/node-modules';
 import { buildModel } from 'jest/factories/model';
 
 import { DownloadedModelsScreen } from '../DownloadedModelsScreen';
@@ -16,9 +20,22 @@ import { DownloadedModelsScreen } from '../DownloadedModelsScreen';
 // disposes the TTS engine before its files go away.
 const mockStopGeneration = jest.fn();
 const mockDisposeTts = jest.fn();
+const mockDisposeStt = jest.fn();
+const mockDisposeVad = jest.fn();
+const mockDisposeChat = jest.fn();
 const mockChat = { current: { stopGeneration: mockStopGeneration } };
+// Only the native-backed engine handles are stubbed; the selection helpers
+// (which slot a pipeline takes, what a delete has to release) are real logic
+// this screen is the main caller of, so they stay unmocked.
 jest.mock('services', () => ({
-  useAiService: () => ({ chat: mockChat, disposeTts: mockDisposeTts }),
+  ...jest.requireActual('services'),
+  useAiService: () => ({
+    chat: mockChat,
+    disposeChat: mockDisposeChat,
+    disposeTts: mockDisposeTts,
+    disposeStt: mockDisposeStt,
+    disposeVad: mockDisposeVad,
+  }),
 }));
 
 // Deleting a model also clears any message attachments that belonged to its
@@ -51,6 +68,7 @@ beforeEach(() => {
   mockSetOptions.mockClear();
   mockStopGeneration.mockClear();
   mockDisposeTts.mockClear();
+  mockDisposeChat.mockClear();
   mockGoBack.mockClear();
   mockChat.current = { stopGeneration: mockStopGeneration };
   mockGetDocumentPaths.mockReset().mockResolvedValue([]);
@@ -84,11 +102,14 @@ test('pressing a model puts it in use, clear the conversation', () => {
     modelIdInUse: 2,
     conversationIdInUse: undefined,
   });
-  // The screen dismisses itself so the user returns to the chat.
-  expect(mockGoBack).toHaveBeenCalled();
+  // Selecting a model deliberately does NOT dismiss the screen: each slot has
+  // its own model, so the user picks a chat model and a voice in one visit and
+  // leaves by the header's back button. Pinned here because re-adding the
+  // goBack() this screen used to call would silently undo that.
+  expect(mockGoBack).not.toHaveBeenCalled();
 });
 
-test('pressing the already-in-use model does nothing (no switch, no dismiss)', () => {
+test('pressing the already-in-use model does not switch', () => {
   const models = [buildModel(1), buildModel(2)];
   mockUseModels.mockReturnValue({ models });
   mockUseAppState.mockReturnValue({ modelIdInUse: 2 });
@@ -97,7 +118,6 @@ test('pressing the already-in-use model does nothing (no switch, no dismiss)', (
   fireEvent.press(screen.UNSAFE_getByProps({ model: models[1] }), models[1]);
 
   expect(mockSetAppState).not.toHaveBeenCalled();
-  expect(mockGoBack).not.toHaveBeenCalled();
 });
 
 test('delete mode: confirming the alert deletes the in-use model and clears it from use', async () => {
@@ -136,6 +156,9 @@ test('delete mode: confirming the alert deletes the in-use model and clears it f
     }),
   );
 
+  // Deleting the in-use chat model tears down its loaded chat.
+  expect(mockDisposeChat).toHaveBeenCalled();
+
   // The deleted model's attachment files are looked up and cleaned up too, so
   // they don't outlive the conversations that referenced them.
   expect(mockGetDocumentPaths).toHaveBeenCalledWith(2);
@@ -164,7 +187,9 @@ test('without canDelete (drawer entry) deletion is unavailable', () => {
   // No delete toggle is rendered in the header (no trash icon).
   const headerRight = mockSetOptions.mock.calls.at(-1)![0].headerRight;
   const header = render(headerRight());
-  expect(header.UNSAFE_queryAllByProps({ iosIconName: 'trash' })).toHaveLength(0);
+  expect(header.UNSAFE_queryAllByProps({ iosIconName: 'trash' })).toHaveLength(
+    0,
+  );
 
   alertSpy.mockRestore();
 });
@@ -181,13 +206,14 @@ test('pressing a TTS model selects it as the voice — never as the chat model',
   const screen = render(<DownloadedModelsScreen />);
   fireEvent.press(screen.UNSAFE_getByProps({ model: models[1] }), models[1]);
 
-  expect(mockSetAppState).toHaveBeenCalledWith({ ttsModelIdInUse: 7 });
+  expect(mockSetAppState).toHaveBeenCalledWith(
+    expect.objectContaining({ ttsModelIdInUse: 7 }),
+  );
   expect(mockSetAppState).not.toHaveBeenCalledWith(
     expect.objectContaining({ modelIdInUse: 7 }),
   );
   // Selecting a voice doesn't touch the running chat.
   expect(mockStopGeneration).not.toHaveBeenCalled();
-  expect(mockGoBack).toHaveBeenCalled();
 });
 
 test('the checkmark reflects each pipeline against its own in-use slot', () => {
@@ -201,12 +227,12 @@ test('the checkmark reflects each pipeline against its own in-use slot', () => {
   mockUseAppState.mockReturnValue({ modelIdInUse: 1, ttsModelIdInUse: 7 });
 
   const screen = render(<DownloadedModelsScreen />);
-  expect(
-    screen.UNSAFE_getByProps({ model: models[0] }).props.isSelected,
-  ).toBe(true);
-  expect(
-    screen.UNSAFE_getByProps({ model: models[1] }).props.isSelected,
-  ).toBe(true);
+  expect(screen.UNSAFE_getByProps({ model: models[0] }).props.isSelected).toBe(
+    true,
+  );
+  expect(screen.UNSAFE_getByProps({ model: models[1] }).props.isSelected).toBe(
+    true,
+  );
 });
 
 test('deleting the selected voice model disposes the engine and clears the slot', async () => {
@@ -232,7 +258,9 @@ test('deleting the selected voice model disposes the engine and clears the slot'
   });
 
   await waitFor(() =>
-    expect(mockSetAppState).toHaveBeenCalledWith({ ttsModelIdInUse: undefined }),
+    expect(mockSetAppState).toHaveBeenCalledWith({
+      ttsModelIdInUse: undefined,
+    }),
   );
   // The engine teardown is enqueued before the files are removed.
   expect(mockDisposeTts).toHaveBeenCalled();

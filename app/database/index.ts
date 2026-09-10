@@ -1,4 +1,9 @@
-import { getDatabase, closeDatabase, initDatabase } from './database';
+import {
+  getDatabase,
+  closeDatabase,
+  initDatabase,
+  resetDatabase,
+} from './database';
 import { getStorage } from './storage';
 import {
   hydrateAppState,
@@ -14,6 +19,7 @@ export {
   getDatabase,
   closeDatabase,
   initDatabase,
+  resetDatabase,
   getStorage,
   hydrateAppState,
   getAppState,

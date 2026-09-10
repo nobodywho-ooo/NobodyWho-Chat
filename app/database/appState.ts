@@ -1,7 +1,10 @@
 import { haptics, log } from 'helpers';
+import { MODEL_SLOTS, ModelSlot, modelSlotSpec } from 'types';
 import { getStorage } from './storage';
 
 const APP_STATE = 'appState';
+
+const CHAT_SLOT_KEY = modelSlotSpec(ModelSlot.chat).appStateKey;
 
 export type AssistantConfig = {
   temperature: number;
@@ -9,6 +12,9 @@ export type AssistantConfig = {
   thinking: boolean;
   toolCalling: boolean;
   contextSize: number;
+  ttsVoice?: string;
+  ttsLanguage?: string;
+  sttLanguage?: string;
 };
 
 export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
@@ -22,6 +28,8 @@ export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
 export type AppState = {
   modelIdInUse?: number;
   ttsModelIdInUse?: number;
+  sttModelIdInUse?: number;
+  vadModelIdInUse?: number;
   conversationIdInUse?: number;
   assistantConfig?: AssistantConfig;
 };
@@ -36,12 +44,16 @@ function sameAssistantConfig(
   if (a === undefined || b === undefined) {
     return false;
   }
+
   return (
     a.temperature === b.temperature &&
     a.systemPrompt === b.systemPrompt &&
     a.thinking === b.thinking &&
     a.toolCalling === b.toolCalling &&
-    a.contextSize === b.contextSize
+    a.contextSize === b.contextSize &&
+    a.ttsVoice === b.ttsVoice &&
+    a.ttsLanguage === b.ttsLanguage &&
+    a.sttLanguage === b.sttLanguage
   );
 }
 
@@ -77,13 +89,13 @@ export function subscribeAppState(listener: AppStateListener): () => void {
   };
 }
 
-
 export async function setAppState(patch: Partial<AppState>): Promise<void> {
   const prev = _state;
   const next = { ...prev, ...patch };
   if (
-    next.modelIdInUse === prev.modelIdInUse &&
-    next.ttsModelIdInUse === prev.ttsModelIdInUse &&
+    MODEL_SLOTS.every(
+      ({ appStateKey }) => next[appStateKey] === prev[appStateKey],
+    ) &&
     next.conversationIdInUse === prev.conversationIdInUse &&
     sameAssistantConfig(next.assistantConfig, prev.assistantConfig)
   ) {
@@ -95,9 +107,11 @@ export async function setAppState(patch: Partial<AppState>): Promise<void> {
   _listeners.forEach(listener => {
     try {
       listener(next, prev);
-      haptics.medium();
+      if (next[CHAT_SLOT_KEY] !== prev[CHAT_SLOT_KEY]) {
+        haptics.medium();
+      }
     } catch (error) {
-      log('appState listener error', error, { capture: true});
+      log('appState listener error', error, { capture: true });
     }
   });
 }

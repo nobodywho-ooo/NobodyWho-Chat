@@ -182,7 +182,11 @@ test('with an image attached, only the image option is listed', () => {
     .map(node => node.props.icon.iosIconName);
   expect(iconNames).toContain('photo');
   expect(iconNames).not.toContain('camera');
-  expect(iconNames).not.toContain('waveform');
+  // The audio attach option is gone. It shares the waveform icon with the
+  // always-present voice-assistant button, so assert on its label, not the icon.
+  expect(
+    screen.queryByLabelText('components.inputBar.attachAudio'),
+  ).toBeNull();
   // The remaining option offers to unselect the attachment.
   expect(screen.getByText('components.inputBar.unselect')).toBeTruthy();
 });

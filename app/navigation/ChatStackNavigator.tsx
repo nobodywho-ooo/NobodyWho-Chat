@@ -1,5 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, {
+  RefObject,
   createContext,
   useCallback,
   useContext,
@@ -9,11 +9,25 @@ import React, {
   useState,
 } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { AppState, AppStateStatus, Pressable } from 'react-native';
+import { BlurTargetView } from 'expo-blur';
+import {
+  AppState,
+  AppStateStatus,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SamplerPresets } from 'react-native-nobodywho';
-import { DisplayMessage, isChatPipeline, isTtsPipeline } from 'types';
 import {
+  DisplayMessage,
+  Model,
+  ModelSlot,
+  isChatPipeline,
+  modelSlotSpec,
+} from 'types';
+import {
+  AssistantConfig,
   DEFAULT_ASSISTANT_CONFIG,
   getAppState,
   setAppState,
@@ -27,13 +41,13 @@ import {
 import {
   log,
   isIOS,
-  isExternalPickerActive,
+  isForegroundHeld,
   toChatHistory,
   toModelHistory,
 } from 'helpers';
-import { PlatformIcon } from 'components';
+import { PlatformIcon, Toast } from 'components';
 import { useAppState, useModels, useStyled } from 'hooks';
-import { useAiService } from 'services';
+import { subscribeConversationSync, useAiService } from 'services';
 import {
   ChatScreen,
   CustomizeAssistantScreen,
@@ -57,6 +71,8 @@ enum SessionStatus {
 }
 
 type LoadedConversationId = number | undefined;
+
+const emptyHistory = (): DisplayMessage[] => [];
 
 interface ChatRootContextValue {
   modelsLoading: boolean;
@@ -87,9 +103,14 @@ const ChatRootContext =
 
 const ChatRootScreen = () => {
   const ctx = useContext(ChatRootContext);
+  const [blurTargetNode, setBlurTargetNode] = useState<View | null>(null);
+  const blurTarget = useMemo(
+    () => ({ current: blurTargetNode }),
+    [blurTargetNode],
+  );
 
   if (ctx.modelsLoading) {
-    return <LoadingScreen message={ctx.loadingMessage} />;
+    return <LoadingScreen />;
   }
 
   if (!ctx.hasModels) {
@@ -99,21 +120,33 @@ const ChatRootScreen = () => {
     return <NoModelSelectedScreen />;
   }
 
-  switch (ctx.status) {
-    case SessionStatus.Ready:
-      return (
+  if (ctx.status === SessionStatus.Error) {
+    return <ErrorScreen onRetry={ctx.onRetry} />;
+  }
+
+  const loading = ctx.status === SessionStatus.Loading;
+
+  return (
+    <View style={styles.chatRoot}>
+      <BlurTargetView
+        ref={setBlurTargetNode as unknown as RefObject<View | null>}
+        style={styles.chatRoot}
+      >
         <ChatScreen
           conversationId={ctx.conversationId}
           messages={ctx.chatHistory}
           onConversationCreated={ctx.onConversationCreated}
+          disabled={loading}
         />
-      );
-    case SessionStatus.Error:
-      return <ErrorScreen onRetry={ctx.onRetry} />;
-    case SessionStatus.Loading:
-    default:
-      return <LoadingScreen message={ctx.loadingMessage} />;
-  }
+      </BlurTargetView>
+      <Toast
+        visible={loading}
+        message={ctx.loadingMessage}
+        loading
+        blurTarget={blurTarget}
+      />
+    </View>
+  );
 };
 
 export const ChatStackNavigator = () => {
@@ -121,11 +154,21 @@ export const ChatStackNavigator = () => {
   const { colors } = useStyled();
   const { models, loading: modelsLoading } = useModels();
   const { modelIdInUse } = useAppState();
-  const { chat, createChat, disposeChat, createTts, disposeTts } =
-    useAiService();
+  const {
+    chat,
+    createChat,
+    disposeChat,
+    createTts,
+    disposeTts,
+    createStt,
+    disposeStt,
+    createVad,
+    disposeVad,
+  } = useAiService();
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
-  const [chatHistory, setChatHistory] = useState<DisplayMessage[]>([]);
+  const [chatHistory, setChatHistory] =
+    useState<DisplayMessage[]>(emptyHistory);
   const [loadedConversationId, setLoadedConversationId] =
     useState<LoadedConversationId>(undefined);
   const selfCreatedConversationIdRef = useRef<LoadedConversationId>(undefined);
@@ -176,7 +219,7 @@ export const ChatStackNavigator = () => {
     const { modelIdInUse: modelId, conversationIdInUse } = getAppState();
     if (conversationIdInUse === undefined) {
       await chat.current.setChatHistory([]);
-      setChatHistory([]);
+      setChatHistory(emptyHistory());
       setLoadedConversationId(undefined);
       return;
     }
@@ -257,27 +300,131 @@ export const ChatStackNavigator = () => {
   // The screen already displays that conversation, so we record it as loaded
   // (making the subscription below skip a reload) and persist it for the drawer
   // and next launch — without touching chatHistory, so the screen never remounts.
+  //
+  // Recording it as loaded is what lets a later New Chat or delete land: those
+  // only clear conversationIdInUse, and the reload that follows hands the screen
+  // an empty history for no conversation. Left pointing at none, this state
+  // would make that reload indistinguishable from where we already were, and the
+  // screen would keep showing the conversation it created.
   const handleConversationCreated = useCallback((id: number) => {
     selfCreatedConversationIdRef.current = id;
+    setLoadedConversationId(id);
     setAppState({ conversationIdInUse: id });
   }, []);
 
-  const loadTtsIfSelected = useCallback(async () => {
-    // TODO: uncomment when TTS is ready
-    return;
+  // Reload only the displayed history for a conversation, without touching the
+  // native chat. Used for a voice turn: VoiceAssistantScreen drives our shared
+  // chat, so its context is already current — only the on-screen messages need
+  // to catch up.
+  const reloadDisplayHistory = useCallback(async (id: number) => {
+    try {
+      const messages = await getMessagesByConversationId(id);
+      setChatHistory(toChatHistory(messages));
+      setLoadedConversationId(id);
+    } catch (error) {
+      log('ChatStackNavigator voice history reload', error, { capture: true });
+    }
+  }, []);
 
-    // const { ttsModelIdInUse } = getAppState();
-    // if (ttsModelIdInUse === undefined) {
-    //   return;
-    // }
-    // const model = await getModelById(ttsModelIdInUse);
-    // if (model === undefined || !isTtsPipeline(model.pipeline)) {
-    //   return;
-    // }
-    // await createTts({ model }).catch(error =>
-    //   log('ChatStackNavigator tts load', error, { capture: true }),
-    // );
-    // }, [createTts]);
+  // A voice turn persisted messages to `id`. If it started a brand-new
+  // conversation, adopt it as in-use (for the drawer and next launch), marking
+  // it self-created so the app-state subscription below skips its native reset —
+  // the shared chat already holds the turn. Either way, refresh the display.
+  const handleConversationSynced = useCallback(
+    (id: number) => {
+      if (getAppState().conversationIdInUse !== id) {
+        selfCreatedConversationIdRef.current = id;
+        setAppState({ conversationIdInUse: id });
+      }
+      reloadDisplayHistory(id);
+    },
+    [reloadDisplayHistory],
+  );
+
+  useEffect(
+    () => subscribeConversationSync(handleConversationSynced),
+    [handleConversationSynced],
+  );
+
+  // The engines that load straight from their own app-state slot, as opposed to
+  // the chat model, whose load goes through startSession (history, system
+  // prompt, sampler). Driving them from one table keeps the three lifecycle
+  // sites — first load, app-state change, and background/foreground — from
+  // drifting apart, which is how a slot ends up loading on launch but never
+  // coming back after a resume.
+  const auxSlots = useMemo(
+    () => [
+      {
+        slot: ModelSlot.tts,
+        dispose: disposeTts,
+        create: (model: Model) => {
+          // Voice/language were resolved and stored when this model was
+          // selected (see resolveTtsPrefs at the selection sites), each in the
+          // vocabulary its engine accepts. Read them straight from the config —
+          // undefined lets the engine keep its own default for that option.
+          const { assistantConfig = DEFAULT_ASSISTANT_CONFIG } = getAppState();
+          return createTts({
+            model,
+            voice: assistantConfig.ttsVoice,
+            language: assistantConfig.ttsLanguage,
+          });
+        },
+        // Voice and language live in assistantConfig but are load-time options,
+        // so an edit to either has to reload the engine even though the
+        // selected model is unchanged.
+        configChanged: (next: AssistantConfig, prev: AssistantConfig) =>
+          next.ttsVoice !== prev.ttsVoice ||
+          next.ttsLanguage !== prev.ttsLanguage,
+      },
+      {
+        slot: ModelSlot.stt,
+        dispose: disposeStt,
+        create: (model: Model) => {
+          // Undefined is the automatic setting: the engine then detects the
+          // spoken language on every transcription, which a fixed code skips.
+          const { assistantConfig = DEFAULT_ASSISTANT_CONFIG } = getAppState();
+          return createStt({ model, language: assistantConfig.sttLanguage });
+        },
+        // Like the TTS options above, the language is fixed at load time, so
+        // changing it has to reload the engine on an unchanged model.
+        configChanged: (next: AssistantConfig, prev: AssistantConfig) =>
+          next.sttLanguage !== prev.sttLanguage,
+      },
+      {
+        slot: ModelSlot.vad,
+        dispose: disposeVad,
+        create: (model: Model) => createVad({ model }),
+      },
+    ],
+    [createTts, createStt, createVad, disposeTts, disposeStt, disposeVad],
+  );
+
+  type AuxSlot = (typeof auxSlots)[number];
+
+  // Called fire-and-forget from all three lifecycle sites, so every await inside
+  // has to be guarded: the model lookup opens the database lazily and can reject
+  // when the handle is closed or the tables are being rebuilt, which is exactly
+  // what a foreground transition racing a reset looks like.
+  const loadAuxSlot = useCallback(async (entry: AuxSlot) => {
+    const { appStateKey, accepts } = modelSlotSpec(entry.slot);
+
+    try {
+      const modelId = getAppState()[appStateKey];
+
+      if (modelId === undefined) {
+        return;
+      }
+
+      const model = await getModelById(modelId);
+
+      if (model === undefined || !accepts(model.pipeline)) {
+        return;
+      }
+
+      await entry.create(model);
+    } catch (error) {
+      log(`ChatStackNavigator ${entry.slot} load`, error, { capture: true });
+    }
   }, []);
 
   // --- Lifecycle triggers ----------------------------------------------------
@@ -288,24 +435,49 @@ export const ChatStackNavigator = () => {
     if (getAppState().modelIdInUse !== undefined) {
       startSession();
     }
-    loadTtsIfSelected();
-  }, [startSession, loadTtsIfSelected]);
+    auxSlots.forEach(loadAuxSlot);
+  }, [startSession, auxSlots, loadAuxSlot]);
 
   // React to app-state changes: a model or assistant-config change tears down
   // the chat and rebuilds from scratch; a conversation-only change reloads just the history.
   useEffect(() => {
     return subscribeAppState((next, prev) => {
-      if (next.ttsModelIdInUse !== prev.ttsModelIdInUse) {
-        disposeTts();
-        if (next.ttsModelIdInUse !== undefined) {
-          loadTtsIfSelected();
-        }
-      }
+      // Compare effective configs, the way mountModelAndCreateChat resolves
+      // them. assistantConfig stays undefined until something writes it, so
+      // comparing raw values would read the first write — selecting a voice
+      // model stamps the defaults in — as a change to every field.
+      const nextConfig = next.assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
+      const prevConfig = prev.assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
 
-      if (
-        next.modelIdInUse !== prev.modelIdInUse ||
-        next.assistantConfig !== prev.assistantConfig
-      ) {
+      auxSlots.forEach(entry => {
+        const { appStateKey } = modelSlotSpec(entry.slot);
+        const selected = next[appStateKey];
+        const modelChanged = selected !== prev[appStateKey];
+        const optionsChanged =
+          selected !== undefined &&
+          (entry.configChanged?.(nextConfig, prevConfig) ?? false);
+
+        if (!modelChanged && !optionsChanged) {
+          return;
+        }
+
+        entry.dispose();
+
+        if (selected !== undefined) {
+          loadAuxSlot(entry);
+        }
+      });
+
+      // Only model changes or chat-affecting config rebuild the chat — a
+      // voice/language edit must not tear down the loaded chat model.
+      const chatConfigChanged =
+        nextConfig.temperature !== prevConfig.temperature ||
+        nextConfig.systemPrompt !== prevConfig.systemPrompt ||
+        nextConfig.thinking !== prevConfig.thinking ||
+        nextConfig.toolCalling !== prevConfig.toolCalling ||
+        nextConfig.contextSize !== prevConfig.contextSize;
+
+      if (next.modelIdInUse !== prev.modelIdInUse || chatConfigChanged) {
         disposeChat();
         if (next.modelIdInUse !== undefined) {
           startSession();
@@ -321,48 +493,55 @@ export const ChatStackNavigator = () => {
         refreshChatHistory();
       }
     });
-  }, [
-    disposeChat,
-    disposeTts,
-    startSession,
-    refreshChatHistory,
-    loadTtsIfSelected,
-  ]);
+  }, [disposeChat, startSession, refreshChatHistory, auxSlots, loadAuxSlot]);
 
-  const unloadedForBackground = useRef(false);
-  const ttsUnloadedForBackground = useRef(false);
+  // Which slots this component released on the way to the background, so the
+  // resume reloads exactly those. A set keyed by slot rather than one boolean
+  // ref per engine: a new slot then needs no matching ref, and a forgotten one
+  // can't leave an engine unloaded after a resume with nothing to notice it.
+  const unloadedForBackground = useRef(new Set<ModelSlot>());
+
   useEffect(() => {
     const subscription = AppState.addEventListener(
       'change',
       (nextState: AppStateStatus) => {
         if (nextState === 'background') {
-          if (isExternalPickerActive()) {
+          if (isForegroundHeld()) {
             return;
           }
+
           if (getAppState().modelIdInUse !== undefined) {
             disposeChat();
-            unloadedForBackground.current = true;
+            unloadedForBackground.current.add(ModelSlot.chat);
           }
-          if (getAppState().ttsModelIdInUse !== undefined) {
-            disposeTts();
-            ttsUnloadedForBackground.current = true;
-          }
+
+          auxSlots.forEach(entry => {
+            const { appStateKey } = modelSlotSpec(entry.slot);
+
+            if (getAppState()[appStateKey] !== undefined) {
+              entry.dispose();
+              unloadedForBackground.current.add(entry.slot);
+            }
+          });
         } else if (nextState === 'active') {
-          if (unloadedForBackground.current) {
-            unloadedForBackground.current = false;
+          const unloaded = unloadedForBackground.current;
+
+          if (unloaded.delete(ModelSlot.chat)) {
             if (getAppState().modelIdInUse !== undefined) {
               startSession();
             }
           }
-          if (ttsUnloadedForBackground.current) {
-            ttsUnloadedForBackground.current = false;
-            loadTtsIfSelected();
-          }
+
+          auxSlots.forEach(entry => {
+            if (unloaded.delete(entry.slot)) {
+              loadAuxSlot(entry);
+            }
+          });
         }
       },
     );
     return () => subscription.remove();
-  }, [disposeChat, disposeTts, startSession, loadTtsIfSelected]);
+  }, [disposeChat, startSession, auxSlots, loadAuxSlot]);
 
   const inUseModelName = models.find(m => m.id === modelIdInUse)?.name;
   const loadingMessage = inUseModelName
@@ -488,3 +667,9 @@ export const ChatStackNavigator = () => {
     </ChatRootContext.Provider>
   );
 };
+
+const styles = StyleSheet.create({
+  chatRoot: {
+    flex: 1,
+  },
+});

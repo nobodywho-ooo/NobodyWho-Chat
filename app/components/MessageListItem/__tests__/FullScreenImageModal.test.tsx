@@ -2,7 +2,7 @@ import React from 'react';
 import { Image, Modal } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 
-import { FullScreenImageModal } from '../FullScreenImageModal';
+import { FullScreenImageModal } from '../UserMessage/FullScreenImageModal';
 
 test('shows the image when a uri is provided', () => {
   const { UNSAFE_getByType } = render(
@@ -10,7 +10,9 @@ test('shows the image when a uri is provided', () => {
   );
 
   expect(UNSAFE_getByType(Modal).props.visible).toBe(true);
-  expect(UNSAFE_getByType(Image).props.source).toEqual({ uri: 'file:///img.jpg' });
+  expect(UNSAFE_getByType(Image).props.source).toEqual({
+    uri: 'file:///img.jpg',
+  });
 });
 
 test('calls onClose when the close button is pressed', () => {

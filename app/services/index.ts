@@ -1,3 +1,4 @@
 export * from './AiService';
 export * from './tools';
-export * from './ttsEngine';
+export * from './conversationSync';
+export * from './modelSelection';

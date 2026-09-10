@@ -2,6 +2,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 
+import { holdForeground } from './foregroundHold';
 import { copyToMessageDocuments } from './messageDocuments';
 
 const MAX_IMAGE_DIMENSION = 1024;
@@ -40,23 +41,8 @@ const prepareImage = async (
   return saved.uri;
 };
 
-let externalPickerDepth = 0;
-
-// A system picker we launched (photo library / document picker) pauses
-// our Activity and surfaces as 'background', but the model must stay alive
-export const isExternalPickerActive = (): boolean => externalPickerDepth > 0;
-
-const withExternalPicker = async <T>(run: () => Promise<T>): Promise<T> => {
-  externalPickerDepth += 1;
-  try {
-    return await run();
-  } finally {
-    externalPickerDepth = Math.max(0, externalPickerDepth - 1);
-  }
-};
-
 export const pickImageToMessageDocuments = async (): Promise<string | null> =>
-  withExternalPicker(async () => {
+  holdForeground(async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 1,
@@ -81,7 +67,7 @@ export const captureImageToMessageDocuments = async (capture: {
 };
 
 export const pickAudioToMessageDocuments = async (): Promise<string | null> =>
-  withExternalPicker(async () => {
+  holdForeground(async () => {
     const result = await DocumentPicker.getDocumentAsync({
       type: ['audio/mpeg', 'audio/wav', 'audio/x-wav'],
       copyToCacheDirectory: true,

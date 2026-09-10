@@ -1,0 +1,21 @@
+diff --git a/node_modules/expo-audio/ios/AudioModule.swift b/node_modules/expo-audio/ios/AudioModule.swift
+index d265606..733ec16 100644
+--- a/node_modules/expo-audio/ios/AudioModule.swift
++++ b/node_modules/expo-audio/ios/AudioModule.swift
+@@ -814,11 +814,11 @@ public class AudioModule: Module {
+       sessionOptions = categoryOptions
+     }
+ 
+-    if sessionOptions.isEmpty {
+-      try session.setCategory(category, mode: .default)
+-    } else {
+-      try session.setCategory(category, options: sessionOptions)
+-    }
++    // Always pass an explicit mode. AudioStream.start() puts the shared session
++    // in .measurement (raw, unprocessed capture) and setCategory(_:options:)
++    // leaves the mode alone, so playback after any recording stayed in
++    // .measurement and came out barely audible.
++    try session.setCategory(category, mode: .default, options: sessionOptions)
+   }
+ 
+   private func activateSession() throws {

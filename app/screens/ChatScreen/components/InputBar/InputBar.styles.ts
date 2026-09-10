@@ -1,7 +1,7 @@
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { Spacings } from 'style';
 
-export const INPUT_BAR_HEIGHT = 42;
+export const INPUT_BAR_HEIGHT = 94;
 const TOP_GRADIENT_HEIGHT = 10;
 
 export const styles = StyleSheet.create({
@@ -23,25 +23,38 @@ export const styles = StyleSheet.create({
     height: TOP_GRADIENT_HEIGHT,
   },
   inputBarContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
     borderRadius: 16,
     paddingHorizontal: Spacings.lg,
     paddingVertical: Spacings.sm,
-    minHeight: INPUT_BAR_HEIGHT,
+  },
+  inputBarContainerBottomPart: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: Spacings.sm,
+  },
+  inputBarContainerBottomPartLeft: {
+    flexDirection: 'row',
   },
   textInput: {
     flex: 1,
-    paddingTop: Platform.select({
-      ios: -Spacings.xs,
-      android: 8,
-    }),
+    paddingTop: Spacings.sm,
+    paddingVertical: Spacings.lg,
     fontSize: 16,
     maxHeight: 100,
     paddingRight: 6,
   },
   attachContainer: {
     marginRight: Spacings.sm
+  },
+  transcriptionContainer: {
+    marginRight: Spacings.sm,
+  },
+  transcriptionLoaderContainer: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   attachMainContainer: {
     flexDirection: 'row',

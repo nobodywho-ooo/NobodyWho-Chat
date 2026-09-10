@@ -1,14 +1,26 @@
-import React, { useEffect, useRef } from 'react';
-import { View, TextInput, StyleProp, ViewStyle } from 'react-native';
+import React, { useCallback, useEffect, useRef } from 'react';
+import {
+  ActivityIndicator,
+  Keyboard,
+  View,
+  type LayoutChangeEvent,
+  TextInput,
+  StyleProp,
+  ViewStyle,
+  Pressable,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
 import { useStyled } from 'hooks';
 import { useTheme } from 'context';
 import { IconButton, IconButtonIconProps, Text } from 'components';
+import { useDrawerCoordination } from 'navigation';
+import { haptics } from 'helpers';
 import { Theme } from 'types';
 
 import { styles, INPUT_BAR_HEIGHT } from './InputBar.styles';
-import { haptics } from 'helpers';
+
+const KEYBOARD_HIDE_TIMEOUT = 400;
 
 const gradientColors: Record<Theme, string[]> = {
   light: ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.9)'],
@@ -20,6 +32,7 @@ export type ImageAttachSource = 'photo' | 'camera';
 interface InputBarProps {
   value: string;
   isStreaming: boolean;
+  disabled?: boolean;
   attachExpanded: boolean;
   onAttachExpandedChange: (expanded: boolean) => void;
   onChangeText: (text: string) => void;
@@ -28,7 +41,7 @@ interface InputBarProps {
   onFocus?: () => void;
   onBlur?: () => void;
   style?: StyleProp<ViewStyle>;
-  topAccessory?: React.ReactNode;
+  messageStarters?: React.ReactNode;
   showImageAttach?: boolean;
   showAudioAttach?: boolean;
   imageSource?: ImageAttachSource;
@@ -36,11 +49,17 @@ interface InputBarProps {
   onAttachImage?: () => void;
   onAttachCamera?: () => void;
   onAttachAudio?: () => void;
+  showDictation?: boolean;
+  isRecording?: boolean;
+  isTranscribing?: boolean;
+  onStartDictation?: () => void;
+  onStopDictation?: () => void;
 }
 
 export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   value,
   isStreaming,
+  disabled = false,
   attachExpanded,
   onAttachExpandedChange,
   onChangeText,
@@ -49,7 +68,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   onFocus,
   onBlur,
   style,
-  topAccessory,
+  messageStarters,
   showImageAttach = false,
   showAudioAttach = false,
   imageSource,
@@ -57,10 +76,16 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   onAttachImage,
   onAttachCamera,
   onAttachAudio,
+  showDictation = false,
+  isRecording = false,
+  isTranscribing = false,
+  onStartDictation,
+  onStopDictation,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const theme = useTheme();
+  const { open: openDrawer, reportSwipeExclusion } = useDrawerCoordination();
 
   const canAttach = showImageAttach || showAudioAttach;
   const showToggle = canAttach && !isStreaming;
@@ -96,6 +121,49 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
     onAttachExpandedChange(!attachExpanded);
   };
 
+  // Undoes the wait below (drops the listener and the timeout) — set only while
+  // an open is pending on the keyboard, so it doubles as "is one pending".
+  const cancelPendingOpen = useRef<(() => void) | undefined>(undefined);
+
+  const openVoiceAssistant = () => {
+    if (!Keyboard.isVisible()) {
+      openDrawer('right');
+      return;
+    }
+
+    cancelPendingOpen.current?.();
+
+    const open = () => {
+      cancelPendingOpen.current?.();
+      openDrawer('right');
+    };
+
+    const subscription = Keyboard.addListener('keyboardDidHide', open);
+    const timeout = setTimeout(open, KEYBOARD_HIDE_TIMEOUT);
+
+    cancelPendingOpen.current = () => {
+      cancelPendingOpen.current = undefined;
+      subscription.remove();
+      clearTimeout(timeout);
+    };
+
+    Keyboard.dismiss();
+  };
+
+  useEffect(() => () => cancelPendingOpen.current?.(), []);
+
+  // This container holds everything the bar can grow to — the message starters,
+  // the attach options, the field itself — and it's pinned to the bottom of the
+  // screen (the keyboard inset arrives as its padding), so its height is exactly
+  // the strip the drawer swipes have to ignore. See DrawerCoordination.
+  const handleLayout = useCallback(
+    ({ nativeEvent }: LayoutChangeEvent) =>
+      reportSwipeExclusion(nativeEvent.layout.height),
+    [reportSwipeExclusion],
+  );
+
+  useEffect(() => () => reportSwipeExclusion(0), [reportSwipeExclusion]);
+
   const handleSend = () => {
     if (attachExpanded) {
       onAttachExpandedChange(false);
@@ -108,6 +176,40 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
     borderColor: colors.border,
     borderWidth: 1,
   };
+
+  const attachButtonIcon: IconButtonIconProps = expanded
+    ? { iosIconName: 'xmark', androidIconName: 'close' }
+    : hasAttachment
+      ? {
+          iosIconName: 'paperclip',
+          androidIconName: 'attach_file',
+        }
+      : { iosIconName: 'plus', androidIconName: 'add' };
+  const transcribingIconButton: IconButtonIconProps = isRecording
+    ? {
+        iosIconName: 'stop.fill',
+        androidIconName: 'stop',
+      }
+    : { iosIconName: 'mic', androidIconName: 'mic' };
+  const voiceAssistantIconButton: IconButtonIconProps = {
+    iosIconName: 'waveform',
+    androidIconName: 'graphic_eq',
+  };
+
+  const attachButtonAccessibilityLabel = t(
+    expanded ? 'components.inputBar.closeAttach' : 'components.inputBar.attach',
+  );
+  const transcribingIconAccessibilityLabel = t(
+    isRecording
+      ? 'components.inputBar.stopDictation'
+      : 'components.inputBar.dictate',
+  );
+  const transcribingIconColor = isRecording
+    ? colors.dangerContent
+    : colors.onSurface;
+  const transcribingIconBackgroundColor = isRecording
+    ? colors.dangerSurface
+    : colors.surfaceContainer;
 
   const renderAttachButton = ({
     icon,
@@ -124,6 +226,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
       <IconButton
         icon={icon}
         onPress={onPress}
+        disabled={disabled}
         size={20}
         color={active ? colors.ctaContentPrimary : colors.onSurface}
         backgroundColor={
@@ -151,6 +254,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
       <IconButton
         icon={icon}
         onPress={onPress}
+        disabled={disabled}
         size={20}
         color={active ? colors.ctaContentPrimary : colors.onSurface}
         backgroundColor={
@@ -158,18 +262,20 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
         }
         accessibilityLabel={accessibilityLabel}
       />
-      <Text
-        variant="body2"
-        style={[styles.attachLabel, { color: colors.onSurface }]}
-      >
-        {label}
-      </Text>
+      <Pressable onPress={onPress}>
+        <Text
+          variant="body2"
+          style={[styles.attachLabel, { color: colors.onSurface }]}
+        >
+          {label}
+        </Text>
+      </Pressable>
     </View>
   );
 
   return (
-    <View style={styles.mainContainer}>
-      {topAccessory}
+    <View style={styles.mainContainer} onLayout={handleLayout}>
+      {messageStarters}
       {expanded && (
         <View style={[styles.attachOptionsList, extraStyle]}>
           {showPhoto &&
@@ -227,42 +333,72 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
           style={styles.topGradient}
         />
         <View style={[styles.inputBarContainer, extraStyle]}>
-          <View style={styles.attachMainContainer}>
-            {showToggle &&
-              renderAttachButton({
-                icon: expanded
-                  ? { iosIconName: 'xmark', androidIconName: 'close' }
-                  : hasAttachment
-                    ? {
-                        iosIconName: 'paperclip',
-                        androidIconName: 'attach_file',
-                      }
-                    : { iosIconName: 'plus', androidIconName: 'add' },
-                active: !expanded && hasAttachment,
-                onPress: toggleAttach,
-                accessibilityLabel: t(
-                  expanded
-                    ? 'components.inputBar.closeAttach'
-                    : 'components.inputBar.attach',
-                ),
-              })}
-          </View>
           <TextInput
             style={[styles.textInput, { color: colors.onSurface }]}
             placeholder={t('components.inputBar.placeholder')}
             placeholderTextColor="#999"
             value={value}
+            editable={!disabled}
             onChangeText={onChangeText}
             onFocus={onFocus}
             onBlur={onBlur}
             multiline
           />
-          <InputBarAction
-            isStreaming={isStreaming}
-            value={value}
-            onSend={handleSend}
-            onStop={onStop}
-          />
+          <View style={styles.inputBarContainerBottomPart}>
+            <View style={styles.inputBarContainerBottomPartLeft}>
+              <View style={styles.attachMainContainer}>
+                {showToggle &&
+                  renderAttachButton({
+                    icon: attachButtonIcon,
+                    active: !expanded && hasAttachment,
+                    onPress: toggleAttach,
+                    accessibilityLabel: attachButtonAccessibilityLabel,
+                  })}
+              </View>
+
+              {showDictation &&
+                (!isStreaming || isRecording || isTranscribing) && (
+                  <View style={styles.transcriptionContainer}>
+                    {isTranscribing ? (
+                      <View style={styles.transcriptionLoaderContainer}>
+                        <ActivityIndicator
+                          size="small"
+                          color={colors.onSurface}
+                        />
+                      </View>
+                    ) : (
+                      <IconButton
+                        icon={transcribingIconButton}
+                        onPress={
+                          isRecording ? onStopDictation : onStartDictation
+                        }
+                        disabled={disabled}
+                        size={20}
+                        color={transcribingIconColor}
+                        backgroundColor={transcribingIconBackgroundColor}
+                        accessibilityLabel={transcribingIconAccessibilityLabel}
+                      />
+                    )}
+                  </View>
+                )}
+              <IconButton
+                icon={voiceAssistantIconButton}
+                onPress={openVoiceAssistant}
+                disabled={disabled}
+                size={20}
+                color={colors.onSurface}
+                backgroundColor={colors.surfaceContainer}
+                accessibilityLabel={t('components.inputBar.voiceAssistant')}
+              />
+            </View>
+            <InputBarAction
+              isStreaming={isStreaming}
+              disabled={disabled}
+              value={value}
+              onSend={handleSend}
+              onStop={onStop}
+            />
+          </View>
         </View>
       </View>
     </View>
@@ -273,6 +409,7 @@ InputBar.height = INPUT_BAR_HEIGHT;
 
 interface InputBarActionProps {
   isStreaming: boolean;
+  disabled: boolean;
   value: string;
   onSend: () => void;
   onStop: () => void;
@@ -280,6 +417,7 @@ interface InputBarActionProps {
 
 const InputBarAction: React.FC<InputBarActionProps> = ({
   isStreaming,
+  disabled,
   value,
   onSend,
   onStop,
@@ -311,6 +449,7 @@ const InputBarAction: React.FC<InputBarActionProps> = ({
     <IconButton
       icon={icon}
       onPress={isStreaming ? onStop : onSend}
+      disabled={disabled}
       size={20}
       color={color}
       backgroundColor={backgroundColor}

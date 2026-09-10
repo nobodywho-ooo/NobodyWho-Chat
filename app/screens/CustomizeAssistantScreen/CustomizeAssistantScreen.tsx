@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, Switch, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   AssistantConfig,
@@ -8,7 +9,14 @@ import {
   setAppState,
 } from 'database';
 import { useStyled } from 'hooks';
-import { IconButton, Slider, Text } from 'components';
+import {
+  IconButton,
+  Slider,
+  SpeechToTextPreferences,
+  Text,
+  TextToSpeechPreferences,
+} from 'components';
+import { Spacings } from 'style';
 
 import styles from './CustomizeAssistantScreen.styles';
 
@@ -22,6 +30,7 @@ export const TOKENS_STEP = 500;
 export const CustomizeAssistantScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
+  const insets = useSafeAreaInsets();
 
   const [config, setConfig] = useState<AssistantConfig>(
     () => getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG,
@@ -42,6 +51,7 @@ export const CustomizeAssistantScreen: React.FC = () => {
   // Closing the screen mid-edit must not lose the pending changes
   const configRef = useRef(config);
   configRef.current = config;
+
   useEffect(
     () => () => {
       setAppState({ assistantConfig: configRef.current });
@@ -58,6 +68,10 @@ export const CustomizeAssistantScreen: React.FC = () => {
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingBottom: insets.bottom + Spacings.xl },
+      ]}
       keyboardShouldPersistTaps="handled"
     >
       <Text bold>{t('screens.customizeAssistant.temperature')}</Text>
@@ -184,6 +198,17 @@ export const CustomizeAssistantScreen: React.FC = () => {
           />
         </View>
       </View>
+
+      <TextToSpeechPreferences
+        voice={config.ttsVoice}
+        language={config.ttsLanguage}
+        onChange={savePreference}
+      />
+
+      <SpeechToTextPreferences
+        language={config.sttLanguage}
+        onChange={savePreference}
+      />
     </ScrollView>
   );
 };

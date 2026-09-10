@@ -1,6 +1,7 @@
 import { Directory, File, FileMode, Paths } from 'expo-file-system';
 
 import { toPlainPath } from './fileUri';
+import { log } from './log';
 
 // Downloaded model files live under <documents>/models/<modelId> — one
 // directory per model. Parts reconstruct the model's own file tree inside it
@@ -46,6 +47,60 @@ const modelDirectory = (modelId: number): Directory =>
 // (e.g. Tts.load's `source`) receive.
 export const modelDirectoryPath = (modelId: number): string =>
   toPlainPath(modelDirectory(modelId).uri);
+
+// A TTS model ships the voices (and, for pocket-tts, the language bundles) it
+// actually supports as files inside its own folder, so the picker enumerates
+// them from disk rather than from a hardcoded list — see the per-engine
+// vocabularies in ttsEngine.ts. Names are returned numerically-aware sorted so
+// "M10" follows "M2", and [] when the folder is absent (model not downloaded,
+// or one that ships no such folder) or unreadable.
+const listEntries = (
+  modelId: number,
+  dirName: string,
+  pick: (entry: File | Directory) => string | undefined,
+): string[] => {
+  const dir = new Directory(modelDirectory(modelId), dirName);
+
+  if (!dir.exists) {
+    return [];
+  }
+
+  try {
+    return dir
+      .list()
+      .map(pick)
+      .filter((name): name is string => name !== undefined)
+      .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  } catch (error) {
+    log('listModelFolder', error, { capture: true });
+    return [];
+  }
+};
+
+// The basenames of the files in `<model dir>/<dirName>` carrying `extension`,
+// with the extension stripped: Supertonic's voice_styles/M1.json → "M1",
+// Kokoro's voices/bf_emma.safetensors → "bf_emma". Anything else in the folder
+// (READMEs, licences) is skipped.
+export const listModelFiles = (
+  modelId: number,
+  dirName: string,
+  extension: string,
+): string[] =>
+  listEntries(modelId, dirName, entry =>
+    entry instanceof File && entry.name.toLowerCase().endsWith(extension)
+      ? entry.name.slice(0, -extension.length)
+      : undefined,
+  );
+
+// The subdirectory names in `<model dir>/<dirName>` — pocket-tts ships one
+// per language bundle (onnx/english_2026-04, onnx/german, …).
+export const listModelSubdirectories = (
+  modelId: number,
+  dirName: string,
+): string[] =>
+  listEntries(modelId, dirName, entry =>
+    entry instanceof Directory ? entry.name : undefined,
+  );
 
 // Part fileNames come from the remote catalogue, which is parsed without
 // validation — refuse anything that could resolve outside the model directory.
@@ -291,7 +346,8 @@ export const downloadModelPart = async (
         idempotent: true,
         signal,
         headers: { Range: `bytes=${offset}-${end}` },
-        onProgress: ({ bytesWritten }) => onProgress(offset + bytesWritten, total),
+        onProgress: ({ bytesWritten }) =>
+          onProgress(offset + bytesWritten, total),
       });
 
       // The server must honor the range: the chunk should be exactly the window

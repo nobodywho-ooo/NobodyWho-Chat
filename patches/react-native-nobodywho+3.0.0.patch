@@ -1,0 +1,22 @@
+diff --git a/node_modules/react-native-nobodywho/src/chat.ts b/node_modules/react-native-nobodywho/src/chat.ts
+index a2d9782..58f895f 100644
+--- a/node_modules/react-native-nobodywho/src/chat.ts
++++ b/node_modules/react-native-nobodywho/src/chat.ts
+@@ -147,10 +147,13 @@ export class Chat {
+   /** Tokenize a text message or multimodal prompt and return the token IDs.
+    * Each element is a token ID (number) for text, or null for image/audio embedding slots. */
+   async tokenize(message: string | Prompt): Promise<(number | null)[]> {
+-    if (typeof message === "string") {
+-      return this._inner.tokenize(message);
+-    }
+-    return this._inner.tokenizeWithPrompt(message._parts);
++    const tokens =
++      typeof message === "string"
++        ? await this._inner.tokenize(message)
++        : await this._inner.tokenizeWithPrompt(message._parts!);
++    // uniffi maps the Rust `Option<i32>` to `undefined`, but the documented
++    // contract for an embedding slot is `null` (as in askWithPrompt above).
++    return tokens.map((token) => token ?? null);
+   }
+ 
+   /** Set the system prompt. */

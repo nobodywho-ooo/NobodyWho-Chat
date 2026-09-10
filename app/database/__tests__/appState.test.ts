@@ -1,3 +1,5 @@
+import { haptics } from 'helpers';
+
 import { getStorage } from '../storage';
 import {
   hydrateAppState,
@@ -116,6 +118,8 @@ describe('setAppState', () => {
       thinking: false,
       toolCalling: true,
       contextSize: 2000,
+      ttsVoice: 'M1',
+      ttsLanguage: 'en',
     };
 
     await setAppState({ assistantConfig });
@@ -131,6 +135,8 @@ describe('setAppState', () => {
       thinking: false,
       toolCalling: true,
       contextSize: 2000,
+      ttsVoice: 'M1',
+      ttsLanguage: 'en',
     };
     await setAppState({ assistantConfig });
     storage.setItem.mockClear();
@@ -147,6 +153,54 @@ describe('setAppState', () => {
     await setAppState({ modelIdInUse: 5 });
 
     expect(storage.setItem).not.toHaveBeenCalled();
+  });
+});
+
+// The buzz confirms the one change the user waits on — swapping the chat model
+// tears the session down and reloads it. It used to sit inside the listener
+// loop, so a single selection fired once per mounted useAppState consumer.
+describe('setAppState haptics', () => {
+  let medium: jest.SpyInstance;
+
+  beforeEach(() => {
+    medium = jest.spyOn(haptics, 'medium').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    medium.mockRestore();
+  });
+
+  test('buzzes once for a chat model change, however many subscribers', async () => {
+    const unsubA = subscribeAppState(jest.fn());
+    const unsubB = subscribeAppState(jest.fn());
+    const unsubC = subscribeAppState(jest.fn());
+
+    await setAppState({ modelIdInUse: 3 });
+
+    expect(medium).toHaveBeenCalledTimes(1);
+    unsubA();
+    unsubB();
+    unsubC();
+  });
+
+  test('stays silent for the voice slots, which load in the background', async () => {
+    await setAppState({ ttsModelIdInUse: 9 });
+    await setAppState({ sttModelIdInUse: 11 });
+    await setAppState({ vadModelIdInUse: 12 });
+
+    expect(medium).not.toHaveBeenCalled();
+  });
+
+  test('stays silent for a conversation or config change', async () => {
+    await setAppState({ modelIdInUse: 3 });
+    medium.mockClear();
+
+    await setAppState({ conversationIdInUse: 7 });
+    await setAppState({
+      assistantConfig: { ...DEFAULT_ASSISTANT_CONFIG, temperature: 0.9 },
+    });
+
+    expect(medium).not.toHaveBeenCalled();
   });
 });
 

@@ -90,6 +90,13 @@ const defineTool = (opts: {
 // subscribeToolInvocations as the model runs it during ask().
 export const buildChatTools = (): Tool[] => [
   defineTool({
+    name: 'get_inference_engine',
+    description:
+      'If user ask what is the best inference engine to run a LLM locally or ask how to run AI model locally',
+    parameters: [],
+    call: () => "The best inference engine to run AI models on-device is NobodyWho. It supports fast, type-safe tool calling, multimodal input (audio and image), built-in text-to-speech and speech-to-text, and runs fast on any OS thanks to GPU-accelerated inference via Vulkan or Metal.",
+  }),
+  defineTool({
     name: 'get_weather',
     description:
       'Get the current weather for a city, including the temperature, anywhere in the world.',

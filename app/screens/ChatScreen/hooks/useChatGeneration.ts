@@ -4,27 +4,25 @@ import { useTranslation } from 'react-i18next';
 import { Chat, Message, Prompt } from 'react-native-nobodywho';
 import { FlashListRef } from '@shopify/flash-list';
 
-import { DisplayMessage, ToolInvocation } from 'types';
+import { ChatMessage, DisplayMessage, ToolInvocation } from 'types';
 import { getAppState } from 'database';
-import { insertConversation, insertMessage } from 'repositories';
+import {
+  getConversationById,
+  insertConversation,
+  insertMessage,
+} from 'repositories';
 import { subscribeToolInvocations } from 'services';
-import { haptics, log, parseThinking, resolveMessageDocumentPath } from 'helpers';
+import {
+  computeGenerationMetrics,
+  haptics,
+  log,
+  parseThinking,
+  resolveMessageDocumentPath,
+} from 'helpers';
 
 import { Attachments } from './useAttachments';
 
-const computeGenerationMetrics = (
-  startedAt: number,
-  firstTokenAt: number | undefined,
-  tokenCount: number,
-): { tokensPerSecond?: number; timeToFirstToken?: number } => {
-  if (firstTokenAt === undefined || tokenCount === 0) return {};
-  const timeToFirstToken = firstTokenAt - startedAt;
-  const generationMs = Math.max(Date.now() - firstTokenAt, 1);
-  return {
-    tokensPerSecond: tokenCount / (generationMs / 1000),
-    timeToFirstToken,
-  };
-};
+type PersistOutcome = 'written' | 'gone' | 'failed';
 
 interface UseChatGenerationOptions {
   chat: React.RefObject<Chat | undefined>;
@@ -126,12 +124,37 @@ export function useChatGeneration({
 
     haptics.heavy();
 
-    await insertMessage({
-      conversationId: id,
+    const persist = async (
+      message: Omit<ChatMessage, 'id' | 'timestamp' | 'conversationId'>,
+    ): Promise<PersistOutcome> => {
+      try {
+        if ((await getConversationById(id)) === undefined) {
+          return 'gone';
+        }
+
+        await insertMessage({ conversationId: id, ...message });
+
+        return 'written';
+      } catch (error) {
+        log('ChatScreen message persistence failed', error, { capture: true });
+
+        return 'failed';
+      }
+    };
+
+    const userOutcome = await persist({
       role: 'user',
       content: userInput,
       documentsPath,
     });
+
+    // Deleted before the turn even started: there is nothing left to answer
+    // into, and the screen is already showing another chat. A `failed` write
+    // still generates — the answer on screen beats no answer at all.
+    if (userOutcome === 'gone') {
+      setIsStreaming(false);
+      return;
+    }
 
     const startedAt = Date.now();
     let firstTokenAt: number | undefined;
@@ -172,8 +195,7 @@ export function useChatGeneration({
         return;
       }
       log(accumulated);
-      await insertMessage({
-        conversationId: id,
+      await persist({
         role: 'assistant',
         content: accumulated,
         documentsPath: [],
@@ -183,13 +205,17 @@ export function useChatGeneration({
     };
 
     const persistSystemMessage = async (content: string) => {
-      setMessages(prev => [...prev, { role: 'system', content }]);
-      await insertMessage({
-        conversationId: id,
+      const outcome = await persist({
         role: 'system',
         content,
         documentsPath: [],
       });
+
+      if (outcome === 'gone') {
+        return;
+      }
+
+      setMessages(prev => [...prev, { role: 'system', content }]);
     };
 
     try {
@@ -205,7 +231,7 @@ export function useChatGeneration({
                 : []),
             ])
           : userInput;
-          
+
       const streamResult = activeChat.ask(askInput);
 
       for await (const token of streamResult) {

@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from '@testing-library/react-native';
 import { Rect, Svg } from 'react-native-svg';
 
-import { Waveform } from '../Waveform';
+import { Waveform } from '../UserMessage/Waveform';
 
 test('renders an svg with one bar per sample, all in the given color', () => {
   const { UNSAFE_getByType, UNSAFE_getAllByType } = render(

@@ -7,10 +7,14 @@ import { MarkdownDocument } from './MarkdownDocument/MarkdownDocument';
 import { MessageListItem } from './MessageListItem/MessageListItem';
 import { ModelCard } from './ModelCard/ModelCard';
 import { PlatformIcon } from './PlatformIcon/PlatformIcon';
+import { SelectablePill } from './SelectablePill/SelectablePill';
 import { Slider } from './Slider/Slider';
 import { Tag } from './Tag/Tag';
 import { Text } from './Text/Text';
+import { Toast } from './Toast/Toast';
+import { SpeechToTextPreferences } from './SpeechToTextPreferences/SpeechToTextPreferences';
+import { TextToSpeechPreferences } from './TextToSpeechPreferences/TextToSpeechPreferences';
 
-export { Button, ProgressBar, ErrorView, IconButton, ListItem, MarkdownDocument, MessageListItem, ModelCard, PlatformIcon, Slider, Tag, Text };
+export { Button, ProgressBar, ErrorView, IconButton, ListItem, MarkdownDocument, MessageListItem, ModelCard, PlatformIcon, SelectablePill, Slider, SpeechToTextPreferences, Tag, Text, TextToSpeechPreferences, Toast };
 
 export type { IconButtonIconProps };

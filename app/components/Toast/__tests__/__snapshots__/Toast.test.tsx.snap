@@ -1,0 +1,82 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Toast renders the message when visible 1`] = `
+<View
+  pointerEvents="none"
+  style={
+    [
+      {
+        "alignItems": "center",
+        "left": 0,
+        "position": "absolute",
+        "right": 0,
+        "top": 12,
+      },
+      undefined,
+    ]
+  }
+>
+  <View
+    accessibilityLiveRegion="polite"
+    accessibilityRole="alert"
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 20,
+          "borderWidth": 1,
+          "flexDirection": "row",
+          "gap": 8,
+          "maxWidth": "90%",
+          "overflow": "hidden",
+          "paddingHorizontal": 12,
+          "paddingVertical": 8,
+          "shadowOffset": {
+            "height": 2,
+            "width": 0,
+          },
+        },
+        {
+          "borderColor": "#acacac",
+        },
+        {},
+      ]
+    }
+  >
+    <View
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "opacity": 0.55,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+          {
+            "backgroundColor": "#ebebeb",
+          },
+        ]
+      }
+    />
+    <Text
+      numberOfLines={2}
+      style={
+        [
+          {
+            "flexShrink": 1,
+            "paddingRight": 4,
+          },
+          {
+            "color": "#000000",
+          },
+        ]
+      }
+      variant="body2"
+    >
+      Loading Model 0…
+    </Text>
+  </View>
+</View>
+`;

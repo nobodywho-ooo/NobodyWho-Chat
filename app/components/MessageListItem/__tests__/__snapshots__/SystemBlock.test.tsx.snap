@@ -8,6 +8,7 @@ exports[`matches the snapshot 1`] = `
         "alignSelf": "stretch",
         "borderRadius": 12,
         "borderWidth": 1,
+        "marginVertical": 12,
         "paddingHorizontal": 12,
         "paddingVertical": 8,
         "rowGap": 4,

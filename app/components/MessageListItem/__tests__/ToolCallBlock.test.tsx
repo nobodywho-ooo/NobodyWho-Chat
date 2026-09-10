@@ -1,7 +1,10 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 
-import { ToolCallBlock, formatArguments } from '../ToolCallBlock';
+import {
+  ToolCallBlock,
+  formatArguments,
+} from '../AssistantMessage/ToolCallBlock';
 
 describe('formatArguments', () => {
   test('formats arguments as a one-line summary', () => {

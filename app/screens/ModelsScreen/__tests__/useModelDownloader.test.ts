@@ -23,6 +23,7 @@ jest.mock('repositories', () => ({
 }));
 
 jest.mock('database', () => ({
+  DEFAULT_ASSISTANT_CONFIG: {},
   getAppState: jest.fn(() => ({ modelIdInUse: 1 })),
   setAppState: jest.fn(async () => {}),
 }));
@@ -31,6 +32,9 @@ jest.mock('helpers', () => ({
   downloadModelPart: jest.fn(),
   deleteModelDirectory: jest.fn(),
   log: jest.fn(),
+  // Unit-tested in ttsVoices.test.ts; here we only care that the auto-select
+  // spreads its result into the persisted config.
+  resolveTtsPrefs: jest.fn(() => ({})),
 }));
 
 const mockGetModelDownloads = getModelDownloads as jest.Mock;
@@ -131,7 +135,9 @@ test('a TTS model fills the voice slot — never the chat slot', async () => {
   renderHook(() => useModelDownloader());
 
   await waitFor(() =>
-    expect(mockSetAppState).toHaveBeenCalledWith({ ttsModelIdInUse: 104 }),
+    expect(mockSetAppState).toHaveBeenCalledWith(
+      expect.objectContaining({ ttsModelIdInUse: 104 }),
+    ),
   );
   expect(mockSetAppState).not.toHaveBeenCalledWith(
     expect.objectContaining({ modelIdInUse: 104 }),

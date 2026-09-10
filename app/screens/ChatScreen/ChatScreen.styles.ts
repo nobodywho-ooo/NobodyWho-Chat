@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { Layout, Spacings } from 'style';
+import { CONTAINER_PADDING_HORIZONTAL, Layout, Spacings } from 'style';
 
 export default StyleSheet.create({
   container: {
@@ -25,6 +25,11 @@ export default StyleSheet.create({
   },
   blurTargetContainer: {
     flex: 1,
+    marginHorizontal: -CONTAINER_PADDING_HORIZONTAL,
+  },
+  blurTargetContent: {
+    flex: 1,
+    paddingHorizontal: CONTAINER_PADDING_HORIZONTAL,
   },
   headerGradient: {
     position: 'absolute',
@@ -38,5 +43,8 @@ export default StyleSheet.create({
   },
   listContent: {
     paddingBottom: Spacings.md,
+  },
+  emptyArea: {
+    flex: 1,
   },
 });

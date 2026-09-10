@@ -1,69 +1,24 @@
 import React, { useCallback } from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
+import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
-import { getFamilyIcon } from 'helpers';
-import { Model, ModelPipeline, pipelineLabel } from 'types';
+import {
+  getFamilyIcon,
+  getPipelineIcon,
+  modelSizeLabel,
+  parameterCountLabel,
+} from 'helpers';
+import { Model, pipelineLabel } from 'types';
+
 import { Text, fontSizes } from '../Text/Text';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
 import { Tag } from '../Tag/Tag';
 
 import styles from './ModelCard.styles';
-import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
 
 const HIGH_CPU_USAGE_SIZE_GB = 2;
-
-const pipelineIcon: Record<
-  ModelPipeline,
-  {
-    iosIconName: SFSymbolProps['name'];
-    androidIconName: MaterialSymbolProps['name'];
-  }
-> = {
-  [ModelPipeline.textGeneration]: {
-    iosIconName: 'text.bubble',
-    androidIconName: 'chat',
-  },
-  [ModelPipeline.imageToImage]: {
-    iosIconName: 'photo',
-    androidIconName: 'image',
-  },
-  [ModelPipeline.imageTextToText]: {
-    iosIconName: 'photo.on.rectangle',
-    androidIconName: 'photo_library',
-  },
-  [ModelPipeline.audioTextToText]: {
-    iosIconName: 'waveform',
-    androidIconName: 'graphic_eq',
-  },
-  [ModelPipeline.imageAudioTextToText]: {
-    iosIconName: 'square.grid.2x2',
-    androidIconName: 'dashboard',
-  },
-  [ModelPipeline.featureExtraction]: {
-    iosIconName: 'magnifyingglass',
-    androidIconName: 'search',
-  },
-  [ModelPipeline.textRanking]: {
-    iosIconName: 'list.number',
-    androidIconName: 'format_list_numbered',
-  },
-  [ModelPipeline.textToSpeech]: {
-    iosIconName: 'speaker.wave.2',
-    androidIconName: 'text_to_speech',
-  },
-  // TODO: update icons
-  [ModelPipeline.speechToText]: {
-    iosIconName: 'speaker.wave.2',
-    androidIconName: 'text_to_speech',
-  },
-  // TODO: update icons
-  [ModelPipeline.automaticSpeechRecognition]: {
-    iosIconName: 'speaker.wave.2',
-    androidIconName: 'text_to_speech',
-  },
-};
 
 interface ModelCardProps {
   style?: StyleProp<ViewStyle>;
@@ -97,9 +52,9 @@ export const ModelCard: React.FC<ModelCardProps> = ({
     languages,
   } = model;
   const isDownloading = downloadProgress !== undefined;
-
   const FamilyIcon = getFamilyIcon(family);
   const showDownloadIcon = !isDownloaded && !isSelected && !deleteMode;
+  const icon = getPipelineIcon(pipeline);
 
   const handlePress = useCallback(() => {
     onPress?.(model);
@@ -112,10 +67,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
     ? 'downloading'
     : 'download';
 
-  const parameterCountLabel =
-    parameterCountBillions >= 1
-      ? `(${parameterCountBillions}B)`
-      : `(${Math.round(parameterCountBillions * 1000)}M)`;
+  const parameterLabel = parameterCountLabel(parameterCountBillions);
 
   return (
     <Pressable
@@ -144,18 +96,20 @@ export const ModelCard: React.FC<ModelCardProps> = ({
             >
               {name}
             </Text>
-            <Text
-              variant="body1"
-              bold
-              style={{ color: colors.onSurfaceVariant }}
-            >
-              {parameterCountLabel}
-            </Text>
+            {parameterLabel && (
+              <Text
+                variant="body1"
+                bold
+                style={{ color: colors.onSurfaceVariant }}
+              >
+                {`(${parameterLabel})`}
+              </Text>
+            )}
           </View>
           <View style={styles.pipelineContainer}>
             <PlatformIcon
-              iosIconName={pipelineIcon[pipeline].iosIconName}
-              androidIconName={pipelineIcon[pipeline].androidIconName}
+              iosIconName={icon.iosIconName}
+              androidIconName={icon.androidIconName}
               size={fontSizes.caption}
               color={colors.onSurface}
             />
@@ -180,7 +134,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
               <Tag
                 iosIconName="internaldrive"
                 androidIconName="hard_drive"
-                label={`${sizeGB} GB`}
+                label={modelSizeLabel(sizeGB)}
               />
               {languages.length > 0 && (
                 <Tag

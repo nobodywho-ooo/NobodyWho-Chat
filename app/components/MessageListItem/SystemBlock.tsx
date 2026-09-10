@@ -46,6 +46,7 @@ export const SystemBlock: React.FC<SystemBlockProps> = ({ content }) => {
 
 const styles = StyleSheet.create({
   container: {
+    marginVertical: Spacings.md,
     alignSelf: 'stretch',
     borderWidth: CARD_BORDER_WIDTH,
     borderRadius: 12,

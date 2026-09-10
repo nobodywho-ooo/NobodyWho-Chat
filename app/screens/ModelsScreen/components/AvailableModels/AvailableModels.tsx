@@ -1,12 +1,28 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { ErrorView, ModelCard, PlatformIcon, Text } from 'components';
+import {
+  ErrorView,
+  ModelCard,
+  PlatformIcon,
+  SelectablePill,
+  Text,
+} from 'components';
 import { useStyled } from 'hooks';
-import { Model } from 'types';
+import { getPipelineIcon } from 'helpers';
+import { Model, ModelPipeline, pipelineLabel } from 'types';
 import { Spacings } from 'style';
 
 import styles from './AvailableModels.styles';
+
+const ALL_PIPELINES = 'all';
+
+type PipelineFilter = ModelPipeline | typeof ALL_PIPELINES;
+
+const UNORDERED = Number.MAX_SAFE_INTEGER;
+
+const byCatalogueOrder = (a: Model, b: Model) =>
+  (a.order ?? UNORDERED) - (b.order ?? UNORDERED);
 
 interface AvailableModelsProps {
   models: Model[];
@@ -30,7 +46,33 @@ export const AvailableModels: React.FC<AvailableModelsProps> = ({
   const { t } = useTranslation();
   const { colors } = useStyled();
 
+  const [filter, setFilter] = useState<PipelineFilter>(ALL_PIPELINES);
+
+  const pipelines = useMemo(() => {
+    const present = new Set(models.map(model => model.pipeline));
+    return Object.values(ModelPipeline).filter(pipeline =>
+      present.has(pipeline),
+    );
+  }, [models]);
+
+  // Fall back to All filter when downloading the last model of a selected pipeline
+  useEffect(() => {
+    if (filter !== ALL_PIPELINES && !pipelines.includes(filter)) {
+      setFilter(ALL_PIPELINES);
+    }
+  }, [filter, pipelines]);
+
+  const visibleModels = useMemo(
+    () =>
+      (filter === ALL_PIPELINES
+        ? [...models]
+        : models.filter(model => model.pipeline === filter)
+      ).sort(byCatalogueOrder),
+    [models, filter],
+  );
+
   const showModels = !isLoading && !hasError && models.length > 0;
+  const showFilters = showModels && pipelines.length > 1;
 
   return (
     <>
@@ -67,8 +109,27 @@ export const AvailableModels: React.FC<AvailableModelsProps> = ({
         />
       )}
 
+      {showFilters && (
+        <View style={styles.filterContainer}>
+          <SelectablePill
+            label={t('screens.models.allPipelines')}
+            selected={filter === ALL_PIPELINES}
+            onPress={() => setFilter(ALL_PIPELINES)}
+          />
+          {pipelines.map(pipeline => (
+            <SelectablePill
+              key={pipeline}
+              label={pipelineLabel[pipeline]}
+              icon={getPipelineIcon(pipeline)}
+              selected={filter === pipeline}
+              onPress={() => setFilter(pipeline)}
+            />
+          ))}
+        </View>
+      )}
+
       {showModels &&
-        models.map(model => (
+        visibleModels.map(model => (
           <ModelCard key={model.id} model={model} onPress={onModelPress} />
         ))}
 

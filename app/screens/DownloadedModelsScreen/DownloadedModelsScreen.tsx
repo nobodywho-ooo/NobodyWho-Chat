@@ -2,18 +2,24 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useState,
 } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAppState, useModels, useStyled } from 'hooks';
-import { setAppState } from 'database';
 import { deleteModel, getDocumentPathsByModelId } from 'repositories';
 import { deleteMessageDocuments, deleteModelFiles, isIOS, log } from 'helpers';
 import { ModelCard, PlatformIcon, Text } from 'components';
-import { useAiService } from 'services';
-import { Model, isTtsPipeline, isChatPipeline } from 'types';
+import {
+  inUseModelIdForPipeline,
+  releaseSlots,
+  selectModel,
+  slotsHolding,
+  useAiService,
+} from 'services';
+import { Model, ModelPipeline, ModelSlot, isChatPipeline } from 'types';
 
 import styles from './DownloadedModelsScreen.styles';
 
@@ -21,8 +27,9 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { models } = useModels();
-  const { modelIdInUse, ttsModelIdInUse } = useAppState();
-  const { chat, disposeTts, disposeChat } = useAiService();
+  const appState = useAppState();
+  const { chat, disposeTts, disposeStt, disposeVad, disposeChat } =
+    useAiService();
   const navigation = useNavigation();
   const route = useRoute();
   const [deleteMode, setDeleteMode] = useState(false);
@@ -37,19 +44,28 @@ export const DownloadedModelsScreen: React.FC = () => {
     }
   }, [hasModels, deleteMode]);
 
+  // Every slot's release, keyed by slot, so a new slot is a compile error here
+  // rather than a model whose files are deleted while an engine still holds it.
+  const disposeForSlot = useMemo<Record<ModelSlot, () => void>>(
+    () => ({
+      [ModelSlot.chat]: disposeChat,
+      [ModelSlot.tts]: disposeTts,
+      [ModelSlot.stt]: disposeStt,
+      [ModelSlot.vad]: disposeVad,
+    }),
+    [disposeChat, disposeTts, disposeStt, disposeVad],
+  );
+
   const handleDeleteModel = useCallback(
     async (model: Model) => {
       try {
         const documentPaths = await getDocumentPathsByModelId(model.id);
 
-        if (ttsModelIdInUse === model.id) {
-          disposeTts();
-          await setAppState({ ttsModelIdInUse: undefined });
-        }
-
-        if (isChatPipeline(model.pipeline)) {
-          disposeChat;
-        }
+        // Release the engines before the files go away, so nothing is mid-read
+        // when the directory is removed.
+        const held = slotsHolding(model.id, appState);
+        held.forEach(slot => disposeForSlot[slot]());
+        await releaseSlots(held.filter(slot => slot !== ModelSlot.chat));
 
         const filesDeleted = await deleteModelFiles(model);
         if (!filesDeleted) {
@@ -59,17 +75,14 @@ export const DownloadedModelsScreen: React.FC = () => {
         await deleteModel(model.id);
         await deleteMessageDocuments(documentPaths);
 
-        if (modelIdInUse === model.id) {
-          await setAppState({
-            modelIdInUse: undefined,
-            conversationIdInUse: undefined,
-          });
-        }
+        // The chat slot is cleared last: dropping it also drops the open
+        // conversation, which routes the UI away from this screen.
+        await releaseSlots(held.filter(slot => slot === ModelSlot.chat));
       } catch (error) {
         log('DownloadedModelsScreen handleDeleteModel', error);
       }
     },
-    [modelIdInUse, ttsModelIdInUse, disposeTts, disposeChat],
+    [appState, disposeForSlot],
   );
 
   const confirmDeleteModel = useCallback(
@@ -99,34 +112,20 @@ export const DownloadedModelsScreen: React.FC = () => {
         return;
       }
 
-      if (isTtsPipeline(model.pipeline)) {
-        if (ttsModelIdInUse !== model.id) {
-          setAppState({ ttsModelIdInUse: model.id });
-          navigation.goBack();
-        }
+      if (inUseModelIdForPipeline(model.pipeline, appState) === model.id) {
         return;
       }
 
-      if (modelIdInUse !== model.id) {
-        // Stop any in-flight generation before the model switch tears down
-        // the current chat, so a live stream ends cleanly rather than being
-        // cut off mid-token as the backend is swapped out.
+      // Stop any in-flight generation before the model switch tears down the
+      // current chat, so a live stream ends cleanly rather than being cut off
+      // mid-token as the backend is swapped out.
+      if (isChatPipeline(model.pipeline)) {
         chat.current?.stopGeneration();
-        setAppState({
-          modelIdInUse: model.id,
-          conversationIdInUse: undefined,
-        });
-        navigation.goBack();
       }
+
+      selectModel(model);
     },
-    [
-      deleteMode,
-      confirmDeleteModel,
-      modelIdInUse,
-      ttsModelIdInUse,
-      chat,
-      navigation,
-    ],
+    [deleteMode, confirmDeleteModel, appState, chat],
   );
 
   const renderHeaderRight = useCallback(() => {
@@ -181,27 +180,24 @@ export const DownloadedModelsScreen: React.FC = () => {
     );
   }
 
+  const inUseIdFor = (pipeline: ModelPipeline) =>
+    inUseModelIdForPipeline(pipeline, appState);
+
   return (
     <ScrollView
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
-      {models.map(model => {
-        const isSelected = isTtsPipeline(model.pipeline)
-          ? ttsModelIdInUse === model.id
-          : modelIdInUse === model.id;
-
-        return (
-          <ModelCard
-            key={model.id}
-            isDownloaded
-            deleteMode={deleteMode}
-            isSelected={isSelected}
-            model={model}
-            onPress={handleModelPress}
-          />
-        );
-      })}
+      {models.map(model => (
+        <ModelCard
+          key={model.id}
+          isDownloaded
+          deleteMode={deleteMode}
+          isSelected={inUseIdFor(model.pipeline) === model.id}
+          model={model}
+          onPress={handleModelPress}
+        />
+      ))}
     </ScrollView>
   );
 };

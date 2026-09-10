@@ -8,15 +8,9 @@ import {
   updateModelDownloadParts,
   insertModel,
 } from 'repositories';
-import { getAppState, setAppState } from 'database';
-import {
-  Model,
-  ModelDownload,
-  ModelPart,
-  isChatPipeline,
-  isTtsPipeline,
-} from 'types';
+import { Model, ModelDownload, ModelPart } from 'types';
 import { deleteModelDirectory, downloadModelPart, log } from 'helpers';
+import { selectModelIfSlotFree } from 'services';
 
 const DOWNLOAD_THROTTLE = 0.01; // 1% step
 
@@ -83,6 +77,7 @@ export const useModelDownloader = () => {
           sizeGB,
         }),
       );
+
       try {
         await insertModel({ ...model, parts: downloadedParts });
       } catch (error) {
@@ -90,22 +85,10 @@ export const useModelDownloader = () => {
         deleteModelDirectory(model.id);
         throw error;
       }
+
       modelDownloaded = true;
 
-      if (
-        isChatPipeline(model.pipeline) &&
-        getAppState().modelIdInUse === undefined
-      ) {
-        await setAppState({
-          modelIdInUse: model.id,
-          conversationIdInUse: undefined,
-        });
-      } else if (
-        isTtsPipeline(model.pipeline) &&
-        getAppState().ttsModelIdInUse === undefined
-      ) {
-        await setAppState({ ttsModelIdInUse: model.id });
-      }
+      await selectModelIfSlotFree(model);
 
       await deleteModelDownload(model.id);
     } catch (error) {
@@ -179,7 +162,7 @@ export const useModelDownloader = () => {
           }
         }
       } catch (error) {
-        log('ModelsScreen resumeDownloads', error, { capture: true });
+        log('ModelsScreen resumeDownloads', error);
       }
     };
 

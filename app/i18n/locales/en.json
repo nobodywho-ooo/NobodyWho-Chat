@@ -133,7 +133,12 @@
       "photo": "Photo",
       "camera": "Camera",
       "audio": "Audio",
-      "unselect": "Unselect"
+      "voiceAssistant": "Voice Assistant",
+      "unselect": "Unselect",
+      "dictate": "Dictate",
+      "stopDictation": "Stop dictation",
+      "microphoneDeniedTitle": "Microphone access needed",
+      "microphoneDeniedMessage": "Allow microphone access in Settings to dictate your messages."
     },
     "cameraCapture": {
       "permission": "Camera access is needed to take a photo.",
@@ -145,6 +150,7 @@
       "copy": "Copy",
       "playAudio": "Play audio",
       "pauseAudio": "Pause audio",
+      "stopAudio": "Stop audio",
       "viewImage": "View image",
       "closeImage": "Close image",
       "thinking": "Thinking…",
@@ -181,12 +187,37 @@
       "settings": "Settings",
       "changeModel": "Change model"
     },
+    "voiceAssistant": {
+      "title": "Voice Assistant",
+      "start": "Start listening",
+      "close": "Close",
+      "preferences": "Voice preferences",
+      "stop": "Stop",
+      "status": {
+        "idle": "Tap to speak",
+        "listening": "Listening…",
+        "transcribing": "Transcribing",
+        "thinking": "Thinking",
+        "synthesizing": "Generating speech…",
+        "speaking": "Speaking…",
+        "error": "Something went wrong — tap to try again"
+      },
+      "setup": {
+        "title": "Set up voice chat",
+        "description": "You need four models loaded at once.",
+        "chat": "Chat model",
+        "stt": "Speech-to-text model",
+        "tts": "Text-to-speech model",
+        "vad": "Voice Activity Detection model",
+        "hint": "Download and activate one of each, then come back."
+      }
+    },
     "settings": {
       "app": "App",
       "models": "Models",
       "manageYourModels": "Manage your models",
       "customize": "Customize",
-      "customizeSubtitle": "Configure token generation",
+      "customizeSubtitle": "Configure your assistant",
       "about": "About",
       "terms": "Terms & Conditions",
       "termsSubtitle": "Read our terms of use",
@@ -197,13 +228,13 @@
     },
     "models": {
       "inUse": "In use",
-      "voiceInUse": "Voice in use",
       "readyToUse": "Ready to use",
       "downloaded": "Downloaded",
       "modelCount_one": "{{count}} model",
       "modelCount_other": "{{count}} models",
       "downloading": "Downloading...",
       "availableToDownload": "Available to download",
+      "allPipelines": "All models",
       "errorCannotGetModelsAtTheMoment": "Cannot get the models at the moment",
       "youHaveDownloadedAllTheModels": "You have downloaded all the models.",
       "chooseModelTitle": "Choosing the Right Model",
@@ -231,15 +262,32 @@
       "maxTokens": "Max tokens",
       "maxTokensSubtitle": "Context size of the conversation",
       "decreaseMaxTokens": "Decrease max tokens",
-      "increaseMaxTokens": "Increase max tokens"
+      "increaseMaxTokens": "Increase max tokens",
+      "textToSpeech": "Text To Speech",
+      "voice": "Voice",
+      "voiceSubtitle": "The speaking voice used to read messages aloud",
+      "voiceMale": "Male {{index}}",
+      "voiceFemale": "Female {{index}}",
+      "language": "Language",
+      "languageSubtitle": "The language the voice speaks",
+      "speechToText": "Speech To Text",
+      "sttLanguage": "Language",
+      "sttLanguageSubtitle": "The language you speak. Picking one skips detection and transcribes faster.",
+      "sttLanguageAutomatic": "Automatic"
     },
     "chat": {
       "generationFailed": "Something went wrong while generating a response.",
       "generationStopped": "Generation stopped."
     },
     "loadingScreen": {
-      "loadingModel": "Loading {{model}}…",
+      "loadingModel": "Loading {{model}}",
       "loadingApp": "App is loading..."
+    },
+    "errorScreen": {
+      "resetData": "Reset app data",
+      "resetConfirmTitle": "Reset app data?",
+      "resetConfirmMessage": "This permanently erases your chat history and the list of downloaded models, then restarts the app. This can't be undone.",
+      "resetConfirm": "Reset"
     }
   }
 }

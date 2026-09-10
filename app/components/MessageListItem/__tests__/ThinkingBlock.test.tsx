@@ -2,7 +2,7 @@ import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
 import { StreamdownText } from 'react-native-streamdown';
 
-import { ThinkingBlock } from '../ThinkingBlock';
+import { ThinkingBlock } from '../AssistantMessage/ThinkingBlock';
 
 const mockStreamdown = StreamdownText as unknown as jest.Mock;
 

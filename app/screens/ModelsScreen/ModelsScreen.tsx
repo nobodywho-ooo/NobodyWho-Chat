@@ -13,7 +13,7 @@ import {
   AvailableModels,
   DownloadedModelsLink,
   DownloadingModels,
-  InUseModel,
+  InUseModels,
 } from './components';
 
 export const ModelsScreen: React.FC = () => {
@@ -25,8 +25,7 @@ export const ModelsScreen: React.FC = () => {
   const { downloads } = useModelDownloads();
   const {
     availableModels,
-    currentModel,
-    currentTtsModel,
+    inUseModels,
     downloadedCount,
     isLoading,
     hasError,
@@ -56,22 +55,12 @@ export const ModelsScreen: React.FC = () => {
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
-      {!!currentModel && (
-        <InUseModel model={currentModel} title={t('screens.models.inUse')} />
-      )}
-
-      {!!currentTtsModel && (
-        <InUseModel
-          model={currentTtsModel}
-          title={t('screens.models.voiceInUse')}
-          first={!currentModel}
-        />
-      )}
+      {inUseModels.length > 0 && <InUseModels models={inUseModels} />}
 
       {downloadedCount > 0 && (
         <DownloadedModelsLink
           count={downloadedCount}
-          first={!currentModel && !currentTtsModel}
+          first={inUseModels.length === 0}
           onPress={goToDownloadedModels}
         />
       )}

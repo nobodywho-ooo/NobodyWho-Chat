@@ -9,6 +9,13 @@ export default StyleSheet.create({
     paddingTop: Spacings.lg,
     marginVertical: Spacings.md,
   },
+  filterContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacings.sm,
+    marginBottom: Spacings.md,
+    paddingBottom: Spacings.xs,
+  },
   loader: {
     marginTop: Spacings.lg,
   },

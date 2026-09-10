@@ -2,6 +2,17 @@
 
 exports[`renders correctly CustomizeAssistantScreen 1`] = `
 <RCTScrollView
+  contentContainerStyle={
+    [
+      {
+        "paddingBottom": 20,
+        "paddingTop": 16,
+      },
+      {
+        "paddingBottom": NaN,
+      },
+    ]
+  }
   contentInsetAdjustmentBehavior="automatic"
   keyboardShouldPersistTaps="handled"
   style={
@@ -9,7 +20,6 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
       {
         "flex": 1,
         "paddingHorizontal": 16,
-        "paddingTop": 16,
       },
       {
         "backgroundColor": "#FFFFFF",
