@@ -188,17 +188,18 @@ test('renders the answer after </think> separately from the reasoning', () => {
 
 // --- Loading indicator -----------------------------------------------------
 
-test('shows a loading indicator while an empty message is streaming', () => {
+test('shimmers a thinking label while an empty message is streaming', () => {
   const message: DisplayMessage = { role: 'assistant', content: '' };
   const screen = renderAssistant(message, { isStreaming: true });
-  expect(screen.UNSAFE_queryByType(ActivityIndicator)).toBeTruthy();
+  const shimmer = screen.UNSAFE_getByType('ShimmerText' as never);
+  expect(shimmer.props.text).toBe('components.messageListItem.thinking');
   expect(screen.queryByRole('button')).toBeNull();
 });
 
-test('shows no loading indicator once the message has content', () => {
+test('shows no thinking label once the message has content', () => {
   const message: DisplayMessage = { role: 'assistant', content: 'streaming…' };
   const screen = renderAssistant(message, { isStreaming: true });
-  expect(screen.UNSAFE_queryByType(ActivityIndicator)).toBeNull();
+  expect(screen.UNSAFE_queryByType('ShimmerText' as never)).toBeNull();
 });
 
 // --- Thinking block --------------------------------------------------------

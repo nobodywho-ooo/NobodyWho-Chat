@@ -1,0 +1,34 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`renders correctly ShimmerText 1`] = `
+<SkiaText
+  text="Thinking…"
+>
+  <SkiaLinearGradient
+    colors={
+      [
+        "#7c7c7c",
+        "#000000",
+        "#7c7c7c",
+      ]
+    }
+    end={
+      {
+        "value": null,
+      }
+    }
+    positions={
+      [
+        0,
+        0.5,
+        1,
+      ]
+    }
+    start={
+      {
+        "value": null,
+      }
+    }
+  />
+</SkiaText>
+`;

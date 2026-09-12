@@ -260,14 +260,27 @@ jest.mock('react-native-reanimated', () => {
   };
 });
 
-// The voice orb renders through Skia; under Jest there's no native canvas, so
-// Canvas passes children through and Picture renders nothing.
+// The voice orb and ShimmerText render through Skia; under Jest there's no
+// native canvas, so Canvas passes children through, Picture renders nothing and
+// the text primitives render as host elements tests can assert on. matchFont
+// returns a fake font whose metrics/measurements are derived from the font size,
+// so layout maths stay deterministic.
 jest.mock('@shopify/react-native-skia', () => {
   const mockReact = require('react');
   return {
     Canvas: ({ children }) =>
       mockReact.createElement(mockReact.Fragment, null, children),
     Picture: () => null,
+    Text: ({ text, children }) =>
+      mockReact.createElement('SkiaText', { text }, children),
+    LinearGradient: props => mockReact.createElement('SkiaLinearGradient', props),
+    matchFont: ({ fontSize = 14 } = {}) => ({
+      getMetrics: () => ({ ascent: -fontSize, descent: fontSize * 0.25 }),
+      // Roughly half an em per character, enough for wrapping assertions.
+      measureText: text => ({ x: 0, y: 0, width: text.length * fontSize * 0.5, height: fontSize }),
+    }),
+    useClock: () => ({ value: 0 }),
+    vec: (x, y) => ({ x, y }),
   };
 });
 

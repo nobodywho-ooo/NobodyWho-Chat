@@ -4,6 +4,7 @@ jest.mock("react-native/Libraries/Components/Touchable/TouchableOpacity", () => 
 /* Shared Components */
 jest.mock("../../../app/components/ListItem/ListItem", () => ({ ListItem: 'ListItem' }));
 jest.mock("../../../app/components/PlatformIcon/PlatformIcon", () => ({ PlatformIcon: 'PlatformIcon' }));
+jest.mock("../../../app/components/ShimmerText/ShimmerText", () => ({ ShimmerText: 'ShimmerText' }));
 jest.mock("../../../app/components/Text/Text", () => ({
   Text: 'Text',
   fontSizes: { h1: 32, h2: 28, h3: 24, h4: 20, body1: 16, body2: 14, caption: 12 },

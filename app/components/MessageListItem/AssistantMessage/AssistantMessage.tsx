@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Linking, Pressable, View } from 'react-native';
+import { Linking, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { StreamdownText } from 'react-native-streamdown';
@@ -21,11 +21,13 @@ import { ToolCallBlock } from './ToolCallBlock';
 import { ToolCallModal } from './ToolCallModal';
 
 import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
+import { ShimmerText } from '../../ShimmerText/ShimmerText';
 import { Text } from '../../Text/Text';
 
 import styles from './AssistantMessage.styles';
 
 const COPIED_RESET_MS = 1500;
+const THINKING_FONT_SIZE = 14;
 
 const formatTimeToFirstToken = (ms: number): string =>
   ms >= 1000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.round(ms)} ms`;
@@ -119,11 +121,18 @@ export const AssistantMessage: React.FC<AssistantMessageProps> = ({
   return (
     <View style={styles.assistantContainer}>
       {isAwaitingResponse ? (
-        <ActivityIndicator
-          size="small"
-          color={colors.primary}
-          style={styles.loadingIndicator}
-        />
+        <View style={styles.thinkingContainer}>
+          <PlatformIcon
+            iosIconName="sparkles"
+            androidIconName="auto_awesome"
+            size={THINKING_FONT_SIZE}
+            color={colors.onSurfaceVariant}
+          />
+          <ShimmerText
+            text={t('components.messageListItem.thinking')}
+            fontSize={THINKING_FONT_SIZE}
+          />
+        </View>
       ) : (
         <>
           {thinking !== null && (

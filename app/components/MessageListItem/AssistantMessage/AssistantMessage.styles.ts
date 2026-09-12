@@ -23,7 +23,10 @@ export default StyleSheet.create({
     lineHeight: 16,
     includeFontPadding: false,
   },
-  loadingIndicator: {
+  thinkingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
+    gap: Spacings.sm,
   },
 });
