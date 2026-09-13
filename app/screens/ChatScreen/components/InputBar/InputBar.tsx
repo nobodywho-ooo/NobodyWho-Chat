@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Keyboard,
@@ -87,6 +87,8 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   const theme = useTheme();
   const { open: openDrawer, reportSwipeExclusion } = useDrawerCoordination();
 
+  const [focused, setFocused] = useState(false);
+
   const canAttach = showImageAttach || showAudioAttach;
   const showToggle = canAttach && !isStreaming;
   const expanded = showToggle && attachExpanded;
@@ -164,6 +166,16 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
 
   useEffect(() => () => reportSwipeExclusion(0), [reportSwipeExclusion]);
 
+  const handleFocus = useCallback(() => {
+    setFocused(true);
+    onFocus?.();
+  }, [onFocus]);
+
+  const handleBlur = useCallback(() => {
+    setFocused(false);
+    onBlur?.();
+  }, [onBlur]);
+
   const handleSend = () => {
     if (attachExpanded) {
       onAttachExpandedChange(false);
@@ -175,6 +187,11 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
     backgroundColor: colors.surface,
     borderColor: colors.border,
     borderWidth: 1,
+  };
+
+  const inputBarStyle = {
+    ...extraStyle,
+    borderColor: focused ? colors.borderFocused : colors.border,
   };
 
   const attachButtonIcon: IconButtonIconProps = expanded
@@ -332,7 +349,7 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
           end={{ x: 0, y: 1 }}
           style={styles.topGradient}
         />
-        <View style={[styles.inputBarContainer, extraStyle]}>
+        <View style={[styles.inputBarContainer, inputBarStyle]}>
           <TextInput
             style={[styles.textInput, { color: colors.onSurface }]}
             placeholder={t('components.inputBar.placeholder')}
@@ -340,8 +357,8 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
             value={value}
             editable={!disabled}
             onChangeText={onChangeText}
-            onFocus={onFocus}
-            onBlur={onBlur}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
             multiline
           />
           <View style={styles.inputBarContainerBottomPart}>

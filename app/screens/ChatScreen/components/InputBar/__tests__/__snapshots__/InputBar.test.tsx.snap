@@ -76,7 +76,9 @@ exports[`renders correctly InputBar 1`] = `
       <TextInput
         editable={true}
         multiline={true}
+        onBlur={[Function]}
         onChangeText={[Function]}
+        onFocus={[Function]}
         placeholder="components.inputBar.placeholder"
         placeholderTextColor="#999"
         style={
@@ -230,7 +232,9 @@ exports[`renders correctly InputBar when streaming 1`] = `
       <TextInput
         editable={true}
         multiline={true}
+        onBlur={[Function]}
         onChangeText={[Function]}
+        onFocus={[Function]}
         placeholder="components.inputBar.placeholder"
         placeholderTextColor="#999"
         style={
@@ -384,7 +388,9 @@ exports[`renders correctly InputBar with value 1`] = `
       <TextInput
         editable={true}
         multiline={true}
+        onBlur={[Function]}
         onChangeText={[Function]}
+        onFocus={[Function]}
         placeholder="components.inputBar.placeholder"
         placeholderTextColor="#999"
         style={
@@ -538,7 +544,9 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
       <TextInput
         editable={true}
         multiline={true}
+        onBlur={[Function]}
         onChangeText={[Function]}
+        onFocus={[Function]}
         placeholder="components.inputBar.placeholder"
         placeholderTextColor="#999"
         style={

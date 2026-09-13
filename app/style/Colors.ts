@@ -23,6 +23,7 @@ export type NWColors = {
   warningSurface: string;
   warningContent: string;
   border: string;
+  borderFocused: string;
   borderSecondary: string;
   shadow: string;
   tabBarActive: string;
@@ -52,6 +53,7 @@ export const lightColors: NWColors = {
   warningSurface: 'rgba(230, 184, 0, 0.15)',
   warningContent: '#e6b800',
   border: '#e1e1e1',
+  borderFocused: '#c1c1c1',
   borderSecondary: '#acacac',
   shadow: 'rgba(44, 44, 44, 0.24)',
   tabBarActive: '#628395',
@@ -81,6 +83,7 @@ export const darkColors: NWColors = {
   warningSurface: 'rgba(230, 184, 0, 0.15)',
   warningContent: '#e6b800',
   border: '#404040',
+  borderFocused: '#8d8d8d',
   borderSecondary: '#838383',
   shadow: 'rgba(43, 43, 43, 0.48)',
   tabBarActive: '#628395',

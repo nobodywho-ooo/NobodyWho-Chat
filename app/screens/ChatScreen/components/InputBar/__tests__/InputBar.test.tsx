@@ -131,8 +131,7 @@ const expandedImageIcons = (imageSource?: 'photo' | 'camera'): string[] => {
   const toggle = screen
     .UNSAFE_getAllByType(IconButton as never)
     .find(
-      node =>
-        node.props.accessibilityLabel === 'components.inputBar.attach',
+      node => node.props.accessibilityLabel === 'components.inputBar.attach',
     );
   act(() => toggle?.props.onPress());
   return screen
@@ -184,9 +183,7 @@ test('with an image attached, only the image option is listed', () => {
   expect(iconNames).not.toContain('camera');
   // The audio attach option is gone. It shares the waveform icon with the
   // always-present voice-assistant button, so assert on its label, not the icon.
-  expect(
-    screen.queryByLabelText('components.inputBar.attachAudio'),
-  ).toBeNull();
+  expect(screen.queryByLabelText('components.inputBar.attachAudio')).toBeNull();
   // The remaining option offers to unselect the attachment.
   expect(screen.getByText('components.inputBar.unselect')).toBeTruthy();
 });
@@ -288,4 +285,43 @@ test('sending closes the expanded tray', () => {
 
   expect(onSend).toHaveBeenCalled();
   expect(screen.queryByText('components.inputBar.photo')).toBeNull();
+});
+
+// --- Focus -----------------------------------------------------------------
+
+// The bar's border is the last style on the View wrapping the text input.
+const barBorderColor = (screen: ReturnType<typeof render>): string => {
+  const input = screen.UNSAFE_getByType(TextInput);
+  const bar = input.parent;
+  const flattened = Object.assign(
+    {},
+    ...[bar?.props.style].flat(Infinity).filter(Boolean),
+  );
+  return flattened.borderColor;
+};
+
+test('highlights the bar border while the text input is focused', () => {
+  const screen = render(<StatefulInputBar />);
+  const input = screen.UNSAFE_getByType(TextInput);
+
+  expect(barBorderColor(screen)).toBe('#e1e1e1');
+
+  act(() => input.props.onFocus());
+  expect(barBorderColor(screen)).toBe('#c1c1c1');
+
+  act(() => input.props.onBlur());
+  expect(barBorderColor(screen)).toBe('#e1e1e1');
+});
+
+test('still forwards focus and blur to the parent', () => {
+  const onFocus = jest.fn();
+  const onBlur = jest.fn();
+  const screen = render(<StatefulInputBar onFocus={onFocus} onBlur={onBlur} />);
+  const input = screen.UNSAFE_getByType(TextInput);
+
+  act(() => input.props.onFocus());
+  expect(onFocus).toHaveBeenCalled();
+
+  act(() => input.props.onBlur());
+  expect(onBlur).toHaveBeenCalled();
 });

@@ -16,12 +16,12 @@ const familyIcons: Record<string, FC<SvgProps>> = {
   qwen: qwen,
   bonsai: bonsai,
   LFM2: liquid,
-  "Gemma 4": gemma4,
+  'Gemma 4': gemma4,
   supertonic: supertonic,
   ministral: mistral,
-  "Granite 4.0": ibm,
-  "Whisper": openai,
-  "Silero": silero,
+  Granite: ibm,
+  Whisper: openai,
+  Silero: silero,
 };
 
 export const getFamilyIcon = (family: string): FC<SvgProps> | undefined => {
