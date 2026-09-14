@@ -1,0 +1,95 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`ScrollToBottomButton renders a chevron when visible 1`] = `
+<View
+  pointerEvents="box-none"
+  style={
+    [
+      {
+        "alignItems": "center",
+      },
+      undefined,
+    ]
+  }
+>
+  <View
+    accessibilityLabel="components.scrollToBottomButton.label"
+    accessibilityRole="button"
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": undefined,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    hitSlop={8}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "borderRadius": 18,
+          "borderWidth": 1,
+          "height": 36,
+          "justifyContent": "center",
+          "overflow": "hidden",
+          "shadowOffset": {
+            "height": 2,
+            "width": 0,
+          },
+          "width": 36,
+        },
+        {
+          "borderColor": "#acacac",
+        },
+        false,
+      ]
+    }
+  >
+    <View
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "opacity": 0.55,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+          {
+            "backgroundColor": "#ebebeb",
+          },
+        ]
+      }
+    />
+    <PlatformIcon
+      androidIconName="keyboard_arrow_down"
+      color="#000000"
+      iosIconName="chevron.down"
+      size={18}
+    />
+  </View>
+</View>
+`;

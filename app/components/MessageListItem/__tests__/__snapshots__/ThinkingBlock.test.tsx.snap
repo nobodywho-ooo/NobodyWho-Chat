@@ -72,6 +72,7 @@ exports[`matches the snapshot 1`] = `
         [
           {
             "includeFontPadding": false,
+            "paddingLeft": 2,
           },
           {
             "color": "#7c7c7c",

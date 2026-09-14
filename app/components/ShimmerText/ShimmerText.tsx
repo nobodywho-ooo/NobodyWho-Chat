@@ -26,12 +26,21 @@ interface ShimmerTextProps {
   align?: 'left' | 'center';
 }
 
+const LINE_HEIGHT_RATIO = 1.3;
+const BASELINE_RATIO = 1.02;
+const GLYPH_WIDTH_RATIO = 0.55;
+
 /**
  * Skia's tight glyph bounds leave no room for the trailing side bearing, so an
  * intrinsically sized canvas gets a quarter-em of slack to avoid clipping.
  */
 const measureIntrinsicWidth = (font: SkFont, text: string, fontSize: number) =>
-  Math.ceil(font.measureText(text).width + fontSize / 4);
+  Math.ceil(
+    Math.max(
+      font.measureText(text).width + fontSize / 4,
+      text.length * fontSize * GLYPH_WIDTH_RATIO,
+    ),
+  );
 
 function wrapText(
   text: string,
@@ -92,10 +101,7 @@ export const ShimmerText: React.FC<ShimmerTextProps> = ({
   );
 
   const { lines, canvasWidth, lineHeight, baseline, height } = useMemo(() => {
-    const fontMetrics = font.getMetrics();
-    const computedLineHeight = Math.ceil(
-      fontMetrics.descent - fontMetrics.ascent,
-    );
+    const computedLineHeight = Math.ceil(fontSize * LINE_HEIGHT_RATIO);
     const resolvedWidth = width ?? measureIntrinsicWidth(font, text, fontSize);
     const wrapped =
       width === undefined ? [text] : wrapText(text, font, width, maxLines);
@@ -103,7 +109,7 @@ export const ShimmerText: React.FC<ShimmerTextProps> = ({
       lines: wrapped,
       canvasWidth: resolvedWidth,
       lineHeight: computedLineHeight,
-      baseline: Math.ceil(-fontMetrics.ascent),
+      baseline: Math.round(fontSize * BASELINE_RATIO),
       height: wrapped.length * computedLineHeight,
     };
   }, [font, text, width, fontSize, maxLines]);

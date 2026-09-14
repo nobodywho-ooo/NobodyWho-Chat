@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Keyboard, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { FlashList, FlashListRef } from '@shopify/flash-list';
+import { KeyboardAwareLegendList } from '@legendapp/list/keyboard';
+import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { BlurTargetView, BlurView } from 'expo-blur';
 import LinearGradient from 'react-native-linear-gradient';
-import { MessageListItem } from 'components';
+import { MessageListItem, ScrollToBottomButton } from 'components';
 import { useTheme } from 'context';
 import { useAppState, useStyled } from 'hooks';
 import {
@@ -21,7 +22,7 @@ import { CameraCaptureModal, InputBar, MessageStarters } from './components';
 import {
   useAttachments,
   useChatGeneration,
-  useKeyboardHeight,
+  useMessageListScroll,
   useSttTranscription,
   useTtsPlayback,
 } from './hooks';
@@ -36,6 +37,10 @@ const gradientColors: Record<Theme, string[]> = {
   light: ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.9)'],
   dark: ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 0.9)'],
 };
+
+const EmptyArea: React.FC = () => (
+  <Pressable style={styles.emptyArea} onPress={Keyboard.dismiss} />
+);
 
 interface ChatScreenProps {
   conversationId: number | undefined;
@@ -83,18 +88,23 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         t('components.inputBar.microphoneDeniedMessage'),
       ),
   });
-  const flatListRef = useRef<FlashListRef<DisplayMessage>>(null);
-  const blurTargetRef = useRef<View>(null);
   const [messages, setMessages] = useState<DisplayMessage[]>(initialMessages);
   const [conversationId, setConversationId] = useState(initialConversationId);
   const [attachExpanded, setAttachExpanded] = useState(false);
 
-  const { keyboardHeight, isKeyboardVisible } = useKeyboardHeight();
+  const blurTargetRef = useRef<View>(null);
+  const previousConversationIdRef = useRef<number | undefined | 'mount'>(
+    'mount',
+  );
+
+  const list = useMessageListScroll(messages);
+
   const ingestsImage = pipelineIngestsImage(chatPipeline);
   const ingestsAudio = pipelineIngestsAudio(chatPipeline);
 
   const attachments = useAttachments({ ingestsImage, ingestsAudio });
   const { clearAllAttachments } = attachments;
+
   const { isStreaming, handleSend, stopStreaming } = useChatGeneration({
     chat,
     ingestsImage,
@@ -106,7 +116,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     setConversationId,
     onConversationCreated,
     attachments,
-    flatListRef,
+    messages,
+    onTurnStart: list.anchorSentMessage,
   });
 
   useEffect(() => {
@@ -114,12 +125,30 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   }, [initialMessages]);
 
   useEffect(() => {
+    const previous = previousConversationIdRef.current;
+    previousConversationIdRef.current = initialConversationId;
+
+    const isSameConversation =
+      previous === initialConversationId ||
+      (previous === undefined && initialConversationId !== undefined);
+
+    if (isSameConversation) {
+      return;
+    }
+
     setConversationId(initialConversationId);
     setAttachExpanded(false);
     clearAllAttachments();
     stopAudio();
     cancelRecording();
-  }, [initialConversationId, clearAllAttachments, stopAudio, cancelRecording]);
+    list.showConversation();
+  }, [
+    initialConversationId,
+    clearAllAttachments,
+    stopAudio,
+    cancelRecording,
+    list,
+  ]);
 
   // Switching models => Drop the attachments whenever the pipeline's capabilities change,
   useEffect(() => {
@@ -127,23 +156,31 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     clearAllAttachments();
   }, [ingestsImage, ingestsAudio, clearAllAttachments]);
 
-  const scrollToEnd = useCallback((_width: number, contentHeight: number) => {
-    flatListRef.current?.scrollToOffset({
-      offset: contentHeight,
-      animated: false,
-    });
-  }, []);
+  const renderMessage = useCallback(
+    ({ item, index }: { item: DisplayMessage; index: number }) => (
+      <MessageListItem
+        message={item}
+        isStreaming={isStreaming && index === messages.length - 1}
+        index={index}
+        canPlayAudio={canPlayAudio}
+        isAudioLoading={audioLoadingIndex === index}
+        isAudioPlaying={playingIndex === index}
+        onPlayAudio={playAudio}
+        onStopAudio={stopAudio}
+      />
+    ),
+    [
+      isStreaming,
+      messages.length,
+      canPlayAudio,
+      audioLoadingIndex,
+      playingIndex,
+      playAudio,
+      stopAudio,
+    ],
+  );
 
-  let bottomOffset: number;
-  if (!isKeyboardVisible) {
-    bottomOffset = insets.bottom + INPUT_BAR_PADDING;
-  } else if (isAndroid) {
-    bottomOffset = keyboardHeight + INPUT_BAR_PADDING + insets.bottom;
-  } else {
-    bottomOffset = keyboardHeight + INPUT_BAR_PADDING;
-  }
-
-  const listPaddingBottom = bottomOffset + InputBar.height + INPUT_BAR_PADDING;
+  const hasMessages = messages.length > 0;
 
   const messageStarters = messages.length === 0 && !attachExpanded && (
     <MessageStarters
@@ -167,36 +204,27 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             { backgroundColor: colors.surface },
           ]}
         >
-          {messages.length > 0 ? (
-            <FlashList
-              ref={flatListRef}
-              data={messages}
-              style={styles.listContainer}
-              contentContainerStyle={[
-                styles.listContent,
-                { paddingBottom: listPaddingBottom },
-              ]}
-              keyExtractor={(_, index) => index.toString()}
-              showsVerticalScrollIndicator={false}
-              renderItem={({ item, index }) => (
-                <MessageListItem
-                  message={item}
-                  isStreaming={isStreaming && index === messages.length - 1}
-                  index={index}
-                  canPlayAudio={canPlayAudio}
-                  isAudioLoading={audioLoadingIndex === index}
-                  isAudioPlaying={playingIndex === index}
-                  onPlayAudio={playAudio}
-                  onStopAudio={stopAudio}
-                />
-              )}
-              onContentSizeChange={scrollToEnd}
-              keyboardShouldPersistTaps="handled"
-              keyboardDismissMode={isAndroid ? 'on-drag' : 'interactive'}
-            />
-          ) : (
-            <Pressable style={styles.emptyArea} onPress={Keyboard.dismiss} />
-          )}
+          <KeyboardAwareLegendList
+            ref={list.listRef}
+            data={messages}
+            style={styles.listContainer}
+            contentContainerStyle={styles.listContent}
+            keyExtractor={(_, index) => index.toString()}
+            showsVerticalScrollIndicator={false}
+            renderItem={renderMessage}
+            ListEmptyComponent={EmptyArea}
+            recycleItems={false}
+            anchoredEndSpace={list.anchoredEndSpace}
+            maintainVisibleContentPosition={list.maintainVisibleContentPosition}
+            onScrollBeginDrag={list.onScrollBeginDrag}
+            contentInsetEndAdjustment={list.contentInsetEndAdjustment}
+            keyboardLiftBehavior="whenAtEnd"
+            keyboardOffset={insets.bottom}
+            freeze={list.freeze}
+            applyWorkaroundForContentInsetHitTestBug
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode={isAndroid ? 'on-drag' : 'interactive'}
+          />
         </View>
       </BlurTargetView>
       {attachExpanded && (
@@ -222,30 +250,44 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           />
         </Pressable>
       )}
-      <InputBar
-        value={inputText}
-        isStreaming={isStreaming}
-        disabled={disabled}
-        attachExpanded={attachExpanded}
-        onAttachExpandedChange={setAttachExpanded}
-        showImageAttach={ingestsImage}
-        showAudioAttach={ingestsAudio}
-        imageSource={attachments.attachedDocuments?.imageSource}
-        hasAudio={!!attachments.attachedDocuments?.audioPath}
-        onAttachImage={attachments.handleAttachImage}
-        onAttachCamera={attachments.handleAttachCamera}
-        onAttachAudio={attachments.handleAttachAudio}
-        showDictation={canDictate}
-        isRecording={isRecording}
-        isTranscribing={isTranscribing}
-        onStartDictation={startRecording}
-        onStopDictation={stopRecording}
-        onChangeText={setInputText}
-        onSend={handleSend}
-        onStop={stopStreaming}
-        style={{ paddingBottom: bottomOffset }}
-        messageStarters={messageStarters}
-      />
+      <KeyboardStickyView
+        offset={{ opened: insets.bottom }}
+        style={styles.inputBarContainer}
+        pointerEvents="box-none"
+      >
+        <ScrollToBottomButton
+          visible={hasMessages && list.canScrollToBottom}
+          onPress={list.scrollToBottom}
+          blurTarget={blurTargetRef}
+          style={styles.scrollToBottomContainer}
+        />
+        <InputBar
+          composerRef={list.composerRef}
+          onComposerLayout={list.onComposerLayout}
+          value={inputText}
+          isStreaming={isStreaming}
+          disabled={disabled}
+          attachExpanded={attachExpanded}
+          onAttachExpandedChange={setAttachExpanded}
+          showImageAttach={ingestsImage}
+          showAudioAttach={ingestsAudio}
+          imageSource={attachments.attachedDocuments?.imageSource}
+          hasAudio={!!attachments.attachedDocuments?.audioPath}
+          onAttachImage={attachments.handleAttachImage}
+          onAttachCamera={attachments.handleAttachCamera}
+          onAttachAudio={attachments.handleAttachAudio}
+          showDictation={canDictate}
+          isRecording={isRecording}
+          isTranscribing={isTranscribing}
+          onStartDictation={startRecording}
+          onStopDictation={stopRecording}
+          onChangeText={setInputText}
+          onSend={handleSend}
+          onStop={stopStreaming}
+          style={{ paddingBottom: insets.bottom + INPUT_BAR_PADDING }}
+          messageStarters={messageStarters}
+        />
+      </KeyboardStickyView>
       {ingestsImage && (
         <CameraCaptureModal
           visible={attachments.cameraVisible}

@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Keyboard } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Chat, Message, Prompt } from 'react-native-nobodywho';
-import { FlashListRef } from '@shopify/flash-list';
+import { KeyboardController } from 'react-native-keyboard-controller';
 
 import { ChatMessage, DisplayMessage, ToolInvocation } from 'types';
 import { getAppState } from 'database';
@@ -12,7 +11,6 @@ import {
   computeGenerationMetrics,
   haptics,
   log,
-  parseThinking,
   resolveMessageDocumentPath,
 } from 'helpers';
 
@@ -31,7 +29,8 @@ interface UseChatGenerationOptions {
   setConversationId: (id: number) => void;
   onConversationCreated: (conversationId: number) => void;
   attachments: Attachments;
-  flatListRef: React.RefObject<FlashListRef<DisplayMessage> | null>;
+  messages: DisplayMessage[];
+  onTurnStart: (anchorIndex: number) => void;
 }
 
 export function useChatGeneration({
@@ -45,7 +44,8 @@ export function useChatGeneration({
   onConversationCreated,
   attachments,
   setMessages,
-  flatListRef,
+  messages,
+  onTurnStart,
 }: UseChatGenerationOptions) {
   const { t } = useTranslation();
   const [isStreaming, setIsStreaming] = useState(false);
@@ -100,11 +100,13 @@ export function useChatGeneration({
       content: '',
     };
 
+    onTurnStart(messages.length);
     setMessages(prev => [...prev, userMessage, initialAssistantMessage]);
     setInputText('');
 
     attachments.clearAttachmentsAfterSend(documentsPath);
-    Keyboard.dismiss();
+
+    KeyboardController.dismiss();
     stopRequestedRef.current = false;
     setIsStreaming(true);
 
@@ -169,7 +171,6 @@ export function useChatGeneration({
     let firstTokenAt: number | undefined;
     let tokenCount = 0;
     let accumulated = '';
-    let scrolledToThinking = false;
     const turnToolCalls: ToolInvocation[] = [];
 
     const renderAssistant = (extra?: {
@@ -254,16 +255,6 @@ export function useChatGeneration({
         tokenCount += 1;
         accumulated += token;
         renderAssistant();
-
-        if (
-          !scrolledToThinking &&
-          parseThinking(accumulated).thinking !== null
-        ) {
-          scrolledToThinking = true;
-          requestAnimationFrame(() =>
-            flatListRef.current?.scrollToEnd({ animated: true }),
-          );
-        }
       }
 
       if (chat.current !== activeChat) {

@@ -26,7 +26,7 @@ import { Text } from '../../Text/Text';
 
 import styles from './AssistantMessage.styles';
 
-const COPIED_RESET_MS = 1500;
+const COPIED_RESET_MS = 1000;
 const THINKING_FONT_SIZE = 14;
 
 const formatTimeToFirstToken = (ms: number): string =>
@@ -43,7 +43,7 @@ interface AssistantMessageProps {
   onStopAudio?: () => void;
 }
 
-export const AssistantMessage: React.FC<AssistantMessageProps> = ({
+const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
   message,
   isStreaming,
   index,
@@ -118,6 +118,9 @@ export const AssistantMessage: React.FC<AssistantMessageProps> = ({
 
   const showAudioSpeaker = canPlayAudio && !isStreaming && rest.length > 0;
 
+  const showFooter =
+    canCopyAssistantText || showAudioSpeaker || metrics.length > 0;
+
   return (
     <View style={styles.assistantContainer}>
       {isAwaitingResponse ? (
@@ -168,7 +171,7 @@ export const AssistantMessage: React.FC<AssistantMessageProps> = ({
             ))}
         </>
       )}
-      {content.length > 0 && (
+      {showFooter && (
         <View style={styles.footerContainer}>
           {canCopyAssistantText && (
             <Pressable
@@ -225,3 +228,5 @@ export const AssistantMessage: React.FC<AssistantMessageProps> = ({
     </View>
   );
 };
+
+export const AssistantMessage = React.memo(AssistantMessageComponent);

@@ -16,8 +16,6 @@ interface MessageListItemProps {
   onStopAudio?: () => void;
 }
 
-// Picks the right renderer for a message's role; each role's markup lives in its
-// own component (UserMessage / AssistantMessage) to keep this dispatch readable.
 export const MessageListItem: React.FC<MessageListItemProps> = ({
   message,
   isStreaming = false,

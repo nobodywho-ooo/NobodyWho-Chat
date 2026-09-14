@@ -7,6 +7,7 @@ import { MarkdownDocument } from './MarkdownDocument/MarkdownDocument';
 import { MessageListItem } from './MessageListItem/MessageListItem';
 import { ModelCard } from './ModelCard/ModelCard';
 import { PlatformIcon } from './PlatformIcon/PlatformIcon';
+import { ScrollToBottomButton } from './ScrollToBottomButton/ScrollToBottomButton';
 import { SelectablePill } from './SelectablePill/SelectablePill';
 import { ShimmerText } from './ShimmerText/ShimmerText';
 import { Slider } from './Slider/Slider';
@@ -16,6 +17,6 @@ import { Toast } from './Toast/Toast';
 import { SpeechToTextPreferences } from './SpeechToTextPreferences/SpeechToTextPreferences';
 import { TextToSpeechPreferences } from './TextToSpeechPreferences/TextToSpeechPreferences';
 
-export { Button, ProgressBar, ErrorView, IconButton, ListItem, MarkdownDocument, MessageListItem, ModelCard, PlatformIcon, SelectablePill, ShimmerText, Slider, SpeechToTextPreferences, Tag, Text, TextToSpeechPreferences, Toast };
+export { Button, ProgressBar, ErrorView, IconButton, ListItem, MarkdownDocument, MessageListItem, ModelCard, PlatformIcon, ScrollToBottomButton, SelectablePill, ShimmerText, Slider, SpeechToTextPreferences, Tag, Text, TextToSpeechPreferences, Toast };
 
 export type { IconButtonIconProps };

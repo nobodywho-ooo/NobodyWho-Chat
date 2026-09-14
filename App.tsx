@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Platform, StatusBar } from 'react-native';
 import { setAudioModeAsync } from 'expo-audio';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DefaultTheme, DarkTheme } from '@react-navigation/native';
 import * as Sentry from '@sentry/react-native';
@@ -205,11 +206,13 @@ function AppLoader() {
 export default Sentry.wrap(function App() {
   return (
     <GestureHandlerRootView>
-      <SafeAreaProvider>
-        <ThemeProvider>
-          <AppLoader />
-        </ThemeProvider>
-      </SafeAreaProvider>
+      <KeyboardProvider>
+        <SafeAreaProvider>
+          <ThemeProvider>
+            <AppLoader />
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </KeyboardProvider>
     </GestureHandlerRootView>
   );
 });

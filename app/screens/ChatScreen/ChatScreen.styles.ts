@@ -38,6 +38,15 @@ export default StyleSheet.create({
     top: 0,
     height: 10,
   },
+  inputBarContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  scrollToBottomContainer: {
+    marginBottom: Spacings.sm,
+  },
   listContainer: {
     flex: 1,
   },

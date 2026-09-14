@@ -146,6 +146,9 @@
       "openSettings": "Åbn indstillinger",
       "close": "Luk"
     },
+    "scrollToBottomButton": {
+      "label": "Gå til seneste"
+    },
     "messageListItem": {
       "copy": "Kopiér",
       "playAudio": "Afspil lyd",

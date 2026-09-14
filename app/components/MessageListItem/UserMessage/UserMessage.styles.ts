@@ -1,16 +1,20 @@
 import { StyleSheet } from 'react-native';
 import { Spacings } from 'style';
 
+export const LINE_HEIGHT = 22;
+export const BUBBLE_PADDING_VERTICAL = Spacings.md;
+export const ROW_MARGIN_VERTICAL = Spacings.md;
+
 export default StyleSheet.create({
   userContainer: {
-    marginVertical: Spacings.md,
+    marginVertical: ROW_MARGIN_VERTICAL,
     maxWidth: '90%',
     alignSelf: 'flex-end',
     alignItems: 'flex-end',
   },
   userBubbleContainer: {
     paddingHorizontal: Spacings.lg,
-    paddingVertical: Spacings.md,
+    paddingVertical: BUBBLE_PADDING_VERTICAL,
     borderRadius: 16,
   },
   userBubblePressed: {
@@ -18,7 +22,7 @@ export default StyleSheet.create({
   },
   text: {
     fontSize: 15,
-    lineHeight: 22,
+    lineHeight: LINE_HEIGHT,
   },
   attachmentsContainer: {
     marginBottom: Spacings.sm,

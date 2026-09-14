@@ -1,6 +1,6 @@
 import React from 'react';
-import { Alert } from 'react-native';
-import { render, act } from '@testing-library/react-native';
+import { Alert, FlatList } from 'react-native';
+import { fireEvent, render, act } from '@testing-library/react-native';
 import { Prompt } from 'react-native-nobodywho';
 import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
 
@@ -14,6 +14,11 @@ import {
   mockGetDocumentAsync,
   mockImageSaveAsync,
   mockLaunchImageLibraryAsync,
+  mockClearCaches,
+  mockKeyboardDismiss,
+  mockListState,
+  mockScrollToOffset,
+  mockScrollToIndex,
 } from 'jest/mock/node-modules';
 
 import { ChatScreen } from '../ChatScreen';
@@ -96,6 +101,11 @@ beforeEach(() => {
   mockInsertMessage.mockReset().mockResolvedValue(1);
   mockGetInfo.mockReset().mockResolvedValue({ exists: false });
   mockUnlink.mockReset();
+  mockClearCaches.mockReset();
+  mockScrollToIndex.mockReset();
+  mockScrollToOffset.mockReset();
+  mockKeyboardDismiss.mockClear();
+  mockListState.reset();
 });
 
 const send = async (
@@ -762,4 +772,351 @@ test('a persistence failure that is not a delete still finishes the turn', async
   expect(screen.UNSAFE_getByType(InputBar as never).props.isStreaming).toBe(
     false,
   );
+});
+
+test('puts the keyboard away when a message is sent', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  expect(mockKeyboardDismiss).not.toHaveBeenCalled();
+
+  await send(screen, 'hi');
+
+  // The answer is about to take over the screen, so the keyboard goes away as
+  // part of sending rather than as a side effect of whatever scrolls next.
+  expect(mockKeyboardDismiss).toHaveBeenCalled();
+});
+
+test('leaves the keyboard alone when there is nothing to send', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onSend();
+  });
+
+  expect(mockKeyboardDismiss).not.toHaveBeenCalled();
+});
+
+// --- Anchoring the sent message --------------------------------------------
+
+// The legend-list mock hangs the anchoring props on a `LegendList` wrapper.
+const listProps = (screen: ReturnType<typeof render>) =>
+  screen.UNSAFE_getByType('LegendList' as never).props;
+
+
+test('sending anchors the new message and rides it to the top', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  // The user message landed at index 0, so that row is the one held at the top,
+  // with blank space reserved below it for the reply.
+  expect(listProps(screen).anchoredEndSpace).toEqual(
+    expect.objectContaining({ anchorIndex: 0 }),
+  );
+  // The scroll targets the row itself, not the end of the content: the end
+  // moves as the reserved space shrinks and as the composer's inset drops when
+  // the field snaps back to one line, and a list pinned there goes with it.
+  // The first message of a conversation jumps: there is nothing to slide past.
+  expect(mockScrollToIndex).toHaveBeenCalledWith({
+    index: 0,
+    viewPosition: 0,
+    viewOffset: 12,
+    animated: false,
+  });
+});
+
+test('a later send anchors that message and animates the ride up', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[
+        { role: 'user', content: 'first' },
+        { role: 'assistant', content: 'answer' },
+      ]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'second');
+
+  expect(listProps(screen).anchoredEndSpace).toEqual(
+    expect.objectContaining({ anchorIndex: 2 }),
+  );
+  expect(mockScrollToIndex).toHaveBeenCalledWith({
+    index: 2,
+    viewPosition: 0,
+    viewOffset: 12,
+    animated: true,
+  });
+});
+
+test('a message with an attachment anchors uncapped', async () => {
+  mockChatPipeline = ModelPipeline.imageAudioTextToText;
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(async () => {
+    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+  });
+  await send(screen, 'what is this');
+
+  // An image row is taller than the text cap; capping it would park the middle
+  // of the picture at the top instead of its edge.
+  expect(listProps(screen).anchoredEndSpace.anchorMaxSize).toBeUndefined();
+});
+
+test('a new chat getting its id mid-turn leaves the anchor alone', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={undefined}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+  expect(listProps(screen).anchoredEndSpace).toEqual(
+    expect.objectContaining({ anchorIndex: 0 }),
+  );
+  mockScrollToIndex.mockClear();
+  mockScrollToOffset.mockClear();
+  mockClearCaches.mockClear();
+
+  // The send created the conversation, so its id reaches this screen a beat
+  // later — while the answer is still streaming in. Reading that as a switch
+  // drops the anchor and throws away the measured row heights underneath a
+  // live turn, and the conversation visibly falls and jumps back.
+  screen.update(
+    <ChatScreen
+      conversationId={42}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  expect(listProps(screen).anchoredEndSpace).toEqual(
+    expect.objectContaining({ anchorIndex: 0 }),
+  );
+  expect(mockClearCaches).not.toHaveBeenCalled();
+  expect(mockScrollToOffset).not.toHaveBeenCalled();
+  expect(mockScrollToIndex).not.toHaveBeenCalled();
+});
+
+test('switching conversation drops the anchor and jumps to the latest message', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+  expect(listProps(screen).anchoredEndSpace).toBeDefined();
+
+  screen.update(
+    <ChatScreen
+      conversationId={9}
+      messages={[{ role: 'user', content: 'another chat' }]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  // Another conversation's history has no turn in flight to anchor, and it
+  // opens on its last message rather than wherever the anchor had parked.
+  expect(listProps(screen).anchoredEndSpace).toBeUndefined();
+  expect(mockScrollToOffset).toHaveBeenCalledWith(
+    expect.objectContaining({ animated: false }),
+  );
+  // Rows are keyed by index, so the outgoing conversation's measured heights
+  // would otherwise be reused for the incoming one's rows.
+  expect(mockClearCaches).toHaveBeenCalledWith({ mode: 'sizes' });
+});
+
+// --- Scroll-to-bottom chevron ----------------------------------------------
+
+const chevron = (screen: ReturnType<typeof render>) =>
+  screen.queryByLabelText('components.scrollToBottomButton.label');
+
+test('offers the chevron only while the end of the conversation is out of view', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  // Sitting at the end: nothing to scroll down to.
+  expect(chevron(screen)).toBeNull();
+
+  act(() => mockListState.emitIsAtEnd(false));
+  expect(chevron(screen)).toBeTruthy();
+
+  act(() => mockListState.emitIsAtEnd(true));
+  expect(chevron(screen)).toBeNull();
+});
+
+test('the chevron does not flash while the list is still settling', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={undefined}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  // The list mounts with the first message and reports "not at the end" until
+  // it has laid out and run its scroll. Believing a reading taken right then
+  // flashes the chevron over the first message of every new conversation, so
+  // only the signal itself is trusted.
+  mockListState.isAtEnd = false;
+  await send(screen, 'hi');
+
+  expect(chevron(screen)).toBeNull();
+});
+
+test('the chevron is never offered on an empty conversation', () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={undefined}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  act(() => mockListState.emitIsAtEnd(false));
+  expect(chevron(screen)).toBeNull();
+});
+
+test('follows the answer only while the reader has asked it to', async () => {
+  // A stream the test advances one token at a time, so the list can be poked
+  // between them.
+  const gates = ['one', ' two', ' three'].map(token => {
+    let release = () => {};
+    const arrived = new Promise<void>(resolve => {
+      release = resolve;
+    });
+    return { token, arrived, release };
+  });
+  mockChat.ask.mockImplementation(async function* () {
+    for (const gate of gates) {
+      await gate.arrived;
+      yield gate.token;
+    }
+  });
+  const nextToken = async (index: number) => {
+    await act(async () => {
+      gates[index].release();
+    });
+  };
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  const bar = screen.UNSAFE_getByType(InputBar as never);
+  act(() => bar.props.onChangeText('hi'));
+  let turn: Promise<void> | undefined;
+  await act(async () => {
+    turn = screen.UNSAFE_getByType(InputBar as never).props.onSend();
+  });
+
+  // Nothing follows on its own: the sent message stays anchored where the
+  // reader can read it, however much answer arrives underneath. (The mount's
+  // own jump to the latest message already happened, hence the clear.)
+  mockScrollToOffset.mockClear();
+  await nextToken(0);
+  expect(mockScrollToOffset).not.toHaveBeenCalled();
+  expect(listProps(screen).anchoredEndSpace).toBeDefined();
+
+  // They ask for the bottom. That lets the anchor go — while it holds, blank
+  // space is reserved below the answer and the end of the list is the end of
+  // that space rather than the newest token.
+  act(() => mockListState.emitIsAtEnd(false));
+  fireEvent.press(chevron(screen)!);
+  expect(listProps(screen).anchoredEndSpace).toBeUndefined();
+
+  // From here each token walks the tail along, animated, rather than the list
+  // snapping once enough of the answer has piled up.
+  // Not animated: an animated scroll per token never catches the text, and the
+  // backlog unwinds in a rush the moment generation stops.
+  await nextToken(1);
+  expect(mockScrollToOffset).toHaveBeenCalledWith(
+    expect.objectContaining({ animated: false }),
+  );
+
+  // While following there is nothing to offer: the reader is being held at the
+  // bottom, and the end drifts out of view for a frame on every token.
+  act(() => mockListState.emitIsAtEnd(false));
+  expect(chevron(screen)).toBeNull();
+
+  // Touching the conversation hands scrolling back to them, and the tokens
+  // that follow leave it where they put it.
+  act(() =>
+    screen.UNSAFE_getByType(FlatList as never).props.onScrollBeginDrag(),
+  );
+  act(() => mockListState.emitIsAtEnd(false));
+  expect(chevron(screen)).toBeTruthy();
+
+  mockScrollToOffset.mockClear();
+  await act(async () => {
+    gates[2].release();
+    await turn;
+  });
+  expect(mockScrollToOffset).not.toHaveBeenCalled();
+});
+
+test('pressing the chevron scrolls the conversation to its end', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+  act(() => mockListState.emitIsAtEnd(false));
+
+  fireEvent.press(chevron(screen)!);
+
+  // Animated, and aimed at an offset past the bottom rather than at "the end":
+  // the list works the end out from the last row's measured size, which trails
+  // the text while an answer is being written.
+  expect(mockScrollToOffset).toHaveBeenCalledWith(
+    expect.objectContaining({ animated: true }),
+  );
+  // The reader is at the bottom now, so there is nothing left to offer them.
+  expect(chevron(screen)).toBeNull();
 });

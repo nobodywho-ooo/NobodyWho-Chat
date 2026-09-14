@@ -146,6 +146,9 @@
       "openSettings": "Open settings",
       "close": "Close"
     },
+    "scrollToBottomButton": {
+      "label": "Scroll to latest"
+    },
     "messageListItem": {
       "copy": "Copy",
       "playAudio": "Play audio",

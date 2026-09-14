@@ -15,13 +15,13 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
+    "@legendapp/list": "^3.3.11",
     "@op-engineering/op-sqlite": "^17.1.5",
     "@react-native-menu/menu": "^2.0.0",
     "@react-navigation/drawer": "^8.0.0-alpha.48",
     "@react-navigation/native": "^8.0.0-alpha.41",
     "@react-navigation/native-stack": "^8.0.0-alpha.49",
     "@sentry/react-native": "^8.22.0",
-    "@shopify/flash-list": "^2.3.2",
     "@shopify/react-native-skia": "2.11.0",
     "@types/ramda": "^0.32.0",
     "expo": "~57.0.0",
@@ -42,6 +42,7 @@
     "react-native-enriched-markdown": "^1.0.1",
     "react-native-gesture-handler": "^3.1.0",
     "react-native-haptic-feedback": "^3.0.0",
+    "react-native-keyboard-controller": "^1.22.5",
     "react-native-linear-gradient": "^2.8.3",
     "react-native-localize": "^3.7.0",
     "react-native-nobodywho": "3.0.0",

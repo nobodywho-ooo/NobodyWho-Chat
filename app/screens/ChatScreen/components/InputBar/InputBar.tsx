@@ -18,7 +18,7 @@ import { useDrawerCoordination } from 'navigation';
 import { haptics } from 'helpers';
 import { Theme } from 'types';
 
-import { styles, INPUT_BAR_HEIGHT } from './InputBar.styles';
+import { styles } from './InputBar.styles';
 
 const KEYBOARD_HIDE_TIMEOUT = 400;
 
@@ -40,6 +40,8 @@ interface InputBarProps {
   onStop: () => void;
   onFocus?: () => void;
   onBlur?: () => void;
+  composerRef?: React.Ref<React.ComponentRef<typeof View>>;
+  onComposerLayout?: (event: LayoutChangeEvent) => void;
   style?: StyleProp<ViewStyle>;
   messageStarters?: React.ReactNode;
   showImageAttach?: boolean;
@@ -56,7 +58,7 @@ interface InputBarProps {
   onStopDictation?: () => void;
 }
 
-export const InputBar: React.FC<InputBarProps> & { height: number } = ({
+export const InputBar: React.FC<InputBarProps> = ({
   value,
   isStreaming,
   disabled = false,
@@ -67,6 +69,8 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
   onStop,
   onFocus,
   onBlur,
+  composerRef,
+  onComposerLayout,
   style,
   messageStarters,
   showImageAttach = false,
@@ -336,6 +340,8 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
         </View>
       )}
       <View
+        ref={composerRef}
+        onLayout={onComposerLayout}
         style={[
           styles.inputFieldContainer,
           style,
@@ -421,8 +427,6 @@ export const InputBar: React.FC<InputBarProps> & { height: number } = ({
     </View>
   );
 };
-
-InputBar.height = INPUT_BAR_HEIGHT;
 
 interface InputBarActionProps {
   isStreaming: boolean;

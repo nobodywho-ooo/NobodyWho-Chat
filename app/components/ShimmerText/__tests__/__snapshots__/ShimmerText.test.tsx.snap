@@ -3,6 +3,8 @@
 exports[`renders correctly ShimmerText 1`] = `
 <SkiaText
   text="Thinking…"
+  x={0}
+  y={14}
 >
   <SkiaLinearGradient
     colors={

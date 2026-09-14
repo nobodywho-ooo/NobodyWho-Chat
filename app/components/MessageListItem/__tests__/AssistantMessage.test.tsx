@@ -7,6 +7,7 @@ import { copyToClipboard } from 'helpers';
 import { DisplayMessage } from 'types';
 
 import { AssistantMessage } from '../AssistantMessage/AssistantMessage';
+import styles from '../AssistantMessage/AssistantMessage.styles';
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -312,4 +313,87 @@ test('offers a stop affordance while the message is being read aloud', () => {
 
   fireEvent.press(getByLabelText('components.messageListItem.stopAudio'));
   expect(onStopAudio).toHaveBeenCalled();
+});
+
+// --- Re-render cost --------------------------------------------------------
+
+test('skips re-rendering when nothing about the message changed', () => {
+  // A streaming turn rewrites the messages array on every token while leaving
+  // finished answers untouched. Those rows must not re-parse their markdown
+  // each time, which is what the memo around AssistantMessage buys.
+  const message: DisplayMessage = {
+    role: 'assistant',
+    content: 'an answer that is already finished',
+  };
+  const markdown = EnrichedMarkdownText as unknown as jest.Mock;
+
+  const screen = renderAssistant(message);
+  const rendersAfterMount = markdown.mock.calls.length;
+  expect(rendersAfterMount).toBeGreaterThan(0);
+
+  screen.update(
+    <AssistantMessage
+      message={message}
+      isStreaming={false}
+      index={0}
+      canPlayAudio={false}
+      isAudioLoading={false}
+      isAudioPlaying={false}
+    />,
+  );
+
+  expect(markdown.mock.calls.length).toBe(rendersAfterMount);
+});
+
+test('re-renders when the message content grows', () => {
+  const markdown = EnrichedMarkdownText as unknown as jest.Mock;
+  const screen = renderAssistant({ role: 'assistant', content: 'partial' });
+  const rendersAfterMount = markdown.mock.calls.length;
+
+  // A new message object is what the streaming update produces for the row
+  // being written, so that row still re-renders.
+  screen.update(
+    <AssistantMessage
+      message={{ role: 'assistant', content: 'partial answer' }}
+      isStreaming={false}
+      index={0}
+      canPlayAudio={false}
+      isAudioLoading={false}
+      isAudioPlaying={false}
+    />,
+  );
+
+  expect(markdown.mock.calls.length).toBeGreaterThan(rendersAfterMount);
+});
+
+// --- Footer ----------------------------------------------------------------
+
+test('keeps the footer out of the layout while the answer streams', () => {
+  // Nothing in the footer is offered mid-turn: copy and read-aloud both wait
+  // for the answer to finish, and the metrics only exist once it has. An empty
+  // footer still carries its top margin, so rendering one grows the row under
+  // the reader for nothing.
+  const message: DisplayMessage = {
+    role: 'assistant',
+    content: '<think>still reasoning',
+  };
+  const screen = renderAssistant(message, { isStreaming: true });
+
+  expect(screen.queryByLabelText('components.messageListItem.copy')).toBeNull();
+  expect(screen.queryByText(/tok\/s/)).toBeNull();
+  // The reasoning is on screen, so the row rendered — just without a footer.
+  expect(
+    screen.getByLabelText('components.messageListItem.viewThinking'),
+  ).toBeTruthy();
+  expect(screen.UNSAFE_queryByProps(styles.footerContainer)).toBeNull();
+});
+
+test('brings the footer back once the answer is finished', () => {
+  const message: DisplayMessage = {
+    role: 'assistant',
+    content: 'the finished answer',
+  };
+  const screen = renderAssistant(message);
+
+  expect(screen.getByLabelText('components.messageListItem.copy')).toBeTruthy();
 });

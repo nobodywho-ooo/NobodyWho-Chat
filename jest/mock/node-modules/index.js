@@ -271,11 +271,15 @@ jest.mock('@shopify/react-native-skia', () => {
     Canvas: ({ children }) =>
       mockReact.createElement(mockReact.Fragment, null, children),
     Picture: () => null,
-    Text: ({ text, children }) =>
-      mockReact.createElement('SkiaText', { text }, children),
+    // x/y are the glyph origin, so tests can assert the laid-out geometry.
+    Text: ({ text, x, y, children }) =>
+      mockReact.createElement('SkiaText', { text, x, y }, children),
     LinearGradient: props => mockReact.createElement('SkiaLinearGradient', props),
     matchFont: ({ fontSize = 14 } = {}) => ({
-      getMetrics: () => ({ ascent: -fontSize, descent: fontSize * 0.25 }),
+      // Zeroed on purpose: this is what Skia hands back on the first frame,
+      // before the typeface resolves. Anything laying itself out from these
+      // would collapse and then jump, so nothing may depend on them.
+      getMetrics: () => ({ ascent: 0, descent: 0 }),
       // Roughly half an em per character, enough for wrapping assertions.
       measureText: text => ({ x: 0, y: 0, width: text.length * fontSize * 0.5, height: fontSize }),
     }),
@@ -323,9 +327,108 @@ jest.mock('react-native-linear-gradient', () => ({
   default: 'LinearGradient',
 }));
 
-jest.mock('@shopify/flash-list', () => ({
-  FlashList: require('react-native').FlatList,
-}));
+// The imperative scroll the chat screen uses to ride a sent message to the top.
+export const mockScrollToEnd = jest.fn();
+// Size caches the screen drops when it swaps in another conversation.
+export const mockClearCaches = jest.fn();
+// The scroll that parks a sent message at the top of the list.
+export const mockScrollToIndex = jest.fn();
+// The list's own scroll, used to follow an answer as it is written.
+export const mockScrollToOffset = jest.fn();
+
+// Stand-in for the list's own state signals. Tests drive `emitIsAtEnd` to move
+// the list away from (and back to) the end of the conversation.
+export const mockListState = {
+  isAtEnd: true,
+  listeners: new Set(),
+  listen(_type, callback) {
+    mockListState.listeners.add(callback);
+    return () => mockListState.listeners.delete(callback);
+  },
+  emitIsAtEnd(value) {
+    mockListState.isAtEnd = value;
+    mockListState.listeners.forEach(callback => callback(value));
+  },
+  reset() {
+    mockListState.isAtEnd = true;
+    mockListState.listeners.clear();
+  },
+};
+
+// legend-list virtualizes from measured layout, and Jest reports none, so the
+// real list renders an empty scroll view. Back it with RN's FlatList and hang
+// the legend-only props on a wrapper element so tests can assert on the
+// anchoring without a layout pass.
+// react-native-keyboard-controller's native module isn't available under Jest,
+// and the stand-in it ships is ESM the RN preset does not transform. The app
+// only mounts the provider and the sticky view, so pass both through.
+// Sending a message puts the keyboard away; tests assert on this.
+export const mockKeyboardDismiss = jest.fn().mockResolvedValue(undefined);
+
+jest.mock('react-native-keyboard-controller', () => {
+  const mockReact = require('react');
+  const { View } = require('react-native');
+  return {
+    KeyboardProvider: ({ children }) =>
+      mockReact.createElement(mockReact.Fragment, null, children),
+    KeyboardStickyView: ({ children, style }) =>
+      mockReact.createElement(View, { style }, children),
+    KeyboardController: { dismiss: () => mockKeyboardDismiss() },
+  };
+});
+
+jest.mock('@legendapp/list/keyboard', () => {
+  const mockReact = require('react');
+  const { FlatList } = require('react-native');
+  const composerInset = {
+    contentInsetEndAdjustment: { value: 0 },
+    onComposerLayout: () => {},
+  };
+  const scrollToEndApi = {
+    // A reanimated shared value in the real library, so it carries `set`.
+    freeze: { value: false, set: () => {} },
+    scrollMessageToEnd: options => mockScrollToEnd(options),
+  };
+  const listApi = {
+    clearCaches: options => mockClearCaches(options),
+    getState: () => mockListState,
+    scrollToIndex: params => {
+      mockScrollToIndex(params);
+      return Promise.resolve();
+    },
+    scrollToOffset: params => {
+      mockScrollToOffset(params);
+      return Promise.resolve();
+    },
+  };
+  const LegendList = mockReact.forwardRef((props, ref) => {
+    const {
+      anchoredEndSpace,
+      applyWorkaroundForContentInsetHitTestBug,
+      contentInsetEndAdjustment,
+      estimatedItemSize,
+      freeze,
+      keyboardLiftBehavior,
+      keyboardOffset,
+      maintainVisibleContentPosition,
+      recycleItems,
+      ...rest
+    } = props;
+    mockReact.useImperativeHandle(ref, () => listApi, []);
+    return mockReact.createElement(
+      'LegendList',
+      { anchoredEndSpace, maintainVisibleContentPosition },
+      mockReact.createElement(FlatList, rest),
+    );
+  });
+  return {
+    KeyboardAwareLegendList: LegendList,
+    // Both hooks hand back stable values in the real library; keep that here,
+    // or every consumer effect that depends on them re-runs each render.
+    useKeyboardChatComposerInset: () => composerInset,
+    useKeyboardScrollToEnd: () => scrollToEndApi,
+  };
+});
 
 export const mockFromPath = jest.fn();
 export const mockTtsLoad = jest.fn();

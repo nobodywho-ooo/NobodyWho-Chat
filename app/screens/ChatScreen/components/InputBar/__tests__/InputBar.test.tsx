@@ -1,6 +1,6 @@
 import React from 'react';
-import { TextInput } from 'react-native';
-import { render, act } from '@testing-library/react-native';
+import { Text, TextInput, View } from 'react-native';
+import { render, act, within } from '@testing-library/react-native';
 import { IconButton } from 'components';
 
 import { InputBar } from '../InputBar';
@@ -324,4 +324,28 @@ test('still forwards focus and blur to the parent', () => {
 
   act(() => input.props.onBlur());
   expect(onBlur).toHaveBeenCalled();
+});
+
+// --- Composer measurement --------------------------------------------------
+
+test('measures the field for the list inset, not the starters above it', () => {
+  const onComposerLayout = jest.fn();
+
+  const screen = render(
+    <StatefulInputBar
+      onComposerLayout={onComposerLayout}
+      messageStarters={<Text testID="starters">starters</Text>}
+    />,
+  );
+
+  // The view the list measures must not be the one wearing the starters: they
+  // vanish the moment a conversation gets its first message, and folding them
+  // into the inset collapses it mid-turn and slides the conversation down.
+  const measured = screen
+    .UNSAFE_getAllByType(View as never)
+    .find(node => node.props.onLayout === onComposerLayout);
+  expect(measured).toBeTruthy();
+  expect(within(measured!).queryByTestId('starters')).toBeNull();
+  // The starters are on screen, just not inside what gets measured.
+  expect(screen.getByTestId('starters')).toBeTruthy();
 });

@@ -1,15 +1,12 @@
 import { StyleSheet } from 'react-native';
 import { Spacings } from 'style';
 
-export const INPUT_BAR_HEIGHT = 94;
 const TOP_GRADIENT_HEIGHT = 10;
 
 export const styles = StyleSheet.create({
   mainContainer: {
-    position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 0,
   },
   inputFieldContainer: {
     paddingTop: Spacings.xs,

@@ -34,3 +34,26 @@ test('truncates the last line once maxLines is reached', () => {
   );
   expect(textsOf(screen)).toEqual(['one', 'two…']);
 });
+
+// --- Stable geometry -------------------------------------------------------
+
+const baselineOf = (screen: ReturnType<typeof render>) =>
+  screen.UNSAFE_getAllByType('SkiaText' as never)[0].props.y as number;
+
+test('lays out without Skia font metrics', () => {
+  // Metrics come back zeroed until the typeface resolves (see the Skia mock).
+  // Sizing the canvas from them would render it collapsed and then grow it a
+  // frame later, shoving whatever sits next to it around the screen.
+  const screen = render(<ShimmerText text="Thinking…" fontSize={14} />);
+
+  expect(baselineOf(screen)).toBeGreaterThan(0);
+});
+
+test('keeps the same geometry across re-renders', () => {
+  const screen = render(<ShimmerText text="Thinking…" fontSize={14} />);
+  const first = baselineOf(screen);
+
+  screen.update(<ShimmerText text="Thinking…" fontSize={14} />);
+
+  expect(baselineOf(screen)).toBe(first);
+});

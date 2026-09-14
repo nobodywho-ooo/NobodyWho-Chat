@@ -15,15 +15,17 @@ import { AudioAttachment } from './AudioAttachment';
 import { FullScreenImageModal } from './FullScreenImageModal';
 import { Text } from '../../Text/Text';
 
-import styles from './UserMessage.styles';
+import styles, {
+  BUBBLE_PADDING_VERTICAL,
+  LINE_HEIGHT,
+  ROW_MARGIN_VERTICAL,
+} from './UserMessage.styles';
 
 interface UserMessageProps {
   message: DisplayMessage;
 }
 
-// A user turn: any attachments (images / audio / files) above a long-press-to-
-// copy text bubble. Split out of MessageListItem to keep role dispatch readable.
-export const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
+const UserMessageComponent: React.FC<UserMessageProps> = ({ message }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { content } = message;
@@ -157,3 +159,9 @@ export const UserMessage: React.FC<UserMessageProps> = ({ message }) => {
     </View>
   );
 };
+
+export const UserMessage = Object.assign(React.memo(UserMessageComponent), {
+  LINE_HEIGHT,
+  BUBBLE_PADDING_VERTICAL,
+  ROW_MARGIN_VERTICAL,
+});

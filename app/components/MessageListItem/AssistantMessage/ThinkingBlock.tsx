@@ -133,6 +133,7 @@ const styles = StyleSheet.create({
     columnGap: Spacings.xs,
   },
   headerLabel: {
+    paddingLeft: Spacings.xxs,
     includeFontPadding: false,
   },
   previewContainer: {
