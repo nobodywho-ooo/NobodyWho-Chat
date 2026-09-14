@@ -10,6 +10,9 @@ import {
   ibm,
   openai,
   silero,
+  nanbeige,
+  openbmb,
+  ai9stars,
 } from 'svg';
 
 const familyIcons: Record<string, FC<SvgProps>> = {
@@ -22,6 +25,9 @@ const familyIcons: Record<string, FC<SvgProps>> = {
   Granite: ibm,
   Whisper: openai,
   Silero: silero,
+  Nanbeige: nanbeige,
+  MiniCPM5: openbmb,
+  G9v3: ai9stars,
 };
 
 export const getFamilyIcon = (family: string): FC<SvgProps> | undefined => {

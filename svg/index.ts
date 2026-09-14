@@ -7,5 +7,21 @@ import mistral from 'svg/mistral.svg';
 import ibm from 'svg/ibm.svg';
 import openai from 'svg/open-ai.svg';
 import silero from 'svg/silero.svg';
+import nanbeige from 'svg/nanbeige.svg';
+import openbmb from 'svg/open-bmb.svg';
+import ai9stars from 'svg/ai9stars.svg';
 
-export { qwen, bonsai, liquid, gemma4, supertonic, mistral, ibm, openai, silero };
+export {
+  qwen,
+  bonsai,
+  liquid,
+  gemma4,
+  supertonic,
+  mistral,
+  ibm,
+  openai,
+  silero,
+  nanbeige,
+  openbmb,
+  ai9stars,
+};
