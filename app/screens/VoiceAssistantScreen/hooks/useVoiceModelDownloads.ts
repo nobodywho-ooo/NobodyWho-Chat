@@ -2,15 +2,29 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useModelDownloads, useModels } from 'hooks';
 import { filterModelsByDeviceMemory, log, MODELS_URL } from 'helpers';
 import { modelDownloadProgress } from 'repositories';
-import { Model, ModelPipeline } from 'types';
+import {
+  isChatPipeline,
+  isSttPipeline,
+  isTtsPipeline,
+  isVadPipeline,
+  Model,
+  ModelPipeline,
+} from 'types';
 import { useModelDownloader } from '../../ModelsScreen/useModelDownloader';
 
 const RECOMMENDED_TAG = 'Recommended';
+const FIRST_PICK_TAG = 'Great First Pick';
 
-const VOICE_PIPELINES: readonly ModelPipeline[] = [
-  ModelPipeline.speechToText,
-  ModelPipeline.textToSpeech,
-  ModelPipeline.voiceActivityDetection,
+interface VoiceRequirement {
+  accepts: (pipeline: ModelPipeline) => boolean;
+  tag: string;
+}
+
+const VOICE_REQUIREMENTS: readonly VoiceRequirement[] = [
+  { accepts: isChatPipeline, tag: FIRST_PICK_TAG },
+  { accepts: isSttPipeline, tag: RECOMMENDED_TAG },
+  { accepts: isTtsPipeline, tag: RECOMMENDED_TAG },
+  { accepts: isVadPipeline, tag: RECOMMENDED_TAG },
 ];
 
 export interface VoiceModelDownloads {
@@ -59,28 +73,27 @@ export const useVoiceModelDownloads = (): VoiceModelDownloads => {
     fetchCatalogue();
   }, []);
 
-  const missingPipelines = useMemo(
+  const missingRequirements = useMemo(
     () =>
-      VOICE_PIPELINES.filter(
-        pipeline =>
-          !storedModels.some(model => model.pipeline === pipeline) &&
-          !downloads.some(download => download.model.pipeline === pipeline),
+      VOICE_REQUIREMENTS.filter(
+        ({ accepts }) =>
+          !storedModels.some(model => accepts(model.pipeline)) &&
+          !downloads.some(download => accepts(download.model.pipeline)),
       ),
     [storedModels, downloads],
   );
 
   const missingModels = useMemo(
     () =>
-      missingPipelines.flatMap(pipeline => {
+      missingRequirements.flatMap(({ accepts, tag }) => {
         const model = catalogue.find(
           candidate =>
-            candidate.pipeline === pipeline &&
-            candidate.tags.includes(RECOMMENDED_TAG),
+            accepts(candidate.pipeline) && candidate.tags.includes(tag),
         );
 
         return model ? [model] : [];
       }),
-    [missingPipelines, catalogue],
+    [missingRequirements, catalogue],
   );
 
   const progress = useMemo(() => {
@@ -131,7 +144,7 @@ export const useVoiceModelDownloads = (): VoiceModelDownloads => {
   }, [targets, storedModels, stopDownload]);
 
   return {
-    hasMissingModels: missingPipelines.length > 0,
+    hasMissingModels: missingRequirements.length > 0,
     canDownload: missingModels.length > 0,
     isDownloading,
     progress,

@@ -214,6 +214,7 @@
         "tts": "Tekst-til-tale-model",
         "vad": "Detektion af stemmeaktivitet model",
         "downloadMissing": "Hent manglende modeller",
+        "loadingModels": "Indlæser modeller…",
         "downloadProgress": "{{percent}}%",
         "cancelDownload": "Annuller download"
       }

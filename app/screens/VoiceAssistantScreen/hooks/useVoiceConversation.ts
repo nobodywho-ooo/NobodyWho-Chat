@@ -55,6 +55,10 @@ export interface VoiceAssistantStatus {
   isSttReady: boolean;
   isTtsReady: boolean;
   isVadReady: boolean;
+  // At least one of the four is being loaded into memory right now. A freshly
+  // downloaded set takes a few seconds to come up, so the setup view has
+  // something to show for the wait instead of an idle checklist.
+  isLoading: boolean;
 }
 
 export interface VoiceConversation {
@@ -95,6 +99,7 @@ export const useVoiceConversation = ({
     chatState,
     sttState,
     ttsState,
+    vadState,
     ttsArchitecture,
     borrowStt,
     borrowTts,
@@ -120,8 +125,11 @@ export const useVoiceConversation = ({
       isSttReady: sttState === AiModelState.Ready,
       isTtsReady: ttsState === AiModelState.Ready,
       isVadReady: speechService.enabled,
+      isLoading: [chatState, sttState, ttsState, vadState].some(
+        state => state === AiModelState.Loading,
+      ),
     }),
-    [chatState, sttState, ttsState, speechService.enabled],
+    [chatState, sttState, ttsState, vadState, speechService.enabled],
   );
   const isReady =
     voiceAssistantStatus.isChatReady &&

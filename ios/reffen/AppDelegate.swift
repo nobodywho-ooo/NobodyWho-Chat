@@ -10,6 +10,8 @@ class AppDelegate: ExpoAppDelegate {
 
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
+  /// Kept for `SceneDelegate`, which starts React Native once the scene connects.
+  var launchOptions: [UIApplication.LaunchOptionsKey: Any]?
 
   override func application(
     _ application: UIApplication,
@@ -21,14 +23,10 @@ class AppDelegate: ExpoAppDelegate {
 
     reactNativeDelegate = delegate
     reactNativeFactory = factory
+    self.launchOptions = launchOptions
 
-    window = UIWindow(frame: UIScreen.main.bounds)
-
-    factory.startReactNative(
-      withModuleName: "reffen",
-      in: window,
-      launchOptions: launchOptions
-    )
+    // The window is created by `SceneDelegate` — the UIScene life cycle is mandatory
+    // for apps built against the iOS 27 SDK (Xcode 27).
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }

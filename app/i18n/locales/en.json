@@ -214,6 +214,7 @@
         "tts": "Text-to-speech model",
         "vad": "Voice Activity Detection model",
         "downloadMissing": "Download missing models",
+        "loadingModels": "Loading models…",
         "downloadProgress": "{{percent}}%",
         "cancelDownload": "Cancel Download"
       }

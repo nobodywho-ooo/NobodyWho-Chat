@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, ProgressBar, Text } from 'components';
 import { useStyled } from 'hooks';
@@ -93,13 +93,27 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
               t('screens.voiceAssistant.setup.vad'),
             )}
           </View>
-          {hasMissingModels && (
+          {hasMissingModels ? (
             <Button
               title={t('screens.voiceAssistant.setup.downloadMissing')}
               disabled={!canDownload}
               onPress={downloadMissing}
               style={styles.downloadButton}
             />
+          ) : (
+            // Nothing left to fetch: whatever the checklist is still missing is
+            // on its way into memory, which takes a few seconds per model.
+            status.isLoading && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator color={colors.primary} />
+                <Text
+                  variant="body2"
+                  style={{ color: colors.onSurfaceVariant }}
+                >
+                  {t('screens.voiceAssistant.setup.loadingModels')}
+                </Text>
+              </View>
+            )
           )}
         </>
       )}
@@ -135,6 +149,12 @@ const styles = StyleSheet.create({
   },
   downloadButton: {
     alignSelf: 'stretch',
+    marginTop: Spacings.sm,
+  },
+  loadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.sm,
     marginTop: Spacings.sm,
   },
   cancelButton: {
