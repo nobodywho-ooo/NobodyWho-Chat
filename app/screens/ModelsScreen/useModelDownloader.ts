@@ -203,5 +203,5 @@ export const useModelDownloader = () => {
     return () => subscription.remove();
   }, [runDownload]);
 
-  return { startDownload, promptStopDownload };
+  return { startDownload, stopDownload, promptStopDownload };
 };

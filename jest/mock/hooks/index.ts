@@ -13,7 +13,8 @@ jest.mock('hooks', () => {
     // Delegates to the real hook by default so tests can drive the real
     // appState store; stub it with mockReturnValue for static values.
     useAppState: jest.fn(actual.useAppState),
-    useModels: jest.fn(),
+    // Defaults to no downloaded models; override per test.
+    useModels: jest.fn(() => ({ models: [], loading: false })),
     useConversations: jest.fn(),
     // Defaults to no in-progress downloads — the same result the real reactive
     // query yields in tests (no rows). Override per test to render the

@@ -208,11 +208,14 @@
       "setup": {
         "title": "Set up voice chat",
         "description": "You need four models loaded at once.",
+        "downloadInProgress": "Download in progress",
         "chat": "Chat model",
         "stt": "Speech-to-text model",
         "tts": "Text-to-speech model",
         "vad": "Voice Activity Detection model",
-        "hint": "Download and activate one of each, then come back."
+        "downloadMissing": "Download missing models",
+        "downloadProgress": "{{percent}}%",
+        "cancelDownload": "Cancel Download"
       }
     },
     "settings": {

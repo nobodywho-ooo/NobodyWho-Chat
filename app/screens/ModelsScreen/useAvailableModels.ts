@@ -1,11 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { map, prop } from 'ramda';
 import { useAppState, useModelDownloads, useModels } from 'hooks';
-import { filterModelsByDeviceMemory } from 'helpers';
+import { filterModelsByDeviceMemory, MODELS_URL } from 'helpers';
 import { MODEL_SLOTS, Model } from 'types';
-
-const MODELS_URL =
-  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.1.0.json';
 
 // Fetches the catalogue, filters it to what the device can run, and derives the
 // three lists the screen renders: the models in use (one per occupied slot),

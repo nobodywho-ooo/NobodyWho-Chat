@@ -208,11 +208,14 @@
       "setup": {
         "title": "Konfigurer stemmechat",
         "description": "Der skal indlæses fire modeller på én gang.",
+        "downloadInProgress": "Download i gang",
         "chat": "Chatmodel",
         "stt": "Tale-til-tekst-model",
         "tts": "Tekst-til-tale-model",
         "vad": "Detektion af stemmeaktivitet model",
-        "hint": "Download og aktiver én af hver, og kom så tilbage."
+        "downloadMissing": "Hent manglende modeller",
+        "downloadProgress": "{{percent}}%",
+        "cancelDownload": "Annuller download"
       }
     },
     "settings": {

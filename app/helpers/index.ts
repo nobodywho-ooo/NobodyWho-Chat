@@ -9,6 +9,7 @@ import { getFamilyIcon } from './familyIcon';
 import { getPipelineIcon } from './pipelineIcon';
 import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
+import { MODELS_URL } from './modelCatalogue';
 import {
   downloadModelPart,
   downloadedPartPath,
@@ -143,4 +144,5 @@ export {
   computeGenerationMetrics,
   parameterCountLabel,
   modelSizeLabel,
+  MODELS_URL,
 };

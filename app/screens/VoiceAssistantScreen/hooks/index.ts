@@ -8,3 +8,5 @@ export type {
   VoiceConversation,
   VoiceStatus,
 } from './useVoiceConversation';
+export { useVoiceModelDownloads } from './useVoiceModelDownloads';
+export type { VoiceModelDownloads } from './useVoiceModelDownloads';

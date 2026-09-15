@@ -1,10 +1,11 @@
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { PlatformIcon, Text } from 'components';
+import { Button, PlatformIcon, ProgressBar, Text } from 'components';
 import { useStyled } from 'hooks';
 import { Spacings } from 'style';
 
+import { useVoiceModelDownloads } from '../hooks';
 import type { VoiceAssistantStatus } from '../hooks';
 
 interface VoiceSetupProps {
@@ -14,6 +15,14 @@ interface VoiceSetupProps {
 export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
+  const {
+    hasMissingModels,
+    canDownload,
+    isDownloading,
+    progress,
+    downloadMissing,
+    cancel,
+  } = useVoiceModelDownloads();
 
   const renderChecklistRow = (loaded: boolean, label: string) => (
     <View style={styles.rowContainer}>
@@ -43,32 +52,57 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
         variant="body2"
         style={[styles.description, { color: colors.onSurfaceVariant }]}
       >
-        {t('screens.voiceAssistant.setup.description')}
+        {t(
+          isDownloading
+            ? 'screens.voiceAssistant.setup.downloadInProgress'
+            : 'screens.voiceAssistant.setup.description',
+        )}
       </Text>
-      <View style={styles.checklistContainer}>
-        {renderChecklistRow(
-          status.isChatReady,
-          t('screens.voiceAssistant.setup.chat'),
-        )}
-        {renderChecklistRow(
-          status.isSttReady,
-          t('screens.voiceAssistant.setup.stt'),
-        )}
-        {renderChecklistRow(
-          status.isTtsReady,
-          t('screens.voiceAssistant.setup.tts'),
-        )}
-        {renderChecklistRow(
-          status.isVadReady,
-          t('screens.voiceAssistant.setup.vad'),
-        )}
-      </View>
-      <Text
-        variant="caption"
-        style={[styles.hint, { color: colors.onSurfaceVariant }]}
-      >
-        {t('screens.voiceAssistant.setup.hint')}
-      </Text>
+      {isDownloading ? (
+        <View style={styles.downloadContainer}>
+          <Text variant="body2" bold style={styles.progressLabel}>
+            {t('screens.voiceAssistant.setup.downloadProgress', {
+              percent: Math.round(Math.min(progress, 1) * 100),
+            })}
+          </Text>
+          <ProgressBar progress={progress} />
+          <Button
+            title={t('screens.voiceAssistant.setup.cancelDownload')}
+            variant="secondary"
+            onPress={cancel}
+            style={styles.cancelButton}
+          />
+        </View>
+      ) : (
+        <>
+          <View style={styles.checklistContainer}>
+            {renderChecklistRow(
+              status.isChatReady,
+              t('screens.voiceAssistant.setup.chat'),
+            )}
+            {renderChecklistRow(
+              status.isSttReady,
+              t('screens.voiceAssistant.setup.stt'),
+            )}
+            {renderChecklistRow(
+              status.isTtsReady,
+              t('screens.voiceAssistant.setup.tts'),
+            )}
+            {renderChecklistRow(
+              status.isVadReady,
+              t('screens.voiceAssistant.setup.vad'),
+            )}
+          </View>
+          {hasMissingModels && (
+            <Button
+              title={t('screens.voiceAssistant.setup.downloadMissing')}
+              disabled={!canDownload}
+              onPress={downloadMissing}
+              style={styles.downloadButton}
+            />
+          )}
+        </>
+      )}
     </View>
   );
 };
@@ -94,8 +128,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacings.sm,
   },
-  hint: {
-    textAlign: 'center',
+  downloadContainer: {
+    alignSelf: 'stretch',
+    gap: Spacings.sm,
     marginTop: Spacings.sm,
+  },
+  downloadButton: {
+    alignSelf: 'stretch',
+    marginTop: Spacings.sm,
+  },
+  cancelButton: {
+    marginTop: Spacings.xl,
+  },
+  progressLabel: {
+    textAlign: 'center',
   },
 });

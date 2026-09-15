@@ -54,7 +54,6 @@ export interface VoiceAssistantStatus {
   isChatReady: boolean;
   isSttReady: boolean;
   isTtsReady: boolean;
-  /** Detects when the user stops talking, which is what ends a turn. */
   isVadReady: boolean;
 }
 
