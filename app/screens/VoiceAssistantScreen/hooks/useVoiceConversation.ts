@@ -55,9 +55,6 @@ export interface VoiceAssistantStatus {
   isSttReady: boolean;
   isTtsReady: boolean;
   isVadReady: boolean;
-  // At least one of the four is being loaded into memory right now. A freshly
-  // downloaded set takes a few seconds to come up, so the setup view has
-  // something to show for the wait instead of an idle checklist.
   isLoading: boolean;
 }
 

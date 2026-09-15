@@ -101,8 +101,6 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
               style={styles.downloadButton}
             />
           ) : (
-            // Nothing left to fetch: whatever the checklist is still missing is
-            // on its way into memory, which takes a few seconds per model.
             status.isLoading && (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator color={colors.primary} />
