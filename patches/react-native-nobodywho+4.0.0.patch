@@ -1,8 +1,8 @@
 diff --git a/node_modules/react-native-nobodywho/src/chat.ts b/node_modules/react-native-nobodywho/src/chat.ts
-index a2d9782..58f895f 100644
+index 09178df..97837a9 100644
 --- a/node_modules/react-native-nobodywho/src/chat.ts
 +++ b/node_modules/react-native-nobodywho/src/chat.ts
-@@ -147,10 +147,13 @@ export class Chat {
+@@ -182,10 +182,13 @@ export class Chat {
    /** Tokenize a text message or multimodal prompt and return the token IDs.
     * Each element is a token ID (number) for text, or null for image/audio embedding slots. */
    async tokenize(message: string | Prompt): Promise<(number | null)[]> {

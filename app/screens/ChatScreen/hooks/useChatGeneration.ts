@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Chat, Message, Prompt } from 'react-native-nobodywho';
+import { Chat, Prompt } from 'react-native-nobodywho';
 import { KeyboardController } from 'react-native-keyboard-controller';
 
 import { ChatMessage, DisplayMessage, ToolInvocation } from 'types';
@@ -89,13 +89,12 @@ export function useChatGeneration({
       (path): path is string => typeof path === 'string',
     );
 
-    // TODO: check
     const userMessage: DisplayMessage = {
       role: 'user',
       content: userInput,
       documentsPath,
     };
-    const initialAssistantMessage: Message = {
+    const initialAssistantMessage: DisplayMessage = {
       role: 'assistant',
       content: '',
     };

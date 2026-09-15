@@ -18,7 +18,11 @@ export interface ChatMessage {
   toolInvocations?: ToolInvocation[];
 }
 
-export type DisplayMessage = Message & {
+type WithTextContent<T> = T extends { content: unknown }
+  ? Omit<T, 'content'> & { content: string }
+  : T;
+
+export type DisplayMessage = WithTextContent<Message> & {
   tokensPerSecond?: number;
   timeToFirstToken?: number;
   documentsPath?: string[];
