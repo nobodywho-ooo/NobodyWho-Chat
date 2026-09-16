@@ -24,7 +24,7 @@ export const TEMPERATURE_MIN = 0;
 export const TEMPERATURE_MAX = 2;
 export const TEMPERATURE_STEP = 0.1;
 export const TOKENS_MIN = 500;
-export const TOKENS_MAX = 8000;
+export const TOKENS_MAX = 12000;
 export const TOKENS_STEP = 500;
 
 export const CustomizeAssistantScreen: React.FC = () => {

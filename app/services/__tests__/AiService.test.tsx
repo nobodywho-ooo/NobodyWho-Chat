@@ -3,11 +3,13 @@ import { renderHook, act } from '@testing-library/react-native';
 
 import { buildModel } from 'jest/factories/model';
 import {
+  mockChatConstruct,
   mockFromPath,
   mockTtsLoad,
   mockSttConstruct,
   mockVadLoad,
 } from 'jest/mock/node-modules';
+import { Model as NobodyWhoModel } from 'react-native-nobodywho';
 import { ModelPipeline } from 'types';
 
 import {
@@ -54,6 +56,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 beforeEach(() => {
   mockFromPath.mockReset();
+  mockChatConstruct.mockReset();
   mockTtsLoad.mockReset();
   mockSttConstruct.mockReset();
   mockVadLoad.mockReset();
@@ -175,11 +178,82 @@ test('createChat wires the projection model and reports the chat pipeline', asyn
     expect.objectContaining({
       modelPath: '/mock-documents/models/2/model.gguf',
       projectionModelPath: '/mock-documents/models/2/mmproj.gguf',
+    }),
+  );
+  expect(mockChatConstruct).toHaveBeenCalledWith(
+    expect.objectContaining({
       // Multimodal loads are bounded to keep the Metal allocation small.
       contextSize: MULTIMODAL_CONTEXT_SIZE,
     }),
   );
   expect(result.current.chatPipeline).toBe(ModelPipeline.imageAudioTextToText);
+});
+
+// The stepper in the assistant settings lets a context be chosen against one
+// model and carried to the next, so the loader is the last place that can stop
+// a size the weights were never trained for.
+const mockMaxCtx = (value: number) => {
+  (NobodyWhoModel as unknown as { mockMaxCtx: number }).mockMaxCtx = value;
+};
+
+describe('context sizing against the model ceiling', () => {
+  afterEach(() => mockMaxCtx(32768));
+
+  test('clamps a configured context to what the model was trained for', async () => {
+    mockMaxCtx(2048);
+    mockFromPath.mockResolvedValue({ destroy: jest.fn() });
+    const { result } = renderHook(() => useAiService(), { wrapper });
+
+    await act(async () => {
+      await result.current.createChat({ model, contextSize: 8000 });
+    });
+
+    expect(mockChatConstruct).toHaveBeenCalledWith(
+      expect.objectContaining({ contextSize: 2048 }),
+    );
+  });
+
+  test('leaves a context the model can serve alone', async () => {
+    mockMaxCtx(32768);
+    mockFromPath.mockResolvedValue({ destroy: jest.fn() });
+    const { result } = renderHook(() => useAiService(), { wrapper });
+
+    await act(async () => {
+      await result.current.createChat({ model, contextSize: 8000 });
+    });
+
+    expect(mockChatConstruct).toHaveBeenCalledWith(
+      expect.objectContaining({ contextSize: 8000 }),
+    );
+  });
+
+  test('a ceiling below the engine default pulls an unset context down too', async () => {
+    mockMaxCtx(1024);
+    mockFromPath.mockResolvedValue({ destroy: jest.fn() });
+    const { result } = renderHook(() => useAiService(), { wrapper });
+
+    await act(async () => {
+      await result.current.createChat({ model });
+    });
+
+    expect(mockChatConstruct).toHaveBeenCalledWith(
+      expect.objectContaining({ contextSize: 1024 }),
+    );
+  });
+
+  test('a model that reports no usable ceiling is left to the engine default', async () => {
+    mockMaxCtx(0);
+    mockFromPath.mockResolvedValue({ destroy: jest.fn() });
+    const { result } = renderHook(() => useAiService(), { wrapper });
+
+    await act(async () => {
+      await result.current.createChat({ model });
+    });
+
+    expect(mockChatConstruct).toHaveBeenCalledWith(
+      expect.objectContaining({ contextSize: undefined }),
+    );
+  });
 });
 
 test('disposeChat resets the chat pipeline to text-only', async () => {

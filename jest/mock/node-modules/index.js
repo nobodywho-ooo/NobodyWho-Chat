@@ -430,7 +430,13 @@ jest.mock('@legendapp/list/keyboard', () => {
   };
 });
 
+// The async "load a chat model" step. AiService reaches it through
+// Model.load; tests stage the Chat instance it should produce.
 export const mockFromPath = jest.fn();
+// The options handed to `new Chat({ model, ... })` after that load — the chat's
+// own settings (systemPrompt, contextSize, tools, templateVariables), which are
+// no longer part of the load call.
+export const mockChatConstruct = jest.fn();
 export const mockTtsLoad = jest.fn();
 export const mockSttConstruct = jest.fn();
 export const mockVadLoad = jest.fn();
@@ -488,8 +494,30 @@ jest.mock('react-native-nobodywho', () => {
     };
     return instance;
   };
+  // AiService loads a chat in two steps so it can read the model's trained
+  // context length before sizing the chat: Model.load, then `new Chat`. The
+  // async step stays mockFromPath (tests stage resolution order and failures
+  // there); the constructor is synchronous and hands back whatever that step
+  // produced, recording its own options separately.
+  class Chat {
+    constructor(opts) {
+      const { model, ...chatOpts } = opts;
+      mockChatConstruct(chatOpts);
+      return model.instance;
+    }
+  }
+  const Model = {
+    // Overridable per test: the context length the weights report.
+    mockMaxCtx: 32768,
+    load: async (opts) => ({
+      instance: await mockFromPath(opts),
+      maxCtx: Model.mockMaxCtx,
+      destroy: jest.fn(),
+    }),
+  };
   return {
-    Chat: { fromPath: (opts) => mockFromPath(opts) },
+    Chat,
+    Model,
     TextToSpeech: { load: (opts) => mockTtsLoad(opts) },
     SpeechToText: {
       load: async (opts) => {

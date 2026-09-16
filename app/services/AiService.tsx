@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import {
   Chat,
+  Model as NobodyWhoModel,
   SamplerConfig,
   SpeechToText,
   TextToSpeech,
@@ -126,6 +127,21 @@ const _initialState: AiServiceState = {
 export const TEARDOWN_SETTLE_MS = 500;
 
 export const MULTIMODAL_CONTEXT_SIZE = 2048;
+
+export const DEFAULT_CONTEXT_SIZE = 4096;
+
+// Hold a requested context to what the model was actually trained for. An
+// unknown ceiling (a model whose metadata doesn't report one) leaves the
+// request alone rather than guessing a cap.
+export const clampContextSize = (
+  requested: number | undefined,
+  maxContext: number | undefined,
+): number | undefined => {
+  if (maxContext === undefined) {
+    return requested;
+  }
+  return Math.min(requested ?? DEFAULT_CONTEXT_SIZE, maxContext);
+};
 
 // The rate the voice activity detector is told its input is in. Silero runs at
 // 16 kHz internally and the rate is fixed at load time, so every caller has to
@@ -532,8 +548,31 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
             ? buildChatTools()
             : undefined;
 
-        // Multimodal contexts are capped: larger ones exhaust Metal buffers.
-        const contextSize =
+        const loaded = await NobodyWhoModel.load({
+          modelPath: chatModelPath,
+          projectionModelPath,
+          useGpu: opts.useGpu ?? true,
+        });
+
+        // What the weights were trained for. A context above it buys nothing
+        // and costs memory, so it is the real ceiling — the configured size is
+        // a user preference that may have been set against a bigger model.
+        const maxContext =
+          Number.isFinite(loaded.maxCtx) && loaded.maxCtx > 0
+            ? loaded.maxCtx
+            : undefined;
+
+        // Multimodal contexts are capped harder, and this cap is load-bearing
+        // rather than belt-and-braces: it bounds the KV-cache Metal allocation
+        // itself. It has been removed once by accident (2026-07-01, when the
+        // option stopped being passed) and the ggml-metal NULL-buffer crash
+        // came straight back — not on the background/foreground cycle the
+        // teardown barrier covers, but on switching from a text model to a
+        // vision one, with the dispose/load serialization confirmed working.
+        // So the barrier and this cap answer two different failure modes, and
+        // having one does not make the other redundant. Anything that widens
+        // it needs testing on a real device with a projection model loaded.
+        const requested =
           projectionModelPath !== undefined
             ? Math.min(
                 opts.contextSize ?? MULTIMODAL_CONTEXT_SIZE,
@@ -541,10 +580,16 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
               )
             : opts.contextSize;
 
-        const instance = await Chat.fromPath({
-          modelPath: chatModelPath,
-          projectionModelPath,
-          useGpu: opts.useGpu ?? true,
+        const contextSize = clampContextSize(requested, maxContext);
+
+        if (requested !== undefined && contextSize !== requested) {
+          log(
+            `AiService chat: context ${requested} exceeds what model ${model.id} (${model.name}) was trained for — using ${contextSize}`,
+          );
+        }
+
+        const instance = new Chat({
+          model: loaded,
           tools,
           systemPrompt: opts.systemPrompt,
           sampler: opts.sampler,

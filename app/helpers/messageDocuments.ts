@@ -1,3 +1,4 @@
+import { File } from 'expo-file-system';
 import {
   copyAsync,
   deleteAsync,
@@ -50,6 +51,20 @@ export const copyToMessageDocuments = async (
 export const resolveMessageDocumentPath = (stored: string): string => {
   const name = stored.replace(/^file:\/\//, '').split('/').pop() ?? stored;
   return `${messageDocumentsDir()}/${name}`;
+};
+
+// Whether a stored attachment is still on disk, checked synchronously so
+// callers that rebuild a message list (toModelHistory) stay pure functions.
+// Attachments outlive nothing in particular — the user can clear app storage,
+// and a restore from backup can bring the database back without the media — so
+// anything handed to a native loader has to be checked first.
+export const messageDocumentExists = (stored: string): boolean => {
+  try {
+    return new File(toFileUri(resolveMessageDocumentPath(stored))).exists;
+  } catch (error) {
+    log('messageDocumentExists failed', error);
+    return false;
+  }
 };
 
 export const deleteMessageDocuments = async (
