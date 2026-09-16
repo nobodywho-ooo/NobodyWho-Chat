@@ -22,6 +22,7 @@ import { toFileUri, toPlainPath } from './fileUri';
 import {
   filterModelsByDeviceMemory,
   modelRequiredMemoryGB,
+  multimodalContextSize,
 } from './deviceMemory';
 import {
   availableDiskSpaceGB,
@@ -93,6 +94,7 @@ export {
   toPlainPath,
   filterModelsByDeviceMemory,
   modelRequiredMemoryGB,
+  multimodalContextSize,
   availableDiskSpaceGB,
   checkDiskSpaceForModel,
   modelDownloadSizeGB,

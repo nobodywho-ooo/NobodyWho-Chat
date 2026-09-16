@@ -42,7 +42,7 @@ export const styles = StyleSheet.create({
     paddingRight: 6,
   },
   attachContainer: {
-    marginRight: Spacings.sm
+    marginRight: Spacings.sm,
   },
   transcriptionContainer: {
     marginRight: Spacings.sm,

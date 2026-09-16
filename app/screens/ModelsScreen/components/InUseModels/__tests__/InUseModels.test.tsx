@@ -6,7 +6,9 @@ import { buildModel } from 'jest/factories/model';
 import { InUseModels } from '../InUseModels';
 
 test('renders correctly InUseModels', () => {
-  const screen = render(<InUseModels models={[buildModel(1), buildModel(2)]} />);
+  const screen = render(
+    <InUseModels models={[buildModel(1), buildModel(2)]} />,
+  );
   expect(screen.toJSON()).toMatchSnapshot();
 });
 

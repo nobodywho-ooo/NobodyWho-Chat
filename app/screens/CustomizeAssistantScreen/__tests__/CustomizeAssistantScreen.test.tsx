@@ -9,6 +9,7 @@ import { ModelPipeline } from 'types';
 
 import {
   CustomizeAssistantScreen,
+  TOKENS_MAX,
   TOKENS_MIN,
   TOKENS_STEP,
 } from '../CustomizeAssistantScreen';
@@ -55,29 +56,42 @@ test('toggling tool calling persists the config', async () => {
   });
 });
 
-test('the stepper changes max tokens by 500 and clamps at the minimum', async () => {
+test('the stepper changes max tokens by 500 and clamps at both ends', async () => {
   const screen = await renderScreen();
 
-  // The default is already at the maximum, so increasing is a no-op.
   const plus = screen.getByLabelText(
     'screens.customizeAssistant.increaseMaxTokens',
   );
-  fireEvent.press(plus);
-  expect(getAppState().assistantConfig?.contextSize).toBe(
-    DEFAULT_ASSISTANT_CONFIG.contextSize,
-  );
-
   const minus = screen.getByLabelText(
     'screens.customizeAssistant.decreaseMaxTokens',
   );
-  const presses =
-    (DEFAULT_ASSISTANT_CONFIG.contextSize - TOKENS_MIN) / TOKENS_STEP;
-  for (let i = 0; i < presses; i++) {
+
+  // One press moves exactly one step off the default.
+  fireEvent.press(plus);
+  expect(getAppState().assistantConfig?.contextSize).toBe(
+    DEFAULT_ASSISTANT_CONFIG.contextSize + TOKENS_STEP,
+  );
+
+  // Walking the rest of the way up lands on the ceiling, and the press past it
+  // is inert — the default no longer sits at the maximum, so this is the only
+  // thing actually covering the upper clamp.
+  const upPresses =
+    (TOKENS_MAX - DEFAULT_ASSISTANT_CONFIG.contextSize) / TOKENS_STEP;
+  for (let i = 1; i < upPresses; i++) {
+    fireEvent.press(plus);
+  }
+  expect(getAppState().assistantConfig?.contextSize).toBe(TOKENS_MAX);
+
+  fireEvent.press(plus);
+  expect(getAppState().assistantConfig?.contextSize).toBe(TOKENS_MAX);
+
+  // And back down to the floor, where the decrease button is likewise inert.
+  const downPresses = (TOKENS_MAX - TOKENS_MIN) / TOKENS_STEP;
+  for (let i = 0; i < downPresses; i++) {
     fireEvent.press(minus);
   }
   expect(getAppState().assistantConfig?.contextSize).toBe(TOKENS_MIN);
 
-  // At the minimum the decrease button is disabled.
   fireEvent.press(minus);
   expect(getAppState().assistantConfig?.contextSize).toBe(TOKENS_MIN);
 });

@@ -35,9 +35,8 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
 };
 
 // react-native-svg-transformer: turn `.svg` imports into React components.
-config.transformer.babelTransformerPath = require.resolve(
-  'react-native-svg-transformer/react-native',
-);
+config.transformer.babelTransformerPath =
+  require.resolve('react-native-svg-transformer/react-native');
 config.resolver.assetExts = config.resolver.assetExts.filter(
   ext => ext !== 'svg',
 );

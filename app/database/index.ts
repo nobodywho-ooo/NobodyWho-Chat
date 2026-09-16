@@ -26,4 +26,4 @@ export {
   setAppState,
   subscribeAppState,
   DEFAULT_ASSISTANT_CONFIG,
-}
+};

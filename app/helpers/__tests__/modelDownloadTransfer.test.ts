@@ -165,7 +165,9 @@ const setupRemote = ({
       ['accept-ranges', advertisesRanges ? 'bytes' : 'none'],
     ]);
     if (etag) headers.set('etag', etag);
-    return { headers: { get: (k: string) => headers.get(k.toLowerCase()) ?? null } };
+    return {
+      headers: { get: (k: string) => headers.get(k.toLowerCase()) ?? null },
+    };
   });
 
   downloadFileAsync.mockImplementation(
@@ -261,11 +263,23 @@ test('reconstructs nested part paths inside the model directory', async () => {
 
 test('rejects part fileNames that could escape the model directory', async () => {
   setupRemote({ total: MB });
-  const unsafe = ['../evil.gguf', 'a/../../evil.gguf', '/abs.gguf', 'a//b', 'a\\b'];
+  const unsafe = [
+    '../evil.gguf',
+    'a/../../evil.gguf',
+    '/abs.gguf',
+    'a//b',
+    'a\\b',
+  ];
 
   for (const fileName of unsafe) {
     await expect(
-      downloadModelPart(MODEL_ID, 'https://x/f', fileName, noSignal(), () => {}),
+      downloadModelPart(
+        MODEL_ID,
+        'https://x/f',
+        fileName,
+        noSignal(),
+        () => {},
+      ),
     ).rejects.toThrow(/unsafe part fileName/);
   }
   expect(downloadFileAsync).not.toHaveBeenCalled();
@@ -364,7 +378,9 @@ test('recovers when the server advertises ranges but then ignores them', async (
     `bytes=0-${16 * MB - 1}`,
   );
   expect(downloadFileAsync.mock.calls[1][2].headers).toBeUndefined();
-  expect(destUris[destUris.length - 1]).toBe(`${MODEL_DIR}/chat-model.gguf.partial`);
+  expect(destUris[destUris.length - 1]).toBe(
+    `${MODEL_DIR}/chat-model.gguf.partial`,
+  );
   expect(sizes.get(`${MODEL_DIR}/chat-model.gguf`)).toBe(total);
   // Scaffolding is cleaned up on the recovery path too.
   expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.partial`)).toBe(false);
@@ -391,7 +407,7 @@ test('aborts a hung HEAD request after the timeout instead of stalling', async (
     noSignal(),
     () => {},
   );
-  
+
   // eslint-disable-next-line jest/valid-expect
   const assertion = expect(promise).rejects.toThrow();
 
@@ -429,11 +445,13 @@ test('an abort stops the loop and keeps the partial for a later resume', async (
   // Abort right after the first chunk lands.
   const base = downloadFileAsync.getMockImplementation()!;
   let calls = 0;
-  downloadFileAsync.mockImplementation(async (url: any, dest: any, options: any) => {
-    const result = await base(url, dest, options);
-    if (++calls === 1) controller.abort();
-    return result;
-  });
+  downloadFileAsync.mockImplementation(
+    async (url: any, dest: any, options: any) => {
+      const result = await base(url, dest, options);
+      if (++calls === 1) controller.abort();
+      return result;
+    },
+  );
 
   await expect(
     downloadModelPart(

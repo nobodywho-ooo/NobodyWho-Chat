@@ -15,7 +15,9 @@ import {
 // The mocked Tool (jest/mock/node-modules) stores its constructor opts, so we
 // can invoke a tool's `call` directly to exercise the conversion logic + the
 // instrument() listener wrapper.
-type MockTool = { opts: { name: string; call: (...args: any[]) => Promise<string> } };
+type MockTool = {
+  opts: { name: string; call: (...args: any[]) => Promise<string> };
+};
 const toolByName = (name: string): MockTool['opts'] => {
   const tool = (buildChatTools() as unknown as MockTool[]).find(
     t => t.opts.name === name,
@@ -103,7 +105,12 @@ describe('fetchWeather', () => {
       .mockResolvedValueOnce({
         json: async () => ({
           results: [
-            { latitude: 48.85, longitude: 2.35, name: 'Paris', country: 'France' },
+            {
+              latitude: 48.85,
+              longitude: 2.35,
+              name: 'Paris',
+              country: 'France',
+            },
           ],
         }),
       })
@@ -148,7 +155,9 @@ describe('fetchWeather', () => {
 
     const result = JSON.parse(await fetchWeather('Paris'));
 
-    expect(result.error).toBe('Impossible to fetch weather info at the moment.');
+    expect(result.error).toBe(
+      'Impossible to fetch weather info at the moment.',
+    );
   });
 });
 
@@ -218,7 +227,11 @@ describe('fetchStockQuote', () => {
       .mockResolvedValueOnce({
         json: async () => ({
           quotes: [
-            { symbol: 'AAPL', longname: 'Apple Inc.', marketCap: 3_000_000_000_000 },
+            {
+              symbol: 'AAPL',
+              longname: 'Apple Inc.',
+              marketCap: 3_000_000_000_000,
+            },
           ],
         }),
       })

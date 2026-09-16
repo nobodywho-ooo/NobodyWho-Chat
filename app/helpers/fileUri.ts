@@ -5,4 +5,5 @@
 export const toFileUri = (path: string): string =>
   path.startsWith('file://') ? path : `file://${path}`;
 
-export const toPlainPath = (uri: string): string => uri.replace(/^file:\/\//, '');
+export const toPlainPath = (uri: string): string =>
+  uri.replace(/^file:\/\//, '');

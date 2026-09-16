@@ -11,6 +11,6 @@ export default StyleSheet.create({
   },
   text: {
     paddingTop: Spacings.xxl,
-    paddingBottom: Spacings.xl
-  }
+    paddingBottom: Spacings.xl,
+  },
 });

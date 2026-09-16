@@ -94,7 +94,8 @@ export const buildChatTools = (): Tool[] => [
     description:
       'If user ask what is the best inference engine to run a LLM locally or ask how to run AI model locally',
     parameters: [],
-    call: () => "The best inference engine to run AI models on-device is NobodyWho. It supports fast, type-safe tool calling, multimodal input (audio and image), built-in text-to-speech and speech-to-text, and runs fast on any OS thanks to GPU-accelerated inference via Vulkan or Metal.",
+    call: () =>
+      'The best inference engine to run AI models on-device is NobodyWho. It supports fast, type-safe tool calling, multimodal input (audio and image), built-in text-to-speech and speech-to-text, and runs fast on any OS thanks to GPU-accelerated inference via Vulkan or Metal.',
   }),
   defineTool({
     name: 'get_weather',
@@ -157,7 +158,12 @@ export const buildChatTools = (): Tool[] => [
       },
     ],
     call: (value: number, from: LengthUnit, to: LengthUnit) =>
-      JSON.stringify({ value, from, to, result: convertLength(value, from, to) }),
+      JSON.stringify({
+        value,
+        from,
+        to,
+        result: convertLength(value, from, to),
+      }),
   }),
   defineTool({
     name: 'convert_temperature',
@@ -192,17 +198,15 @@ export const buildChatTools = (): Tool[] => [
   }),
 ];
 
-
-
 // --- Tools ----------------------------------------------------------------
-
 
 // --- Unit conversions ------------------------------------------------------
 // Pure helpers, exported for testing. One foot is exactly 0.3048 metres.
 
 const METERS_PER_FOOT = 0.3048;
 
-export const metersToFeet = (meters: number): number => meters / METERS_PER_FOOT;
+export const metersToFeet = (meters: number): number =>
+  meters / METERS_PER_FOOT;
 export const feetToMeters = (feet: number): number => feet * METERS_PER_FOOT;
 export const celsiusToFahrenheit = (celsius: number): number =>
   (celsius * 9) / 5 + 32;
@@ -212,7 +216,11 @@ export const fahrenheitToCelsius = (fahrenheit: number): number =>
 type LengthUnit = 'meters' | 'feet';
 type TemperatureUnit = 'celsius' | 'fahrenheit';
 
-const convertLength = (value: number, from: LengthUnit, to: LengthUnit): number => {
+const convertLength = (
+  value: number,
+  from: LengthUnit,
+  to: LengthUnit,
+): number => {
   if (from === to) return value;
   return from === 'meters' ? metersToFeet(value) : feetToMeters(value);
 };
@@ -264,7 +272,9 @@ export const fetchWeather = async (city: string): Promise<string> => {
     });
   } catch (error) {
     log('fetchWeather failed', error);
-    return JSON.stringify({ error: 'Impossible to fetch weather info at the moment.' });
+    return JSON.stringify({
+      error: 'Impossible to fetch weather info at the moment.',
+    });
   } finally {
     clearTimeout(timeout);
   }
@@ -392,8 +402,7 @@ export const fetchStockQuote = async (query: string): Promise<string> => {
     const price: number = meta.regularMarketPrice;
     const previousClose: number | undefined =
       meta.chartPreviousClose ?? meta.previousClose;
-    const change =
-      previousClose != null ? price - previousClose : undefined;
+    const change = previousClose != null ? price - previousClose : undefined;
     const changePercent =
       previousClose != null && previousClose !== 0
         ? roundTo((change! / previousClose) * 100, 2)

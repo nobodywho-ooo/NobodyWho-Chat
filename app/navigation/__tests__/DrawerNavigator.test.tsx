@@ -84,10 +84,7 @@ test('shows the header menu with New Chat and Delete Chat actions', () => {
 
   const actions = leafActions(screen.UNSAFE_getByType(MenuView).props.actions);
 
-  expect(actions.map(action => action.id)).toEqual([
-    'new-chat',
-    'delete-chat',
-  ]);
+  expect(actions.map(action => action.id)).toEqual(['new-chat', 'delete-chat']);
   expect(actions.map(action => action.title)).toEqual([
     'navigation.chatMenu.newChat',
     'navigation.chatMenu.deleteChat',
@@ -108,7 +105,9 @@ test('New Chat clears the conversation in use without deleting anything', async 
     await onPressAction({ nativeEvent: { event: 'new-chat' } });
   });
 
-  expect(mockSetAppState).toHaveBeenCalledWith({ conversationIdInUse: undefined });
+  expect(mockSetAppState).toHaveBeenCalledWith({
+    conversationIdInUse: undefined,
+  });
   expect(mockDeleteConversation).not.toHaveBeenCalled();
 });
 
@@ -124,7 +123,9 @@ test('Delete Chat deletes the current conversation and starts a new chat', async
     await onPressAction({ nativeEvent: { event: 'delete-chat' } });
   });
 
-  expect(mockSetAppState).toHaveBeenCalledWith({ conversationIdInUse: undefined });
+  expect(mockSetAppState).toHaveBeenCalledWith({
+    conversationIdInUse: undefined,
+  });
   expect(mockDeleteConversation).toHaveBeenCalledWith(5);
 });
 
@@ -143,7 +144,9 @@ test('Delete Chat logs and recovers when the deletion fails', async () => {
   });
 
   // The chat is still cleared, and the failure is logged rather than thrown.
-  expect(mockSetAppState).toHaveBeenCalledWith({ conversationIdInUse: undefined });
+  expect(mockSetAppState).toHaveBeenCalledWith({
+    conversationIdInUse: undefined,
+  });
   expect(mockDeleteConversation).toHaveBeenCalledWith(5);
   expect(mockLog).toHaveBeenCalled();
 });

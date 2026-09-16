@@ -15,7 +15,7 @@ jest.mock('@sentry/react-native', () => {
   };
 });
 
-jest.mock("@react-native-menu/menu", () => {
+jest.mock('@react-native-menu/menu', () => {
   const mockReact = require('react');
   return {
     MenuView: ({ children }) =>
@@ -23,7 +23,7 @@ jest.mock("@react-native-menu/menu", () => {
   };
 });
 
-jest.mock("react-native-haptic-feedback", () => {
+jest.mock('react-native-haptic-feedback', () => {
   return {
     trigger: jest.fn(),
   };
@@ -165,7 +165,10 @@ jest.mock('expo-camera', () => {
   const React = require('react');
   return {
     CameraView: React.forwardRef(() => null),
-    useCameraPermissions: () => [{ granted: true, canAskAgain: true }, jest.fn()],
+    useCameraPermissions: () => [
+      { granted: true, canAskAgain: true },
+      jest.fn(),
+    ],
   };
 });
 
@@ -274,14 +277,20 @@ jest.mock('@shopify/react-native-skia', () => {
     // x/y are the glyph origin, so tests can assert the laid-out geometry.
     Text: ({ text, x, y, children }) =>
       mockReact.createElement('SkiaText', { text, x, y }, children),
-    LinearGradient: props => mockReact.createElement('SkiaLinearGradient', props),
+    LinearGradient: props =>
+      mockReact.createElement('SkiaLinearGradient', props),
     matchFont: ({ fontSize = 14 } = {}) => ({
       // Zeroed on purpose: this is what Skia hands back on the first frame,
       // before the typeface resolves. Anything laying itself out from these
       // would collapse and then jump, so nothing may depend on them.
       getMetrics: () => ({ ascent: 0, descent: 0 }),
       // Roughly half an em per character, enough for wrapping assertions.
-      measureText: text => ({ x: 0, y: 0, width: text.length * fontSize * 0.5, height: fontSize }),
+      measureText: text => ({
+        x: 0,
+        y: 0,
+        width: text.length * fontSize * 0.5,
+        height: fontSize,
+      }),
     }),
     useClock: () => ({ value: 0 }),
     vec: (x, y) => ({ x, y }),
@@ -296,7 +305,14 @@ jest.mock('expo-thinking-orbs', () => ({
     {},
     { get: () => ({ build: () => {}, precompute: () => ({ dotCount: 0 }) }) },
   ),
-  acquireDotBuffer: () => ({ count: 0, xs: [], ys: [], rs: [], ws: [], as: [] }),
+  acquireDotBuffer: () => ({
+    count: 0,
+    xs: [],
+    ys: [],
+    rs: [],
+    ws: [],
+    as: [],
+  }),
   buildColorLUT: () => [],
   pickDesignSize: () => 64,
   recordPicture: () => null,
@@ -379,7 +395,7 @@ jest.mock('react-native-keyboard-controller', () => {
 
 jest.mock('@legendapp/list/keyboard', () => {
   const mockReact = require('react');
-  const { FlatList } = require('react-native');
+  const { ScrollView } = require('react-native');
   const composerInset = {
     contentInsetEndAdjustment: { value: 0 },
     onComposerLayout: () => {},
@@ -401,24 +417,51 @@ jest.mock('@legendapp/list/keyboard', () => {
       return Promise.resolve();
     },
   };
+  // Renders every row straight into a ScrollView instead of delegating to
+  // FlatList. A real FlatList brings RN's VirtualizedList with it, which
+  // batches its cell-range updates behind a 50ms timer and setStates from it —
+  // landing outside whatever act() scope the test was in and logging "An
+  // update to VirtualizedList inside a test was not wrapped in act(...)"
+  // whenever the machine is slow enough for the timer to miss. None of these
+  // tests assert on windowing; they assert on the rows and on the imperative
+  // API above, both of which this renders synchronously and without timers.
   const LegendList = mockReact.forwardRef((props, ref) => {
     const {
       anchoredEndSpace,
       applyWorkaroundForContentInsetHitTestBug,
       contentInsetEndAdjustment,
+      data,
       estimatedItemSize,
       freeze,
       keyboardLiftBehavior,
       keyboardOffset,
+      keyExtractor,
+      ListEmptyComponent,
       maintainVisibleContentPosition,
       recycleItems,
+      renderItem,
       ...rest
     } = props;
     mockReact.useImperativeHandle(ref, () => listApi, []);
+
+    const rows = data ?? [];
+    const children =
+      rows.length === 0
+        ? ListEmptyComponent
+          ? mockReact.createElement(ListEmptyComponent)
+          : null
+        : rows.map((item, index) =>
+            mockReact.createElement(
+              mockReact.Fragment,
+              { key: keyExtractor ? keyExtractor(item, index) : index },
+              renderItem ? renderItem({ item, index }) : null,
+            ),
+          );
+
     return mockReact.createElement(
       'LegendList',
       { anchoredEndSpace, maintainVisibleContentPosition },
-      mockReact.createElement(FlatList, rest),
+      mockReact.createElement(ScrollView, rest, children),
     );
   });
   return {
@@ -430,11 +473,19 @@ jest.mock('@legendapp/list/keyboard', () => {
   };
 });
 
+// The async "load a chat model" step. AiService reaches it through
+// Model.load; tests stage the Chat instance it should produce.
 export const mockFromPath = jest.fn();
+// The options handed to `new Chat({ model, ... })` after that load — the chat's
+// own settings (systemPrompt, contextSize, tools, templateVariables), which are
+// no longer part of the load call.
+export const mockChatConstruct = jest.fn();
 export const mockTtsLoad = jest.fn();
 export const mockSttConstruct = jest.fn();
 export const mockVadLoad = jest.fn();
-export const mockDownloadModel = jest.fn(() => Promise.resolve('file://downloaded.gguf'));
+export const mockDownloadModel = jest.fn(() =>
+  Promise.resolve('file://downloaded.gguf'),
+);
 
 jest.mock('react-native-nobodywho', () => {
   // Lightweight stand-in for the multimodal Prompt: records its parts so tests
@@ -488,17 +539,39 @@ jest.mock('react-native-nobodywho', () => {
     };
     return instance;
   };
+  // AiService loads a chat in two steps so it can read the model's trained
+  // context length before sizing the chat: Model.load, then `new Chat`. The
+  // async step stays mockFromPath (tests stage resolution order and failures
+  // there); the constructor is synchronous and hands back whatever that step
+  // produced, recording its own options separately.
+  class Chat {
+    constructor(opts) {
+      const { model, ...chatOpts } = opts;
+      mockChatConstruct(chatOpts);
+      return model.instance;
+    }
+  }
+  const Model = {
+    // Overridable per test: the context length the weights report.
+    mockMaxCtx: 32768,
+    load: async opts => ({
+      instance: await mockFromPath(opts),
+      maxCtx: Model.mockMaxCtx,
+      destroy: jest.fn(),
+    }),
+  };
   return {
-    Chat: { fromPath: (opts) => mockFromPath(opts) },
-    TextToSpeech: { load: (opts) => mockTtsLoad(opts) },
+    Chat,
+    Model,
+    TextToSpeech: { load: opts => mockTtsLoad(opts) },
     SpeechToText: {
-      load: async (opts) => {
+      load: async opts => {
         mockSttConstruct(opts);
         return makeSttInstance();
       },
     },
     VoiceActivityDetection: {
-      load: async (opts) => {
+      load: async opts => {
         mockVadLoad(opts);
         return makeVadInstance();
       },
@@ -514,11 +587,14 @@ jest.mock('react-native-nobodywho', () => {
     CrossEncoder: { fromPath: jest.fn() },
     SamplerPresets: {
       default: jest.fn(() => ({ preset: 'default' })),
-      temperature: jest.fn(temperature => ({ preset: 'temperature', temperature })),
+      temperature: jest.fn(temperature => ({
+        preset: 'temperature',
+        temperature,
+      })),
     },
     Prompt,
     Tool,
-    downloadModel: (opts) => mockDownloadModel(opts),
+    downloadModel: opts => mockDownloadModel(opts),
     ChatMessage: jest.fn(),
     Role: {
       User: 0,
@@ -529,7 +605,7 @@ jest.mock('react-native-nobodywho', () => {
   };
 });
 
-jest.mock("react-native-safe-area-context", () => {
+jest.mock('react-native-safe-area-context', () => {
   return {
     useSafeAreaInsets: () => jest.fn,
   };
@@ -557,12 +633,12 @@ jest.mock('@op-engineering/op-sqlite', () => {
     open: jest.fn().mockReturnValue(mockDb),
     Storage: jest.fn().mockReturnValue({
       getItem: jest.fn().mockReturnValue(jest.fn()),
-      setItem: jest.fn().mockReturnValue(jest.fn())
+      setItem: jest.fn().mockReturnValue(jest.fn()),
     }),
   };
 });
 
-jest.mock("@react-navigation/native", () => {
+jest.mock('@react-navigation/native', () => {
   return {
     useNavigation: () => ({ goBack: jest.fn() }),
     useRoute: () => jest.fn(),
@@ -572,19 +648,19 @@ jest.mock("@react-navigation/native", () => {
   };
 });
 
-jest.mock("@react-navigation/native-stack", () => {
+jest.mock('@react-navigation/native-stack', () => {
   return {
     createNativeStackNavigator: () => jest.fn,
   };
 });
 
-jest.mock("@react-navigation/core", () => {
+jest.mock('@react-navigation/core', () => {
   return {
     useRoute: () => jest.fn(),
   };
 });
 
-jest.mock("@react-navigation/drawer", () => {
+jest.mock('@react-navigation/drawer', () => {
   const mockReact = require('react');
   return {
     useDrawerStatus: () => 'open',

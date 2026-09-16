@@ -375,8 +375,8 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
         </Text>
         <IconButton
           accessibilityLabel="screens.customizeAssistant.increaseMaxTokens"
-          color="#c1c1c1"
-          disabled={true}
+          color="#000000"
+          disabled={false}
           icon={
             {
               "androidIconName": "add",

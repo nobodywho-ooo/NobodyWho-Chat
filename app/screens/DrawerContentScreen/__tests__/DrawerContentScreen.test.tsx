@@ -47,7 +47,10 @@ test('pressing new chat clears the conversation in use and closes the drawer', (
   const onCloseDrawer = jest.fn();
   const screen = render(
     <AiServiceProvider>
-      <DrawerContentScreen navigation={navigation} onCloseDrawer={onCloseDrawer} />
+      <DrawerContentScreen
+        navigation={navigation}
+        onCloseDrawer={onCloseDrawer}
+      />
     </AiServiceProvider>,
   );
 
@@ -84,9 +87,7 @@ test('hides the change model button with fewer than 2 downloaded models', () => 
     </AiServiceProvider>,
   );
 
-  expect(
-    screen.queryByText('screens.drawerContent.changeModel'),
-  ).toBeNull();
+  expect(screen.queryByText('screens.drawerContent.changeModel')).toBeNull();
 });
 
 test('pressing change model navigates to the DownloadedModelsScreen when 2+ models are downloaded', () => {

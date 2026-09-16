@@ -2,15 +2,15 @@ import { parseThinking, stripThinkingBlocks } from '../thinking';
 
 describe('stripThinkingBlocks', () => {
   test('removes a complete think block and keeps the answer', () => {
-    expect(
-      stripThinkingBlocks('<think>reasoning here</think>The answer'),
-    ).toBe('The answer');
+    expect(stripThinkingBlocks('<think>reasoning here</think>The answer')).toBe(
+      'The answer',
+    );
   });
 
   test('removes multiple think blocks', () => {
-    expect(
-      stripThinkingBlocks('<think>a</think>one <think>b</think>two'),
-    ).toBe('one two');
+    expect(stripThinkingBlocks('<think>a</think>one <think>b</think>two')).toBe(
+      'one two',
+    );
   });
 
   test('removes an unclosed trailing think block', () => {
@@ -23,7 +23,9 @@ describe('stripThinkingBlocks', () => {
 
   test('removes a complete Gemma channel block', () => {
     expect(
-      stripThinkingBlocks('<|channel>thought reasoning here<channel|>The answer'),
+      stripThinkingBlocks(
+        '<|channel>thought reasoning here<channel|>The answer',
+      ),
     ).toBe('The answer');
   });
 

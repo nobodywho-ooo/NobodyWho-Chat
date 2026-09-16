@@ -12,7 +12,10 @@ afterEach(() => {
 // --- Text bubble -----------------------------------------------------------
 
 test('renders the message text in a bubble', () => {
-  const message: DisplayMessage = { role: 'user', content: 'Is the water wet?' };
+  const message: DisplayMessage = {
+    role: 'user',
+    content: 'Is the water wet?',
+  };
   const { getByText } = render(<UserMessage message={message} />);
   expect(getByText('Is the water wet?')).toBeTruthy();
 });
@@ -58,15 +61,11 @@ test('opens a full-screen viewer when an image attachment is pressed', () => {
   const { getByLabelText, queryByLabelText } = render(
     <UserMessage message={message} />,
   );
-  expect(
-    queryByLabelText('components.messageListItem.closeImage'),
-  ).toBeNull();
+  expect(queryByLabelText('components.messageListItem.closeImage')).toBeNull();
 
   fireEvent.press(getByLabelText('components.messageListItem.viewImage'));
 
-  expect(
-    getByLabelText('components.messageListItem.closeImage'),
-  ).toBeTruthy();
+  expect(getByLabelText('components.messageListItem.closeImage')).toBeTruthy();
 });
 
 test('groups multiple images together in a single row', () => {
@@ -104,12 +103,13 @@ test('renders an audio attachment with a play control', () => {
     documentsPath: ['/docs/note-1700000000000-123456.m4a'],
   };
   const { getByLabelText } = render(<UserMessage message={message} />);
-  expect(
-    getByLabelText('components.messageListItem.playAudio'),
-  ).toBeTruthy();
+  expect(getByLabelText('components.messageListItem.playAudio')).toBeTruthy();
 });
 
 test('matches the snapshot', () => {
-  const message: DisplayMessage = { role: 'user', content: 'Is the water wet?' };
+  const message: DisplayMessage = {
+    role: 'user',
+    content: 'Is the water wet?',
+  };
   expect(render(<UserMessage message={message} />).toJSON()).toMatchSnapshot();
 });

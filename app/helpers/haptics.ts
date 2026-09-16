@@ -4,37 +4,37 @@ import { log } from './log';
 export const haptics = {
   soft: () => {
     try {
-      trigger('soft')      
+      trigger('soft');
     } catch (error) {
-      log("haptics soft", error);
+      log('haptics soft', error);
     }
   },
   light: () => {
     try {
-      trigger('impactLight')      
+      trigger('impactLight');
     } catch (error) {
-      log("haptics impactLight", error);
+      log('haptics impactLight', error);
     }
   },
   medium: () => {
     try {
-      trigger('impactMedium')      
+      trigger('impactMedium');
     } catch (error) {
-      log("haptics impactMedium", error);
+      log('haptics impactMedium', error);
     }
   },
   heavy: () => {
     try {
-      trigger('impactHeavy')      
+      trigger('impactHeavy');
     } catch (error) {
-      log("haptics impactHeavy", error);
+      log('haptics impactHeavy', error);
     }
   },
   selection: () => {
     try {
-      trigger('selection')      
+      trigger('selection');
     } catch (error) {
-      log("haptics selection", error);
+      log('haptics selection', error);
     }
   },
 };

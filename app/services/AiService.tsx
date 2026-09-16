@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import {
   Chat,
+  Model as NobodyWhoModel,
   SamplerConfig,
   SpeechToText,
   TextToSpeech,
@@ -19,6 +20,7 @@ import {
   downloadedPartPath,
   log,
   modelDirectoryPath,
+  multimodalContextSize,
   resolveSttQuantization,
   sleep,
   ttsEngineForModel,
@@ -125,7 +127,20 @@ const _initialState: AiServiceState = {
 // field crashes persist.
 export const TEARDOWN_SETTLE_MS = 500;
 
-export const MULTIMODAL_CONTEXT_SIZE = 2048;
+export const DEFAULT_CONTEXT_SIZE = 4096;
+
+// Hold a requested context to what the model was actually trained for. An
+// unknown ceiling (a model whose metadata doesn't report one) leaves the
+// request alone rather than guessing a cap.
+export const clampContextSize = (
+  requested: number | undefined,
+  maxContext: number | undefined,
+): number | undefined => {
+  if (maxContext === undefined) {
+    return requested;
+  }
+  return Math.min(requested ?? DEFAULT_CONTEXT_SIZE, maxContext);
+};
 
 // The rate the voice activity detector is told its input is in. Silero runs at
 // 16 kHz internally and the rate is fixed at load time, so every caller has to
@@ -532,19 +547,52 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
             ? buildChatTools()
             : undefined;
 
-        // Multimodal contexts are capped: larger ones exhaust Metal buffers.
-        const contextSize =
-          projectionModelPath !== undefined
-            ? Math.min(
-                opts.contextSize ?? MULTIMODAL_CONTEXT_SIZE,
-                MULTIMODAL_CONTEXT_SIZE,
-              )
-            : opts.contextSize;
-
-        const instance = await Chat.fromPath({
+        const loaded = await NobodyWhoModel.load({
           modelPath: chatModelPath,
           projectionModelPath,
           useGpu: opts.useGpu ?? true,
+        });
+
+        // What the weights were trained for. A context above it buys nothing
+        // and costs memory, so it is the real ceiling — the configured size is
+        // a user preference that may have been set against a bigger model.
+        const maxContext =
+          Number.isFinite(loaded.maxCtx) && loaded.maxCtx > 0
+            ? loaded.maxCtx
+            : undefined;
+
+        // A chat with a projection model loaded is capped harder, and this cap
+        // is load-bearing rather than belt-and-braces: exceed it and the
+        // process dies natively — std::bad_alloc at load, or a memory-warning
+        // kill part-way through an answer — with nothing catchable in between.
+        // It has been lost once by accident (2026-07-01) and the crashes came
+        // straight back, so it is not redundant with the teardown barrier
+        // above: that one answers overlapping allocations, this one answers
+        // their size.
+        //
+        // How big it can be depends on the device and on the model's own
+        // weights, not on a number that can be picked here — see
+        // multimodalContextSize for the measurements behind the tiers.
+        const multimodalCap =
+          projectionModelPath !== undefined
+            ? await multimodalContextSize(model)
+            : undefined;
+
+        const requested =
+          multimodalCap !== undefined
+            ? Math.min(opts.contextSize ?? multimodalCap, multimodalCap)
+            : opts.contextSize;
+
+        const contextSize = clampContextSize(requested, maxContext);
+
+        if (requested !== undefined && contextSize !== requested) {
+          log(
+            `AiService chat: context ${requested} exceeds what model ${model.id} (${model.name}) was trained for — using ${contextSize}`,
+          );
+        }
+
+        const instance = new Chat({
+          model: loaded,
           tools,
           systemPrompt: opts.systemPrompt,
           sampler: opts.sampler,

@@ -1,9 +1,9 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
-import { Message } from 'react-native-nobodywho';
 
 import { MessageListItem } from 'components';
 import { AiServiceProvider } from 'services';
+import { DisplayMessage } from 'types';
 import { ChatScreen } from '../ChatScreen';
 
 // The starter selection is random; pin it so the snapshot stays stable.
@@ -29,7 +29,7 @@ test('renders correctly empty ChatScreen', () => {
 });
 
 test('renders ChatScreen with existing messages', () => {
-  const messages: Message[] = [
+  const messages: DisplayMessage[] = [
     { role: 'user', content: 'Hello there' },
     { role: 'assistant', content: 'Hi! How can I help you?' },
   ];
@@ -51,9 +51,13 @@ test('renders ChatScreen with existing messages', () => {
 });
 
 test('passes raw <think> blocks through to MessageListItem', () => {
-  const messages: Message[] = [
+  const messages: DisplayMessage[] = [
     { role: 'user', content: 'hi' },
-    { role: 'assistant', content: '<think>reasoning</think>answer', toolCalls: [] },
+    {
+      role: 'assistant',
+      content: '<think>reasoning</think>answer',
+      toolCalls: [],
+    },
   ];
 
   const screen = render(

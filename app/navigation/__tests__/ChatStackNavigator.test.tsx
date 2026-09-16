@@ -623,7 +623,8 @@ test('injects restored assistant messages with an empty toolCalls array', async 
       mockChatInstance.setChatHistory.mock.calls.length - 1
     ][0];
   expect(injected).toEqual([
-    { role: 'user', content: 'hi', documentsPath: [] },
+    // A plain user turn, with no attachments to restore as content parts.
+    { role: 'user', content: 'hi' },
     // Raw content (incl. <think>) is injected; toolCalls present so the FFI
     // converter doesn't receive null.
     {
