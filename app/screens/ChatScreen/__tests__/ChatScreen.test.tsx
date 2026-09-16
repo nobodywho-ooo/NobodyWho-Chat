@@ -53,7 +53,11 @@ test('renders ChatScreen with existing messages', () => {
 test('passes raw <think> blocks through to MessageListItem', () => {
   const messages: DisplayMessage[] = [
     { role: 'user', content: 'hi' },
-    { role: 'assistant', content: '<think>reasoning</think>answer', toolCalls: [] },
+    {
+      role: 'assistant',
+      content: '<think>reasoning</think>answer',
+      toolCalls: [],
+    },
   ];
 
   const screen = render(

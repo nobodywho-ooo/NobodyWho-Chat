@@ -96,7 +96,6 @@ describe('createModelDownload', () => {
   });
 });
 
-
 describe('updateModelDownloadParts', () => {
   test('writes the serialized parts progress for the model', async () => {
     const partsProgress = [part({ progress: 0.4 })];

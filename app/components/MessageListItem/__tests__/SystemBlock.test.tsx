@@ -20,6 +20,8 @@ test('renders long content without truncating it', () => {
 });
 
 test('matches the snapshot', () => {
-  const { toJSON } = render(<SystemBlock content="You are a helpful assistant." />);
+  const { toJSON } = render(
+    <SystemBlock content="You are a helpful assistant." />,
+  );
   expect(toJSON()).toMatchSnapshot();
 });

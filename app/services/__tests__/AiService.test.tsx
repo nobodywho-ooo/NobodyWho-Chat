@@ -16,7 +16,6 @@ import {
   AiServiceProvider,
   useAiService,
   AiModelState,
-  MULTIMODAL_CONTEXT_SIZE,
   TEARDOWN_SETTLE_MS,
   VAD_MIN_SILENCE_MS,
   VAD_MIN_SPEECH_MS,
@@ -182,8 +181,10 @@ test('createChat wires the projection model and reports the chat pipeline', asyn
   );
   expect(mockChatConstruct).toHaveBeenCalledWith(
     expect.objectContaining({
-      // Multimodal loads are bounded to keep the Metal allocation small.
-      contextSize: MULTIMODAL_CONTEXT_SIZE,
+      // Bounded by what the device can hold: the mock reports 8 GB, and this
+      // model's parts claim 1 + 1x2 = 3 GB on top of the 2 GB OS reserve,
+      // leaving 3 GB — the middle tier (see multimodalContextSize).
+      contextSize: 2048,
     }),
   );
   expect(result.current.chatPipeline).toBe(ModelPipeline.imageAudioTextToText);

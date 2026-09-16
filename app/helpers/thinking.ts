@@ -52,7 +52,9 @@ export const parseThinking = (content: string): ParsedThinking => {
   while ((match = closedBlock.exec(content)) !== null) {
     // Exactly one capture group per delimiter pair matches; the rest are
     // undefined.
-    const thought = (match.slice(1).find(group => group !== undefined) ?? '').trim();
+    const thought = (
+      match.slice(1).find(group => group !== undefined) ?? ''
+    ).trim();
     if (thought) thoughts.push(thought);
   }
 

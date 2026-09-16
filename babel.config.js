@@ -2,16 +2,18 @@
 // nothing inlines `process.env.EXPO_OS` — which expo-modules-core warns about in
 // dev and uses for Platform.select. Replicate babel-preset-expo's behaviour by
 // replacing `process.env.EXPO_OS` with the per-platform string from the caller.
-const inlineExpoOs = platform => ({ types: t }) => ({
-  name: 'inline-expo-os',
-  visitor: {
-    MemberExpression(path) {
-      if (path.matchesPattern('process.env.EXPO_OS')) {
-        path.replaceWith(t.stringLiteral(platform));
-      }
+const inlineExpoOs =
+  platform =>
+  ({ types: t }) => ({
+    name: 'inline-expo-os',
+    visitor: {
+      MemberExpression(path) {
+        if (path.matchesPattern('process.env.EXPO_OS')) {
+          path.replaceWith(t.stringLiteral(platform));
+        }
+      },
     },
-  },
-});
+  });
 
 module.exports = api => {
   // The worklets plugin's bundleMode emits ESM (import/export) that Jest's
@@ -26,46 +28,46 @@ module.exports = api => {
   return {
     presets: ['module:@react-native/babel-preset'],
     plugins: [
-    ...(platform ? [inlineExpoOs(platform)] : []),
-    [
-      'module-resolver',
-      {
-        root: ['.'],
-        extensions: ['.ios.js', '.android.js', '.js', '.ts', '.tsx', '.json'],
-        alias: {
-          jest: './jest',
-          components: './app/components',
-          navigation: './app/navigation',
-          style: './app/style',
-          utils: './app/utils',
-          types: './app/types',
-          hooks: './app/hooks',
-          context: './app/context',
-          services: './app/services',
-          repositories: './app/repositories',
-          screens: './app/screens',
-          helpers: './app/helpers',
-          i18n: './app/i18n',
-          database: './app/database',
-          svg: './svg'
+      ...(platform ? [inlineExpoOs(platform)] : []),
+      [
+        'module-resolver',
+        {
+          root: ['.'],
+          extensions: ['.ios.js', '.android.js', '.js', '.ts', '.tsx', '.json'],
+          alias: {
+            jest: './jest',
+            components: './app/components',
+            navigation: './app/navigation',
+            style: './app/style',
+            utils: './app/utils',
+            types: './app/types',
+            hooks: './app/hooks',
+            context: './app/context',
+            services: './app/services',
+            repositories: './app/repositories',
+            screens: './app/screens',
+            helpers: './app/helpers',
+            i18n: './app/i18n',
+            database: './app/database',
+            svg: './svg',
+          },
         },
-      },
-    ],
-    [
-      'react-native-worklets/plugin',
-      {
-        bundleMode: !isTest,
-        // Forward the `remend` import into the generated worklet so
-        // react-native-streamdown can call remend() on its `remend-processor`
-        // worklet runtime. This option was formerly named
-        // `workletizableModules: ['remend']`; worklets renamed it to
-        // `importForwarding.moduleNames`, and the old name is silently ignored
-        // (→ "[Worklets] Tried to synchronously call a Remote Function").
-        importForwarding: {
-          moduleNames: ['remend'],
+      ],
+      [
+        'react-native-worklets/plugin',
+        {
+          bundleMode: !isTest,
+          // Forward the `remend` import into the generated worklet so
+          // react-native-streamdown can call remend() on its `remend-processor`
+          // worklet runtime. This option was formerly named
+          // `workletizableModules: ['remend']`; worklets renamed it to
+          // `importForwarding.moduleNames`, and the old name is silently ignored
+          // (→ "[Worklets] Tried to synchronously call a Remote Function").
+          importForwarding: {
+            moduleNames: ['remend'],
+          },
         },
-      },
-    ],
+      ],
     ],
   };
 };

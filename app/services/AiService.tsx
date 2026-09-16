@@ -20,6 +20,7 @@ import {
   downloadedPartPath,
   log,
   modelDirectoryPath,
+  multimodalContextSize,
   resolveSttQuantization,
   sleep,
   ttsEngineForModel,
@@ -125,8 +126,6 @@ const _initialState: AiServiceState = {
 // NULL and crashes inside ggml-metal. Heuristic, not a real wait; bump it if
 // field crashes persist.
 export const TEARDOWN_SETTLE_MS = 500;
-
-export const MULTIMODAL_CONTEXT_SIZE = 2048;
 
 export const DEFAULT_CONTEXT_SIZE = 4096;
 
@@ -562,22 +561,26 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
             ? loaded.maxCtx
             : undefined;
 
-        // Multimodal contexts are capped harder, and this cap is load-bearing
-        // rather than belt-and-braces: it bounds the KV-cache Metal allocation
-        // itself. It has been removed once by accident (2026-07-01, when the
-        // option stopped being passed) and the ggml-metal NULL-buffer crash
-        // came straight back — not on the background/foreground cycle the
-        // teardown barrier covers, but on switching from a text model to a
-        // vision one, with the dispose/load serialization confirmed working.
-        // So the barrier and this cap answer two different failure modes, and
-        // having one does not make the other redundant. Anything that widens
-        // it needs testing on a real device with a projection model loaded.
-        const requested =
+        // A chat with a projection model loaded is capped harder, and this cap
+        // is load-bearing rather than belt-and-braces: exceed it and the
+        // process dies natively — std::bad_alloc at load, or a memory-warning
+        // kill part-way through an answer — with nothing catchable in between.
+        // It has been lost once by accident (2026-07-01) and the crashes came
+        // straight back, so it is not redundant with the teardown barrier
+        // above: that one answers overlapping allocations, this one answers
+        // their size.
+        //
+        // How big it can be depends on the device and on the model's own
+        // weights, not on a number that can be picked here — see
+        // multimodalContextSize for the measurements behind the tiers.
+        const multimodalCap =
           projectionModelPath !== undefined
-            ? Math.min(
-                opts.contextSize ?? MULTIMODAL_CONTEXT_SIZE,
-                MULTIMODAL_CONTEXT_SIZE,
-              )
+            ? await multimodalContextSize(model)
+            : undefined;
+
+        const requested =
+          multimodalCap !== undefined
+            ? Math.min(opts.contextSize ?? multimodalCap, multimodalCap)
             : opts.contextSize;
 
         const contextSize = clampContextSize(requested, maxContext);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, FlatList } from 'react-native';
+import { Alert, ScrollView } from 'react-native';
 import { fireEvent, render, act } from '@testing-library/react-native';
 import { Prompt } from 'react-native-nobodywho';
 import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
@@ -174,7 +174,11 @@ test('a second send appends to the same conversation without creating another', 
   expect(mockInsertConversation).not.toHaveBeenCalled();
   expect(mockInsertMessage).toHaveBeenNthCalledWith(
     1,
-    expect.objectContaining({ conversationId: 42, role: 'user', content: 'second' }),
+    expect.objectContaining({
+      conversationId: 42,
+      role: 'user',
+      content: 'second',
+    }),
   );
 });
 
@@ -275,7 +279,9 @@ test('a vision/hearing send attaches a picked image + audio as a Prompt', async 
   ]);
 
   // The persisted user message records both document paths.
-  const userCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'user');
+  const userCall = mockInsertMessage.mock.calls.find(
+    ([m]) => m.role === 'user',
+  );
   expect(userCall?.[0].documentsPath).toEqual([
     expect.stringContaining('IMG_0001'),
     expect.stringContaining('clip'),
@@ -314,7 +320,9 @@ test('audio-only document picker restricts to audio MIME types', async () => {
   ]);
 
   // Only the audio path is persisted.
-  const userCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'user');
+  const userCall = mockInsertMessage.mock.calls.find(
+    ([m]) => m.role === 'user',
+  );
   expect(userCall?.[0].documentsPath).toEqual([
     expect.stringContaining('clip'),
   ]);
@@ -417,10 +425,9 @@ test('deselecting an attached image deletes its unsent copy from disk', async ()
 
   // The orphaned copy (named from the picked IMG_0001) is unlinked, and nothing
   // is sent when the user then sends a plain-text message.
-  expect(mockUnlink).toHaveBeenCalledWith(
-    expect.stringContaining('IMG_0001'),
-    { idempotent: true },
-  );
+  expect(mockUnlink).toHaveBeenCalledWith(expect.stringContaining('IMG_0001'), {
+    idempotent: true,
+  });
   await send(screen, 'never mind');
   expect(mockChat.ask).toHaveBeenCalledWith('never mind');
 });
@@ -444,10 +451,9 @@ test('an unsent attachment is deleted when the screen unmounts', async () => {
     screen.unmount();
   });
 
-  expect(mockUnlink).toHaveBeenCalledWith(
-    expect.stringContaining('IMG_0001'),
-    { idempotent: true },
-  );
+  expect(mockUnlink).toHaveBeenCalledWith(expect.stringContaining('IMG_0001'), {
+    idempotent: true,
+  });
 });
 
 test('a sent attachment is NOT deleted on unmount (the message owns it)', async () => {
@@ -477,7 +483,10 @@ test('a sent attachment is NOT deleted on unmount (the message owns it)', async 
 
 test('cancelling the image picker attaches nothing', async () => {
   mockChatPipeline = ModelPipeline.imageTextToText;
-  mockLaunchImageLibraryAsync.mockResolvedValue({ canceled: true, assets: null });
+  mockLaunchImageLibraryAsync.mockResolvedValue({
+    canceled: true,
+    assets: null,
+  });
 
   const screen = render(
     <ChatScreen
@@ -494,7 +503,9 @@ test('cancelling the image picker attaches nothing', async () => {
 
   // A bare string prompt and no document paths persisted.
   expect(mockChat.ask).toHaveBeenCalledWith('hello');
-  const userCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'user');
+  const userCall = mockInsertMessage.mock.calls.find(
+    ([m]) => m.role === 'user',
+  );
   expect(userCall?.[0].documentsPath).toEqual([]);
 });
 
@@ -542,7 +553,9 @@ test('a plain text send carries no documents even when multimodal is ready', asy
 
   // A bare string prompt, not a Prompt, and no document paths persisted.
   expect(mockChat.ask).toHaveBeenCalledWith('just text');
-  const userCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'user');
+  const userCall = mockInsertMessage.mock.calls.find(
+    ([m]) => m.role === 'user',
+  );
   expect(userCall?.[0].documentsPath).toEqual([]);
 });
 
@@ -593,7 +606,9 @@ test('stopping mid-stream persists the partial answer and a "stopped" system mes
 
   const roles = mockInsertMessage.mock.calls.map(([m]) => m.role);
   expect(roles).toEqual(['user', 'assistant', 'system']);
-  const systemCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'system');
+  const systemCall = mockInsertMessage.mock.calls.find(
+    ([m]) => m.role === 'system',
+  );
   expect(systemCall?.[0]).toMatchObject({
     role: 'system',
     content: 'screens.chat.generationStopped',
@@ -618,7 +633,9 @@ test('a generation error persists the partial answer and a "failed" system messa
 
   await send(screen, 'hi');
 
-  const systemCall = mockInsertMessage.mock.calls.find(([m]) => m.role === 'system');
+  const systemCall = mockInsertMessage.mock.calls.find(
+    ([m]) => m.role === 'system',
+  );
   expect(systemCall?.[0]).toMatchObject({
     role: 'system',
     content: 'screens.chat.generationFailed',
@@ -813,7 +830,6 @@ test('leaves the keyboard alone when there is nothing to send', async () => {
 // The legend-list mock hangs the anchoring props on a `LegendList` wrapper.
 const listProps = (screen: ReturnType<typeof render>) =>
   screen.UNSAFE_getByType('LegendList' as never).props;
-
 
 test('sending anchors the new message and rides it to the top', async () => {
   const screen = render(
@@ -1084,7 +1100,7 @@ test('follows the answer only while the reader has asked it to', async () => {
   // Touching the conversation hands scrolling back to them, and the tokens
   // that follow leave it where they put it.
   act(() =>
-    screen.UNSAFE_getByType(FlatList as never).props.onScrollBeginDrag(),
+    screen.UNSAFE_getByType(ScrollView as never).props.onScrollBeginDrag(),
   );
   act(() => mockListState.emitIsAtEnd(false));
   expect(chevron(screen)).toBeTruthy();

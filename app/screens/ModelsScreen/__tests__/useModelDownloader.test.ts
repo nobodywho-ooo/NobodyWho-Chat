@@ -70,7 +70,8 @@ const pendingDownload = (
       {
         url: `https://x/model-${id}.gguf`,
         fileName: `model-${id}.gguf`,
-        type: pipeline === ModelPipeline.textToSpeech ? 'tts-file' : 'chat-model',
+        type:
+          pipeline === ModelPipeline.textToSpeech ? 'tts-file' : 'chat-model',
         path: '',
         sizeGB: 1,
       },
@@ -107,9 +108,7 @@ test('keeps the pending download on a transient error so it can resume later', a
   await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalled());
   // The record and the bytes on disk must survive so the foreground resume
   // picks it back up — neither is torn down on a non-abort failure.
-  await waitFor(() =>
-    expect(mockGetModelDownloads).toHaveBeenCalled(),
-  );
+  await waitFor(() => expect(mockGetModelDownloads).toHaveBeenCalled());
   expect(mockDeleteModelDownload).not.toHaveBeenCalled();
   expect(mockDeleteModelDirectory).not.toHaveBeenCalled();
   expect(mockInsertModel).not.toHaveBeenCalled();
@@ -172,7 +171,9 @@ test('a failing insert drops the download row and files instead of retrying fore
 
   renderHook(() => useModelDownloader());
 
-  await waitFor(() => expect(mockDeleteModelDownload).toHaveBeenCalledWith(105));
+  await waitFor(() =>
+    expect(mockDeleteModelDownload).toHaveBeenCalledWith(105),
+  );
   expect(mockDeleteModelDirectory).toHaveBeenCalledWith(105);
   expect(mockSetAppState).not.toHaveBeenCalled();
 });

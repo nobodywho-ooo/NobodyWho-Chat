@@ -75,7 +75,8 @@ describe('rowToModel', () => {
   test('defaults supportedFileFormat to [] when the column is null/missing', () => {
     expect(rowToModel(rawRow).supportedFileFormat).toEqual([]);
     expect(
-      rowToModel({ ...rawRow, supported_file_format: null }).supportedFileFormat,
+      rowToModel({ ...rawRow, supported_file_format: null })
+        .supportedFileFormat,
     ).toEqual([]);
   });
 });
@@ -120,7 +121,22 @@ describe('insertModel', () => {
 
     expect(db.execute).toHaveBeenCalledWith(
       expect.stringContaining('ON CONFLICT(id) DO UPDATE'),
-      [3, 'Q', 1, 1, 'Author', 'Family', 1, 0, 'https://huggingface.co/test/model-3', '[]', 'textGeneration', '["fast"]', '[]', '[]'],
+      [
+        3,
+        'Q',
+        1,
+        1,
+        'Author',
+        'Family',
+        1,
+        0,
+        'https://huggingface.co/test/model-3',
+        '[]',
+        'textGeneration',
+        '["fast"]',
+        '[]',
+        '[]',
+      ],
     );
     // Must NOT use INSERT OR REPLACE: with FKs on, REPLACE cascade-deletes the
     // model's conversations and messages.
@@ -141,9 +157,10 @@ describe('insertModel', () => {
 describe('deleteModel', () => {
   test('deletes the model by id', async () => {
     await deleteModel(5);
-    expect(db.execute).toHaveBeenCalledWith('DELETE FROM models WHERE id = ?', [
-      5,
-    ]);
+    expect(db.execute).toHaveBeenCalledWith(
+      'DELETE FROM models WHERE id = ?',
+      [5],
+    );
   });
 });
 

@@ -103,7 +103,9 @@ describe('insertConversation', () => {
     await insertConversation({ title: 'New', modelId: 5 });
 
     expect(db.execute).toHaveBeenCalledWith(
-      expect.stringContaining('WHERE EXISTS (SELECT 1 FROM models WHERE id = ?)'),
+      expect.stringContaining(
+        'WHERE EXISTS (SELECT 1 FROM models WHERE id = ?)',
+      ),
       expect.anything(),
     );
   });

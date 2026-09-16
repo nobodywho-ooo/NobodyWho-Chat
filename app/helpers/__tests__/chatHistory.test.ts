@@ -66,7 +66,11 @@ describe('toModelHistory (nobodywho context)', () => {
         content: '',
         toolCalls: [{ name: 'get_weather', argumentsJson: '{"city":"Paris"}' }],
       },
-      { role: 'tool', name: 'get_weather', content: '{"temperatureCelsius":12}' },
+      {
+        role: 'tool',
+        name: 'get_weather',
+        content: '{"temperatureCelsius":12}',
+      },
       { role: 'assistant', content: 'It is 12°C in Paris.', toolCalls: [] },
     ]);
   });

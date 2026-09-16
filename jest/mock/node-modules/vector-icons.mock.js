@@ -1,10 +1,10 @@
-import React, { Component } from "react";
+import React, { Component } from 'react';
 
-import { createMock } from "../../utils";
+import { createMock } from '../../utils';
 
 const createIconSet = () => jest.fn().mockResolvedValue();
-const MockedIonicons = createMock("Ionicons");
-const MockedMaterialCommunityIcons = createMock("MaterialCommunityIcons");
+const MockedIonicons = createMock('Ionicons');
+const MockedMaterialCommunityIcons = createMock('MaterialCommunityIcons');
 
 class Ionicons extends Component {
   render() {

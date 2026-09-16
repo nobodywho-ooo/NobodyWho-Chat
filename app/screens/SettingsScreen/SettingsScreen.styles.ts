@@ -23,7 +23,7 @@ export default StyleSheet.create({
   appInfo: {
     paddingTop: Spacings.sm,
   },
-  sectionHeader:{ 
-    paddingTop: Spacings.xl
-  }
+  sectionHeader: {
+    paddingTop: Spacings.xl,
+  },
 });

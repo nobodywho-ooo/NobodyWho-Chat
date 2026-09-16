@@ -49,7 +49,11 @@ export const copyToMessageDocuments = async (
 // before this change, or from a previous install's container UUID) resolve to
 // the current sandbox.
 export const resolveMessageDocumentPath = (stored: string): string => {
-  const name = stored.replace(/^file:\/\//, '').split('/').pop() ?? stored;
+  const name =
+    stored
+      .replace(/^file:\/\//, '')
+      .split('/')
+      .pop() ?? stored;
   return `${messageDocumentsDir()}/${name}`;
 };
 
@@ -94,9 +98,28 @@ export const messageDocumentName = (path: string): string => {
 
 export type MessageDocumentKind = 'image' | 'audio' | 'file';
 
-const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'bmp'];
+const IMAGE_EXTENSIONS = [
+  'jpg',
+  'jpeg',
+  'png',
+  'gif',
+  'webp',
+  'heic',
+  'heif',
+  'bmp',
+];
 const AUDIO_EXTENSIONS = [
-  'mp3', 'wav', 'm4a', 'aac', 'ogg', 'oga', 'opus', 'flac', 'caf', 'aiff', 'amr',
+  'mp3',
+  'wav',
+  'm4a',
+  'aac',
+  'ogg',
+  'oga',
+  'opus',
+  'flac',
+  'caf',
+  'aiff',
+  'amr',
 ];
 
 // Classify a stored document by its file extension so the message bubble can
