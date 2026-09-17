@@ -84,13 +84,13 @@ interface AiServiceContextValue extends AiServiceState {
   stt: React.RefObject<SpeechToText | undefined>;
   vad: React.RefObject<VoiceActivityDetection | undefined>;
 
-  createChat: (opts: ChatOptions & { model: Model }) => Promise<void>;
+  createChat: (opts: ChatOptions & { model: Model }) => Promise<boolean>;
   disposeChat: () => void;
-  createTts: (opts: TtsOptions & { model: Model }) => Promise<void>;
+  createTts: (opts: TtsOptions & { model: Model }) => Promise<boolean>;
   disposeTts: () => void;
-  createStt: (opts: SttOptions & { model: Model }) => Promise<void>;
+  createStt: (opts: SttOptions & { model: Model }) => Promise<boolean>;
   disposeStt: () => void;
-  createVad: (opts: VadOptions & { model: Model }) => Promise<void>;
+  createVad: (opts: VadOptions & { model: Model }) => Promise<boolean>;
   disposeVad: () => void;
 
   // Run work against a loaded engine while holding it open, so a dispose racing
@@ -195,7 +195,7 @@ interface SlotSpec<TInstance extends NativeInstance, TOptions> {
 
 interface NativeSlot<TInstance extends NativeInstance, TOptions> {
   ref: React.RefObject<TInstance | undefined>;
-  create: (opts: TOptions & { model: Model }) => Promise<void>;
+  create: (opts: TOptions & { model: Model }) => Promise<boolean>; // Resolves to whether the slot ended up serving `model`. False means a dispose superseded the load
   dispose: () => void;
   borrow: <R>(
     work: (instance: TInstance) => Promise<R>,
@@ -301,7 +301,7 @@ const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
 
       // Already serving exactly this model — nothing to do.
       if (ref.current && loadedModelId.current === model.id) {
-        return;
+        return true;
       }
 
       if (!accepts(model.pipeline)) {
@@ -313,7 +313,7 @@ const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
       const generationAtCall = generation.current;
       const previousLoad = nativeLoadRef.current;
 
-      const load = async () => {
+      const load = async (): Promise<boolean> => {
         // Wait for any in-flight load to fully settle (and release the native
         // backend) before touching it again. When idle there is nothing to wait
         // for, so the first load reaches the loader in the same tick.
@@ -323,7 +323,7 @@ const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
 
         // Disposed while we waited — bail before starting an unwanted load.
         if (generationAtCall !== generation.current) {
-          return;
+          return false;
         }
 
         const stale = ref.current;
@@ -335,7 +335,7 @@ const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
           // live engine disagree with no way back. Safe to free here: this
           // function owns the load chain for its whole body.
           if (loadedModelId.current === model.id) {
-            return;
+            return true;
           }
 
           ref.current = undefined;
@@ -349,7 +349,7 @@ const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
           // Loading past it would leave the slot claiming a load that the
           // superseded exit below then abandons without ever clearing.
           if (generationAtCall !== generation.current) {
-            return;
+            return false;
           }
         }
 
@@ -373,7 +373,7 @@ const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
             ...slotPatch(stateKey, AiModelState.NotLoaded),
             ...specRef.current.cleared,
           }));
-          return;
+          return false;
         }
 
         ref.current = instance;
@@ -383,6 +383,7 @@ const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
           ...slotPatch(stateKey, AiModelState.Ready),
           ...state,
         }));
+        return true;
       };
 
       // Invoke the load exactly once and publish that single promise, so the
@@ -394,7 +395,7 @@ const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
       nativeLoadRef.current = loadPromise.catch(() => undefined);
 
       try {
-        await loadPromise;
+        return await loadPromise;
       } catch (error) {
         log(`AiService create ${label}`, error, { capture: true });
         // Only the generation that still owns the slot may surface the error; a

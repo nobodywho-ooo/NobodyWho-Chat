@@ -175,16 +175,19 @@ export const ChatStackNavigator = () => {
 
   // --- Lifecycle steps -------------------------------------------------------
 
-  const mountModelAndCreateChat = useCallback(async () => {
+  // Resolves to whether the chat is loaded and ours to use. False means a dispose superseded the load
+  const mountModelAndCreateChat = useCallback(async (): Promise<boolean> => {
     const {
       modelIdInUse: modelId,
       assistantConfig = DEFAULT_ASSISTANT_CONFIG,
     } = getAppState();
+
     if (modelId === undefined) {
       throw new Error('ChatStackNavigator: no model in use');
     }
 
     const model = await getModelById(modelId);
+
     if (model === undefined) {
       throw new Error(`ChatStackNavigator: model ${modelId} not found`);
     }
@@ -198,7 +201,7 @@ export const ChatStackNavigator = () => {
       );
     }
 
-    await createChat({
+    const created = await createChat({
       model,
       systemPrompt: assistantConfig.systemPrompt.trim() || undefined,
       sampler: SamplerPresets.temperature(assistantConfig.temperature),
@@ -206,9 +209,8 @@ export const ChatStackNavigator = () => {
       thinking: assistantConfig.thinking,
       toolCalling: assistantConfig.toolCalling,
     });
-    if (chat.current === undefined) {
-      throw new Error('ChatStackNavigator: chat creation failed');
-    }
+
+    return created && chat.current !== undefined;
   }, [createChat, chat]);
 
   const resetAndLoadChatHistory = useCallback(async () => {
@@ -252,15 +254,15 @@ export const ChatStackNavigator = () => {
   // its outcome — a stale session finishing late must not flip the status.
   const sessionIdRef = useRef(0);
 
-  const runSession = useCallback(async (steps: () => Promise<void>) => {
+  const runSession = useCallback(async (steps: () => Promise<boolean>) => {
     const sessionId = ++sessionIdRef.current;
     const isCurrent = () => sessionId === sessionIdRef.current;
 
     setStatus(SessionStatus.Loading);
 
     try {
-      await steps();
-      if (isCurrent()) {
+      const completed = await steps();
+      if (completed && isCurrent()) {
         setStatus(SessionStatus.Ready);
       }
     } catch (error) {
@@ -276,10 +278,24 @@ export const ChatStackNavigator = () => {
   const startSession = useCallback(
     () =>
       runSession(async () => {
-        await mountModelAndCreateChat();
-        await resetAndLoadChatHistory();
+        const mounted = await mountModelAndCreateChat();
+
+        if (!mounted) {
+          return false;
+        }
+
+        try {
+          await resetAndLoadChatHistory();
+        } catch (error) {
+          if (chat.current === undefined) {
+            return false;
+          }
+          throw error;
+        }
+
+        return true;
       }),
-    [runSession, mountModelAndCreateChat, resetAndLoadChatHistory],
+    [runSession, mountModelAndCreateChat, resetAndLoadChatHistory, chat],
   );
 
   // History-only refresh: used when the in-use chat changes (same model/chat).

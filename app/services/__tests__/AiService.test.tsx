@@ -130,9 +130,13 @@ test('createChat loads the model and exposes the chat', async () => {
   mockFromPath.mockResolvedValue(chat);
   const { result } = renderHook(() => useAiService(), { wrapper });
 
+  let created: boolean | undefined;
   await act(async () => {
-    await result.current.createChat({ model });
+    created = await result.current.createChat({ model });
   });
+
+  // The slot reports that it is serving the requested model.
+  expect(created).toBe(true);
 
   expect(mockFromPath).toHaveBeenCalledWith(
     expect.objectContaining({
@@ -410,21 +414,26 @@ test('a chat resolving after disposeChat is discarded and destroyed', async () =
   );
   const { result } = renderHook(() => useAiService(), { wrapper });
 
-  let createPromise: Promise<void> | undefined;
+  let createPromise: Promise<boolean> | undefined;
   act(() => {
     createPromise = result.current.createChat({ model });
   });
   act(() => result.current.disposeChat());
 
   const staleChat = { destroy: jest.fn() };
+  let created: boolean | undefined;
   await act(async () => {
     resolveFromPath!(staleChat);
-    await createPromise;
+    created = await createPromise;
   });
 
   expect(staleChat.destroy).toHaveBeenCalledTimes(1);
   expect(result.current.chat.current).toBeUndefined();
   expect(result.current.chatState).toBe(AiModelState.NotLoaded);
+  // Resolving without a chat is how the caller learns its load was superseded:
+  // reading the empty ref as a failed load was an error screen on every
+  // dispose that raced a load (ChatStackNavigator: chat creation failed).
+  expect(created).toBe(false);
 });
 
 test('switching models mid-load never runs two Chat.fromPath loads at once', async () => {
@@ -459,7 +468,7 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
   );
 
   // Switch to B (dispose + create) while A is still loading.
-  let loadB: Promise<void> | undefined;
+  let loadB: Promise<boolean> | undefined;
   act(() => result.current.disposeChat());
   act(() => {
     loadB = result.current.createChat({ model: modelB });
@@ -519,7 +528,7 @@ test('a reload waits for the previous chat teardown to settle before allocating'
 
   // Dispose enqueues an async teardown, then a reload starts immediately.
   act(() => result.current.disposeChat());
-  let reload: Promise<void> | undefined;
+  let reload: Promise<boolean> | undefined;
   act(() => {
     reload = result.current.createChat({ model });
   });
@@ -608,7 +617,7 @@ test('createTts serializes behind an in-flight chat load on the shared chain', a
   mockTtsLoad.mockResolvedValue(tts);
   const { result } = renderHook(() => useAiService(), { wrapper });
 
-  let ttsLoad: Promise<void> | undefined;
+  let ttsLoad: Promise<boolean> | undefined;
   act(() => {
     result.current.createChat({ model });
   });

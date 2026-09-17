@@ -57,8 +57,29 @@ export const useMessageListScroll = (messages: DisplayMessage[]) => {
 
   useEffect(() => listRef.current?.getState().listen('isAtEnd', setAtEnd), []);
 
-  const scrollToBottomNow = useCallback((animated: boolean) => {
-    listRef.current?.scrollToOffset({ offset: BOTTOM_OFFSET, animated });
+  const scrollingToBottomRef = useRef(false);
+  const missedScrollToBottomRef = useRef(false);
+
+  const scrollToBottomNow = useCallback(function runScrollToBottom(
+    animated: boolean,
+  ) {
+    if (scrollingToBottomRef.current) {
+      missedScrollToBottomRef.current = true;
+      return;
+    }
+
+    scrollingToBottomRef.current = true;
+
+    try {
+      listRef.current?.scrollToOffset({ offset: BOTTOM_OFFSET, animated });
+    } finally {
+      scrollingToBottomRef.current = false;
+    }
+
+    if (missedScrollToBottomRef.current) {
+      missedScrollToBottomRef.current = false;
+      requestAnimationFrame(() => runScrollToBottom(animated));
+    }
   }, []);
 
   const streamedContent = messages[messages.length - 1]?.content;

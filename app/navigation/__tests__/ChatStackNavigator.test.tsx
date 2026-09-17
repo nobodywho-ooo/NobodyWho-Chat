@@ -42,17 +42,20 @@ const mockChatInstance = {
 const mockChatRef: { current: typeof mockChatInstance | undefined } = {
   current: undefined,
 };
+// The slot creates resolve to whether they ended up serving the model — false
+// when a dispose superseded the load (see useNativeSlot).
 const mockCreateChat = jest.fn(async () => {
   mockChatRef.current = mockChatInstance;
+  return true;
 });
 const mockDisposeChat = jest.fn(() => {
   mockChatRef.current = undefined;
 });
-const mockCreateTts = jest.fn(async () => {});
+const mockCreateTts = jest.fn(async () => true);
 const mockDisposeTts = jest.fn();
-const mockCreateStt = jest.fn(async () => {});
+const mockCreateStt = jest.fn(async () => true);
 const mockDisposeStt = jest.fn();
-const mockCreateVad = jest.fn(async () => {});
+const mockCreateVad = jest.fn(async () => true);
 const mockDisposeVad = jest.fn();
 // These suites only exercise text models; mock-prefixed so the jest.mock
 // factory may reference it (out-of-scope enums are rejected otherwise).
@@ -303,10 +306,10 @@ test('a model switch keeps the chat on screen, inert, behind a loading toast', a
   let finishLoad = () => {};
   mockCreateChat.mockImplementationOnce(
     () =>
-      new Promise<void>(resolve => {
+      new Promise<boolean>(resolve => {
         finishLoad = () => {
           mockChatRef.current = mockChatInstance;
-          resolve();
+          resolve(true);
         };
       }),
   );
@@ -860,6 +863,44 @@ test('unloads the chat on background and rebuilds it on foreground', async () =>
     appStateHandler('active');
   });
   await waitFor(() => expect(mockCreateChat).toHaveBeenCalledTimes(2));
+});
+
+test('a background mid-load is not reported as a failed session', async () => {
+  await setAppState({ modelIdInUse: 0 });
+
+  // Hold the launch load open so the background transition lands inside it.
+  let finishLoad: (created: boolean) => void = () => {};
+  mockCreateChat.mockImplementationOnce(
+    () =>
+      new Promise<boolean>(resolve => {
+        finishLoad = resolve;
+      }),
+  );
+
+  const screen = render(<ChatStackNavigator />);
+  await waitFor(() => expect(mockCreateChat).toHaveBeenCalledTimes(1));
+
+  // Loads take seconds, so the OS can background us in the middle of one. That
+  // releases the slot, and the load in flight then resolves with no chat.
+  await act(async () => {
+    appStateHandler('background');
+  });
+  expect(mockDisposeChat).toHaveBeenCalledTimes(1);
+  await act(async () => {
+    finishLoad(false);
+  });
+
+  // A teardown we asked for is not a failed session: reading the empty slot as
+  // one is what raised "chat creation failed" behind the error screen.
+  expect(screen.queryByText('common.somethingWentWrong')).toBeNull();
+
+  // And the resume still rebuilds the session, all the way to a usable chat.
+  await act(async () => {
+    appStateHandler('active');
+  });
+  await showEmptyChat(screen);
+  expect(mockCreateChat).toHaveBeenCalledTimes(2);
+  expect(screen.UNSAFE_getByType(InputBar as never).props.disabled).toBe(false);
 });
 
 test('keeps the model resident when a dialog we launched backgrounds the app', async () => {
