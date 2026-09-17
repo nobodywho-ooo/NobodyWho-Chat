@@ -11,6 +11,8 @@ import {
   cleanTranscript,
   computeGenerationMetrics,
   concatPcm,
+  createThinkOpenWriter,
+  hasMessageContent,
   log,
   MAX_RECORDING_MS,
   requestMicrophonePermission,
@@ -94,6 +96,7 @@ export const useVoiceConversation = ({
   const {
     chat,
     chatState,
+    chatThinkOpen,
     sttState,
     ttsState,
     vadState,
@@ -315,7 +318,7 @@ export const useVoiceConversation = ({
           return;
         }
 
-        if (answerText.trim()) {
+        if (hasMessageContent(answerText)) {
           await insertMessage({
             conversationId,
             role: 'assistant',
@@ -430,16 +433,21 @@ export const useVoiceConversation = ({
     // reconstructs like a typed one (toModelHistory expands them on reload).
     setStatus('thinking');
 
-    let answer = '';
+    // Mirrors the typed path: templates that spend the opening reasoning
+    // delimiter in the prompt need it written back, or the reasoning reads as
+    // part of the answer — and gets spoken aloud below.
+    const thinkOpenWriter = createThinkOpenWriter(chatThinkOpen);
+    let answer = thinkOpenWriter.write('turn', '');
 
     const startedAt = Date.now();
     let firstTokenAt: number | undefined;
     let tokenCount = 0;
 
     const toolInvocations: ToolInvocation[] = [];
-    const unsubscribeTools = subscribeToolInvocations(invocation =>
-      toolInvocations.push(invocation),
-    );
+    const unsubscribeTools = subscribeToolInvocations(invocation => {
+      toolInvocations.push(invocation);
+      answer = thinkOpenWriter.write('toolResult', answer);
+    });
 
     let failed = false;
 
@@ -475,7 +483,7 @@ export const useVoiceConversation = ({
       tokenCount,
     );
 
-    if (answer.trim()) {
+    if (hasMessageContent(answer)) {
       setHasAnswered(true);
     }
 
@@ -551,6 +559,7 @@ export const useVoiceConversation = ({
     }
   }, [
     chat,
+    chatThinkOpen,
     borrowStt,
     borrowTts,
     ttsArchitecture,

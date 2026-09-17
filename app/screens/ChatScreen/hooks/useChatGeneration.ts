@@ -9,10 +9,13 @@ import { insertConversation, insertMessage } from 'repositories';
 import { subscribeToolInvocations } from 'services';
 import {
   computeGenerationMetrics,
+  createThinkOpenWriter,
+  hasMessageContent,
   haptics,
   log,
   resolveMessageDocumentPath,
 } from 'helpers';
+import type { ImplicitThinkOpen } from 'helpers';
 
 import { Attachments } from './useAttachments';
 
@@ -20,6 +23,7 @@ type PersistOutcome = 'written' | 'gone' | 'failed';
 
 interface UseChatGenerationOptions {
   chat: React.RefObject<Chat | undefined>;
+  thinkOpen: ImplicitThinkOpen | undefined;
   ingestsImage: boolean;
   ingestsAudio: boolean;
   inputText: string;
@@ -35,6 +39,7 @@ interface UseChatGenerationOptions {
 
 export function useChatGeneration({
   chat,
+  thinkOpen,
   ingestsImage,
   ingestsAudio,
   inputText,
@@ -169,8 +174,10 @@ export function useChatGeneration({
     const startedAt = Date.now();
     let firstTokenAt: number | undefined;
     let tokenCount = 0;
-    let accumulated = '';
     const turnToolCalls: ToolInvocation[] = [];
+
+    const thinkOpenWriter = createThinkOpenWriter(thinkOpen);
+    let accumulated = thinkOpenWriter.write('turn', '');
 
     const renderAssistant = (extra?: {
       tokensPerSecond?: number;
@@ -192,6 +199,7 @@ export function useChatGeneration({
 
     const unsubscribe = subscribeToolInvocations(invocation => {
       turnToolCalls.push(invocation);
+      accumulated = thinkOpenWriter.write('toolResult', accumulated);
       renderAssistant();
     });
 
@@ -199,7 +207,7 @@ export function useChatGeneration({
       tokensPerSecond?: number;
       timeToFirstToken?: number;
     }) => {
-      if (accumulated.length === 0) {
+      if (!hasMessageContent(accumulated)) {
         setMessages(prev => prev.slice(0, -1));
         return;
       }

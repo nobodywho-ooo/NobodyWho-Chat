@@ -69,6 +69,15 @@ export const useMessageListScroll = (messages: DisplayMessage[]) => {
     scrollToBottomNow(false);
   }, [following, streamedContent, scrollToBottomNow]);
 
+  useEffect(() => {
+    if (!following) {
+      return;
+    }
+    return listRef.current
+      ?.getState()
+      .listen('totalSize', () => scrollToBottomNow(false));
+  }, [following, scrollToBottomNow]);
+
   const anchorSentMessage = useCallback((index: number) => {
     setFollowing(false);
     setAnchorIndex(index);

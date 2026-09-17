@@ -75,6 +75,48 @@ describe('toModelHistory (nobodywho context)', () => {
     ]);
   });
 
+  test('expands several tools of one round into one call and one result each', () => {
+    // A parallel round is still a single stored row: nobodywho expects one
+    // assistant message carrying every call, then a result per call in the same
+    // order, then the answer.
+    const timeInvocation = {
+      name: 'get_time',
+      arguments: { city: 'Paris' },
+      result: '{"hour":14}',
+    };
+
+    expect(
+      toModelHistory([
+        {
+          ...base,
+          role: 'assistant',
+          content: 'It is 12°C at 14:00 in Paris.',
+          toolInvocations: [weatherInvocation, timeInvocation],
+        },
+      ]),
+    ).toEqual([
+      {
+        role: 'assistant',
+        content: '',
+        toolCalls: [
+          { name: 'get_weather', argumentsJson: '{"city":"Paris"}' },
+          { name: 'get_time', argumentsJson: '{"city":"Paris"}' },
+        ],
+      },
+      {
+        role: 'tool',
+        name: 'get_weather',
+        content: '{"temperatureCelsius":12}',
+      },
+      { role: 'tool', name: 'get_time', content: '{"hour":14}' },
+      {
+        role: 'assistant',
+        content: 'It is 12°C at 14:00 in Paris.',
+        toolCalls: [],
+      },
+    ]);
+  });
+
   test('an assistant turn with no tool calls keeps an empty toolCalls', () => {
     expect(
       toModelHistory([{ ...base, role: 'assistant', content: 'hi' }]),

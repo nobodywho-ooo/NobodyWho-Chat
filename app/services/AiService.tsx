@@ -18,6 +18,7 @@ import {
 import * as Sentry from '@sentry/react-native';
 import {
   downloadedPartPath,
+  implicitThinkOpen,
   log,
   modelDirectoryPath,
   multimodalContextSize,
@@ -25,6 +26,7 @@ import {
   sleep,
   ttsEngineForModel,
 } from 'helpers';
+import type { ImplicitThinkOpen } from 'helpers';
 import {
   ChatPipeline,
   Model,
@@ -47,6 +49,7 @@ export enum AiModelState {
 interface AiServiceState {
   chatState: AiModelState;
   chatPipeline: ChatPipeline;
+  chatThinkOpen?: ImplicitThinkOpen;
   ttsState: AiModelState;
   ttsArchitecture?: TextToSpeechArchitecture;
   sttState: AiModelState;
@@ -111,6 +114,7 @@ const AiServiceContext = createContext<AiServiceContextValue | undefined>(
 const _initialState: AiServiceState = {
   chatState: AiModelState.NotLoaded,
   chatPipeline: ModelPipeline.textGeneration,
+  chatThinkOpen: undefined,
   ttsState: AiModelState.NotLoaded,
   ttsArchitecture: undefined,
   sttState: AiModelState.NotLoaded,
@@ -508,7 +512,10 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     {
       stateKey: 'chatState',
       accepts: isChatPipeline,
-      cleared: { chatPipeline: ModelPipeline.textGeneration },
+      cleared: {
+        chatPipeline: ModelPipeline.textGeneration,
+        chatThinkOpen: undefined,
+      },
       // Stop any in-flight generation before freeing the context, so a stream
       // still being consumed (e.g. ChatScreen mid-send during a model switch)
       // ends cleanly instead of having the context torn out from under it.
@@ -591,6 +598,8 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
           );
         }
 
+        const enableThinking = model.thinking && (opts.thinking ?? true);
+
         const instance = new Chat({
           model: loaded,
           tools,
@@ -598,13 +607,16 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
           sampler: opts.sampler,
           contextSize,
           templateVariables: {
-            enable_thinking: model.thinking && (opts.thinking ?? true),
+            enable_thinking: enableThinking,
           },
         });
 
         return {
           instance,
-          state: { chatPipeline: toChatPipeline(model.pipeline) },
+          state: {
+            chatPipeline: toChatPipeline(model.pipeline),
+            chatThinkOpen: implicitThinkOpen(model, enableThinking),
+          },
         };
       },
     },

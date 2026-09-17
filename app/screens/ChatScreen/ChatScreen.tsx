@@ -59,7 +59,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const { colors } = useStyled();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { chat, chatPipeline, ttsState, sttState } = useAiService();
+  const { chat, chatPipeline, chatThinkOpen, ttsState, sttState } =
+    useAiService();
   const { ttsModelIdInUse, sttModelIdInUse } = useAppState();
 
   const canPlayAudio =
@@ -107,6 +108,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const { isStreaming, handleSend, stopStreaming } = useChatGeneration({
     chat,
+    thinkOpen: chatThinkOpen,
     ingestsImage,
     ingestsAudio,
     inputText,

@@ -10,6 +10,7 @@ import silero from 'svg/silero.svg';
 import nanbeige from 'svg/nanbeige.svg';
 import openbmb from 'svg/open-bmb.svg';
 import ai9stars from 'svg/ai9stars.svg';
+import tokenrhythm from 'svg/tokenrhythm.svg';
 
 export {
   qwen,
@@ -24,4 +25,5 @@ export {
   nanbeige,
   openbmb,
   ai9stars,
+  tokenrhythm,
 };

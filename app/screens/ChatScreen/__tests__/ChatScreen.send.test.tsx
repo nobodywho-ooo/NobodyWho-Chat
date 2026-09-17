@@ -9,7 +9,9 @@ import { MessageListItem } from 'components';
 import { InputBar } from '../components/InputBar/InputBar';
 import { CameraCaptureModal } from '../components/CameraCaptureModal/CameraCaptureModal';
 import { insertConversation, insertMessage } from 'repositories';
-import { ModelPipeline } from 'types';
+import { implicitThinkOpen } from 'helpers';
+import type { ImplicitThinkOpen } from 'helpers';
+import { Model, ModelPipeline } from 'types';
 import {
   mockGetDocumentAsync,
   mockImageSaveAsync,
@@ -50,10 +52,13 @@ const mockChatRef: { current: typeof mockChat | undefined } = {
 };
 // Drives which modalities ChatScreen offers for the loaded model.
 let mockChatPipeline: ModelPipeline = ModelPipeline.textGeneration;
+// Set when the loaded model's template prefills the opening reasoning tag.
+let mockChatThinkOpen: ImplicitThinkOpen | undefined;
 jest.mock('services', () => ({
   useAiService: () => ({
     chat: mockChatRef,
     chatPipeline: mockChatPipeline,
+    chatThinkOpen: mockChatThinkOpen,
     tts: { current: undefined },
     ttsState: 'notLoaded',
   }),
@@ -81,6 +86,7 @@ const stream = async function* () {
 };
 
 beforeEach(() => {
+  mockChatThinkOpen = undefined;
   mockChatRef.current = mockChat;
   mockChat.ask.mockReset().mockImplementation(() => stream());
   mockChatPipeline = ModelPipeline.textGeneration;
@@ -1135,4 +1141,84 @@ test('pressing the chevron scrolls the conversation to its end', async () => {
   );
   // The reader is at the bottom now, so there is nothing left to offer them.
   expect(chevron(screen)).toBeNull();
+});
+
+test('a turn that grows after its last token keeps its end in view', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+  act(() => mockListState.emitIsAtEnd(false));
+  fireEvent.press(chevron(screen)!);
+
+  // The finished answer is taller than the last token left it: the footer row
+  // under it — copy, speak, the metrics — arrives with the end of the turn, and
+  // the list only learns its height when it measures the row. Aiming at the end
+  // again from the render that added it lands short, so the list's own report of
+  // what it measured is what puts the reader back at the bottom.
+  mockScrollToOffset.mockClear();
+  act(() => mockListState.emitTotalSize(1200));
+
+  expect(mockScrollToOffset).toHaveBeenCalledWith(
+    expect.objectContaining({ animated: false }),
+  );
+});
+
+test('content measured after the reader has taken over leaves them where they are', async () => {
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+  act(() => mockListState.emitIsAtEnd(false));
+  fireEvent.press(chevron(screen)!);
+  act(() =>
+    screen.UNSAFE_getByType(ScrollView as never).props.onScrollBeginDrag(),
+  );
+
+  mockScrollToOffset.mockClear();
+  act(() => mockListState.emitTotalSize(1200));
+
+  expect(mockScrollToOffset).not.toHaveBeenCalled();
+});
+
+test('stopping mid-thinking keeps the block open for a template-opened model', () => {
+  // The model only ever emits the closing tag, so the opener is written into
+  // the stream. Stopping before it closes must not strip that opener, or the
+  // reasoning reloads as the answer itself.
+  mockChatThinkOpen = implicitThinkOpen(
+    { family: 'NeoHorse 1', parameterCountBillions: 4 } as Model,
+    true,
+  );
+
+  const screen = render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+  mockChat.ask.mockImplementation(() =>
+    (async function* () {
+      yield 'I was working out that';
+      screen.UNSAFE_getByType(InputBar as never).props.onStop();
+    })(),
+  );
+
+  return send(screen, 'hi').then(() => {
+    const assistant = mockInsertMessage.mock.calls
+      .map(([message]) => message)
+      .find(message => message.role === 'assistant');
+
+    expect(assistant.content).toBe('<think>I was working out that');
+  });
 });

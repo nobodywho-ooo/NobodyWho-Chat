@@ -2,7 +2,13 @@ import { renderHook, act } from '@testing-library/react-native';
 
 import { insertMessage } from 'repositories';
 import { notifyConversationSync } from 'services';
-import { resetRecordingModeForTests, synthesizeSpeech } from 'helpers';
+import {
+  implicitThinkOpen,
+  resetRecordingModeForTests,
+  synthesizeSpeech,
+} from 'helpers';
+import type { ImplicitThinkOpen } from 'helpers';
+import type { Model } from 'types';
 
 import { useVoiceConversation } from '../hooks/useVoiceConversation';
 
@@ -17,12 +23,15 @@ const mockChatRef: { current: typeof mockChat | undefined } = {
   current: mockChat,
 };
 const mockStt = { transcribePcm: jest.fn() };
+// Set by the test that answers with a template-swallowed opening delimiter.
+let mockChatThinkOpen: ImplicitThinkOpen | undefined;
 const mockTts = { synthesize: jest.fn() };
 
 jest.mock('services', () => ({
   useAiService: () => ({
     chat: mockChatRef,
     chatState: 'ready',
+    chatThinkOpen: mockChatThinkOpen,
     sttState: 'ready',
     ttsState: 'ready',
     ttsArchitecture: undefined,
@@ -166,6 +175,7 @@ const stopTalking = async (result: { current: { toggle: () => void } }) => {
 };
 
 beforeEach(() => {
+  mockChatThinkOpen = undefined;
   resetRecordingModeForTests();
   mockHoldReleaseMode = false;
   mockReleaseMode = undefined;
@@ -347,4 +357,33 @@ test('closing the screen mid-playback stops the audio', async () => {
 
   expect(mockPlayer.pause).toHaveBeenCalled();
   expect(result.current.status).toBe('idle');
+});
+
+test('writes back a swallowed opening delimiter, and never speaks the reasoning', async () => {
+  // The voice loop has no thinking block to show, but it does hand the answer
+  // to the TTS engine — so a model whose template spent the opening delimiter
+  // in the prompt would otherwise read its whole chain of thought aloud.
+  mockChatThinkOpen = implicitThinkOpen(
+    { family: 'MiniCPM5', parameterCountBillions: 2 } as Model,
+    true,
+  );
+  mockChat.ask.mockImplementation(() =>
+    (async function* () {
+      yield 'weighing it up';
+      yield '</think>';
+      yield 'The answer.';
+    })(),
+  );
+
+  const { result } = renderConversation();
+  await startListening(result);
+  await stopTalking(result);
+
+  const assistant = mockInsertMessage.mock.calls
+    .map(([message]) => message)
+    .find(message => message.role === 'assistant');
+
+  // Stored like a typed turn: a well-formed block, not a stray terminator.
+  expect(assistant.content).toBe('<think>weighing it up</think>The answer.');
+  expect(mockSynthesizeSpeech.mock.calls[0]).toContain('The answer.');
 });

@@ -352,18 +352,28 @@ export const mockScrollToIndex = jest.fn();
 // The list's own scroll, used to follow an answer as it is written.
 export const mockScrollToOffset = jest.fn();
 
-// Stand-in for the list's own state signals. Tests drive `emitIsAtEnd` to move
-// the list away from (and back to) the end of the conversation.
+// Stand-in for the list's own state signals, kept per signal like the real one:
+// tests drive `emitIsAtEnd` to move the list away from (and back to) the end of
+// the conversation, and `emitTotalSize` to report content it has just measured.
 export const mockListState = {
   isAtEnd: true,
-  listeners: new Set(),
-  listen(_type, callback) {
-    mockListState.listeners.add(callback);
-    return () => mockListState.listeners.delete(callback);
+  listeners: new Map(),
+  listen(type, callback) {
+    const forType = mockListState.listeners.get(type) ?? new Set();
+    forType.add(callback);
+    mockListState.listeners.set(type, forType);
+    return () => forType.delete(callback);
+  },
+  emit(type, value) {
+    const forType = mockListState.listeners.get(type);
+    forType?.forEach(callback => callback(value));
   },
   emitIsAtEnd(value) {
     mockListState.isAtEnd = value;
-    mockListState.listeners.forEach(callback => callback(value));
+    mockListState.emit('isAtEnd', value);
+  },
+  emitTotalSize(value) {
+    mockListState.emit('totalSize', value);
   },
   reset() {
     mockListState.isAtEnd = true;

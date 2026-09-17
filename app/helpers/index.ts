@@ -3,7 +3,13 @@ import { log } from './log';
 import { capitalize } from './string';
 import { safeJsonParse } from './json';
 import { getMarkdownStyle } from './markdown';
-import { parseThinking, stripThinkingBlocks } from './thinking';
+import {
+  createThinkOpenWriter,
+  hasMessageContent,
+  implicitThinkOpen,
+  parseThinking,
+  stripThinkingBlocks,
+} from './thinking';
 import { haptics } from './haptics';
 import { getFamilyIcon } from './familyIcon';
 import { getPipelineIcon } from './pipelineIcon';
@@ -79,6 +85,12 @@ export type { TtsEngine, TtsLanguageOption } from './ttsEngine';
 export type { SttLanguageOption } from './sttLanguages';
 export type { PipelineIcon } from './pipelineIcon';
 export type { DiskSpaceCheck } from './diskSpace';
+export type {
+  ImplicitThinkOpen,
+  ParsedThinking,
+  ThinkOpenWriter,
+  ThinkPrefillSite,
+} from './thinking';
 
 export {
   getFamilyIcon,
@@ -116,6 +128,9 @@ export {
   capitalize,
   safeJsonParse,
   getMarkdownStyle,
+  createThinkOpenWriter,
+  hasMessageContent,
+  implicitThinkOpen,
   parseThinking,
   stripThinkingBlocks,
   haptics,
