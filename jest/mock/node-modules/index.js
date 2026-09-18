@@ -435,6 +435,22 @@ jest.mock('@legendapp/list/keyboard', () => {
   // whenever the machine is slow enough for the timer to miss. None of these
   // tests assert on windowing; they assert on the rows and on the imperative
   // API above, both of which this renders synchronously and without timers.
+
+  // The real list memoizes every rendered row on (item key, item, extraData)
+  // and reads renderItem off a ref, so a fresh renderItem closure on its own
+  // never reaches a row that is already on screen. Modelled here too: without
+  // it a screen that feeds its rows state from outside the message — an engine
+  // that finished loading, which message is playing — passes its tests and
+  // still ships rows frozen at their first render.
+  const Row = mockReact.memo(
+    ({ item, index, renderItem }) =>
+      renderItem ? renderItem({ item, index }) : null,
+    (prev, next) =>
+      prev.item === next.item &&
+      prev.index === next.index &&
+      prev.extraData === next.extraData,
+  );
+
   const LegendList = mockReact.forwardRef((props, ref) => {
     const {
       anchoredEndSpace,
@@ -442,6 +458,7 @@ jest.mock('@legendapp/list/keyboard', () => {
       contentInsetEndAdjustment,
       data,
       estimatedItemSize,
+      extraData,
       freeze,
       keyboardLiftBehavior,
       keyboardOffset,
@@ -461,11 +478,13 @@ jest.mock('@legendapp/list/keyboard', () => {
           ? mockReact.createElement(ListEmptyComponent)
           : null
         : rows.map((item, index) =>
-            mockReact.createElement(
-              mockReact.Fragment,
-              { key: keyExtractor ? keyExtractor(item, index) : index },
-              renderItem ? renderItem({ item, index }) : null,
-            ),
+            mockReact.createElement(Row, {
+              key: keyExtractor ? keyExtractor(item, index) : index,
+              item,
+              index,
+              extraData,
+              renderItem,
+            }),
           );
 
     return mockReact.createElement(

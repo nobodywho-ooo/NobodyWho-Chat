@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { Alert, Keyboard, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -192,6 +198,23 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     ],
   );
 
+  const listExtraData = useMemo(
+    () => ({
+      isStreaming,
+      lastIndex: messages.length - 1,
+      canPlayAudio,
+      audioLoadingId,
+      audioPlayingId,
+    }),
+    [
+      isStreaming,
+      messages.length,
+      canPlayAudio,
+      audioLoadingId,
+      audioPlayingId,
+    ],
+  );
+
   const hasMessages = messages.length > 0;
 
   const messageStarters = messages.length === 0 && !attachExpanded && (
@@ -224,6 +247,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             keyExtractor={messageKey}
             showsVerticalScrollIndicator={false}
             renderItem={renderMessage}
+            extraData={listExtraData}
             ListEmptyComponent={EmptyArea}
             recycleItems={false}
             anchoredEndSpace={list.anchoredEndSpace}

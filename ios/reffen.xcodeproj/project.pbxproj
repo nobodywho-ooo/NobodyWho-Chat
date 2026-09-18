@@ -34,6 +34,7 @@
 		C11B0A4D2CA45674006654E2 /* RTNClipboard.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = RTNClipboard.h; path = reffen/RTNClipboard.h; sourceTree = "<group>"; };
 		C11B0A4D2CA45674006654E3 /* RTNClipboard.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = RTNClipboard.mm; path = reffen/RTNClipboard.mm; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		C11B0A4D2CA45674006654E4 /* reffen.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = reffen.entitlements; path = reffen/reffen.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -59,6 +60,7 @@
 				C11B0A4D2CA45674006654E2 /* RTNClipboard.h */,
 				C11B0A4D2CA45674006654E3 /* RTNClipboard.mm */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
+				C11B0A4D2CA45674006654E4 /* reffen.entitlements */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 			);
 			name = reffen;
@@ -364,6 +366,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "logo-nobodywho";
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = reffen/reffen.entitlements;
 				CURRENT_PROJECT_VERSION = 12;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = reffen/Info.plist;
@@ -397,6 +400,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = "logo-nobodywho";
 				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_ENTITLEMENTS = reffen/reffen.entitlements;
 				CURRENT_PROJECT_VERSION = 12;
 				INFOPLIST_FILE = reffen/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "NobodyWho Chat";
