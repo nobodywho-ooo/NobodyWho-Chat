@@ -79,7 +79,7 @@ test('forwards streaming and audio props to AssistantMessage', () => {
     <MessageListItem
       message={message}
       isStreaming
-      index={4}
+      messageId="row:4"
       canPlayAudio
       isAudioLoading
       isAudioPlaying
@@ -91,7 +91,7 @@ test('forwards streaming and audio props to AssistantMessage', () => {
   expect(mockAssistantMessage.mock.calls[0][0]).toMatchObject({
     message,
     isStreaming: true,
-    index: 4,
+    messageId: 'row:4',
     canPlayAudio: true,
     isAudioLoading: true,
     isAudioPlaying: true,
@@ -106,7 +106,7 @@ test('applies default streaming/audio props to AssistantMessage when omitted', (
 
   expect(mockAssistantMessage.mock.calls[0][0]).toMatchObject({
     isStreaming: false,
-    index: 0,
+    messageId: '',
     canPlayAudio: false,
     isAudioLoading: false,
     isAudioPlaying: false,

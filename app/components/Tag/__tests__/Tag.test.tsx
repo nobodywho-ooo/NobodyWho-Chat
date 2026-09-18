@@ -27,10 +27,22 @@ describe('Tag', () => {
     expect(tree).toMatchSnapshot();
   });
 
-  test('renders the High CPU usage label in yellow with a yellow background', () => {
+  test('renders a warning tag in yellow with a yellow background', () => {
     const tree = render(
-      <Tag label="High CPU usage" iosIconName="cpu" androidIconName="memory" />,
+      <Tag
+        label="Heavy processing"
+        variant="warning"
+        iosIconName="cpu"
+        androidIconName="memory"
+      />,
     ).toJSON();
+    expect(tree).toMatchSnapshot();
+  });
+
+  // Catalogue tags arrive as free-form remote text with no variant of their own,
+  // so the promoted one is still recognised by its label.
+  test('still promotes the catalogue highlight tag by its label', () => {
+    const tree = render(<Tag label="Great First Pick" />).toJSON();
     expect(tree).toMatchSnapshot();
   });
 });

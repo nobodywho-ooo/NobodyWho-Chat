@@ -1,5 +1,5 @@
 import 'i18n';
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useState } from 'react';
 import { Platform, StatusBar } from 'react-native';
 import { setAudioModeAsync } from 'expo-audio';
@@ -28,13 +28,15 @@ import { useTranslation } from 'react-i18next';
 const unWantedError =
   'Cannot create devtools websocket connections in embedded environments.';
 
+const TRACES_SAMPLE_RATE = __DEV__ ? 1.0 : 0.1;
+
 Sentry.init({
   dsn: 'https://5901cf2e433ebe444dd4dc9f8aebc790@o4511569171709952.ingest.de.sentry.io/4511569173217360',
-  sendDefaultPii: true,
-  tracesSampleRate: __DEV__ ? 1.0 : 1.0, // TODO: Reminder - Decrease later on for prod
-  profilesSampleRate: __DEV__ ? 0 : 1.0,
+  sendDefaultPii: false,
+  tracesSampleRate: TRACES_SAMPLE_RATE,
+  profilesSampleRate: __DEV__ ? 0 : 0.1,
   replaysOnErrorSampleRate: __DEV__ ? 0 : 1.0,
-  replaysSessionSampleRate: __DEV__ ? 0 : 1.0, // TODO: Reminder - Decrease later on for prod
+  replaysSessionSampleRate: 0,
   enableLogs: true,
   integrations: [
     ...(__DEV__
@@ -152,7 +154,14 @@ function AppLoader() {
   const [dbError, setDbError] = useState(false);
   const { t } = useTranslation();
 
+  const running = useRef(false);
+
   const init = useCallback(async () => {
+    if (running.current) {
+      return;
+    }
+    running.current = true;
+
     setDbError(false);
     setDbReady(false);
 
@@ -170,16 +179,25 @@ function AppLoader() {
     } catch (error) {
       log('App init failed', error, { capture: true });
       setDbError(true);
+    } finally {
+      running.current = false;
     }
   }, []);
 
   const reset = useCallback(async () => {
+    if (running.current) {
+      return;
+    }
+    running.current = true;
+
     setDbError(false);
     setDbReady(false);
     try {
       await resetDatabase();
     } catch (error) {
       log('App reset failed', error, { capture: true });
+    } finally {
+      running.current = false;
     }
     init();
   }, [init]);

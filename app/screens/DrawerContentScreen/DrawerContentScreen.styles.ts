@@ -1,6 +1,8 @@
 import { StyleSheet } from 'react-native';
 import { Spacings } from 'style';
 
+export const FLOATING_BUTTON_BOTTOM = Spacings.xxl;
+
 export default StyleSheet.create({
   container: {
     flex: 1,
@@ -32,7 +34,7 @@ export default StyleSheet.create({
   },
   floatingButton: {
     position: 'absolute',
-    bottom: Spacings.xxl,
+    bottom: FLOATING_BUTTON_BOTTOM,
     alignSelf: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },

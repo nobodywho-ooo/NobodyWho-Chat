@@ -142,13 +142,14 @@ const renderBothFeatures = async () => {
   );
 
   await act(async () => {
-    await result.current.service.createChat({ model: chatModel });
-    await result.current.service.createStt({ model: sttModel });
-    await result.current.service.createTts({ model: ttsModel });
-    await result.current.service.createVad({ model: vadModel });
+    await result.current.service.slots.chat.create({ model: chatModel });
+    await result.current.service.slots.stt.create({ model: sttModel });
+    await result.current.service.slots.tts.create({ model: ttsModel });
+    await result.current.service.slots.vad.create({ model: vadModel });
   });
 
-  const vad = result.current.service.vad.current as unknown as MockVad;
+  const vad = result.current.service.slots.vad.ref
+    .current as unknown as MockVad;
   const [voiceStream, dictationStream] = Object.keys(mockEmitters);
 
   // Queue one utterance: the detector hears speech start, then end.

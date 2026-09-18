@@ -114,6 +114,7 @@ exports[`renders correctly DrawerContentScreen 1`] = `
     </View>
   </View>
   <ConversationsList
+    bottomInset={0}
     onCloseDrawer={[Function]}
   />
   <LinearGradient

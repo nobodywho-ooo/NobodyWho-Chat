@@ -62,19 +62,30 @@ type AppStateListener = (next: AppState, prev: AppState) => void;
 let _state: AppState = {};
 const _listeners = new Set<AppStateListener>();
 
+const isAppStateShape = (value: unknown): value is AppState =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
 export async function hydrateAppState(): Promise<void> {
   const raw = await getStorage().getItem(APP_STATE);
+
   try {
-    _state = raw !== undefined ? JSON.parse(raw) : {};
+    const parsed = raw !== undefined ? JSON.parse(raw) : {};
+
+    _state = isAppStateShape(parsed) ? parsed : {};
+
+    // Fall back if fields added/renamed. Inside the try because it reads the
+    // parsed value: a malformed store must land on the empty default here, not
+    // throw out of hydration and strand the app on the error screen.
+    if (isAppStateShape(_state.assistantConfig)) {
+      _state.assistantConfig = {
+        ...DEFAULT_ASSISTANT_CONFIG,
+        ..._state.assistantConfig,
+      };
+    } else if (_state.assistantConfig !== undefined) {
+      _state.assistantConfig = DEFAULT_ASSISTANT_CONFIG;
+    }
   } catch {
     _state = {};
-  }
-  // Fall back if fields added/renamed
-  if (_state.assistantConfig) {
-    _state.assistantConfig = {
-      ...DEFAULT_ASSISTANT_CONFIG,
-      ..._state.assistantConfig,
-    };
   }
 }
 

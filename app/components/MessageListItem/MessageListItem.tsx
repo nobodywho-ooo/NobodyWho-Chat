@@ -8,18 +8,18 @@ import { SystemBlock } from './SystemBlock';
 interface MessageListItemProps {
   message: DisplayMessage;
   isStreaming?: boolean;
-  index?: number;
+  messageId?: string;
   canPlayAudio?: boolean;
   isAudioLoading?: boolean;
   isAudioPlaying?: boolean;
-  onPlayAudio?: (index: number, text: string) => void;
+  onPlayAudio?: (messageId: string, text: string) => void;
   onStopAudio?: () => void;
 }
 
 export const MessageListItem: React.FC<MessageListItemProps> = ({
   message,
   isStreaming = false,
-  index: messageIndex = 0,
+  messageId = '',
   canPlayAudio = false,
   isAudioLoading = false,
   isAudioPlaying = false,
@@ -35,7 +35,7 @@ export const MessageListItem: React.FC<MessageListItemProps> = ({
       <AssistantMessage
         message={message}
         isStreaming={isStreaming}
-        index={messageIndex}
+        messageId={messageId}
         canPlayAudio={canPlayAudio}
         isAudioLoading={isAudioLoading}
         isAudioPlaying={isAudioPlaying}

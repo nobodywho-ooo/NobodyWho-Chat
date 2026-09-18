@@ -11,10 +11,18 @@ import styles from './ConversationsList.styles';
 
 interface ConversationsListProps {
   onCloseDrawer: () => void;
+  /**
+   * Room to leave below the last conversation, so it can be scrolled clear of
+   * whatever floats over the bottom of the drawer. Without it the last items
+   * come to rest underneath the New chat button, which sits on top of this list
+   * and takes their taps.
+   */
+  bottomInset?: number;
 }
 
 export const ConversationsList: FC<ConversationsListProps> = ({
   onCloseDrawer,
+  bottomInset = 0,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
@@ -67,7 +75,12 @@ export const ConversationsList: FC<ConversationsListProps> = ({
       </Text>
       <FlatList
         style={styles.listContainer}
-        contentContainerStyle={styles.contentContainerStyle}
+        contentContainerStyle={[
+          styles.contentContainerStyle,
+          { paddingBottom: bottomInset },
+        ]}
+        // Keeps the scroll bar itself out from under the button too (iOS).
+        scrollIndicatorInsets={{ bottom: bottomInset }}
         data={conversations}
         keyExtractor={conversation => conversation.id.toString()}
         renderItem={renderItem}

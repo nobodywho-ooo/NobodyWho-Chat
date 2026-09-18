@@ -24,18 +24,18 @@ const mockDisposeStt = jest.fn();
 const mockDisposeVad = jest.fn();
 const mockDisposeChat = jest.fn();
 const mockChat = { current: { stopGeneration: mockStopGeneration } };
+const mockSlots = {
+  chat: { ref: mockChat, dispose: mockDisposeChat },
+  tts: { ref: { current: undefined }, dispose: mockDisposeTts },
+  stt: { ref: { current: undefined }, dispose: mockDisposeStt },
+  vad: { ref: { current: undefined }, dispose: mockDisposeVad },
+};
 // Only the native-backed engine handles are stubbed; the selection helpers
 // (which slot a pipeline takes, what a delete has to release) are real logic
 // this screen is the main caller of, so they stay unmocked.
 jest.mock('services', () => ({
   ...jest.requireActual('services'),
-  useAiService: () => ({
-    chat: mockChat,
-    disposeChat: mockDisposeChat,
-    disposeTts: mockDisposeTts,
-    disposeStt: mockDisposeStt,
-    disposeVad: mockDisposeVad,
-  }),
+  useAiService: () => ({ slots: mockSlots }),
 }));
 
 // Deleting a model also clears any message attachments that belonged to its

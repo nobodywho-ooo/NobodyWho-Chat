@@ -154,17 +154,8 @@ export const ChatStackNavigator = () => {
   const { colors } = useStyled();
   const { models, loading: modelsLoading } = useModels();
   const { modelIdInUse } = useAppState();
-  const {
-    chat,
-    createChat,
-    disposeChat,
-    createTts,
-    disposeTts,
-    createStt,
-    disposeStt,
-    createVad,
-    disposeVad,
-  } = useAiService();
+  const { slots } = useAiService();
+  const chat = slots.chat.ref;
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
   const [chatHistory, setChatHistory] =
@@ -201,7 +192,7 @@ export const ChatStackNavigator = () => {
       );
     }
 
-    const created = await createChat({
+    const created = await slots.chat.create({
       model,
       systemPrompt: assistantConfig.systemPrompt.trim() || undefined,
       sampler: SamplerPresets.temperature(assistantConfig.temperature),
@@ -211,7 +202,7 @@ export const ChatStackNavigator = () => {
     });
 
     return created && chat.current !== undefined;
-  }, [createChat, chat]);
+  }, [slots, chat]);
 
   const resetAndLoadChatHistory = useCallback(async () => {
     if (chat.current === undefined) {
@@ -372,14 +363,13 @@ export const ChatStackNavigator = () => {
     () => [
       {
         slot: ModelSlot.tts,
-        dispose: disposeTts,
         create: (model: Model) => {
           // Voice/language were resolved and stored when this model was
           // selected (see resolveTtsPrefs at the selection sites), each in the
           // vocabulary its engine accepts. Read them straight from the config —
           // undefined lets the engine keep its own default for that option.
           const { assistantConfig = DEFAULT_ASSISTANT_CONFIG } = getAppState();
-          return createTts({
+          return slots.tts.create({
             model,
             voice: assistantConfig.ttsVoice,
             language: assistantConfig.ttsLanguage,
@@ -394,12 +384,14 @@ export const ChatStackNavigator = () => {
       },
       {
         slot: ModelSlot.stt,
-        dispose: disposeStt,
         create: (model: Model) => {
           // Undefined is the automatic setting: the engine then detects the
           // spoken language on every transcription, which a fixed code skips.
           const { assistantConfig = DEFAULT_ASSISTANT_CONFIG } = getAppState();
-          return createStt({ model, language: assistantConfig.sttLanguage });
+          return slots.stt.create({
+            model,
+            language: assistantConfig.sttLanguage,
+          });
         },
         // Like the TTS options above, the language is fixed at load time, so
         // changing it has to reload the engine on an unchanged model.
@@ -408,11 +400,10 @@ export const ChatStackNavigator = () => {
       },
       {
         slot: ModelSlot.vad,
-        dispose: disposeVad,
-        create: (model: Model) => createVad({ model }),
+        create: (model: Model) => slots.vad.create({ model }),
       },
     ],
-    [createTts, createStt, createVad, disposeTts, disposeStt, disposeVad],
+    [slots],
   );
 
   type AuxSlot = (typeof auxSlots)[number];
@@ -477,7 +468,7 @@ export const ChatStackNavigator = () => {
           return;
         }
 
-        entry.dispose();
+        slots[entry.slot].dispose();
 
         if (selected !== undefined) {
           loadAuxSlot(entry);
@@ -494,7 +485,7 @@ export const ChatStackNavigator = () => {
         nextConfig.contextSize !== prevConfig.contextSize;
 
       if (next.modelIdInUse !== prev.modelIdInUse || chatConfigChanged) {
-        disposeChat();
+        slots.chat.dispose();
         if (next.modelIdInUse !== undefined) {
           startSession();
         }
@@ -509,7 +500,7 @@ export const ChatStackNavigator = () => {
         refreshChatHistory();
       }
     });
-  }, [disposeChat, startSession, refreshChatHistory, auxSlots, loadAuxSlot]);
+  }, [slots, startSession, refreshChatHistory, auxSlots, loadAuxSlot]);
 
   // Which slots this component released on the way to the background, so the
   // resume reloads exactly those. A set keyed by slot rather than one boolean
@@ -527,7 +518,7 @@ export const ChatStackNavigator = () => {
           }
 
           if (getAppState().modelIdInUse !== undefined) {
-            disposeChat();
+            slots.chat.dispose();
             unloadedForBackground.current.add(ModelSlot.chat);
           }
 
@@ -535,7 +526,7 @@ export const ChatStackNavigator = () => {
             const { appStateKey } = modelSlotSpec(entry.slot);
 
             if (getAppState()[appStateKey] !== undefined) {
-              entry.dispose();
+              slots[entry.slot].dispose();
               unloadedForBackground.current.add(entry.slot);
             }
           });
@@ -557,7 +548,7 @@ export const ChatStackNavigator = () => {
       },
     );
     return () => subscription.remove();
-  }, [disposeChat, startSession, auxSlots, loadAuxSlot]);
+  }, [slots, startSession, auxSlots, loadAuxSlot]);
 
   const inUseModelName = models.find(m => m.id === modelIdInUse)?.name;
   const loadingMessage = inUseModelName

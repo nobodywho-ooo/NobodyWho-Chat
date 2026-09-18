@@ -38,7 +38,8 @@ export const useSttTranscription = ({
   onPermissionDenied,
 }: SttTranscriptionOptions): SttTranscription => {
   const busyRef = useRef(false);
-  const { sttState, borrowStt } = useAiService();
+  const { slots, sttState } = useAiService();
+  const { borrow: borrowStt } = slots.stt;
 
   // cancelRecording is defined below but has to be reachable from the preempt callback
   const cancelRecordingRef = useRef<() => void>(() => undefined);

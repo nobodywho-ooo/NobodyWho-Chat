@@ -42,6 +42,19 @@ export async function getDocumentPathsByModelId(
   );
 }
 
+export async function getDocumentPathsByConversationId(
+  conversationId: number,
+): Promise<string[]> {
+  const db = getDatabase();
+  const result = await db.execute(
+    'SELECT documents_path FROM messages WHERE conversation_id = ?',
+    [conversationId],
+  );
+  return result.rows.flatMap(row =>
+    safeJsonParse<string[]>(row.documents_path, []),
+  );
+}
+
 // Resolves to undefined when the conversation is gone — the caller's turn was
 // filed against a conversation that has since been deleted (by Delete chat, or
 // by the ON DELETE CASCADE from deleting its model). The parent check is an

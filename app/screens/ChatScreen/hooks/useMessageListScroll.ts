@@ -59,6 +59,7 @@ export const useMessageListScroll = (messages: DisplayMessage[]) => {
 
   const scrollingToBottomRef = useRef(false);
   const missedScrollToBottomRef = useRef(false);
+  const replayFrameRef = useRef<number | undefined>(undefined);
 
   const scrollToBottomNow = useCallback(function runScrollToBottom(
     animated: boolean,
@@ -78,9 +79,22 @@ export const useMessageListScroll = (messages: DisplayMessage[]) => {
 
     if (missedScrollToBottomRef.current) {
       missedScrollToBottomRef.current = false;
-      requestAnimationFrame(() => runScrollToBottom(animated));
+      replayFrameRef.current = requestAnimationFrame(() => {
+        replayFrameRef.current = undefined;
+        runScrollToBottom(animated);
+      });
     }
   }, []);
+
+  useEffect(
+    () => () => {
+      if (replayFrameRef.current !== undefined) {
+        cancelAnimationFrame(replayFrameRef.current);
+        replayFrameRef.current = undefined;
+      }
+    },
+    [],
+  );
 
   const streamedContent = messages[messages.length - 1]?.content;
   useEffect(() => {

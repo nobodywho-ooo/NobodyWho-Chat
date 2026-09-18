@@ -94,16 +94,17 @@ export const useVoiceConversation = ({
 }: UseVoiceConversationOptions): VoiceConversation => {
   const { t } = useTranslation();
   const {
-    chat,
+    slots,
     chatState,
     chatThinkOpen,
     sttState,
     ttsState,
     vadState,
     ttsArchitecture,
-    borrowStt,
-    borrowTts,
   } = useAiService();
+  const chat = slots.chat.ref;
+  const { borrow: borrowStt } = slots.stt;
+  const { borrow: borrowTts } = slots.tts;
 
   // stopAll is defined below but has to be reachable from the preempt callback.
   // Kept in a ref so the speech service never has to be re-armed.

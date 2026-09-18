@@ -173,7 +173,9 @@
     },
     "modelCard": {
       "languageCount_one": "{{count}} language",
-      "languageCount_other": "{{count}} languages"
+      "languageCount_other": "{{count}} languages",
+      "thinking": "Thinking",
+      "heavyProcessing": "Heavy processing"
     }
   },
   "screens": {

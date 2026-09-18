@@ -26,7 +26,11 @@ export const findChunk = (
     const size = view.getUint32(p + 4, true);
 
     if (tagAt(bytes, p) === id) {
-      return { offset: p + 8, size };
+      // Reported against what is actually here, not what the header claims. A
+      // truncated file (a synthesis cut short, a restore that lost bytes)
+      // declares its original length, and a caller that trusts it reads past
+      // the end
+      return { offset: p + 8, size: Math.min(size, bytes.length - (p + 8)) };
     }
 
     // Chunks are word-aligned: an odd size is followed by a pad byte.

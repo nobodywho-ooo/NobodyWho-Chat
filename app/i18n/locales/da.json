@@ -173,7 +173,9 @@
     },
     "modelCard": {
       "languageCount_one": "{{count}} sprog",
-      "languageCount_other": "{{count}} sprog"
+      "languageCount_other": "{{count}} sprog",
+      "thinking": "Ræsonnement",
+      "heavyProcessing": "Krævende"
     }
   },
   "screens": {

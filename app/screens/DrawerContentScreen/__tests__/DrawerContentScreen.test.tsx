@@ -8,6 +8,7 @@ import { buildModel } from 'jest/factories/model';
 import { AiServiceProvider } from 'services';
 
 import { DrawerContentScreen } from '../DrawerContentScreen';
+import { FLOATING_BUTTON_BOTTOM } from '../DrawerContentScreen.styles';
 
 // DrawerContentScreen navigates via the navigation prop the drawer passes it
 // (not useNavigation — that resolves to the parent navigator in drawer content).
@@ -62,6 +63,47 @@ test('pressing new chat clears the conversation in use and closes the drawer', (
     conversationIdInUse: undefined,
   });
   expect(onCloseDrawer).toHaveBeenCalled();
+});
+
+// The button floats over the conversations list rather than sitting below it,
+// so without this room the last conversations come to rest underneath it and
+// the button takes their taps.
+test('the conversations list leaves room to scroll clear of the new chat button', () => {
+  mockUseModels.mockReturnValue({ models: [buildModel(1)] });
+  const screen = render(
+    <AiServiceProvider>
+      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
+    </AiServiceProvider>,
+  );
+
+  const list = () => screen.UNSAFE_getByType('ConversationsList' as never);
+  const buttonHeight = 48;
+
+  fireEvent(
+    screen.UNSAFE_getByProps({ title: 'screens.drawerContent.newChat' }),
+    'layout',
+    { nativeEvent: { layout: { height: buttonHeight } } },
+  );
+
+  // Asserted against what the button actually occupies rather than against the
+  // formula, so the room stays sufficient however the spacing is retuned.
+  expect(list().props.bottomInset).toBeGreaterThan(
+    FLOATING_BUTTON_BOTTOM + buttonHeight,
+  );
+});
+
+test('the conversations list reclaims the room when there is no new chat button', () => {
+  mockUseModels.mockReturnValue({ models: [] });
+
+  const screen = render(
+    <AiServiceProvider>
+      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
+    </AiServiceProvider>,
+  );
+
+  expect(
+    screen.UNSAFE_getByType('ConversationsList' as never).props.bottomInset,
+  ).toBe(0);
 });
 
 test('hides the new chat button when no model is downloaded', () => {

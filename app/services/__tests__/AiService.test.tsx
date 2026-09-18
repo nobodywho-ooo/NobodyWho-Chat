@@ -21,7 +21,7 @@ import {
   VAD_MIN_SPEECH_MS,
   VAD_SAMPLE_RATE,
   VAD_THRESHOLD,
-} from '../AiService';
+} from '../ai';
 
 // TTS goes through nobodywho's TextToSpeech.load (mocked in jest/mock/node-modules);
 // these tests only care that AiService drives it correctly (source path,
@@ -132,7 +132,7 @@ test('createChat loads the model and exposes the chat', async () => {
 
   let created: boolean | undefined;
   await act(async () => {
-    created = await result.current.createChat({ model });
+    created = await result.current.slots.chat.create({ model });
   });
 
   // The slot reports that it is serving the requested model.
@@ -144,7 +144,7 @@ test('createChat loads the model and exposes the chat', async () => {
     }),
   );
   expect(result.current.chatState).toBe(AiModelState.Ready);
-  expect(result.current.chat.current).toBe(chat);
+  expect(result.current.slots.chat.ref.current).toBe(chat);
   // A plain text model reports the text-only pipeline.
   expect(result.current.chatPipeline).toBe(ModelPipeline.textGeneration);
 });
@@ -174,7 +174,7 @@ test('createChat wires the projection model and reports the chat pipeline', asyn
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
-    await result.current.createChat({ model: visionModel });
+    await result.current.slots.chat.create({ model: visionModel });
   });
 
   expect(mockFromPath).toHaveBeenCalledWith(
@@ -210,7 +210,7 @@ describe('context sizing against the model ceiling', () => {
     const { result } = renderHook(() => useAiService(), { wrapper });
 
     await act(async () => {
-      await result.current.createChat({ model, contextSize: 8000 });
+      await result.current.slots.chat.create({ model, contextSize: 8000 });
     });
 
     expect(mockChatConstruct).toHaveBeenCalledWith(
@@ -224,7 +224,7 @@ describe('context sizing against the model ceiling', () => {
     const { result } = renderHook(() => useAiService(), { wrapper });
 
     await act(async () => {
-      await result.current.createChat({ model, contextSize: 8000 });
+      await result.current.slots.chat.create({ model, contextSize: 8000 });
     });
 
     expect(mockChatConstruct).toHaveBeenCalledWith(
@@ -238,7 +238,7 @@ describe('context sizing against the model ceiling', () => {
     const { result } = renderHook(() => useAiService(), { wrapper });
 
     await act(async () => {
-      await result.current.createChat({ model });
+      await result.current.slots.chat.create({ model });
     });
 
     expect(mockChatConstruct).toHaveBeenCalledWith(
@@ -252,7 +252,7 @@ describe('context sizing against the model ceiling', () => {
     const { result } = renderHook(() => useAiService(), { wrapper });
 
     await act(async () => {
-      await result.current.createChat({ model });
+      await result.current.slots.chat.create({ model });
     });
 
     expect(mockChatConstruct).toHaveBeenCalledWith(
@@ -280,11 +280,11 @@ test('disposeChat resets the chat pipeline to text-only', async () => {
   });
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
-    await result.current.createChat({ model: visionModel });
+    await result.current.slots.chat.create({ model: visionModel });
   });
   expect(result.current.chatPipeline).toBe(ModelPipeline.imageTextToText);
 
-  act(() => result.current.disposeChat());
+  act(() => result.current.slots.chat.dispose());
 
   expect(result.current.chatPipeline).toBe(ModelPipeline.textGeneration);
 });
@@ -294,13 +294,13 @@ test('createChat sets the error state and rethrows on failure', async () => {
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
-    await expect(result.current.createChat({ model })).rejects.toThrow(
+    await expect(result.current.slots.chat.create({ model })).rejects.toThrow(
       'load boom',
     );
   });
 
   expect(result.current.chatState).toBe(AiModelState.Error);
-  expect(result.current.chat.current).toBeUndefined();
+  expect(result.current.slots.chat.ref.current).toBeUndefined();
 });
 
 test('createChat fails loudly when the model file is missing on disk', async () => {
@@ -316,7 +316,7 @@ test('createChat fails loudly when the model file is missing on disk', async () 
 
   try {
     await act(async () => {
-      await expect(result.current.createChat({ model })).rejects.toThrow(
+      await expect(result.current.slots.chat.create({ model })).rejects.toThrow(
         /chat-model file missing/,
       );
     });
@@ -334,13 +334,13 @@ test('disposeChat destroys the current chat instance', async () => {
   mockFromPath.mockResolvedValue(chat);
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
-    await result.current.createChat({ model });
+    await result.current.slots.chat.create({ model });
   });
 
   // The ref/state clear synchronously; the native destroy is deferred onto the
   // load chain, so flush microtasks before asserting it ran.
-  act(() => result.current.disposeChat());
-  expect(result.current.chat.current).toBeUndefined();
+  act(() => result.current.slots.chat.dispose());
+  expect(result.current.slots.chat.ref.current).toBeUndefined();
   expect(result.current.chatState).toBe(AiModelState.NotLoaded);
 
   await act(async () => {
@@ -358,17 +358,17 @@ test('disposeChat stops generation before destroying the chat', async () => {
   mockFromPath.mockResolvedValue(chat);
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
-    await result.current.createChat({ model });
+    await result.current.slots.chat.create({ model });
   });
 
-  act(() => result.current.disposeChat());
+  act(() => result.current.slots.chat.dispose());
   await act(async () => {
     await flushMicrotasks();
   });
 
   // Order matters: an in-flight stream must be stopped before its context is freed.
   expect(order).toEqual(['stop', 'destroy']);
-  expect(result.current.chat.current).toBeUndefined();
+  expect(result.current.slots.chat.ref.current).toBeUndefined();
 });
 
 test('disposeChat clears the chat even when destroy throws, so a reload works', async () => {
@@ -381,12 +381,12 @@ test('disposeChat clears the chat even when destroy throws, so a reload works', 
   mockFromPath.mockResolvedValueOnce(chat);
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
-    await result.current.createChat({ model });
+    await result.current.slots.chat.create({ model });
   });
 
   // The ref is cleared synchronously despite the (deferred) destroy throwing.
-  act(() => result.current.disposeChat());
-  expect(result.current.chat.current).toBeUndefined();
+  act(() => result.current.slots.chat.dispose());
+  expect(result.current.slots.chat.ref.current).toBeUndefined();
   expect(result.current.chatState).toBe(AiModelState.NotLoaded);
 
   await act(async () => {
@@ -399,9 +399,9 @@ test('disposeChat clears the chat even when destroy throws, so a reload works', 
   const next = { destroy: jest.fn() };
   mockFromPath.mockResolvedValueOnce(next);
   await act(async () => {
-    await result.current.createChat({ model });
+    await result.current.slots.chat.create({ model });
   });
-  expect(result.current.chat.current).toBe(next);
+  expect(result.current.slots.chat.ref.current).toBe(next);
   expect(result.current.chatState).toBe(AiModelState.Ready);
 });
 
@@ -416,9 +416,9 @@ test('a chat resolving after disposeChat is discarded and destroyed', async () =
 
   let createPromise: Promise<boolean> | undefined;
   act(() => {
-    createPromise = result.current.createChat({ model });
+    createPromise = result.current.slots.chat.create({ model });
   });
-  act(() => result.current.disposeChat());
+  act(() => result.current.slots.chat.dispose());
 
   const staleChat = { destroy: jest.fn() };
   let created: boolean | undefined;
@@ -428,7 +428,7 @@ test('a chat resolving after disposeChat is discarded and destroyed', async () =
   });
 
   expect(staleChat.destroy).toHaveBeenCalledTimes(1);
-  expect(result.current.chat.current).toBeUndefined();
+  expect(result.current.slots.chat.ref.current).toBeUndefined();
   expect(result.current.chatState).toBe(AiModelState.NotLoaded);
   // Resolving without a chat is how the caller learns its load was superseded:
   // reading the empty ref as a failed load was an error screen on every
@@ -460,7 +460,7 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
 
   // Start loading A; its fromPath is now in flight.
   act(() => {
-    result.current.createChat({ model: modelA });
+    result.current.slots.chat.create({ model: modelA });
   });
   expect(mockFromPath).toHaveBeenCalledTimes(1);
   expect(mockFromPath).toHaveBeenLastCalledWith(
@@ -469,9 +469,9 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
 
   // Switch to B (dispose + create) while A is still loading.
   let loadB: Promise<boolean> | undefined;
-  act(() => result.current.disposeChat());
+  act(() => result.current.slots.chat.dispose());
   act(() => {
-    loadB = result.current.createChat({ model: modelB });
+    loadB = result.current.slots.chat.create({ model: modelB });
   });
 
   // The bug: B's load would call fromPath immediately, running two native
@@ -508,7 +508,7 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
     resolvers[1](chatB);
     await loadB;
   });
-  expect(result.current.chat.current).toBe(chatB);
+  expect(result.current.slots.chat.ref.current).toBe(chatB);
   expect(result.current.chatState).toBe(AiModelState.Ready);
 });
 
@@ -522,15 +522,15 @@ test('a reload waits for the previous chat teardown to settle before allocating'
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
-    await result.current.createChat({ model });
+    await result.current.slots.chat.create({ model });
   });
-  expect(result.current.chat.current).toBe(chatA);
+  expect(result.current.slots.chat.ref.current).toBe(chatA);
 
   // Dispose enqueues an async teardown, then a reload starts immediately.
-  act(() => result.current.disposeChat());
+  act(() => result.current.slots.chat.dispose());
   let reload: Promise<boolean> | undefined;
   act(() => {
-    reload = result.current.createChat({ model });
+    reload = result.current.slots.chat.create({ model });
   });
 
   // Teardown destroys the old chat, but the new context must not allocate yet.
@@ -546,8 +546,95 @@ test('a reload waits for the previous chat teardown to settle before allocating'
     await reload;
   });
   expect(mockFromPath).toHaveBeenCalledTimes(2);
-  expect(result.current.chat.current).toBe(chatB);
+  expect(result.current.slots.chat.ref.current).toBe(chatB);
   expect(result.current.chatState).toBe(AiModelState.Ready);
+});
+
+test('a reload still settles when another dispose is queued behind it', async () => {
+  // Same crash as above, reached the other way round: only the last teardown of
+  // a burst pays the settle, and "last" used to be decided by a count that a
+  // dispose enqueued *after* the reload was published still incremented. The
+  // chat teardown then handed the chain straight to the reload with no settle —
+  // which is a model switch followed by backgrounding the app, or by a change
+  // to a voice model, within the teardown window.
+  const chatA = { stopGeneration: jest.fn(), destroy: jest.fn() };
+  const chatB = { destroy: jest.fn() };
+  const tts = { destroy: jest.fn() };
+  mockFromPath.mockResolvedValueOnce(chatA).mockResolvedValueOnce(chatB);
+  mockTtsLoad.mockResolvedValue(tts);
+  const { result } = renderHook(() => useAiService(), { wrapper });
+
+  await act(async () => {
+    await result.current.slots.chat.create({ model });
+    await result.current.slots.tts.create({ model: ttsModel });
+  });
+
+  act(() => result.current.slots.chat.dispose());
+  let reload: Promise<boolean> | undefined;
+  act(() => {
+    reload = result.current.slots.chat.create({ model });
+    // Lands after the reload was published, so it queues *behind* it — but it
+    // is counted as pending the moment it is enqueued.
+    result.current.slots.tts.dispose();
+  });
+
+  // The chat teardown has run; the reload must still be waiting on the settle.
+  await act(async () => {
+    await flushMicrotasks();
+  });
+  expect(chatA.destroy).toHaveBeenCalledTimes(1);
+  expect(mockFromPath).toHaveBeenCalledTimes(1);
+
+  await act(async () => {
+    await waitForTeardownSettle();
+    await reload;
+  });
+  expect(mockFromPath).toHaveBeenCalledTimes(2);
+  expect(result.current.slots.chat.ref.current).toBe(chatB);
+});
+
+// Everything the provider hands down sits behind a memo keyed on the slot
+// callbacks, so a slot that re-made them each render would re-run every consumer
+// effect depending on one — the chat session lifecycle in ChatStackNavigator,
+// among others — on every state change. The slot holds its callbacks stable by
+// depending on the spec's individual members rather than the spec object, which
+// is why the engine specs are module constants (see engines.ts): an `open`
+// rebuilt per render would break this even though a spread of a constant spec
+// would not.
+test('the exposed slots keep their identity across re-renders', async () => {
+  mockFromPath.mockResolvedValue({
+    stopGeneration: jest.fn(),
+    destroy: jest.fn(),
+  });
+  const { result, rerender } = renderHook(() => useAiService(), { wrapper });
+
+  const before = {
+    slots: result.current.slots,
+    chat: result.current.slots.chat,
+    createChat: result.current.slots.chat.create,
+    borrowStt: result.current.slots.stt.borrow,
+    disposeAll: result.current.disposeAll,
+  };
+
+  const expectUnchanged = () => {
+    expect(result.current.slots).toBe(before.slots);
+    expect(result.current.slots.chat).toBe(before.chat);
+    expect(result.current.slots.chat.create).toBe(before.createChat);
+    expect(result.current.slots.stt.borrow).toBe(before.borrowStt);
+    expect(result.current.disposeAll).toBe(before.disposeAll);
+  };
+
+  // A plain re-render changes nothing.
+  rerender(undefined);
+  expectUnchanged();
+
+  // Neither does a load, which re-renders the provider through its state.
+  await act(async () => {
+    await result.current.slots.chat.create({ model });
+  });
+
+  expect(result.current.chatState).toBe(AiModelState.Ready);
+  expectUnchanged();
 });
 
 test('createTts loads the engine from the model directory', async () => {
@@ -556,7 +643,7 @@ test('createTts loads the engine from the model directory', async () => {
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
-    await result.current.createTts({ model: ttsModel });
+    await result.current.slots.tts.create({ model: ttsModel });
   });
 
   // The loader gets the model's directory (not a single file) plus the
@@ -567,7 +654,7 @@ test('createTts loads the engine from the model directory', async () => {
     architecture: 'supertonic',
   });
   expect(result.current.ttsState).toBe(AiModelState.Ready);
-  expect(result.current.tts.current).toBe(tts);
+  expect(result.current.slots.tts.ref.current).toBe(tts);
   // The loaded architecture is published so playback can branch on it (Kokoro
   // needs chunking, Supertonic does not).
   expect(result.current.ttsArchitecture).toBe('supertonic');
@@ -579,7 +666,7 @@ test('createTts refuses a non-TTS model', async () => {
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
-    await expect(result.current.createTts({ model })).rejects.toThrow(
+    await expect(result.current.slots.tts.create({ model })).rejects.toThrow(
       /is not a valid tts model/,
     );
   });
@@ -596,7 +683,7 @@ test('createTts fails loudly when a TTS file is missing on disk', async () => {
   try {
     await act(async () => {
       await expect(
-        result.current.createTts({ model: ttsModel }),
+        result.current.slots.tts.create({ model: ttsModel }),
       ).rejects.toThrow(/file .* missing/);
     });
 
@@ -619,10 +706,10 @@ test('createTts serializes behind an in-flight chat load on the shared chain', a
 
   let ttsLoad: Promise<boolean> | undefined;
   act(() => {
-    result.current.createChat({ model });
+    result.current.slots.chat.create({ model });
   });
   act(() => {
-    ttsLoad = result.current.createTts({ model: ttsModel });
+    ttsLoad = result.current.slots.tts.create({ model: ttsModel });
   });
 
   // The invariant: no second native load while the first is in flight.
@@ -647,11 +734,11 @@ test('disposeTts destroys the engine via the teardown chain', async () => {
   mockTtsLoad.mockResolvedValue(tts);
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
-    await result.current.createTts({ model: ttsModel });
+    await result.current.slots.tts.create({ model: ttsModel });
   });
 
-  act(() => result.current.disposeTts());
-  expect(result.current.tts.current).toBeUndefined();
+  act(() => result.current.slots.tts.dispose());
+  expect(result.current.slots.tts.ref.current).toBeUndefined();
   expect(result.current.ttsState).toBe(AiModelState.NotLoaded);
   // The architecture is cleared so a stale value can't survive a model switch.
   expect(result.current.ttsArchitecture).toBeUndefined();
@@ -667,7 +754,7 @@ test('createStt loads the engine from the model directory', async () => {
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
-    await result.current.createStt({ model: sttModel });
+    await result.current.slots.stt.create({ model: sttModel });
   });
 
   // Whisper is loaded from the model's own directory (folder-based source, like
@@ -680,7 +767,7 @@ test('createStt loads the engine from the model directory', async () => {
     quantization: 'int8',
   });
   expect(result.current.sttState).toBe(AiModelState.Ready);
-  expect(result.current.stt.current).toBeDefined();
+  expect(result.current.slots.stt.ref.current).toBeDefined();
   // The chat slot is untouched.
   expect(result.current.chatState).toBe(AiModelState.NotLoaded);
 });
@@ -689,7 +776,7 @@ test('createStt refuses a non-STT model', async () => {
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
-    await expect(result.current.createStt({ model })).rejects.toThrow(
+    await expect(result.current.slots.stt.create({ model })).rejects.toThrow(
       /is not a valid stt model/,
     );
   });
@@ -705,7 +792,7 @@ test('createStt fails loudly when an STT file is missing on disk', async () => {
   try {
     await act(async () => {
       await expect(
-        result.current.createStt({ model: sttModel }),
+        result.current.slots.stt.create({ model: sttModel }),
       ).rejects.toThrow(/file .* missing/);
     });
 
@@ -719,12 +806,12 @@ test('createStt fails loudly when an STT file is missing on disk', async () => {
 test('disposeStt destroys the engine via the teardown chain', async () => {
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
-    await result.current.createStt({ model: sttModel });
+    await result.current.slots.stt.create({ model: sttModel });
   });
-  const instance = result.current.stt.current;
+  const instance = result.current.slots.stt.ref.current;
 
-  act(() => result.current.disposeStt());
-  expect(result.current.stt.current).toBeUndefined();
+  act(() => result.current.slots.stt.dispose());
+  expect(result.current.slots.stt.ref.current).toBeUndefined();
   expect(result.current.sttState).toBe(AiModelState.NotLoaded);
 
   // The native destroy is deferred onto the load chain.
@@ -741,13 +828,13 @@ test('dispose tears down both engines', async () => {
   mockTtsLoad.mockResolvedValue(tts);
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
-    await result.current.createChat({ model });
-    await result.current.createTts({ model: ttsModel });
+    await result.current.slots.chat.create({ model });
+    await result.current.slots.tts.create({ model: ttsModel });
   });
 
-  act(() => result.current.dispose());
-  expect(result.current.chat.current).toBeUndefined();
-  expect(result.current.tts.current).toBeUndefined();
+  act(() => result.current.disposeAll());
+  expect(result.current.slots.chat.ref.current).toBeUndefined();
+  expect(result.current.slots.tts.ref.current).toBeUndefined();
 
   // Both teardowns are chained (chat first, then tts after its settle).
   await act(async () => {
@@ -765,7 +852,7 @@ test('createVad loads the detector from the model directory at its fixed rate', 
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
-    await result.current.createVad({ model: vadModel });
+    await result.current.slots.vad.create({ model: vadModel });
   });
 
   // Folder-based source like TTS/STT; the rate is fixed at load time, so every
@@ -780,7 +867,7 @@ test('createVad loads the detector from the model directory at its fixed rate', 
     minSilenceDurationMs: VAD_MIN_SILENCE_MS,
   });
   expect(result.current.vadState).toBe(AiModelState.Ready);
-  expect(result.current.vad.current).toBeDefined();
+  expect(result.current.slots.vad.ref.current).toBeDefined();
   // The chat slot is untouched.
   expect(result.current.chatState).toBe(AiModelState.NotLoaded);
 });
@@ -789,7 +876,7 @@ test('createVad refuses a non-VAD model', async () => {
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
-    await expect(result.current.createVad({ model })).rejects.toThrow(
+    await expect(result.current.slots.vad.create({ model })).rejects.toThrow(
       /is not a valid vad model/,
     );
   });
@@ -805,7 +892,7 @@ test('createVad fails loudly when the VAD file is missing on disk', async () => 
   try {
     await act(async () => {
       await expect(
-        result.current.createVad({ model: vadModel }),
+        result.current.slots.vad.create({ model: vadModel }),
       ).rejects.toThrow(/file .* missing/);
     });
 
@@ -819,12 +906,12 @@ test('createVad fails loudly when the VAD file is missing on disk', async () => 
 test('disposeVad destroys the detector via the teardown chain', async () => {
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
-    await result.current.createVad({ model: vadModel });
+    await result.current.slots.vad.create({ model: vadModel });
   });
-  const instance = result.current.vad.current;
+  const instance = result.current.slots.vad.ref.current;
 
-  act(() => result.current.disposeVad());
-  expect(result.current.vad.current).toBeUndefined();
+  act(() => result.current.slots.vad.dispose());
+  expect(result.current.slots.vad.ref.current).toBeUndefined();
   expect(result.current.vadState).toBe(AiModelState.NotLoaded);
 
   // The native destroy is deferred onto the load chain.
@@ -855,8 +942,8 @@ test('a load for a different model replaces the one already in the slot', async 
   // see an empty slot and the same generation — the shape a background/foreground
   // reload takes when it collides with a model switch.
   await act(async () => {
-    const a = result.current.createTts({ model: ttsModel });
-    const b = result.current.createTts({ model: otherTtsModel });
+    const a = result.current.slots.tts.create({ model: ttsModel });
+    const b = result.current.slots.tts.create({ model: otherTtsModel });
     await Promise.all([a, b]);
   });
 
@@ -866,7 +953,7 @@ test('a load for a different model replaces the one already in the slot', async 
   expect(mockTtsLoad).toHaveBeenCalledTimes(2);
   expect(mockTtsLoad.mock.calls[1][0].source).toContain('10');
   expect(first.destroy).toHaveBeenCalledTimes(1);
-  expect(result.current.tts.current).toBe(second);
+  expect(result.current.slots.tts.ref.current).toBe(second);
   expect(result.current.ttsState).toBe(AiModelState.Ready);
 });
 
@@ -878,7 +965,7 @@ test('a dispose during a replacement teardown leaves the slot unloaded, not load
   const { result } = renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
-    await result.current.createTts({ model: ttsModel });
+    await result.current.slots.tts.create({ model: ttsModel });
   });
   expect(result.current.ttsState).toBe(AiModelState.Ready);
 
@@ -886,11 +973,11 @@ test('a dispose during a replacement teardown leaves the slot unloaded, not load
   // settle delay — which is a wide enough window for a dispose to land in the
   // middle of it (the voice model deselected, or the app backgrounded).
   await act(async () => {
-    const swapping = result.current.createTts({ model: otherTtsModel });
+    const swapping = result.current.slots.tts.create({ model: otherTtsModel });
     await flushMicrotasks();
     expect(first.destroy).toHaveBeenCalledTimes(1);
 
-    result.current.disposeTts();
+    result.current.slots.tts.dispose();
     await swapping;
   });
 
@@ -899,7 +986,7 @@ test('a dispose during a replacement teardown leaves the slot unloaded, not load
   // re-triggers one, and the voice assistant reports the model as still coming
   // up for the rest of the session.
   expect(result.current.ttsState).toBe(AiModelState.NotLoaded);
-  expect(result.current.tts.current).toBeUndefined();
+  expect(result.current.slots.tts.ref.current).toBeUndefined();
   expect(result.current.ttsArchitecture).toBeUndefined();
 
   // It also stops before loading the replacement at all, rather than allocating
@@ -914,10 +1001,10 @@ test('a repeat load of the model already in the slot is reused, not reloaded', a
 
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
-    await result.current.createTts({ model: ttsModel });
+    await result.current.slots.tts.create({ model: ttsModel });
   });
   await act(async () => {
-    await result.current.createTts({ model: ttsModel });
+    await result.current.slots.tts.create({ model: ttsModel });
   });
 
   expect(mockTtsLoad).toHaveBeenCalledTimes(1);
@@ -937,19 +1024,21 @@ test('a teardown waits for borrowed work instead of freeing the handle under it'
 
   const { result } = renderHook(() => useAiService(), { wrapper });
   await act(async () => {
-    await result.current.createTts({ model: ttsModel });
+    await result.current.slots.tts.create({ model: ttsModel });
   });
 
   let borrowed: Promise<Uint8Array | undefined>;
   act(() => {
-    borrowed = result.current.borrowTts(engine => engine.synthesize('hello'));
+    borrowed = result.current.slots.tts.borrow(engine =>
+      engine.synthesize('hello'),
+    );
   });
 
   // Disposing mid-call clears the slot immediately, but must not free the
   // native handle: none of these engines can be cancelled, so destroy() here
   // would pull the pointer out from under a running Rust future.
-  act(() => result.current.disposeTts());
-  expect(result.current.tts.current).toBeUndefined();
+  act(() => result.current.slots.tts.dispose());
+  expect(result.current.slots.tts.ref.current).toBeUndefined();
 
   await act(async () => {
     await flushMicrotasks();
@@ -970,7 +1059,7 @@ test('borrowing an empty slot resolves to undefined rather than throwing', async
 
   await act(async () => {
     await expect(
-      result.current.borrowTts(engine => engine.synthesize('hello')),
+      result.current.slots.tts.borrow(engine => engine.synthesize('hello')),
     ).resolves.toBeUndefined();
   });
 });

@@ -6,28 +6,36 @@ const API_TIMEOUT_MS = 5_000;
 
 export type ToolInvocationListener = (invocation: ToolInvocation) => void;
 
-// Pub-sub mirroring database/appState.ts: subscribe returns an unsubscribe, and
-// notify isolates listener errors so one can't break a tool call. ChatScreen
-// subscribes for the duration of a send and unsubscribes in its `finally`.
-const invocationListeners = new Set<ToolInvocationListener>();
+// Subscribe returns an unsubscribe, and notify isolates listener errors so one
+// can't break a tool call. Each caller subscribes for the length of one turn and
+// unsubscribes in its `finally`: ChatScreen around a send, the voice assistant
+// around its own generation.
+const invocationQueue: ToolInvocationListener[] = [];
 
 export const subscribeToolInvocations = (
   listener: ToolInvocationListener,
 ): (() => void) => {
-  invocationListeners.add(listener);
+  invocationQueue.push(listener);
   return () => {
-    invocationListeners.delete(listener);
+    const at = invocationQueue.indexOf(listener);
+    if (at !== -1) {
+      invocationQueue.splice(at, 1);
+    }
   };
 };
 
 const notifyToolInvocation = (invocation: ToolInvocation): void => {
-  invocationListeners.forEach(listener => {
-    try {
-      listener(invocation);
-    } catch (error) {
-      log('tool invocation listener error', error, { capture: true });
-    }
-  });
+  const listener = invocationQueue[0];
+
+  if (!listener) {
+    return;
+  }
+
+  try {
+    listener(invocation);
+  } catch (error) {
+    log('tool invocation listener error', error, { capture: true });
+  }
 };
 
 // Wrap a tool's logic so every call reports a structured ToolInvocation when it

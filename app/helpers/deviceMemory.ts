@@ -14,6 +14,19 @@ const OS_RESERVED_GB = isIOS ? 2 : 3;
 // while running its weights effectively take up twice their on-disk size.
 const PROJECTION_MODEL_MULTIPLIER = 2;
 
+const totalMemoryGB = async (): Promise<number | undefined> => {
+  try {
+    const bytes = await getTotalMemory();
+
+    return Number.isFinite(bytes) && bytes > 0
+      ? bytes / BYTES_PER_GB
+      : undefined;
+  } catch (error) {
+    log('totalMemoryGB failed', error, { capture: true });
+    return undefined;
+  }
+};
+
 const partMemoryGB = (part: ModelPart): number =>
   part.type === 'projection-model'
     ? part.sizeGB * PROJECTION_MODEL_MULTIPLIER
@@ -29,16 +42,15 @@ export const modelRequiredMemoryGB = (model: Model): number =>
 export const filterModelsByDeviceMemory = async (
   models: Model[],
 ): Promise<Model[]> => {
-  try {
-    const totalMemoryGB = (await getTotalMemory()) / BYTES_PER_GB;
-    const usableMemoryGB = totalMemoryGB - OS_RESERVED_GB;
-    return models.filter(
-      model => modelRequiredMemoryGB(model) <= usableMemoryGB,
-    );
-  } catch (error) {
-    log('filterModelsByDeviceMemory failed', error, { capture: true });
+  const totalGB = await totalMemoryGB();
+
+  if (totalGB === undefined) {
     return models;
   }
+
+  const usableMemoryGB = totalGB - OS_RESERVED_GB;
+
+  return models.filter(model => modelRequiredMemoryGB(model) <= usableMemoryGB);
 };
 
 // Context sizes for a chat that has a projection model loaded, chosen by how
@@ -86,18 +98,17 @@ export const MULTIMODAL_CONTEXT_FALLBACK = 2048;
 // differently from one launch to the next, and the context size is fixed for
 // the life of the chat, so a lucky reading would be paid for later.
 export const multimodalContextSize = async (model: Model): Promise<number> => {
-  try {
-    const totalMemoryGB = (await getTotalMemory()) / BYTES_PER_GB;
-    const freeGB =
-      totalMemoryGB - OS_RESERVED_GB - modelRequiredMemoryGB(model);
+  const totalGB = await totalMemoryGB();
 
-    const tier = MULTIMODAL_CONTEXT_TIERS.find(
-      candidate => freeGB >= candidate.freeGB,
-    );
-
-    return tier?.context ?? MULTIMODAL_CONTEXT_FLOOR;
-  } catch (error) {
-    log('multimodalContextSize failed', error, { capture: true });
+  if (totalGB === undefined) {
     return MULTIMODAL_CONTEXT_FALLBACK;
   }
+
+  const freeGB = totalGB - OS_RESERVED_GB - modelRequiredMemoryGB(model);
+
+  const tier = MULTIMODAL_CONTEXT_TIERS.find(
+    candidate => freeGB >= candidate.freeGB,
+  );
+
+  return tier?.context ?? MULTIMODAL_CONTEXT_FLOOR;
 };

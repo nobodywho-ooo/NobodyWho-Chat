@@ -54,12 +54,39 @@ const mockChatRef: { current: typeof mockChat | undefined } = {
 let mockChatPipeline: ModelPipeline = ModelPipeline.textGeneration;
 // Set when the loaded model's template prefills the opening reasoning tag.
 let mockChatThinkOpen: ImplicitThinkOpen | undefined;
+// Built once, not per useAiService() call: the real provider hands down slots
+// whose identity is stable.
+const mockSlots = {
+  chat: {
+    ref: mockChatRef,
+    create: jest.fn(),
+    dispose: jest.fn(),
+    borrow: jest.fn(),
+  },
+  tts: {
+    ref: { current: undefined },
+    create: jest.fn(),
+    dispose: jest.fn(),
+    borrow: jest.fn(),
+  },
+  stt: {
+    ref: { current: undefined },
+    create: jest.fn(),
+    dispose: jest.fn(),
+    borrow: jest.fn(),
+  },
+  vad: {
+    ref: { current: undefined },
+    create: jest.fn(),
+    dispose: jest.fn(),
+    borrow: jest.fn(),
+  },
+};
 jest.mock('services', () => ({
   useAiService: () => ({
-    chat: mockChatRef,
+    slots: mockSlots,
     chatPipeline: mockChatPipeline,
     chatThinkOpen: mockChatThinkOpen,
-    tts: { current: undefined },
     ttsState: 'notLoaded',
   }),
   AiModelState: {
@@ -566,7 +593,7 @@ test('a plain text send carries no documents even when multimodal is ready', asy
 });
 
 test('a model swap mid-stream stops streaming without persisting the assistant', async () => {
-  // Simulate disposeChat nulling chat.current after the first token arrives.
+  // Simulate the chat slot being disposed — its ref nulled — after the first token.
   mockChat.ask.mockImplementation(() =>
     (async function* () {
       yield 'partial';

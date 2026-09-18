@@ -59,7 +59,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const { colors } = useStyled();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { chat, chatPipeline, chatThinkOpen, ttsState, sttState } =
+  const { slots, chatPipeline, chatThinkOpen, ttsState, sttState } =
     useAiService();
   const { ttsModelIdInUse, sttModelIdInUse } = useAppState();
 
@@ -68,8 +68,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const canDictate =
     sttModelIdInUse !== undefined && sttState === AiModelState.Ready;
   const {
-    playingIndex,
-    loadingIndex: audioLoadingIndex,
+    playingId: audioPlayingId,
+    loadingId: audioLoadingId,
     play: playAudio,
     stop: stopAudio,
   } = useTtsPlayback();
@@ -107,7 +107,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const { clearAllAttachments } = attachments;
 
   const { isStreaming, handleSend, stopStreaming } = useChatGeneration({
-    chat,
+    chat: slots.chat.ref,
     thinkOpen: chatThinkOpen,
     ingestsImage,
     ingestsAudio,
@@ -158,25 +158,35 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     clearAllAttachments();
   }, [ingestsImage, ingestsAudio, clearAllAttachments]);
 
+  const messageKey = useCallback(
+    (item: DisplayMessage, index: number) => item.uid ?? `at:${index}`,
+    [],
+  );
+
   const renderMessage = useCallback(
-    ({ item, index }: { item: DisplayMessage; index: number }) => (
-      <MessageListItem
-        message={item}
-        isStreaming={isStreaming && index === messages.length - 1}
-        index={index}
-        canPlayAudio={canPlayAudio}
-        isAudioLoading={audioLoadingIndex === index}
-        isAudioPlaying={playingIndex === index}
-        onPlayAudio={playAudio}
-        onStopAudio={stopAudio}
-      />
-    ),
+    ({ item, index }: { item: DisplayMessage; index: number }) => {
+      const messageId = messageKey(item, index);
+
+      return (
+        <MessageListItem
+          message={item}
+          isStreaming={isStreaming && index === messages.length - 1}
+          messageId={messageId}
+          canPlayAudio={canPlayAudio}
+          isAudioLoading={audioLoadingId === messageId}
+          isAudioPlaying={audioPlayingId === messageId}
+          onPlayAudio={playAudio}
+          onStopAudio={stopAudio}
+        />
+      );
+    },
     [
       isStreaming,
       messages.length,
       canPlayAudio,
-      audioLoadingIndex,
-      playingIndex,
+      audioLoadingId,
+      audioPlayingId,
+      messageKey,
       playAudio,
       stopAudio,
     ],
@@ -211,7 +221,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             data={messages}
             style={styles.listContainer}
             contentContainerStyle={styles.listContent}
-            keyExtractor={(_, index) => index.toString()}
+            keyExtractor={messageKey}
             showsVerticalScrollIndicator={false}
             renderItem={renderMessage}
             ListEmptyComponent={EmptyArea}

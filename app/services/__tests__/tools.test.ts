@@ -96,6 +96,51 @@ describe('buildChatTools', () => {
     await toolByName('convert_temperature').call(0, 'celsius', 'fahrenheit');
     expect(invocations).toHaveLength(1);
   });
+
+  // The chat screen and the voice assistant can both be subscribed at once —
+  // the voice screen is the right drawer's content, always mounted, and is
+  // reachable while a chat generation is streaming. Broadcasting filed each
+  // turn's tool calls on the other's assistant message, and persisted them
+  // there. Delivery follows the order the turns started in, which is the order
+  // the native worker runs their asks in.
+  test('only the turn that subscribed first receives invocations', async () => {
+    const first: ToolInvocation[] = [];
+    const second: ToolInvocation[] = [];
+
+    const unsubscribeFirst = subscribeToolInvocations(i => first.push(i));
+    const unsubscribeSecond = subscribeToolInvocations(i => second.push(i));
+
+    await toolByName('convert_length').call(1, 'meters', 'feet');
+
+    expect(first).toHaveLength(1);
+    expect(second).toHaveLength(0);
+
+    // The first turn ends; the stream passes to the one queued behind it.
+    unsubscribeFirst();
+    await toolByName('convert_length').call(2, 'meters', 'feet');
+
+    expect(first).toHaveLength(1);
+    expect(second).toHaveLength(1);
+
+    unsubscribeSecond();
+  });
+
+  test('a turn that unsubscribes out of order does not strand the stream', async () => {
+    const first: ToolInvocation[] = [];
+    const second: ToolInvocation[] = [];
+
+    const unsubscribeFirst = subscribeToolInvocations(i => first.push(i));
+    const unsubscribeSecond = subscribeToolInvocations(i => second.push(i));
+
+    // The later turn is abandoned (screen closed) before the earlier one ends.
+    unsubscribeSecond();
+    await toolByName('convert_length').call(1, 'meters', 'feet');
+
+    expect(first).toHaveLength(1);
+    expect(second).toHaveLength(0);
+
+    unsubscribeFirst();
+  });
 });
 
 describe('fetchWeather', () => {

@@ -1,5 +1,5 @@
-import React, { useCallback } from 'react';
-import { View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { LayoutChangeEvent, View } from 'react-native';
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
@@ -10,8 +10,9 @@ import { useAiService } from 'services';
 import { useTheme } from 'context';
 import { useModels } from 'hooks';
 import { Theme } from 'types';
+import { Spacings } from 'style';
 
-import styles from './DrawerContentScreen.styles';
+import styles, { FLOATING_BUTTON_BOTTOM } from './DrawerContentScreen.styles';
 
 interface DrawerContentScreenProps {
   navigation: DrawerContentComponentProps['navigation'];
@@ -29,7 +30,8 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
 }) => {
   const { t } = useTranslation();
   const { models } = useModels();
-  const { chat } = useAiService();
+  const { slots } = useAiService();
+  const chat = slots.chat.ref;
   const theme = useTheme();
 
   const closeDrawer = onCloseDrawer;
@@ -53,6 +55,18 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
     setAppState({ conversationIdInUse: undefined });
     closeDrawer();
   }, [closeDrawer]);
+
+  const [newChatHeight, setNewChatHeight] = useState(0);
+
+  const handleNewChatLayout = useCallback((event: LayoutChangeEvent) => {
+    const { height } = event.nativeEvent.layout;
+    setNewChatHeight(current => (current === height ? current : height));
+  }, []);
+
+  const showNewChat = models.length >= 1;
+  const listBottomInset = showNewChat
+    ? FLOATING_BUTTON_BOTTOM + newChatHeight + Spacings.lg
+    : 0;
 
   return (
     <View style={styles.container}>
@@ -85,7 +99,10 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         )}
       </View>
 
-      <ConversationsList onCloseDrawer={closeDrawer} />
+      <ConversationsList
+        onCloseDrawer={closeDrawer}
+        bottomInset={listBottomInset}
+      />
 
       <LinearGradient
         pointerEvents="none"
@@ -95,12 +112,13 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         style={styles.bottomGradient}
       />
 
-      {models.length >= 1 && (
+      {showNewChat && (
         <Button
           title={t('screens.drawerContent.newChat')}
           variant="secondary"
           icon={{ iosIconName: 'plus.bubble', androidIconName: 'add_comment' }}
           onPress={handleNewChatPress}
+          onLayout={handleNewChatLayout}
           style={styles.floatingButton}
         />
       )}

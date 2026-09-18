@@ -20,6 +20,7 @@ describe('toChatHistory (display)', () => {
     const [assistant] = toChatHistory([
       {
         ...base,
+        id: 7,
         role: 'assistant',
         content: 'It is 12°C in Paris.',
         toolInvocations: [weatherInvocation],
@@ -27,6 +28,7 @@ describe('toChatHistory (display)', () => {
     ]);
 
     expect(assistant).toEqual({
+      uid: 'row:7',
       role: 'assistant',
       content: 'It is 12°C in Paris.',
       tokensPerSecond: undefined,
@@ -39,13 +41,37 @@ describe('toChatHistory (display)', () => {
   test('maps user and system messages', () => {
     expect(
       toChatHistory([
-        { ...base, role: 'user', content: 'hello', documentsPath: ['/a.png'] },
-        { ...base, role: 'system', content: 'You are helpful.' },
+        {
+          ...base,
+          id: 1,
+          role: 'user',
+          content: 'hello',
+          documentsPath: ['/a.png'],
+        },
+        { ...base, id: 2, role: 'system', content: 'You are helpful.' },
       ]),
     ).toEqual([
-      { role: 'user', content: 'hello', documentsPath: ['/a.png'] },
-      { role: 'system', content: 'You are helpful.' },
+      {
+        uid: 'row:1',
+        role: 'user',
+        content: 'hello',
+        documentsPath: ['/a.png'],
+      },
+      { uid: 'row:2', role: 'system', content: 'You are helpful.' },
     ]);
+  });
+
+  // The row id is what the chat list keys on, so every displayed message has to
+  // carry one and no two may share it — an index would not survive a turn
+  // appending rows and then dropping one again.
+  test('gives every message a distinct identity from its row id', () => {
+    const uids = toChatHistory([
+      { ...base, id: 11, role: 'user', content: 'hi' },
+      { ...base, id: 12, role: 'assistant', content: 'hello' },
+      { ...base, id: 13, role: 'system', content: 'stopped' },
+    ]).map(message => message.uid);
+
+    expect(uids).toEqual(['row:11', 'row:12', 'row:13']);
   });
 });
 

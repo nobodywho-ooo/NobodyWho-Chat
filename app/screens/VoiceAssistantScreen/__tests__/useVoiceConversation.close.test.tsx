@@ -27,18 +27,44 @@ const mockStt = { transcribePcm: jest.fn() };
 let mockChatThinkOpen: ImplicitThinkOpen | undefined;
 const mockTts = { synthesize: jest.fn() };
 
+// Built once, not per useAiService() call: the real provider hands down slots
+// whose identity is stable. Borrowing is what keeps a dispose from freeing an
+// engine mid-call; here it just hands the call the stand-in.
+const mockSlots = {
+  chat: {
+    ref: mockChatRef,
+    create: jest.fn(),
+    dispose: jest.fn(),
+    borrow: jest.fn(),
+  },
+  tts: {
+    ref: { current: mockTts },
+    create: jest.fn(),
+    dispose: jest.fn(),
+    borrow: (call: (engine: typeof mockTts) => unknown) => call(mockTts),
+  },
+  stt: {
+    ref: { current: mockStt },
+    create: jest.fn(),
+    dispose: jest.fn(),
+    borrow: (call: (engine: typeof mockStt) => unknown) => call(mockStt),
+  },
+  vad: {
+    ref: { current: undefined },
+    create: jest.fn(),
+    dispose: jest.fn(),
+    borrow: jest.fn(),
+  },
+};
+
 jest.mock('services', () => ({
   useAiService: () => ({
-    chat: mockChatRef,
+    slots: mockSlots,
     chatState: 'ready',
     chatThinkOpen: mockChatThinkOpen,
     sttState: 'ready',
     ttsState: 'ready',
     ttsArchitecture: undefined,
-    // Borrowing is what keeps a dispose from freeing an engine mid-call; here
-    // it just hands the call the stand-in.
-    borrowStt: (call: (engine: typeof mockStt) => unknown) => call(mockStt),
-    borrowTts: (call: (engine: typeof mockTts) => unknown) => call(mockTts),
   }),
   AiModelState: {
     NotLoaded: 'notLoaded',

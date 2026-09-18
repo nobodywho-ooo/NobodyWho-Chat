@@ -10,16 +10,16 @@ import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
 interface AudioSpeakerButtonProps {
   isLoading: boolean;
   isPlaying: boolean;
-  index: number;
+  messageId: string;
   content: string;
-  onPlay?: (index: number, text: string) => void;
+  onPlay?: (messageId: string, text: string) => void;
   onStop?: () => void;
 }
 
 export const AudioSpeakerButton: React.FC<AudioSpeakerButtonProps> = ({
   isLoading,
   isPlaying,
-  index,
+  messageId,
   content,
   onPlay,
   onStop,
@@ -47,7 +47,9 @@ export const AudioSpeakerButton: React.FC<AudioSpeakerButtonProps> = ({
       )}
       hitSlop={8}
       onPress={() =>
-        isPlaying ? onStop?.() : onPlay?.(index, stripThinkingBlocks(content))
+        isPlaying
+          ? onStop?.()
+          : onPlay?.(messageId, stripThinkingBlocks(content))
       }
       style={({ pressed }) => [pressed && styles.buttonPressed]}
     >

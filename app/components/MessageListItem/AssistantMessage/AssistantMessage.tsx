@@ -35,18 +35,18 @@ const formatTimeToFirstToken = (ms: number): string =>
 interface AssistantMessageProps {
   message: DisplayMessage;
   isStreaming: boolean;
-  index: number;
+  messageId: string;
   canPlayAudio: boolean;
   isAudioLoading: boolean;
   isAudioPlaying: boolean;
-  onPlayAudio?: (index: number, text: string) => void;
+  onPlayAudio?: (messageId: string, text: string) => void;
   onStopAudio?: () => void;
 }
 
 const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
   message,
   isStreaming,
-  index,
+  messageId,
   canPlayAudio,
   isAudioLoading,
   isAudioPlaying,
@@ -193,7 +193,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
             <AudioSpeakerButton
               isLoading={isAudioLoading}
               isPlaying={isAudioPlaying}
-              index={index}
+              messageId={messageId}
               content={rest}
               onPlay={onPlayAudio}
               onStop={onStopAudio}

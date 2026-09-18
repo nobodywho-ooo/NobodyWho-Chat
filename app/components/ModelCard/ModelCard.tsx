@@ -18,7 +18,7 @@ import { Tag } from '../Tag/Tag';
 
 import styles from './ModelCard.styles';
 
-const HIGH_CPU_USAGE_SIZE_GB = 2;
+const HEAVY_PROCESSING_SIZE_GB = 2;
 
 interface ModelCardProps {
   style?: StyleProp<ViewStyle>;
@@ -149,14 +149,15 @@ export const ModelCard: React.FC<ModelCardProps> = ({
                 <Tag
                   iosIconName="lightbulb"
                   androidIconName="lightbulb"
-                  label="Thinking"
+                  label={t('components.modelCard.thinking')}
                 />
               )}
-              {sizeGB > HIGH_CPU_USAGE_SIZE_GB && (
+              {sizeGB > HEAVY_PROCESSING_SIZE_GB && (
                 <Tag
                   iosIconName="cpu"
                   androidIconName="memory"
-                  label="High CPU usage"
+                  variant="warning"
+                  label={t('components.modelCard.heavyProcessing')}
                 />
               )}
               {tags.map(tag => (

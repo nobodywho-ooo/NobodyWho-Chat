@@ -57,11 +57,12 @@ test('reports the end of speech and hands back the captured segment', async () =
   const { result } = renderSpeechService();
 
   await act(async () => {
-    await result.current.service.createVad({ model: vadModel });
+    await result.current.service.slots.vad.create({ model: vadModel });
   });
   expect(result.current.speech.enabled).toBe(true);
 
-  const vad = result.current.service.vad.current as unknown as MockVad;
+  const vad = result.current.service.slots.vad.ref
+    .current as unknown as MockVad;
   vad.mockEvents = [
     VoiceActivityDetectionEvent.SpeechStarted,
     VoiceActivityDetectionEvent.Speech,
@@ -87,10 +88,11 @@ test('resamples the recording to the rate the detection model was loaded with', 
   const { result } = renderSpeechService();
 
   await act(async () => {
-    await result.current.service.createVad({ model: vadModel });
+    await result.current.service.slots.vad.create({ model: vadModel });
   });
 
-  const vad = result.current.service.vad.current as unknown as MockVad;
+  const vad = result.current.service.slots.vad.ref
+    .current as unknown as MockVad;
   act(() => result.current.speech.reset());
   // 48 kHz hardware: six samples become two at the model's 16 kHz.
   result.current.speech.push(Int16Array.from([0, 3, 6, 10, 20, 30]), 48000);
@@ -103,10 +105,11 @@ test('treats an empty finish as no speech, so the caller keeps its own recording
   const { result } = renderSpeechService();
 
   await act(async () => {
-    await result.current.service.createVad({ model: vadModel });
+    await result.current.service.slots.vad.create({ model: vadModel });
   });
 
-  const vad = result.current.service.vad.current as unknown as MockVad;
+  const vad = result.current.service.slots.vad.ref
+    .current as unknown as MockVad;
   act(() => result.current.speech.reset());
   vad.finish.mockReturnValueOnce([]);
 
@@ -117,10 +120,11 @@ test('reports itself unusable once push throws, so callers stop waiting on it', 
   const { result } = renderSpeechService();
 
   await act(async () => {
-    await result.current.service.createVad({ model: vadModel });
+    await result.current.service.slots.vad.create({ model: vadModel });
   });
 
-  const vad = result.current.service.vad.current as unknown as MockVad;
+  const vad = result.current.service.slots.vad.ref
+    .current as unknown as MockVad;
   act(() => result.current.speech.reset());
   vad.push.mockImplementationOnce(() => {
     throw new Error('native failure');
@@ -158,10 +162,11 @@ test('a second consumer takes the detector and preempts the first', async () => 
   );
 
   await act(async () => {
-    await result.current.service.createVad({ model: vadModel });
+    await result.current.service.slots.vad.create({ model: vadModel });
   });
 
-  const vad = result.current.service.vad.current as unknown as MockVad;
+  const vad = result.current.service.slots.vad.ref
+    .current as unknown as MockVad;
   act(() => result.current.dictation.reset());
 
   const chunk = Int16Array.from([1, 2, 3]);
@@ -185,10 +190,11 @@ test('reset clears the model so an abandoned turn cannot bleed into the next', a
   const { result } = renderSpeechService();
 
   await act(async () => {
-    await result.current.service.createVad({ model: vadModel });
+    await result.current.service.slots.vad.create({ model: vadModel });
   });
 
-  const vad = result.current.service.vad.current as unknown as MockVad;
+  const vad = result.current.service.slots.vad.ref
+    .current as unknown as MockVad;
   act(() => result.current.speech.reset());
 
   expect(vad.finish).toHaveBeenCalledTimes(1);

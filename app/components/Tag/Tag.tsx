@@ -7,29 +7,42 @@ import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 
 import styles from './Tag.styles';
 
+export type TagVariant = 'default' | 'highlight' | 'warning';
+
+const CATALOGUE_HIGHLIGHT_LABEL = 'Great First Pick';
+
 interface TagProps {
   label: string;
+  variant?: TagVariant;
   iosIconName?: SFSymbolProps['name'];
   androidIconName?: MaterialSymbolProps['name'];
 }
 
 export const Tag: React.FC<TagProps> = ({
   label,
+  variant,
   iosIconName,
   androidIconName,
 }) => {
   const { colors } = useStyled();
 
-  let textColor = colors.onSurfaceVariant;
-  let backgroundColor = colors.surfaceSecondary;
+  const resolvedVariant: TagVariant =
+    variant ?? (label === CATALOGUE_HIGHLIGHT_LABEL ? 'highlight' : 'default');
 
-  if (label === 'Great First Pick') {
-    textColor = colors.onSurface;
-    backgroundColor = colors.surfaceContainer;
-  } else if (label === 'High CPU usage') {
-    textColor = colors.warningContent;
-    backgroundColor = colors.warningSurface;
-  }
+  const { textColor, backgroundColor } = {
+    default: {
+      textColor: colors.onSurfaceVariant,
+      backgroundColor: colors.surfaceSecondary,
+    },
+    highlight: {
+      textColor: colors.onSurface,
+      backgroundColor: colors.surfaceContainer,
+    },
+    warning: {
+      textColor: colors.warningContent,
+      backgroundColor: colors.warningSurface,
+    },
+  }[resolvedVariant];
 
   return (
     <View style={[styles.container, { backgroundColor: backgroundColor }]}>

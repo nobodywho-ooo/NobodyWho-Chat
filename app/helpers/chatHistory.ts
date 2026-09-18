@@ -13,9 +13,12 @@ import {
 // toModelHistory (that is what actually goes to chat.setChatHistory).
 export const toChatHistory = (messages: ChatMessage[]): DisplayMessage[] =>
   messages.map((message): DisplayMessage => {
+    const uid = `row:${message.id}`;
+
     switch (message.role) {
       case 'assistant':
         return {
+          uid,
           role: 'assistant',
           content: message.content,
           tokensPerSecond: message.tokensPerSecond,
@@ -24,12 +27,14 @@ export const toChatHistory = (messages: ChatMessage[]): DisplayMessage[] =>
         };
       case 'system':
         return {
+          uid,
           role: 'system',
           content: message.content,
         };
       case 'user':
       default:
         return {
+          uid,
           role: 'user',
           content: message.content,
           documentsPath: message.documentsPath,

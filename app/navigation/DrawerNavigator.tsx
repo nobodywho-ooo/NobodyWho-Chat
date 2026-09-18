@@ -14,10 +14,19 @@ import {
 import { useTranslation } from 'react-i18next';
 import { setAppState } from 'database';
 import { isChatPipeline } from 'types';
-import { deleteConversation } from 'repositories';
+import {
+  deleteConversation,
+  getDocumentPathsByConversationId,
+} from 'repositories';
 import { DrawerContentScreen } from 'screens';
 import { PlatformIcon, Text } from 'components';
-import { log, isIOS, capitalize, parameterCountLabel } from 'helpers';
+import {
+  log,
+  isIOS,
+  capitalize,
+  deleteMessageDocuments,
+  parameterCountLabel,
+} from 'helpers';
 import { useAppState, useConversations, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
 import { Spacings } from 'style';
@@ -39,11 +48,11 @@ const ChatHeaderRight = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { conversationIdInUse } = useAppState();
-  const { chat } = useAiService();
+  const { slots } = useAiService();
 
   const handleMenuAction = React.useCallback(
     async ({ nativeEvent }: NativeActionEvent) => {
-      chat.current?.stopGeneration();
+      slots.chat.ref.current?.stopGeneration();
 
       if (nativeEvent.event === MENU_ACTION_NEW_CHAT) {
         setAppState({ conversationIdInUse: undefined });
@@ -57,13 +66,18 @@ const ChatHeaderRight = () => {
         setAppState({ conversationIdInUse: undefined });
 
         try {
+          const documentPaths =
+            await getDocumentPathsByConversationId(conversationIdInUse);
+
           await deleteConversation(conversationIdInUse);
+
+          await deleteMessageDocuments(documentPaths);
         } catch (error) {
           log('Failed to delete conversation', error, { capture: true });
         }
       }
     },
-    [conversationIdInUse, chat],
+    [conversationIdInUse, slots],
   );
 
   const newChatAction: MenuAction = {

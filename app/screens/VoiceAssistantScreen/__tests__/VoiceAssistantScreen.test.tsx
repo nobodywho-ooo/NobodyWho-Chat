@@ -75,9 +75,9 @@ test('stays unavailable until the voice detection model is loaded too', async ()
 
   // Chat, transcription and speech loaded — everything except detection.
   await act(async () => {
-    await service.createChat({ model: chatModel });
-    await service.createStt({ model: sttModel });
-    await service.createTts({ model: ttsModel });
+    await service.slots.chat.create({ model: chatModel });
+    await service.slots.stt.create({ model: sttModel });
+    await service.slots.tts.create({ model: ttsModel });
   });
 
   // Nothing would notice the user had stopped talking, so the screen is not
@@ -85,7 +85,7 @@ test('stays unavailable until the voice detection model is loaded too', async ()
   expect(screen.getByText('screens.voiceAssistant.setup.title')).toBeTruthy();
 
   await act(async () => {
-    await service.createVad({ model: vadModel });
+    await service.slots.vad.create({ model: vadModel });
   });
 
   expect(screen.queryByText('screens.voiceAssistant.setup.title')).toBeNull();

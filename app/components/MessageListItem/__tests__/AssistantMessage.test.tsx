@@ -23,7 +23,7 @@ const renderAssistant = (
     <AssistantMessage
       message={message}
       isStreaming={false}
-      index={0}
+      messageId="row:0"
       canPlayAudio={false}
       isAudioLoading={false}
       isAudioPlaying={false}
@@ -273,15 +273,16 @@ test('reads the message aloud (thinking stripped) when a TTS model is active', (
     content: '<think>weighing it</think>Yes, the water is wet',
   };
   const { getByLabelText } = renderAssistant(message, {
-    index: 3,
+    messageId: 'row:3',
     canPlayAudio: true,
     onPlayAudio,
   });
 
   fireEvent.press(getByLabelText('components.messageListItem.playAudio'));
 
-  // The row index and the thinking-free text are handed to the synthesizer.
-  expect(onPlayAudio).toHaveBeenCalledWith(3, 'Yes, the water is wet');
+  // The message's own identity and the thinking-free text are handed to the
+  // synthesizer — not its row number, which the next turn can shift.
+  expect(onPlayAudio).toHaveBeenCalledWith('row:3', 'Yes, the water is wet');
 });
 
 test('shows a spinner instead of the read-aloud button while synthesizing', () => {
@@ -335,7 +336,7 @@ test('skips re-rendering when nothing about the message changed', () => {
     <AssistantMessage
       message={message}
       isStreaming={false}
-      index={0}
+      messageId="row:0"
       canPlayAudio={false}
       isAudioLoading={false}
       isAudioPlaying={false}
@@ -356,7 +357,7 @@ test('re-renders when the message content grows', () => {
     <AssistantMessage
       message={{ role: 'assistant', content: 'partial answer' }}
       isStreaming={false}
-      index={0}
+      messageId="row:0"
       canPlayAudio={false}
       isAudioLoading={false}
       isAudioPlaying={false}

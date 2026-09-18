@@ -78,43 +78,7 @@ exports[`Tag renders a label without an icon 1`] = `
 </View>
 `;
 
-exports[`Tag renders no icon when only one platform icon name is provided 1`] = `
-<View
-  style={
-    [
-      {
-        "alignItems": "center",
-        "borderRadius": 6,
-        "flexDirection": "row",
-        "gap": 2,
-        "paddingHorizontal": 8,
-        "paddingVertical": 4,
-      },
-      {
-        "backgroundColor": "#f7f7f7",
-      },
-    ]
-  }
->
-  <Text
-    style={
-      [
-        {
-          "fontSize": 12,
-          "marginLeft": 2,
-        },
-        {
-          "color": "#7c7c7c",
-        },
-      ]
-    }
-  >
-    2.5 GB
-  </Text>
-</View>
-`;
-
-exports[`Tag renders the High CPU usage label in yellow with a yellow background 1`] = `
+exports[`Tag renders a warning tag in yellow with a yellow background 1`] = `
 <View
   style={
     [
@@ -151,7 +115,79 @@ exports[`Tag renders the High CPU usage label in yellow with a yellow background
       ]
     }
   >
-    High CPU usage
+    Heavy processing
+  </Text>
+</View>
+`;
+
+exports[`Tag renders no icon when only one platform icon name is provided 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "borderRadius": 6,
+        "flexDirection": "row",
+        "gap": 2,
+        "paddingHorizontal": 8,
+        "paddingVertical": 4,
+      },
+      {
+        "backgroundColor": "#f7f7f7",
+      },
+    ]
+  }
+>
+  <Text
+    style={
+      [
+        {
+          "fontSize": 12,
+          "marginLeft": 2,
+        },
+        {
+          "color": "#7c7c7c",
+        },
+      ]
+    }
+  >
+    2.5 GB
+  </Text>
+</View>
+`;
+
+exports[`Tag still promotes the catalogue highlight tag by its label 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "borderRadius": 6,
+        "flexDirection": "row",
+        "gap": 2,
+        "paddingHorizontal": 8,
+        "paddingVertical": 4,
+      },
+      {
+        "backgroundColor": "#ebebeb",
+      },
+    ]
+  }
+>
+  <Text
+    style={
+      [
+        {
+          "fontSize": 12,
+          "marginLeft": 2,
+        },
+        {
+          "color": "#000000",
+        },
+      ]
+    }
+  >
+    Great First Pick
   </Text>
 </View>
 `;

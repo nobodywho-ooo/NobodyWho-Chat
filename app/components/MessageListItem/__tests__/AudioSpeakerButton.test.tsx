@@ -14,7 +14,7 @@ test('shows a play control when idle and speaks the message on press', () => {
     <AudioSpeakerButton
       isLoading={false}
       isPlaying={false}
-      index={2}
+      messageId="row:2"
       content="Hello world"
       onPlay={onPlay}
       onStop={onStop}
@@ -23,7 +23,7 @@ test('shows a play control when idle and speaks the message on press', () => {
 
   fireEvent.press(getByLabelText('components.messageListItem.playAudio'));
 
-  expect(onPlay).toHaveBeenCalledWith(2, 'Hello world');
+  expect(onPlay).toHaveBeenCalledWith('row:2', 'Hello world');
   expect(onStop).not.toHaveBeenCalled();
 });
 
@@ -33,7 +33,7 @@ test('strips thinking blocks from the spoken text', () => {
     <AudioSpeakerButton
       isLoading={false}
       isPlaying={false}
-      index={0}
+      messageId="row:0"
       content="<think>weighing it</think>The answer is 42"
       onPlay={onPlay}
     />,
@@ -41,7 +41,7 @@ test('strips thinking blocks from the spoken text', () => {
 
   fireEvent.press(getByLabelText('components.messageListItem.playAudio'));
 
-  expect(onPlay).toHaveBeenCalledWith(0, 'The answer is 42');
+  expect(onPlay).toHaveBeenCalledWith('row:0', 'The answer is 42');
 });
 
 test('shows a stop control while playing and stops on press', () => {
@@ -51,7 +51,7 @@ test('shows a stop control while playing and stops on press', () => {
     <AudioSpeakerButton
       isLoading={false}
       isPlaying
-      index={1}
+      messageId="row:1"
       content="Hello world"
       onPlay={onPlay}
       onStop={onStop}
@@ -74,7 +74,7 @@ test('shows a spinner instead of a button while synthesizing', () => {
     <AudioSpeakerButton
       isLoading
       isPlaying={false}
-      index={0}
+      messageId="row:0"
       content="Hello world"
       onPlay={onPlay}
       onStop={onStop}
@@ -95,7 +95,7 @@ test('does not throw when pressed without handlers', () => {
     <AudioSpeakerButton
       isLoading={false}
       isPlaying={false}
-      index={0}
+      messageId="row:0"
       content="Hello world"
     />,
   );
@@ -111,7 +111,7 @@ test('matches the snapshot', () => {
     <AudioSpeakerButton
       isLoading={false}
       isPlaying={false}
-      index={0}
+      messageId="row:0"
       content="Hello world"
       onPlay={jest.fn()}
       onStop={jest.fn()}

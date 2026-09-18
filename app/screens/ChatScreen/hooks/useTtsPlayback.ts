@@ -5,32 +5,33 @@ import { log, synthesizeSpeech } from 'helpers';
 import { AiModelState, useAiService } from 'services';
 
 interface TtsPlayback {
-  loadingIndex: number | null;
-  playingIndex: number | null;
-  play: (index: number, text: string) => Promise<void>;
+  loadingId: string | null;
+  playingId: string | null;
+  play: (messageId: string, text: string) => Promise<void>;
   stop: () => void;
 }
 
 const PLAYBACK_FILE = 'tts-playback.wav';
 
 // Drives the assistant "read aloud" button: synthesizes a message with the
-// loaded TTS model, writes the WAV to disk and plays it, tracking which row is
-// loading vs. playing so the list can render the right affordance. Lifted to
+// loaded TTS model, writes the WAV to disk and plays it, tracking which message
+// is loading vs. playing so the list can render the right affordance. Lifted to
 // the screen (rather than living per-row) so a single audio player is shared —
 // starting one message stops any other.
 export const useTtsPlayback = (): TtsPlayback => {
   const busyRef = useRef(false);
   const generationRef = useRef(0);
-  const { ttsState, ttsArchitecture, borrowTts } = useAiService();
-  const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
-  const [playingIndex, setPlayingIndex] = useState<number | null>(null);
+  const { slots, ttsState, ttsArchitecture } = useAiService();
+  const { borrow: borrowTts } = slots.tts;
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [playingId, setPlayingId] = useState<string | null>(null);
 
   const player = useAudioPlayer();
   const status = useAudioPlayerStatus(player);
 
   useEffect(() => {
     if (status.didJustFinish) {
-      setPlayingIndex(null);
+      setPlayingId(null);
     }
   }, [status.didJustFinish]);
 
@@ -41,7 +42,7 @@ export const useTtsPlayback = (): TtsPlayback => {
     } catch (error) {
       log('useTtsPlayback stop', error);
     }
-    setPlayingIndex(null);
+    setPlayingId(null);
   }, [player]);
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export const useTtsPlayback = (): TtsPlayback => {
   }, []);
 
   const play = useCallback(
-    async (index: number, text: string) => {
+    async (messageId: string, text: string) => {
       if (busyRef.current) {
         return;
       }
@@ -61,7 +62,7 @@ export const useTtsPlayback = (): TtsPlayback => {
 
       busyRef.current = true;
       const generation = ++generationRef.current;
-      setLoadingIndex(index);
+      setLoadingId(messageId);
       try {
         const wav = await borrowTts(engine =>
           synthesizeSpeech(
@@ -82,18 +83,18 @@ export const useTtsPlayback = (): TtsPlayback => {
         // replace() reloads the source from disk (the file was just rewritten),
         // so reusing the same path still plays the fresh audio.
         player.replace({ uri: file.uri });
-        setPlayingIndex(index);
+        setPlayingId(messageId);
         player.play();
       } catch (error) {
-        setPlayingIndex(null);
+        setPlayingId(null);
         log('useTtsPlayback play', error);
       } finally {
-        setLoadingIndex(null);
+        setLoadingId(null);
         busyRef.current = false;
       }
     },
     [borrowTts, ttsState, ttsArchitecture, player],
   );
 
-  return { loadingIndex, playingIndex, play, stop };
+  return { loadingId, playingId, play, stop };
 };

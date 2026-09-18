@@ -2,7 +2,6 @@ import React, {
   useCallback,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useState,
 } from 'react';
 import { Alert, Pressable, ScrollView, View } from 'react-native';
@@ -28,8 +27,7 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { colors } = useStyled();
   const { models } = useModels();
   const appState = useAppState();
-  const { chat, disposeTts, disposeStt, disposeVad, disposeChat } =
-    useAiService();
+  const { slots } = useAiService();
   const navigation = useNavigation();
   const route = useRoute();
   const [deleteMode, setDeleteMode] = useState(false);
@@ -44,18 +42,6 @@ export const DownloadedModelsScreen: React.FC = () => {
     }
   }, [hasModels, deleteMode]);
 
-  // Every slot's release, keyed by slot, so a new slot is a compile error here
-  // rather than a model whose files are deleted while an engine still holds it.
-  const disposeForSlot = useMemo<Record<ModelSlot, () => void>>(
-    () => ({
-      [ModelSlot.chat]: disposeChat,
-      [ModelSlot.tts]: disposeTts,
-      [ModelSlot.stt]: disposeStt,
-      [ModelSlot.vad]: disposeVad,
-    }),
-    [disposeChat, disposeTts, disposeStt, disposeVad],
-  );
-
   const handleDeleteModel = useCallback(
     async (model: Model) => {
       try {
@@ -64,7 +50,7 @@ export const DownloadedModelsScreen: React.FC = () => {
         // Release the engines before the files go away, so nothing is mid-read
         // when the directory is removed.
         const held = slotsHolding(model.id, appState);
-        held.forEach(slot => disposeForSlot[slot]());
+        held.forEach(slot => slots[slot].dispose());
         await releaseSlots(held.filter(slot => slot !== ModelSlot.chat));
 
         const filesDeleted = await deleteModelFiles(model);
@@ -89,7 +75,7 @@ export const DownloadedModelsScreen: React.FC = () => {
         log('DownloadedModelsScreen handleDeleteModel', error);
       }
     },
-    [appState, disposeForSlot],
+    [appState, slots],
   );
 
   const confirmDeleteModel = useCallback(
@@ -127,12 +113,12 @@ export const DownloadedModelsScreen: React.FC = () => {
       // current chat, so a live stream ends cleanly rather than being cut off
       // mid-token as the backend is swapped out.
       if (isChatPipeline(model.pipeline)) {
-        chat.current?.stopGeneration();
+        slots.chat.ref.current?.stopGeneration();
       }
 
       selectModel(model);
     },
-    [deleteMode, confirmDeleteModel, appState, chat],
+    [deleteMode, confirmDeleteModel, appState, slots],
   );
 
   const renderHeaderRight = useCallback(() => {

@@ -262,7 +262,7 @@ exports[`renders correctly ModelCard 1`] = `
               ]
             }
           >
-            Thinking
+            components.modelCard.thinking
           </Text>
         </View>
         <View
@@ -301,7 +301,7 @@ exports[`renders correctly ModelCard 1`] = `
               ]
             }
           >
-            High CPU usage
+            components.modelCard.heavyProcessing
           </Text>
         </View>
         <View
@@ -611,7 +611,7 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
               ]
             }
           >
-            Thinking
+            components.modelCard.thinking
           </Text>
         </View>
         <View
@@ -650,7 +650,7 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
               ]
             }
           >
-            High CPU usage
+            components.modelCard.heavyProcessing
           </Text>
         </View>
         <View
@@ -1116,7 +1116,7 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
               ]
             }
           >
-            Thinking
+            components.modelCard.thinking
           </Text>
         </View>
         <View
@@ -1155,7 +1155,7 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
               ]
             }
           >
-            High CPU usage
+            components.modelCard.heavyProcessing
           </Text>
         </View>
         <View

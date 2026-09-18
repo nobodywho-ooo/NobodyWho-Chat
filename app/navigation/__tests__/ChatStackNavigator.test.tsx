@@ -61,19 +61,39 @@ const mockDisposeVad = jest.fn();
 // factory may reference it (out-of-scope enums are rejected otherwise).
 const mockChatPipeline = ModelPipeline.textGeneration;
 
+// Built once, not per useAiService() call: the real provider hands down slots
+// whose identity is stable, and several consumer effects key off it.
+const mockSlots = {
+  chat: {
+    ref: mockChatRef,
+    create: mockCreateChat,
+    dispose: mockDisposeChat,
+    borrow: jest.fn(),
+  },
+  tts: {
+    ref: { current: undefined },
+    create: mockCreateTts,
+    dispose: mockDisposeTts,
+    borrow: jest.fn(),
+  },
+  stt: {
+    ref: { current: undefined },
+    create: mockCreateStt,
+    dispose: mockDisposeStt,
+    borrow: jest.fn(),
+  },
+  vad: {
+    ref: { current: undefined },
+    create: mockCreateVad,
+    dispose: mockDisposeVad,
+    borrow: jest.fn(),
+  },
+};
+
 jest.mock('services', () => ({
   useAiService: () => ({
-    chat: mockChatRef,
+    slots: mockSlots,
     chatPipeline: mockChatPipeline,
-    createChat: mockCreateChat,
-    disposeChat: mockDisposeChat,
-    createTts: mockCreateTts,
-    disposeTts: mockDisposeTts,
-    createStt: mockCreateStt,
-    disposeStt: mockDisposeStt,
-    createVad: mockCreateVad,
-    disposeVad: mockDisposeVad,
-    vad: { current: undefined },
     vadState: 'notLoaded',
   }),
   AiModelState: {

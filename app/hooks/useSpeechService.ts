@@ -79,7 +79,8 @@ const DISABLED_SERVICE: Omit<SpeechService, 'enabled'> = {
 export const useSpeechService = (
   options: SpeechServiceOptions = {},
 ): SpeechService => {
-  const { vad, vadState } = useAiService();
+  const { slots, vadState } = useAiService();
+  const vad = slots.vad.ref;
 
   // Latched when push() throws, so one failure degrades the turn rather than
   // throwing once per recorded buffer for the rest of the session. Mirrored

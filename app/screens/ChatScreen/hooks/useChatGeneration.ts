@@ -21,6 +21,20 @@ import { Attachments } from './useAttachments';
 
 type PersistOutcome = 'written' | 'gone' | 'failed';
 
+// Identities for messages the screen is still holding optimistically, before
+// they come back from the database with a row id (see DisplayMessage.uid).
+// A counter rather than a random id: uniqueness only has to hold within one
+// list at one moment, which a counter gives outright, and the `new:` prefix
+// keeps it clear of the `row:` ids a reload produces.
+//
+// Seeded from the clock rather than 0 so a Fast Refresh can't mint an id that
+// is already on screen — re-evaluating this module resets the counter while
+// React keeps the message list's state, and from 0 the next optimistic message
+// would collide with the `new:1` still rendered. Dev-only, but free to rule out.
+let optimisticMessages = Date.now();
+
+const nextUid = (): string => `new:${++optimisticMessages}`;
+
 interface UseChatGenerationOptions {
   chat: React.RefObject<Chat | undefined>;
   thinkOpen: ImplicitThinkOpen | undefined;
@@ -95,11 +109,15 @@ export function useChatGeneration({
     );
 
     const userMessage: DisplayMessage = {
+      uid: nextUid(),
       role: 'user',
       content: userInput,
       documentsPath,
     };
+
+    const assistantUid = nextUid();
     const initialAssistantMessage: DisplayMessage = {
+      uid: assistantUid,
       role: 'assistant',
       content: '',
     };
@@ -186,6 +204,7 @@ export function useChatGeneration({
       setMessages(prev => {
         const next = [...prev];
         next[next.length - 1] = {
+          uid: assistantUid,
           role: 'assistant',
           content: accumulated,
           ...(turnToolCalls.length > 0
@@ -211,7 +230,6 @@ export function useChatGeneration({
         setMessages(prev => prev.slice(0, -1));
         return;
       }
-      log(accumulated);
       await persist({
         role: 'assistant',
         content: accumulated,
@@ -232,7 +250,10 @@ export function useChatGeneration({
         return;
       }
 
-      setMessages(prev => [...prev, { role: 'system', content }]);
+      setMessages(prev => [
+        ...prev,
+        { uid: nextUid(), role: 'system', content },
+      ]);
     };
 
     try {

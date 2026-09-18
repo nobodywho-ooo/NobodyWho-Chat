@@ -59,6 +59,28 @@ it('does not recurse when its own scroll keeps reporting sizes', () => {
   expect(view.result.current.canScrollToBottom).toBe(false);
 });
 
+// The replay is a frame away, so it can still be waiting when the screen closes
+// — and a scroll that keeps reporting sizes re-arms it every frame, so what is
+// left running is an unbounded loop against a list that no longer exists. (In
+// this suite it also used to land inside whatever test ran next, scrolling the
+// shared stub an extra time.)
+it('drops a pending replay when the screen goes away', async () => {
+  const view = renderFollowingList();
+  scrollReportingSizes(Number.POSITIVE_INFINITY);
+
+  act(() => mockListState.emitTotalSize(1200));
+  expect(mockScrollToOffset).toHaveBeenCalledTimes(1); // the replay is now armed
+
+  view.unmount();
+  mockScrollToOffset.mockClear();
+
+  await act(async () => {
+    await new Promise(resolve => requestAnimationFrame(resolve));
+  });
+
+  expect(mockScrollToOffset).not.toHaveBeenCalled();
+});
+
 it('replays the scroll it had to skip', async () => {
   renderFollowingList();
   scrollReportingSizes(1);

@@ -27,4 +27,5 @@ export type DisplayMessage = WithTextContent<Message> & {
   timeToFirstToken?: number;
   documentsPath?: string[];
   toolInvocations?: ToolInvocation[];
+  uid?: string;
 };

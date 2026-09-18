@@ -73,6 +73,25 @@ describe('filterModelsByDeviceMemory', () => {
 
     expect(result).toEqual(models);
   });
+
+  // react-native-device-info resolves to -1 rather than rejecting when the
+  // platform can't answer. Read as a size it makes every budget negative, so
+  // the whole catalogue filtered itself out and the Models screen came up empty
+  // with nothing to explain why.
+  test.each([-1, 0, NaN])(
+    'returns every model when total memory reads as %p',
+    async bytes => {
+      mockGetTotalMemory.mockResolvedValue(bytes);
+      const models = [
+        buildModel(1, { parts: [part('chat-model', 1)] }),
+        buildModel(2, { parts: [part('chat-model', 2)] }),
+      ];
+
+      const result = await filterModelsByDeviceMemory(models);
+
+      expect(result).toEqual(models);
+    },
+  );
 });
 
 describe('multimodalContextSize', () => {
@@ -118,4 +137,16 @@ describe('multimodalContextSize', () => {
       MULTIMODAL_CONTEXT_FALLBACK,
     );
   });
+
+  // The -1 sentinel is "unknown", not "a tiny device": it has to reach the same
+  // fallback a rejection does, rather than being budgeted with as a real size.
+  test.each([-1, 0, NaN])(
+    'falls back to the same size when total memory reads as %p',
+    async bytes => {
+      mockGetTotalMemory.mockResolvedValue(bytes);
+      expect(await multimodalContextSize(visionModel)).toBe(
+        MULTIMODAL_CONTEXT_FALLBACK,
+      );
+    },
+  );
 });

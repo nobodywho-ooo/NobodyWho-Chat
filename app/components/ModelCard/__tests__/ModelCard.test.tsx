@@ -78,16 +78,29 @@ test('renders correctly ModelCard when model is selected', () => {
   expect(tree).toMatchSnapshot();
 });
 
-test('shows a High CPU usage tag when the model size is above 2 GB', () => {
+const HEAVY_PROCESSING_LABEL = 'components.modelCard.heavyProcessing';
+
+test('shows a heavy processing tag when the model size is above 2 GB', () => {
   const bigModel: Model = { ...mockModel, sizeGB: 2.5 };
   const { getAllByText } = render(<ModelCard model={bigModel} />);
 
-  expect(getAllByText('High CPU usage')).toHaveLength(1);
+  expect(getAllByText(HEAVY_PROCESSING_LABEL)).toHaveLength(1);
 });
 
-test('does not show a High CPU usage tag when the model size is 2 GB or below', () => {
+test('does not show a heavy processing tag when the model size is 2 GB or below', () => {
   const smallModel: Model = { ...mockModel, sizeGB: 2 };
   const { queryByText } = render(<ModelCard model={smallModel} />);
 
-  expect(queryByText('High CPU usage')).toBeNull();
+  expect(queryByText(HEAVY_PROCESSING_LABEL)).toBeNull();
+});
+
+// The warning colour used to be picked by matching the English label, so it
+// went missing the moment the tag was translated. It rides on the variant now.
+test('marks the heavy processing tag as a warning rather than relying on its text', () => {
+  const bigModel: Model = { ...mockModel, sizeGB: 2.5 };
+  const { UNSAFE_getByProps } = render(<ModelCard model={bigModel} />);
+
+  expect(
+    UNSAFE_getByProps({ label: HEAVY_PROCESSING_LABEL }).props.variant,
+  ).toBe('warning');
 });
