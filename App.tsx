@@ -96,11 +96,7 @@ function AppContent() {
 
   return (
     <>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor="transparent"
-        translucent
-      />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <Sentry.NavigationContainer theme={navigationTheme}>
         <RootDrawerNavigator />
       </Sentry.NavigationContainer>

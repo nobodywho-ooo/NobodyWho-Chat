@@ -7,6 +7,14 @@ require Pod::Executable.execute_command('node', ['-p',
   )', __dir__]).strip
 
 platform :ios, '16.4'
+
+# Build React Native Core from source instead of the prebuilt Maven tarball
+# (RN 0.88 defaults this to 1). Expo SDK 58's CocoaPods integration expects the
+# prebuilt pod to ship `Headers/module.modulemap`, and RN 0.88.0-rc.0's tarball
+# does not, so every C target fails with "module map file ... not found".
+# Remove once Expo 58 and RN 0.88 ship stable and agree on the artifact layout.
+ENV['RCT_USE_PREBUILT_RNCORE'] = '0'
+
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']

@@ -157,8 +157,10 @@ const appendFile = async (
   try {
     for (let copied = 0; copied < length; copied += APPEND_SLICE_BYTES) {
       // readBytes returns the remainder when fewer than a full slice are left.
-      writer.writeBytes(reader.readBytes(APPEND_SLICE_BYTES));
-      await Promise.resolve();
+      // Both are async as of expo-file-system 58 (the blocking forms are now
+      // readBytesSync/writeBytesSync), so awaiting them does the yielding an
+      // explicit `await Promise.resolve()` used to provide.
+      await writer.writeBytes(await reader.readBytes(APPEND_SLICE_BYTES));
     }
   } finally {
     reader.close();

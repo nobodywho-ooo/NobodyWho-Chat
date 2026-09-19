@@ -145,7 +145,19 @@ export function useVoiceOrbPicture({
     // preset (never the voice-blend mode), so every field is zero: the modes we
     // drive read only yaw/pitch/roll, and amp/from/to/mix are voice-mode only.
     // Omitting it makes `buildWave` read `dyn.yaw` off `undefined` and throw.
-    const dyn = { amp: 0, from: 0, to: 0, mix: 0, yaw: 0, pitch: 0, roll: 0 };
+    // 0.2.1 added `orient` (an explicit orientation matrix) and `rMul` (a
+    // radius multiplier); null and 1 are their neutral values.
+    const dyn = {
+      amp: 0,
+      from: 0,
+      to: 0,
+      mix: 0,
+      yaw: 0,
+      pitch: 0,
+      roll: 0,
+      orient: null,
+      rMul: 1,
+    };
     build(buf, orbSize, t, opts, staticData, dyn);
 
     // --- the voice pass, on the finished dot cloud ------------------------

@@ -1,8 +1,8 @@
 diff --git a/node_modules/expo-audio/ios/AudioModule.swift b/node_modules/expo-audio/ios/AudioModule.swift
-index d265606..733ec16 100644
+index bad776e..b6b2ee0 100644
 --- a/node_modules/expo-audio/ios/AudioModule.swift
 +++ b/node_modules/expo-audio/ios/AudioModule.swift
-@@ -814,11 +814,11 @@ public class AudioModule: Module {
+@@ -912,11 +912,11 @@ public class AudioModule: Module {
        sessionOptions = categoryOptions
      }
  
@@ -18,4 +18,4 @@ index d265606..733ec16 100644
 +    try session.setCategory(category, mode: .default, options: sessionOptions)
    }
  
-   private func activateSession() throws {
+   private func canStartPlayback() -> Bool {
