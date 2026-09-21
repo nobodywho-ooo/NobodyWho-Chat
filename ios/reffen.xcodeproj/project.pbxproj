@@ -228,9 +228,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-reffen/Pods-reffen-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-reffen/Pods-reffen-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -327,9 +331,13 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-reffen/Pods-reffen-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
+			inputPaths = (
+			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-reffen/Pods-reffen-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -360,7 +368,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "logo-nobodywho";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = reffen/reffen.entitlements;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = reffen/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "NobodyWho Chat";
@@ -394,7 +402,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = "logo-nobodywho";
 				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_ENTITLEMENTS = reffen/reffen.entitlements;
-				CURRENT_PROJECT_VERSION = 12;
+				CURRENT_PROJECT_VERSION = 13;
 				INFOPLIST_FILE = reffen/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "NobodyWho Chat";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
