@@ -19,16 +19,12 @@ import { Spacings } from 'style';
 
 import type { VoiceLevels } from '../hooks';
 
-/** The glow's canvas, as a fraction of the window's height. It rests in the
- * lower half; the rest is headroom for the voice to push into. */
 const HEIGHT_RATIO = 0.5;
 
-/** The drawer's corner radius (RootDrawerNavigator) — the drawer doesn't clip
- * what's drawn in it, so the glow clips itself to the same curve. */
+// The drawer's corner radius (RootDrawerNavigator) since the drawer doesn't clip what's drawn in it
 const CORNER_RADIUS = Spacings.xxxl;
 
-// Same delta clamp as the level smoothing — a hitch advances the drift, not
-// jumps it.
+// Same delta clamp as the level smoothing — a hitch advances the drift, not jumps it
 const MAX_DT_MS = 100;
 
 // Drift tempo, in phase units per second: lazy in silence, livelier while sound
@@ -50,37 +46,30 @@ const FALLOFF: ReadonlyArray<readonly [position: number, alpha: number]> = [
 
 type Tone = 'body' | 'haze' | 'core';
 
+/** x,y: centre, as fractions of the width and of the height above the bottom. */
+/** rx,ry: radii, as fractions of the width and the height. */
+/** rest,peak: opacity in silence, and with its band wide open. */
+/** driftX,driftY: drift amplitude, as fractions of the width and the height. */
+/** speed,offset: drift speed (radians per phase unit) and offset, so none move in step. */
+/** lift: rise at full drive, as a fraction of the height. */
+/** swell: vertical swell at full drive (it widens by 40% of that). */
 interface Blob {
   tone: Tone;
-  /** Centre, as fractions of the width and of the height above the bottom. */
   x: number;
   y: number;
-  /** Radii, as fractions of the width and the height. */
   rx: number;
   ry: number;
-  /** Opacity in silence, and with its band wide open. */
   rest: number;
   peak: number;
-  /** Drift amplitude, as fractions of the width and the height. */
   driftX: number;
   driftY: number;
-  /** Drift speed (radians per phase unit) and offset, so none move in step. */
   speed: number;
   offset: number;
-  /** The band that drives it: vowels (low), sibilance (high), or both. */
   band: 'level' | 'low' | 'high';
-  /** Rise at full drive, as a fraction of the height. */
   lift: number;
-  /** Vertical swell at full drive (it widens by 40% of that). */
   swell: number;
 }
 
-// Back to front. The body is the wash along the edge, swelling on vowels; the
-// two lobes give it an uneven silhouette, deeper on the left and hazier on the
-// right; the core is the deeper blue that only shows while someone talks; the
-// sheen is a pale highlight that sibilance flickers. Each blob's furthest reach
-// (lifted, swollen, drifted) stays under the canvas top, which would otherwise
-// cut it off in a straight line.
 const BLOBS: ReadonlyArray<Blob> = [
   {
     tone: 'body',
@@ -176,8 +165,7 @@ interface GlowBlobProps {
   height: number;
   phase: SharedValue<number>;
   levels: VoiceLevels;
-  /** 1 normally, 0 with reduced motion: the blob then only brightens. */
-  motion: number;
+  motion: number; /** 1 normally, 0 with reduced motion: the blob then only brightens. */
 }
 
 const GlowBlob: React.FC<GlowBlobProps> = ({

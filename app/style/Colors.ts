@@ -28,11 +28,8 @@ export type NWColors = {
   shadow: string;
   tabBarActive: string;
   tabBarInactive: string;
-  /** Voice assistant glow: the wash along the bottom edge. */
   voiceGlowBody: string;
-  /** Voice assistant glow: the pale haze drifting over it. */
   voiceGlowHaze: string;
-  /** Voice assistant glow: the deeper blue the voice lights up. */
   voiceGlowCore: string;
 };
 

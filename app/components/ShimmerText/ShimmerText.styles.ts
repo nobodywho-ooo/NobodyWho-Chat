@@ -5,6 +5,9 @@ export default StyleSheet.create({
     // Lets a long single line ellipsize instead of overflowing its row.
     flexShrink: 1,
   },
+  text: {
+    fontWeight: '600',
+  },
   veilContainer: {
     ...StyleSheet.absoluteFill,
     overflow: 'hidden',

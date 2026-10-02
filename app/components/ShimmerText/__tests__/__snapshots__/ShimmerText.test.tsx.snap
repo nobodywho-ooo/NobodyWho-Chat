@@ -4,25 +4,24 @@ exports[`renders correctly ShimmerText 1`] = `
 <View
   onLayout={[Function]}
   style={
-    [
-      {
-        "flexShrink": 1,
-      },
-      false,
-    ]
+    {
+      "flexShrink": 1,
+    }
   }
 >
   <Text
     numberOfLines={1}
     style={
-      {
-        "color": "#000000",
-        "fontFamily": undefined,
-        "fontSize": 14,
-        "fontWeight": "600",
-        "lineHeight": 19,
-        "textAlign": "left",
-      }
+      [
+        {
+          "fontWeight": "600",
+        },
+        {
+          "color": "#000000",
+          "fontSize": 14,
+          "lineHeight": 19,
+        },
+      ]
     }
   >
     Thinking…

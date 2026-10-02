@@ -1,15 +1,7 @@
-// Just enough colour maths for the effects that blend theme colours on the fly
-// (ShimmerText's veil, the voice glow's gradients): parse the formats the
-// palette uses — hex and rgb()/rgba() — and write them back out with an alpha.
-
 export interface Rgba {
-  /** 0–255. */
   r: number;
-  /** 0–255. */
   g: number;
-  /** 0–255. */
   b: number;
-  /** 0–1. */
   a: number;
 }
 
@@ -17,10 +9,6 @@ const HEX_PATTERN = /^#([\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i;
 const RGB_PATTERN =
   /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)\s*(?:,\s*([\d.]+)\s*)?\)$/i;
 
-/**
- * Parse `#rgb`, `#rgba`, `#rrggbb`, `#rrggbbaa`, `rgb()` or `rgba()`. Returns
- * null for anything else (named colours, PlatformColor…).
- */
 export const parseColor = (color: string): Rgba | null => {
   const value = color.trim();
 
@@ -53,10 +41,6 @@ export const parseColor = (color: string): Rgba | null => {
   return null;
 };
 
-/**
- * `color` as an `rgba()` string at `alpha` times its own opacity. Colours that
- * can't be parsed are returned unchanged.
- */
 export const withAlpha = (color: string, alpha: number): string => {
   const rgba = parseColor(color);
   if (!rgba) {
