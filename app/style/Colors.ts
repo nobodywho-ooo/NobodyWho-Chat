@@ -28,6 +28,9 @@ export type NWColors = {
   shadow: string;
   tabBarActive: string;
   tabBarInactive: string;
+  voiceGlowBody: string;
+  voiceGlowHaze: string;
+  voiceGlowCore: string;
 };
 
 export const lightColors: NWColors = {
@@ -58,6 +61,9 @@ export const lightColors: NWColors = {
   shadow: 'rgba(44, 44, 44, 0.24)',
   tabBarActive: '#628395',
   tabBarInactive: '#828282',
+  voiceGlowBody: '#A8C5E2',
+  voiceGlowHaze: '#D5E2EE',
+  voiceGlowCore: '#7FA6D1',
 };
 
 export const darkColors: NWColors = {
@@ -88,6 +94,9 @@ export const darkColors: NWColors = {
   shadow: 'rgba(43, 43, 43, 0.48)',
   tabBarActive: '#628395',
   tabBarInactive: '#9e9e9e',
+  voiceGlowBody: '#2E4F6B',
+  voiceGlowHaze: '#45667F',
+  voiceGlowCore: '#5B8CBA',
 };
 
 export const getColors = (theme: Theme): NWColors => {

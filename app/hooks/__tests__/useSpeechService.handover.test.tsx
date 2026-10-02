@@ -102,7 +102,7 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
   <AiServiceProvider>{children}</AiServiceProvider>
 );
 
-const orb = {
+const voiceLevels = {
   levels: {} as never,
   feedPcm: jest.fn(),
   listen: jest.fn(),
@@ -134,7 +134,7 @@ const renderBothFeatures = async () => {
   const { result } = renderHook(
     () => ({
       // Mounted first, like the drawer content it is.
-      voice: useVoiceConversation({ orb, active: true }),
+      voice: useVoiceConversation({ voiceLevels, active: true }),
       dictation: useSttTranscription({ onTranscribed: jest.fn() }),
       service: useAiService(),
     }),

@@ -32,7 +32,7 @@ import {
   VAD_SAMPLE_RATE,
 } from 'services';
 
-import { OrbLevelsController } from './useOrbLevels';
+import { VoiceLevelsController } from './useVoiceLevels';
 
 // Whisper works at 16 kHz; the engine resamples internally, so requesting the
 // target rate up front just keeps captured buffers small. Mirrors
@@ -69,8 +69,8 @@ export interface VoiceConversation {
 }
 
 interface UseVoiceConversationOptions {
-  /** The orb drivers to feed from the mic and the answer playback. */
-  orb: OrbLevelsController;
+  /** The glow's drivers, to feed from the mic and the answer playback. */
+  voiceLevels: VoiceLevelsController;
   /** Whether the screen is on-stage (drawer open); false stops everything. */
   active: boolean;
   /** Called when microphone permission is refused, so the screen can prompt. */
@@ -81,14 +81,14 @@ interface UseVoiceConversationOptions {
  * Runs one hands-free turn end to end — capture the question on the microphone
  * until the voice detection model hears the user stop talking, transcribe it
  * with the loaded STT model, answer it with the loaded chat model, and speak the
- * answer with the loaded TTS model — driving the orb through each phase. Reuses
- * the shared chat instance (so the assistant keeps the current conversation's
- * context) and persists each completed turn to that conversation — creating one
- * if this is the first turn — so it also shows up in the chat screen (see
- * notifyConversationSync).
+ * answer with the loaded TTS model — driving the glow through each phase.
+ * Reuses the shared chat instance (so the assistant keeps the current
+ * conversation's context) and persists each completed turn to that
+ * conversation — creating one if this is the first turn — so it also shows up
+ * in the chat screen (see notifyConversationSync).
  */
 export const useVoiceConversation = ({
-  orb,
+  voiceLevels,
   active,
   onPermissionDenied,
 }: UseVoiceConversationOptions): VoiceConversation => {
@@ -210,8 +210,8 @@ export const useVoiceConversation = ({
       const chunk = new Int16Array(buffer.data).slice();
       chunksRef.current.push(chunk);
       sampleRateRef.current = buffer.sampleRate;
-      // Feed the same window to the orb so it swells with the user's voice.
-      orb.feedPcm(chunk, buffer.sampleRate);
+      // Feed the same window to the glow so it swells with the user's voice.
+      voiceLevels.feedPcm(chunk, buffer.sampleRate);
 
       // With a voice detection model loaded, the user falling silent ends the
       // question and answering starts straight away — no second tap. Every
@@ -225,7 +225,7 @@ export const useVoiceConversation = ({
         stopAndAnswerRef.current();
       }
     },
-    [orb, speechService],
+    [voiceLevels, speechService],
   );
 
   const { stream } = useAudioStream({
@@ -545,17 +545,17 @@ export const useVoiceConversation = ({
       return;
     }
 
-    // 4. Play it, driving the orb from the answer's own loudness envelope.
+    // 4. Play it, driving the glow from the answer's own loudness envelope.
     try {
       const file = new File(Paths.cache, PLAYBACK_FILE);
       file.write(wav);
       player.replace({ uri: file.uri });
-      orb.speak(wavToEnvelope(wav));
+      voiceLevels.speak(wavToEnvelope(wav));
       setStatus('speaking');
       player.play();
     } catch (error) {
       log('useVoiceConversation play', error, { capture: true });
-      orb.rest();
+      voiceLevels.rest();
       setStatus(isCurrent() ? 'error' : 'idle');
     }
   }, [
@@ -565,7 +565,7 @@ export const useVoiceConversation = ({
     borrowTts,
     ttsArchitecture,
     drainCapture,
-    orb,
+    voiceLevels,
     player,
     persistTurn,
   ]);
@@ -616,7 +616,7 @@ export const useVoiceConversation = ({
         return;
       }
 
-      orb.listen();
+      voiceLevels.listen();
       listeningRef.current = true;
       armRecordingCap();
 
@@ -624,7 +624,7 @@ export const useVoiceConversation = ({
     } catch (error) {
       log('useVoiceConversation start', error);
       await releaseRecordingMode();
-      orb.rest();
+      voiceLevels.rest();
 
       setStatus('error');
     } finally {
@@ -634,7 +634,7 @@ export const useVoiceConversation = ({
     isReady,
     onPermissionDenied,
     stream,
-    orb,
+    voiceLevels,
     releaseRecordingMode,
     speechService,
     armRecordingCap,
@@ -656,12 +656,12 @@ export const useVoiceConversation = ({
       }
 
       await releaseRecordingMode();
-      orb.rest();
+      voiceLevels.rest();
       await runTurn();
     } finally {
       busyRef.current = false;
     }
-  }, [stream, releaseRecordingMode, orb, runTurn, clearRecordingCap]);
+  }, [stream, releaseRecordingMode, voiceLevels, runTurn, clearRecordingCap]);
 
   // Republish the latest stopAndAnswer for the auto-stop above. Assigning during
   // render (rather than in an effect) keeps it current even if a buffer arrives
@@ -695,9 +695,15 @@ export const useVoiceConversation = ({
     } catch (error) {
       log('useVoiceConversation pause', error);
     }
-    orb.rest();
+    voiceLevels.rest();
     setStatus('idle');
-  }, [stopOwnGeneration, player, orb, speechService, clearRecordingCap]);
+  }, [
+    stopOwnGeneration,
+    player,
+    voiceLevels,
+    speechService,
+    clearRecordingCap,
+  ]);
 
   const toggle = useCallback(() => {
     if (!isReady) {
@@ -723,17 +729,17 @@ export const useVoiceConversation = ({
     }
   }, [isReady, status, startListening, stopAndAnswer, abort]);
 
-  // Playback finished on its own → settle the orb and return to idle.
+  // Playback finished on its own → settle the glow and return to idle.
   useEffect(() => {
     if (playerStatus.didJustFinish) {
-      orb.rest();
+      voiceLevels.rest();
       setStatus(current => (current === 'speaking' ? 'idle' : current));
     }
-  }, [playerStatus.didJustFinish, orb]);
+  }, [playerStatus.didJustFinish, voiceLevels]);
 
   // Stop everything when the screen leaves the stage or a required model is torn
   // down (model switch, backgrounding). Leaves the mic and player released and
-  // the orb at rest, so reopening the screen starts clean.
+  // the glow at rest, so reopening the screen starts clean.
   const stopAll = useCallback(() => {
     turnRef.current += 1;
     listeningRef.current = false;
@@ -756,7 +762,7 @@ export const useVoiceConversation = ({
     speechService.reset();
     speechService.release();
     releaseRecordingMode();
-    orb.rest();
+    voiceLevels.rest();
     setStatus(current => (current === 'transcribing' ? current : 'idle'));
     setHasAnswered(false);
   }, [
@@ -764,7 +770,7 @@ export const useVoiceConversation = ({
     stream,
     player,
     releaseRecordingMode,
-    orb,
+    voiceLevels,
     speechService,
     clearRecordingCap,
   ]);

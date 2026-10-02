@@ -6,6 +6,7 @@ import { buildModel } from 'jest/factories/model';
 import { mockUseSlotModel } from 'jest/mock/hooks';
 import { ModelPipeline } from 'types';
 
+import { VoiceGlow } from '../components';
 import type { VoiceStatus } from '../hooks';
 import { VoiceAssistantScreen } from '../VoiceAssistantScreen';
 
@@ -20,8 +21,8 @@ jest.mock('../hooks', () => {
   const level = { value: 0 };
   return {
     ...actual,
-    useOrbLevels: () => ({
-      levels: { level, low: level, mid: level, high: level },
+    useVoiceLevels: () => ({
+      levels: { level, low: level, high: level, active: level },
       feedPcm: jest.fn(),
       listen: jest.fn(),
       speak: jest.fn(),
@@ -137,21 +138,24 @@ test('offers no preferences button once the assistant has answered', () => {
   expect(screen.getByText('screens.voiceAssistant.status.idle')).toBeTruthy();
 });
 
-test('opening the preferences replaces the orb body', () => {
+test('opening the preferences replaces the voice body', () => {
   const { screen } = renderAt('idle');
+  expect(screen.UNSAFE_queryByType(VoiceGlow)).toBeTruthy();
 
   fireEvent.press(screen.getByLabelText('screens.voiceAssistant.preferences'));
 
   expect(screen.getByText('screens.customizeAssistant.language')).toBeTruthy();
   expect(screen.queryByText('screens.voiceAssistant.status.idle')).toBeNull();
   expect(screen.queryByLabelText('screens.voiceAssistant.start')).toBeNull();
+  // The glow goes too, rather than shining through the settings.
+  expect(screen.UNSAFE_queryByType(VoiceGlow)).toBeNull();
   // Nothing left to configure from here, so the button goes with the panel.
   expect(
     screen.queryByLabelText('screens.voiceAssistant.preferences'),
   ).toBeNull();
 });
 
-test('the close button steps back to the orb instead of closing the drawer', () => {
+test('the close button steps back to the voice body instead of closing the drawer', () => {
   const { screen, onCloseDrawer } = renderAt('idle');
 
   fireEvent.press(screen.getByLabelText('screens.voiceAssistant.preferences'));
@@ -161,7 +165,7 @@ test('the close button steps back to the orb instead of closing the drawer', () 
   expect(screen.getByText('screens.voiceAssistant.status.idle')).toBeTruthy();
   expect(screen.queryByText('screens.customizeAssistant.language')).toBeNull();
 
-  // Back on the orb, it closes the drawer again.
+  // Back on the voice body, it closes the drawer again.
   fireEvent.press(screen.getByLabelText('screens.voiceAssistant.close'));
   expect(onCloseDrawer).toHaveBeenCalledTimes(1);
 });

@@ -4,7 +4,6 @@ import {
   Alert,
   Pressable,
   ScrollView,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -16,7 +15,6 @@ import {
   Text,
   TextToSpeechPreferences,
 } from 'components';
-import { useTheme } from 'context';
 import {
   AssistantConfig,
   DEFAULT_ASSISTANT_CONFIG,
@@ -26,8 +24,12 @@ import {
 import { useAppState, useStyled } from 'hooks';
 import { haptics } from 'helpers';
 
-import { VoiceOrb, VoiceSetup } from './components';
-import { useOrbLevels, useVoiceConversation, type VoiceStatus } from './hooks';
+import { VoiceGlow, VoiceSetup } from './components';
+import {
+  useVoiceConversation,
+  useVoiceLevels,
+  type VoiceStatus,
+} from './hooks';
 
 import styles from './VoiceAssistantScreen.styles';
 
@@ -48,10 +50,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const { width } = useWindowDimensions();
-  const theme = useTheme();
 
-  const orbSize = Math.min(width * 0.7, 300);
   const isDrawerOpen = useDrawerStatus() === 'open';
 
   const [showPreferences, setShowPreferences] = useState(false);
@@ -68,10 +67,10 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
     });
   }, []);
 
-  const orb = useOrbLevels({ active: isDrawerOpen });
+  const voiceLevels = useVoiceLevels({ active: isDrawerOpen });
   const { status, voiceAssistantStatus, isBusy, hasAnswered, toggle } =
     useVoiceConversation({
-      orb,
+      voiceLevels,
       active: isDrawerOpen,
       onPermissionDenied: () =>
         Alert.alert(
@@ -107,6 +106,13 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
 
   return (
     <View style={styles.container}>
+      {!showPreferences && (
+        <VoiceGlow
+          levels={voiceLevels.levels}
+          paused={!isReady || !isDrawerOpen}
+        />
+      )}
+
       <View style={styles.headerContainer}>
         <IconButton
           icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
@@ -148,17 +154,6 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
       ) : (
         <>
           <View style={styles.bodyContainer}>
-            <VoiceOrb
-              levels={orb.levels}
-              size={orbSize}
-              color={colors.primary}
-              dark={theme === 'dark'}
-              // Also paused while the drawer is shut: this screen is always
-              // mounted, and an unpaused orb rebuilds and re-records its whole
-              // Skia picture every frame, off screen, for as long as the app runs.
-              paused={!isReady || !isDrawerOpen}
-            />
-
             {isReady ? (
               <View style={styles.captionsContainer}>
                 <Text variant="body1" bold style={styles.statusText}>
@@ -174,7 +169,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
             <View style={styles.actionContainer}>
               {isProcessing ? (
                 <View style={styles.buttonContainer}>
-                  <ActivityIndicator size="large" color={colors.primary} />
+                  <ActivityIndicator size="large" />
                 </View>
               ) : (
                 <Pressable

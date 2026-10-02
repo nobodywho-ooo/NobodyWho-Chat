@@ -1,145 +1,156 @@
-import React, { useMemo } from 'react';
-import { useDerivedValue } from 'react-native-reanimated';
-import {
-  Canvas,
-  LinearGradient,
-  Text as SkiaText,
-  matchFont,
-  useClock,
-  vec,
-  type SkFont,
-} from '@shopify/react-native-skia';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Text, View, type LayoutChangeEvent } from 'react-native';
+import Animated, {
+  Easing,
+  cancelAnimation,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+} from 'react-native-reanimated';
+import LinearGradient from 'react-native-linear-gradient';
+import { parseColor, withAlpha } from 'helpers';
 import { useStyled } from 'hooks';
 
-type FontWeight = '400' | '500' | '600' | '700' | '800';
+import styles from './ShimmerText.styles';
 
 interface ShimmerTextProps {
   text: string;
-  width?: number; /** Available width to wrap within (px). Defaults to the measured text width. */
   fontSize?: number;
-  fontWeight?: FontWeight;
-  fontFamily?: string;
-  baseColor?: string;
-  highlightColor?: string;
-  periodMs?: number;
-  maxLines?: number;
-  align?: 'left' | 'center';
 }
 
 const LINE_HEIGHT_RATIO = 1.3;
-const BASELINE_RATIO = 1.02;
-const GLYPH_WIDTH_RATIO = 0.55;
+const MIN_BAND_WIDTH = 60;
+const PERIOD_MS = 1500;
 
-/**
- * Skia's tight glyph bounds leave no room for the trailing side bearing, so an
- * intrinsically sized canvas gets a quarter-em of slack to avoid clipping.
- */
-const measureIntrinsicWidth = (font: SkFont, text: string, fontSize: number) =>
-  Math.ceil(
-    Math.max(
-      font.measureText(text).width + fontSize / 4,
-      text.length * fontSize * GLYPH_WIDTH_RATIO,
-    ),
-  );
+const GRADIENT_START = { x: 0, y: 0 };
+const GRADIENT_END = { x: 1, y: 0 };
 
-function wrapText(
-  text: string,
-  font: SkFont,
-  maxWidth: number,
-  maxLines: number,
-): string[] {
-  const words = text.split(/\s+/).filter(Boolean);
-  const lines: string[] = [];
-  let cur = '';
+// How opaque a veil of `backdrop` has to be to turn `highlight` into `base`
+const veilOpacity = (
+  highlight: string,
+  base: string,
+  backdrop: string,
+): number | null => {
+  const h = parseColor(highlight);
+  const b = parseColor(base);
+  const d = parseColor(backdrop);
 
-  for (const word of words) {
-    const candidate = cur === '' ? word : `${cur} ${word}`;
-    if (cur === '' || font.measureText(candidate).width <= maxWidth) {
-      cur = candidate;
-    } else {
-      lines.push(cur);
-      cur = word;
-      if (lines.length === maxLines) {
-        cur = '';
-        break;
-      }
-    }
-  }
-  if (cur !== '' && lines.length < maxLines) {
-    lines.push(cur);
+  if (!h || !b || !d) {
+    return null;
   }
 
-  if (lines.length === maxLines && cur === '' && lines[maxLines - 1] != null) {
-    let last = lines[maxLines - 1];
-    while (last.length > 0 && font.measureText(`${last}…`).width > maxWidth) {
-      last = last.slice(0, -1).trimEnd();
-    }
-    lines[maxLines - 1] = `${last}…`;
+  let numerator = 0;
+  let denominator = 0;
+
+  for (const channel of ['r', 'g', 'b'] as const) {
+    const towardsBackdrop = d[channel] - h[channel];
+    numerator += (b[channel] - h[channel]) * towardsBackdrop;
+    denominator += towardsBackdrop * towardsBackdrop;
   }
-  return lines.length > 0 ? lines : [''];
-}
+
+  if (denominator === 0) {
+    return null;
+  }
+
+  return Math.min(1, Math.max(0, numerator / denominator));
+};
 
 export const ShimmerText: React.FC<ShimmerTextProps> = ({
   text,
-  width,
   fontSize = 14,
-  fontWeight = '600',
-  fontFamily = 'sans-serif',
-  baseColor,
-  highlightColor,
-  periodMs = 1500,
-  maxLines = 3,
-  align = 'left',
 }) => {
   const { colors } = useStyled();
-  const base = baseColor ?? colors.onSurfaceVariant;
-  const highlight = highlightColor ?? colors.onSurface;
+  const base = colors.onSurfaceVariant;
+  const highlight = colors.onSurface;
+  const backdrop = colors.surface;
+  const reducedMotion = useReducedMotion();
 
-  const font = useMemo(
-    () => matchFont({ fontFamily, fontSize, fontWeight }),
-    [fontFamily, fontSize, fontWeight],
-  );
+  // The box shrinks to the text, so how far the band has to travel is only known once it has been laid out.
+  const [width, setWidth] = useState(0);
 
-  const { lines, canvasWidth, lineHeight, baseline, height } = useMemo(() => {
-    const computedLineHeight = Math.ceil(fontSize * LINE_HEIGHT_RATIO);
-    const resolvedWidth = width ?? measureIntrinsicWidth(font, text, fontSize);
-    const wrapped =
-      width === undefined ? [text] : wrapText(text, font, width, maxLines);
-    return {
-      lines: wrapped,
-      canvasWidth: resolvedWidth,
-      lineHeight: computedLineHeight,
-      baseline: Math.round(fontSize * BASELINE_RATIO),
-      height: wrapped.length * computedLineHeight,
-    };
-  }, [font, text, width, fontSize, maxLines]);
+  const veil = useMemo(() => {
+    const opacity = veilOpacity(highlight, base, backdrop);
+    return opacity === null
+      ? null
+      : { color: withAlpha(backdrop, opacity), clear: withAlpha(backdrop, 0) };
+  }, [highlight, base, backdrop]);
 
-  const band = Math.max(60, canvasWidth * 0.5);
-  const travel = canvasWidth + band * 2;
-  const clock = useClock();
-  const startX = useDerivedValue(
-    () => -band + ((clock.value % periodMs) / periodMs) * travel,
-  );
-  const gradientStart = useDerivedValue(() => vec(startX.value, 0));
-  const gradientEnd = useDerivedValue(() => vec(startX.value + band, 0));
+  // Until there is a box to sweep — or for good with reduced motion — the text
+  // is simply drawn in the base colour, so it never flashes the highlight.
+  const isSweeping = veil !== null && width > 0 && !reducedMotion;
+
+  const band = Math.max(MIN_BAND_WIDTH, width * 0.5);
+  const travel = width + band * 2;
+
+  const solid = width + band;
+  const stripWidth = solid * 2 + band;
+
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    if (!isSweeping) {
+      return;
+    }
+    progress.value = 0;
+    progress.value = withRepeat(
+      withTiming(1, { duration: PERIOD_MS, easing: Easing.linear }),
+      -1,
+    );
+    return () => cancelAnimation(progress);
+  }, [isSweeping, progress]);
+
+  // At 0 the band sits just left of the text; at 1 it has crossed and cleared it.
+  const sweepStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: (progress.value - 1) * travel }],
+  }));
+
+  const onLayout = (event: LayoutChangeEvent) =>
+    setWidth(event.nativeEvent.layout.width);
 
   return (
-    <Canvas style={{ width: canvasWidth, height }}>
-      {lines.map((line, i) => {
-        const lineWidth = font.measureText(line).width;
-        const x = align === 'left' ? 0 : (canvasWidth - lineWidth) / 2;
-        const y = baseline + i * lineHeight;
-        return (
-          <SkiaText key={`${i}:${line}`} x={x} y={y} text={line} font={font}>
+    <View style={styles.container} onLayout={onLayout}>
+      <Text
+        numberOfLines={1}
+        style={[
+          styles.text,
+          {
+            color: isSweeping ? highlight : base,
+            fontSize,
+            lineHeight: Math.ceil(fontSize * LINE_HEIGHT_RATIO),
+          },
+        ]}
+      >
+        {text}
+      </Text>
+      {isSweeping && (
+        <View pointerEvents="none" style={styles.veilContainer}>
+          <Animated.View
+            style={[styles.stripContainer, { width: stripWidth }, sweepStyle]}
+          >
             <LinearGradient
-              start={gradientStart}
-              end={gradientEnd}
-              colors={[base, highlight, base]}
-              positions={[0, 0.5, 1]}
+              style={styles.gradientContainer}
+              start={GRADIENT_START}
+              end={GRADIENT_END}
+              colors={[
+                veil.color,
+                veil.color,
+                veil.clear,
+                veil.color,
+                veil.color,
+              ]}
+              locations={[
+                0,
+                solid / stripWidth,
+                (solid + band / 2) / stripWidth,
+                (solid + band) / stripWidth,
+                1,
+              ]}
             />
-          </SkiaText>
-        );
-      })}
-    </Canvas>
+          </Animated.View>
+        </View>
+      )}
+    </View>
   );
 };

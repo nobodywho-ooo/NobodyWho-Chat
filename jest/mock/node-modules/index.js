@@ -251,73 +251,20 @@ jest.mock('react-native-reanimated', () => {
     useSharedValue: initial => ({ value: initial }),
     useAnimatedStyle: () => ({}),
     withTiming: value => value,
+    withRepeat: animation => animation,
+    cancelAnimation: () => {},
+    Easing: { linear: t => t },
     interpolate: value => value,
     interpolateColor: (_value, _input, output) =>
       Array.isArray(output) ? output[0] : output,
     runOnJS: fn => fn,
-    // Voice-orb drivers: no worklet runtime under Jest, so the frame loop is a
-    // no-op handle and the derived picture is inert (Skia's Picture is mocked).
+    // Voice glow and ShimmerText: no worklet runtime under Jest, so the frame
+    // loop is a no-op handle. Reduced motion is a jest.fn so a test can turn it
+    // on.
     useFrameCallback: () => ({ setActive: jest.fn() }),
-    useDerivedValue: () => ({ value: null }),
-    useReducedMotion: () => false,
+    useReducedMotion: jest.fn(() => false),
   };
 });
-
-// The voice orb and ShimmerText render through Skia; under Jest there's no
-// native canvas, so Canvas passes children through, Picture renders nothing and
-// the text primitives render as host elements tests can assert on. matchFont
-// returns a fake font whose metrics/measurements are derived from the font size,
-// so layout maths stay deterministic.
-jest.mock('@shopify/react-native-skia', () => {
-  const mockReact = require('react');
-  return {
-    Canvas: ({ children }) =>
-      mockReact.createElement(mockReact.Fragment, null, children),
-    Picture: () => null,
-    // x/y are the glyph origin, so tests can assert the laid-out geometry.
-    Text: ({ text, x, y, children }) =>
-      mockReact.createElement('SkiaText', { text, x, y }, children),
-    LinearGradient: props =>
-      mockReact.createElement('SkiaLinearGradient', props),
-    matchFont: ({ fontSize = 14 } = {}) => ({
-      // Zeroed on purpose: this is what Skia hands back on the first frame,
-      // before the typeface resolves. Anything laying itself out from these
-      // would collapse and then jump, so nothing may depend on them.
-      getMetrics: () => ({ ascent: 0, descent: 0 }),
-      // Roughly half an em per character, enough for wrapping assertions.
-      measureText: text => ({
-        x: 0,
-        y: 0,
-        width: text.length * fontSize * 0.5,
-        height: fontSize,
-      }),
-    }),
-    useClock: () => ({ value: 0 }),
-    vec: (x, y) => ({ x, y }),
-  };
-});
-
-// expo-thinking-orbs' engine is a pure-JS render loop that only runs inside the
-// reanimated worklet (mocked to never invoke it). Stub the power-user surface
-// useVoiceOrbPicture reads at hook-setup time so the screen mounts.
-jest.mock('expo-thinking-orbs', () => ({
-  MODES: new Proxy(
-    {},
-    { get: () => ({ build: () => {}, precompute: () => ({ dotCount: 0 }) }) },
-  ),
-  acquireDotBuffer: () => ({
-    count: 0,
-    xs: [],
-    ys: [],
-    rs: [],
-    ws: [],
-    as: [],
-  }),
-  buildColorLUT: () => [],
-  pickDesignSize: () => 64,
-  recordPicture: () => null,
-  resolvePreset: () => ({ mode: 'wave', speed: 1, opts: { rMin: 0.3 } }),
-}));
 
 // react-native-worklets ships ESM that Jest can't load, and its native worklet
 // runtime is absent. FullScreenImageModal only uses scheduleOnRN to hop a

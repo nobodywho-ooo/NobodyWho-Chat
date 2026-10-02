@@ -1,19 +1,19 @@
 import { findChunk, tagAt } from './wav';
 
-// Turns raw audio into the 0–1 loudness drivers that animate the voice orb.
+// Turns raw audio into the 0–1 loudness drivers that animate the voice glow.
 //
-// Two sources feed the orb (see useOrbLevels):
+// Two sources feed the glow (see useVoiceLevels):
 //   • the microphone, while the user is talking — analysed live, one call per
 //     captured PCM window (micBands);
 //   • the synthesized answer, while it plays back — analysed once up front into
-//     a time-indexed envelope the render loop samples by playback position
+//     a time-indexed envelope the level loop samples by playback position
 //     (wavToEnvelope), since expo-audio surfaces no per-frame metering.
 //
-// The band split and normalisation mirror the reference orb's useVoiceLevels so
-// both sources read on the orb the same way a human voice does.
+// The band split and normalisation are shared, so both sources read on the glow
+// the same way a human voice does.
 
 /** Loudness window in dBFS: at/below FLOOR reads as silence, at/above CEIL the
- * orb is wide open. Normal phone-mic talking distance sits near −30 dBFS. */
+ * glow is wide open. Normal phone-mic talking distance sits near −30 dBFS. */
 const FLOOR_DB = -62;
 const CEIL_DB = -14;
 
@@ -37,7 +37,7 @@ export interface AudioBands {
 export interface AudioEnvelope {
   /** Broadband loudness per hop, 0–1. */
   level: number[];
-  /** High-band (sibilance) energy per hop, 0–1 — drives the orb's ripple. */
+  /** High-band (sibilance) energy per hop, 0–1 — drives the glow's haze. */
   high: number[];
   /** Milliseconds between successive entries. */
   hopMs: number;
@@ -121,7 +121,7 @@ interface DecodedWav {
 }
 
 // Decode a WAV (PCM int16, or IEEE float32) to a mono −1..1 stream. Returns null
-// on anything it doesn't recognise, so callers can degrade to a silent orb
+// on anything it doesn't recognise, so callers can degrade to a silent glow
 // rather than throw mid-playback.
 const decodeWav = (wav: Uint8Array): DecodedWav | null => {
   if (wav.length < 44 || tagAt(wav, 0) !== 'RIFF' || tagAt(wav, 8) !== 'WAVE') {
@@ -169,13 +169,13 @@ const decodeWav = (wav: Uint8Array): DecodedWav | null => {
 };
 
 /** Milliseconds per envelope hop — coarse enough to keep the array small, fine
- * enough that the orb's attack/release smoothing reads as continuous. */
+ * enough that the glow's attack/release smoothing reads as continuous. */
 const ENVELOPE_HOP_MS = 30;
 
 /**
- * Pre-analyse a synthesized WAV into a time-indexed loudness envelope the orb's
- * render loop samples by playback position. Runs once per answer, off the frame
- * loop. Returns an empty envelope for audio it can't decode.
+ * Pre-analyse a synthesized WAV into a time-indexed loudness envelope the
+ * glow's level loop samples by playback position. Runs once per answer, off the
+ * frame loop. Returns an empty envelope for audio it can't decode.
  */
 export const wavToEnvelope = (
   wav: Uint8Array,

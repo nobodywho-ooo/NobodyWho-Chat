@@ -1,2 +1,2 @@
-export { VoiceOrb } from './VoiceOrb';
+export { VoiceGlow } from './VoiceGlow';
 export { VoiceSetup } from './VoiceSetup';

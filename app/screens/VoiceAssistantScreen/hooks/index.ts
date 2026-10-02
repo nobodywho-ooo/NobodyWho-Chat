@@ -1,7 +1,5 @@
-export { useOrbLevels } from './useOrbLevels';
-export type { OrbLevelsController, VoiceLevels } from './useOrbLevels';
-export { useVoiceOrbPicture } from './useVoiceOrbPicture';
-export type { VoiceOrbOptions } from './useVoiceOrbPicture';
+export { useVoiceLevels } from './useVoiceLevels';
+export type { VoiceLevels, VoiceLevelsController } from './useVoiceLevels';
 export { useVoiceConversation } from './useVoiceConversation';
 export type {
   VoiceAssistantStatus,
