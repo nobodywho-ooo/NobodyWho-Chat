@@ -169,7 +169,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
             <View style={styles.actionContainer}>
               {isProcessing ? (
                 <View style={styles.buttonContainer}>
-                  <ActivityIndicator size="large" color={colors.primary} />
+                  <ActivityIndicator size="large" />
                 </View>
               ) : (
                 <Pressable
