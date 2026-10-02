@@ -8,15 +8,12 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { BlurTargetView } from 'expo-blur';
 import {
-  AppState,
-  AppStateStatus,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
+  createNativeStackNavigator,
+  type NativeStackHeaderItem,
+} from '@react-navigation/native-stack';
+import { BlurTargetView } from 'expo-blur';
+import { AppState, AppStateStatus, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SamplerPresets } from 'react-native-nobodywho';
 import {
@@ -38,14 +35,8 @@ import {
   getMessagesByConversationId,
   getModelById,
 } from 'repositories';
-import {
-  log,
-  isIOS,
-  isForegroundHeld,
-  toChatHistory,
-  toModelHistory,
-} from 'helpers';
-import { PlatformIcon, Toast } from 'components';
+import { log, isForegroundHeld, toChatHistory, toModelHistory } from 'helpers';
+import { Toast } from 'components';
 import { useAppState, useModels, useStyled } from 'hooks';
 import { subscribeConversationSync, useAiService } from 'services';
 import {
@@ -587,19 +578,17 @@ export const ChatStackNavigator = () => {
     ],
   );
 
-  const renderCloseButton = useCallback(
-    (navigation: { goBack: () => void }) =>
-      isIOS && (
-        <Pressable onPress={navigation.goBack}>
-          <PlatformIcon
-            iosIconName={'xmark'}
-            androidIconName={'close'}
-            color={colors.onSurface}
-            size={22}
-          />
-        </Pressable>
-      ),
-    [colors.onSurface],
+  const closeHeaderItems = useCallback(
+    (navigation: { goBack: () => void }) => (): NativeStackHeaderItem[] => [
+      {
+        type: 'button',
+        label: t('navigation.close'),
+        icon: { type: 'sfSymbol', name: 'xmark' },
+        tintColor: colors.onSurface,
+        onPress: navigation.goBack,
+      },
+    ],
+    [colors.onSurface, t],
   );
 
   return (
@@ -623,7 +612,7 @@ export const ChatStackNavigator = () => {
           options={({ navigation }) => ({
             title: t('navigation.settings'),
             presentation: 'modal',
-            headerRight: () => renderCloseButton(navigation),
+            unstable_headerRightItems: closeHeaderItems(navigation),
           })}
         />
         <Stack.Screen
@@ -632,7 +621,7 @@ export const ChatStackNavigator = () => {
           options={({ navigation }) => ({
             title: t('navigation.models'),
             presentation: 'modal',
-            headerRight: () => renderCloseButton(navigation),
+            unstable_headerRightItems: closeHeaderItems(navigation),
           })}
         />
         <Stack.Screen
@@ -641,7 +630,7 @@ export const ChatStackNavigator = () => {
           options={({ navigation }) => ({
             title: t('navigation.customizeAssistant'),
             presentation: 'modal',
-            headerRight: () => renderCloseButton(navigation),
+            unstable_headerRightItems: closeHeaderItems(navigation),
           })}
         />
         <Stack.Screen
@@ -658,7 +647,7 @@ export const ChatStackNavigator = () => {
           options={({ navigation }) => ({
             title: t('navigation.terms'),
             presentation: 'modal',
-            headerRight: () => renderCloseButton(navigation),
+            unstable_headerRightItems: closeHeaderItems(navigation),
           })}
         />
         <Stack.Screen
@@ -667,7 +656,7 @@ export const ChatStackNavigator = () => {
           options={({ navigation }) => ({
             title: t('navigation.privacyPolicy'),
             presentation: 'modal',
-            headerRight: () => renderCloseButton(navigation),
+            unstable_headerRightItems: closeHeaderItems(navigation),
           })}
         />
       </Stack.Navigator>

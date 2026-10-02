@@ -25,9 +25,9 @@ test('piles soft radial blobs in the theme’s glow colours', () => {
   gradients.forEach(gradient =>
     expect(gradient).toMatch(/^radial-gradient\(closest-side, /),
   );
-  // The body wash, back-most: voiceGlowBody (#A8C5E2) fading to nothing.
-  expect(gradients[0]).toContain('rgba(168, 197, 226, 1) 0%');
-  expect(gradients[0]).toContain('rgba(168, 197, 226, 0) 100%');
+  // The body wash, back-most: voiceGlowBody (#DFB8A4) fading to nothing.
+  expect(gradients[0]).toContain('rgba(223, 184, 164, 1) 0%');
+  expect(gradients[0]).toContain('rgba(223, 184, 164, 0) 100%');
 });
 
 test('never takes a touch meant for the controls above it', () => {

@@ -124,7 +124,7 @@ const ChatHeaderRight = () => {
 
   return (
     <MenuView
-      style={{ marginHorizontal: ICON_SIZE / 2 }}
+      style={styles.menuButton}
       onPressAction={handleMenuAction}
       actions={actions}
     >
@@ -253,6 +253,12 @@ export const DrawerNavigator = () => {
 };
 
 const styles = StyleSheet.create({
+  menuButton: {
+    width: ICON_SIZE * 2,
+    height: ICON_SIZE * 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   titleContainer: {
     flexShrink: 1,
     minWidth: 0,

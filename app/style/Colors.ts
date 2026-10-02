@@ -35,8 +35,8 @@ export type NWColors = {
 
 export const lightColors: NWColors = {
   ctaContentPrimary: '#FFFFFF',
-  ctaSurfacePrimary: '#628395',
-  ctaSurfacePrimaryDisabled: '#b0c1cb',
+  ctaSurfacePrimary: '#b44618',
+  ctaSurfacePrimaryDisabled: '#e5bdaf',
   ctaContentSecondary: '#FFFFFF',
   ctaSurfaceSecondary: '#000000',
   ctaContentOutline: '#000000',
@@ -48,7 +48,7 @@ export const lightColors: NWColors = {
   onSurfaceVariant: '#7c7c7c',
   onSurfaceDisabled: '#c1c1c1',
   surfaceContainer: '#ebebeb',
-  primary: '#628395',
+  primary: '#b44618',
   dangerSurface: '#f9342a',
   dangerContent: '#FFFFFF',
   successSurface: '#2ec728',
@@ -59,17 +59,17 @@ export const lightColors: NWColors = {
   borderFocused: '#c1c1c1',
   borderSecondary: '#acacac',
   shadow: 'rgba(44, 44, 44, 0.24)',
-  tabBarActive: '#628395',
+  tabBarActive: '#b44618',
   tabBarInactive: '#828282',
-  voiceGlowBody: '#A8C5E2',
-  voiceGlowHaze: '#D5E2EE',
-  voiceGlowCore: '#7FA6D1',
+  voiceGlowBody: '#DFB8A4',
+  voiceGlowHaze: '#EDDED4',
+  voiceGlowCore: '#CF8B6E',
 };
 
 export const darkColors: NWColors = {
   ctaContentPrimary: '#FFFFFF',
-  ctaSurfacePrimary: '#628395',
-  ctaSurfacePrimaryDisabled: '#2e3234',
+  ctaSurfacePrimary: '#b44618',
+  ctaSurfacePrimaryDisabled: '#392f2b',
   ctaContentSecondary: '#000000',
   ctaSurfaceSecondary: '#FFFFFF',
   ctaContentOutline: '#FFFFFF',
@@ -81,7 +81,7 @@ export const darkColors: NWColors = {
   onSurfaceVariant: '#d8d8d8',
   onSurfaceDisabled: '#8d8d8d',
   surfaceContainer: '#3c3c3c',
-  primary: '#628395',
+  primary: '#b44618',
   dangerSurface: '#f9342a',
   dangerContent: '#FFFFFF',
   successSurface: '#2ec728',
@@ -92,11 +92,11 @@ export const darkColors: NWColors = {
   borderFocused: '#8d8d8d',
   borderSecondary: '#838383',
   shadow: 'rgba(43, 43, 43, 0.48)',
-  tabBarActive: '#628395',
+  tabBarActive: '#b44618',
   tabBarInactive: '#9e9e9e',
-  voiceGlowBody: '#2E4F6B',
-  voiceGlowHaze: '#45667F',
-  voiceGlowCore: '#5B8CBA',
+  voiceGlowBody: '#643C2B',
+  voiceGlowHaze: '#775440',
+  voiceGlowCore: '#BF6640',
 };
 
 export const getColors = (theme: Theme): NWColors => {
