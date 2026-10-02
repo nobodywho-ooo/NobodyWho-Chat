@@ -1,4 +1,10 @@
-import { Directory, File, FileMode, Paths } from 'expo-file-system';
+import {
+  Directory,
+  File,
+  FileMode,
+  Paths,
+  type DownloadOptions,
+} from 'expo-file-system';
 
 import { toPlainPath } from './fileUri';
 import { log } from './log';
@@ -39,6 +45,44 @@ const APPEND_SLICE_BYTES = 4 * 1024 * 1024;
 // portal) the whole download stalls before the first byte, since the fetch
 // otherwise only ends when the caller aborts. Bound it independently.
 const META_TIMEOUT_MS = 15_000;
+
+export class NetworkError extends Error {
+  readonly cause: unknown;
+
+  constructor(message: string, cause?: unknown) {
+    super(message);
+    this.name = 'NetworkError';
+    this.cause = cause;
+  }
+}
+
+const TRANSPORT_FAILURE =
+  /java\.net\.|javax\.net\.ssl\.|java\.io\.(EOF|InterruptedIO)Exception|okhttp3\.|unexpected end of stream/;
+const IOS_TRANSPORT_FAILURE =
+  /Unable to download a file: (?!response has status|no response)/;
+
+const isTransportFailure = (error: unknown): boolean => {
+  const message = error instanceof Error ? error.message : String(error);
+  return TRANSPORT_FAILURE.test(message) || IOS_TRANSPORT_FAILURE.test(message);
+};
+
+const downloadFile = async (
+  url: string,
+  destination: File,
+  options: DownloadOptions & { signal: AbortSignal },
+): Promise<void> => {
+  try {
+    await File.downloadFileAsync(url, destination, options);
+  } catch (error) {
+    if (!options.signal.aborted && isTransportFailure(error)) {
+      throw new NetworkError(
+        `GET ${url} failed: ${error instanceof Error ? error.message : String(error)}`,
+        error,
+      );
+    }
+    throw error;
+  }
+};
 
 const modelDirectory = (modelId: number): Directory =>
   new Directory(Paths.document, MODELS_DIR_NAME, String(modelId));
@@ -189,7 +233,8 @@ interface RemoteMeta {
 
 // A HEAD request tells us the total size, range support and validator. Aborts
 // on either the caller's signal (user stopped the download) or META_TIMEOUT_MS
-// (the HEAD hung), whichever fires first.
+// (the HEAD hung), whichever fires first. A transport failure that isn't the
+// caller's abort is rethrown as a NetworkError.
 const fetchRemoteMeta = async (
   url: string,
   signal: AbortSignal,
@@ -201,13 +246,30 @@ const fetchRemoteMeta = async (
   } else {
     signal.addEventListener('abort', onAbort);
   }
-  const timeout = setTimeout(() => controller.abort(), META_TIMEOUT_MS);
+  let timedOut = false;
+  const timeout = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, META_TIMEOUT_MS);
 
   try {
-    const res = await fetch(url, {
-      method: 'HEAD',
-      signal: controller.signal,
-    });
+    let res: Response;
+    try {
+      res = await fetch(url, {
+        method: 'HEAD',
+        signal: controller.signal,
+      });
+    } catch (error) {
+      if (signal.aborted) {
+        throw error;
+      }
+      throw new NetworkError(
+        timedOut
+          ? `HEAD ${url} timed out after ${META_TIMEOUT_MS}ms`
+          : `HEAD ${url} failed: ${error instanceof Error ? error.message : String(error)}`,
+        error,
+      );
+    }
     const length = Number(res.headers.get('content-length'));
     const acceptsRanges = (res.headers.get('accept-ranges') ?? '')
       .toLowerCase()
@@ -242,7 +304,7 @@ const downloadWholeFile = async (
 ): Promise<string> => {
   deleteIfExists(partial);
   deleteIfExists(validatorFile);
-  await File.downloadFileAsync(url, partial, {
+  await downloadFile(url, partial, {
     idempotent: true,
     signal,
     onProgress: ({ bytesWritten, totalBytes }) =>
@@ -342,7 +404,7 @@ export const downloadModelPart = async (
       const expected = end - offset + 1;
 
       deleteIfExists(chunk);
-      await File.downloadFileAsync(url, chunk, {
+      await downloadFile(url, chunk, {
         idempotent: true,
         signal,
         headers: { Range: `bytes=${offset}-${end}` },

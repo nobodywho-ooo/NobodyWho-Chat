@@ -13,6 +13,7 @@ import {
   checkDiskSpaceForModel,
   deleteModelDirectory,
   downloadModelPart,
+  log,
 } from 'helpers';
 import { ModelPipeline } from 'types';
 import { buildModel } from 'jest/factories/model';
@@ -34,6 +35,7 @@ jest.mock('database', () => ({
 }));
 
 jest.mock('helpers', () => ({
+  NetworkError: class NetworkError extends Error {},
   downloadModelPart: jest.fn(),
   deleteModelDirectory: jest.fn(),
   log: jest.fn(),
@@ -57,6 +59,7 @@ const mockDownloadModelPart = downloadModelPart as jest.Mock;
 const mockDeleteModelDirectory = deleteModelDirectory as jest.Mock;
 const mockCheckDiskSpaceForModel = checkDiskSpaceForModel as jest.Mock;
 const mockSetAppState = setAppState as jest.Mock;
+const mockLog = log as jest.Mock;
 
 // A pending download for a single-part model, keyed by a unique id per test so
 // the module-level `activeDownloads` map can't leak state between tests.
@@ -112,6 +115,37 @@ test('keeps the pending download on a transient error so it can resume later', a
   expect(mockDeleteModelDownload).not.toHaveBeenCalled();
   expect(mockDeleteModelDirectory).not.toHaveBeenCalled();
   expect(mockInsertModel).not.toHaveBeenCalled();
+});
+
+test('reports an unexpected download failure to Sentry', async () => {
+  mockGetModelDownloads.mockResolvedValue([pendingDownload(103)]);
+  mockDownloadModelPart.mockRejectedValue(new Error('ranged chunk mismatch'));
+
+  renderHook(() => useModelDownloader());
+
+  await waitFor(() =>
+    expect(mockLog).toHaveBeenCalledWith(
+      'ModelsScreen runDownload',
+      expect.any(Error),
+      { capture: true },
+    ),
+  );
+});
+
+test('does not report an unreachable remote to Sentry', async () => {
+  const { NetworkError } = jest.requireMock('helpers');
+  mockGetModelDownloads.mockResolvedValue([pendingDownload(104)]);
+  mockDownloadModelPart.mockRejectedValue(new NetworkError('HEAD timed out'));
+
+  renderHook(() => useModelDownloader());
+
+  await waitFor(() =>
+    expect(mockLog).toHaveBeenCalledWith(
+      'ModelsScreen runDownload',
+      expect.any(Error),
+      { capture: false },
+    ),
+  );
 });
 
 test('installs the model and clears the download on success', async () => {

@@ -132,6 +132,7 @@ import {
   modelDirectoryPath,
   assertSafeRelativePath,
   locatePart,
+  NetworkError,
 } from '../modelDownload';
 
 const efs = jest.requireMock('expo-file-system') as any;
@@ -409,14 +410,118 @@ test('aborts a hung HEAD request after the timeout instead of stalling', async (
   );
 
   // eslint-disable-next-line jest/valid-expect
-  const assertion = expect(promise).rejects.toThrow();
+  const assertion = expect(promise).rejects.toThrow(NetworkError);
 
   await jest.advanceTimersByTimeAsync(15_000);
   await assertion;
+  await expect(promise).rejects.toThrow(/timed out/);
 
   // No bytes were ever written — it bailed at the HEAD.
   expect(downloadFileAsync).not.toHaveBeenCalled();
   jest.useRealTimers();
+});
+
+test('a user stop during the HEAD is not reported as a NetworkError', async () => {
+  (globalThis as any).fetch = jest.fn(
+    (_url: string, opts: any) =>
+      new Promise((_resolve, reject) => {
+        opts.signal.addEventListener('abort', () =>
+          reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })),
+        );
+      }),
+  );
+  const controller = new AbortController();
+
+  const promise = downloadModelPart(
+    MODEL_ID,
+    'https://x/chat-model.gguf',
+    'chat-model.gguf',
+    controller.signal,
+    () => {},
+  );
+  controller.abort();
+
+  const error = await promise.catch((e: unknown) => e);
+  expect(error).toBeInstanceOf(Error);
+  expect(error).not.toBeInstanceOf(NetworkError);
+});
+
+test('an unreachable host is a NetworkError', async () => {
+  (globalThis as any).fetch = jest.fn(async () => {
+    throw new Error(
+      'fetch failed: The Internet connection appears to be offline.',
+    );
+  });
+
+  await expect(
+    downloadModelPart(
+      MODEL_ID,
+      'https://x/chat-model.gguf',
+      'chat-model.gguf',
+      noSignal(),
+      () => {},
+    ),
+  ).rejects.toThrow(NetworkError);
+});
+
+describe('a failed chunk download', () => {
+  const failWith = (message: string) => {
+    setupRemote({ total: 40 * MB });
+    downloadFileAsync.mockRejectedValue(new Error(message));
+    return downloadModelPart(
+      MODEL_ID,
+      'https://x/chat-model.gguf',
+      'chat-model.gguf',
+      noSignal(),
+      () => {},
+    );
+  };
+
+  test.each([
+    // Android: okhttp's raw IOException, e.g. the OS dropping a backgrounded
+    // app's sockets.
+    "Call to function 'FileSystem.downloadFileAsync' has been rejected.\n→ Caused by: java.net.SocketException: Software caused connection abort",
+    "Call to function 'FileSystem.downloadFileAsync' has been rejected.\n→ Caused by: java.net.UnknownHostException: Unable to resolve host",
+    "Call to function 'FileSystem.downloadFileAsync' has been rejected.\n→ Caused by: javax.net.ssl.SSLException: Read error",
+    // iOS: URLSession transport errors carry a localized description.
+    'Unable to download a file: The network connection was lost.',
+    'Unable to download a file: La connexion réseau a été perdue.',
+  ])('is a NetworkError when the connection fails: %s', async message => {
+    await expect(failWith(message)).rejects.toBeInstanceOf(NetworkError);
+    // The partial is kept so the download resumes on the next attempt.
+    expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.partial`)).toBe(true);
+  });
+
+  test.each([
+    'Unable to download a file: response has status 404',
+    'Unable to download a file: response has status: 503',
+    'Unable to download a file: no response',
+    'Unable to create a file: No space left on device',
+  ])('stays a reportable error otherwise: %s', async message => {
+    const error = await failWith(message).catch(e => e);
+    expect(error).not.toBeInstanceOf(NetworkError);
+    expect(error.message).toBe(message);
+  });
+
+  test('passes the caller abort through untouched', async () => {
+    setupRemote({ total: 40 * MB });
+    const controller = new AbortController();
+    const dropped = new Error('java.net.SocketException: Socket closed');
+    downloadFileAsync.mockImplementation(async () => {
+      controller.abort();
+      throw dropped;
+    });
+
+    await expect(
+      downloadModelPart(
+        MODEL_ID,
+        'https://x/chat-model.gguf',
+        'chat-model.gguf',
+        controller.signal,
+        () => {},
+      ),
+    ).rejects.toBe(dropped);
+  });
 });
 
 test('returns immediately when the file is already installed', async () => {

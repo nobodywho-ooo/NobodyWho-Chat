@@ -23,6 +23,7 @@ import {
   modelDirectoryPath,
   listModelFiles,
   listModelSubdirectories,
+  NetworkError,
 } from './modelDownload';
 import { toFileUri, toPlainPath } from './fileUri';
 import {
@@ -102,6 +103,7 @@ export {
   modelDirectoryPath,
   listModelFiles,
   listModelSubdirectories,
+  NetworkError,
   toFileUri,
   toPlainPath,
   filterModelsByDeviceMemory,

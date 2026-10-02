@@ -16,6 +16,7 @@ import {
   downloadModelPart,
   log,
   modelSizeLabel,
+  NetworkError,
 } from 'helpers';
 import { selectModelIfSlotFree } from 'services';
 
@@ -100,7 +101,8 @@ export const useModelDownloader = () => {
       await deleteModelDownload(model.id);
     } catch (error) {
       log('ModelsScreen runDownload', error, {
-        capture: !controller.signal.aborted, // TODO: delete capture when model downloading is stable
+        // TODO: delete capture when model downloading is stable
+        capture: !controller.signal.aborted && !(error instanceof NetworkError),
       });
     } finally {
       if (activeDownloads.get(model.id) === controller) {
