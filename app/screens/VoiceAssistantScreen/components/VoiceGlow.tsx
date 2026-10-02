@@ -30,8 +30,15 @@ const MAX_DT_MS = 100;
 // Drift tempo, in phase units per second: lazy in silence, livelier while sound
 // is flowing, and quicker still on a loud syllable.
 const IDLE_TEMPO = 1;
-const AWAKE_TEMPO = 0.6;
-const LOUD_TEMPO = 1.4;
+const AWAKE_TEMPO = 0.9;
+const LOUD_TEMPO = 1.8;
+
+// The sideways drift widens by this much while sound is flowing.
+const AWAKE_DRIFT = 0.6;
+
+// How far `active` alone lifts each blob's opacity toward its peak, so the whole
+// glow brightens while someone is talking, not just on the loud syllables.
+const AWAKE_GLOW = 0.6;
 
 // Radial falloff (1 − t²)²: a soft shoulder rather than a cone, so overlapping
 // blobs melt into each other without showing a rim.
@@ -77,15 +84,15 @@ const BLOBS: ReadonlyArray<Blob> = [
     y: -0.12,
     rx: 0.95,
     ry: 0.62,
-    rest: 0.9,
+    rest: 0.6,
     peak: 1,
     driftX: 0.04,
     driftY: 0.03,
     speed: 0.55,
     offset: 0,
     band: 'low',
-    lift: 0.08,
-    swell: 0.25,
+    lift: 0.11,
+    swell: 0.32,
   },
   {
     tone: 'core',
@@ -93,15 +100,15 @@ const BLOBS: ReadonlyArray<Blob> = [
     y: -0.05,
     rx: 0.5,
     ry: 0.55,
-    rest: 0.55,
-    peak: 0.85,
+    rest: 0.3,
+    peak: 1,
     driftX: 0.08,
     driftY: 0.05,
     speed: 0.43,
     offset: 1.7,
     band: 'level',
-    lift: 0.15,
-    swell: 0.2,
+    lift: 0.2,
+    swell: 0.26,
   },
   {
     tone: 'haze',
@@ -109,15 +116,15 @@ const BLOBS: ReadonlyArray<Blob> = [
     y: -0.08,
     rx: 0.48,
     ry: 0.48,
-    rest: 0.85,
+    rest: 0.55,
     peak: 1,
     driftX: 0.06,
     driftY: 0.04,
     speed: 0.5,
     offset: 3.9,
     band: 'high',
-    lift: 0.1,
-    swell: 0.22,
+    lift: 0.14,
+    swell: 0.3,
   },
   {
     tone: 'core',
@@ -126,14 +133,14 @@ const BLOBS: ReadonlyArray<Blob> = [
     rx: 0.42,
     ry: 0.5,
     rest: 0,
-    peak: 0.8,
+    peak: 0.95,
     driftX: 0.12,
     driftY: 0.03,
     speed: 0.37,
     offset: 5.1,
     band: 'level',
-    lift: 0.22,
-    swell: 0.35,
+    lift: 0.26,
+    swell: 0.42,
   },
   {
     tone: 'haze',
@@ -141,15 +148,15 @@ const BLOBS: ReadonlyArray<Blob> = [
     y: 0.02,
     rx: 0.35,
     ry: 0.32,
-    rest: 0.35,
-    peak: 0.6,
+    rest: 0.2,
+    peak: 0.7,
     driftX: 0.15,
     driftY: 0.04,
     speed: 0.31,
     offset: 2.6,
     band: 'high',
-    lift: 0.12,
-    swell: 0.15,
+    lift: 0.17,
+    swell: 0.2,
   },
 ];
 
@@ -188,7 +195,8 @@ const GlowBlob: React.FC<GlowBlobProps> = ({
           : level.value;
     const t = phase.value * blob.speed + blob.offset;
 
-    const driftX = blob.driftX * width * Math.sin(t);
+    const driftX =
+      blob.driftX * (1 + AWAKE_DRIFT * active.value) * width * Math.sin(t);
     const driftY = blob.driftY * height * Math.sin(t * 1.37 + 1.1);
     const breathe = 0.04 * Math.sin(t * 0.71 + 2.3);
     const swell = blob.swell * drive;
@@ -196,7 +204,7 @@ const GlowBlob: React.FC<GlowBlobProps> = ({
     return {
       opacity:
         blob.rest +
-        (blob.peak - blob.rest) * Math.max(drive, 0.5 * active.value),
+        (blob.peak - blob.rest) * Math.max(drive, AWAKE_GLOW * active.value),
       transform: [
         { translateX: motion * driftX },
         { translateY: motion * (driftY - blob.lift * height * drive) },
