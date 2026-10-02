@@ -19,13 +19,6 @@ import { Spacings } from 'style';
 
 import type { VoiceLevels } from '../hooks';
 
-// A mesh gradient by superposition: a handful of soft radial blobs piled along
-// the bottom edge, each drifting on its own slow path and pushed up and out by
-// the voice. A blob's gradient is static, built once per theme; per frame only
-// its wrapper's transform and opacity change, on the UI thread. The wrapper is
-// there for opacity: on iOS an opacity change rebuilds the view's own
-// background-image layers, and the wrapper has none to rebuild.
-
 /** The glow's canvas, as a fraction of the window's height. It rests in the
  * lower half; the rest is headroom for the voice to push into. */
 const HEIGHT_RATIO = 0.5;
@@ -206,14 +199,13 @@ const GlowBlob: React.FC<GlowBlobProps> = ({
           ? high.value
           : level.value;
     const t = phase.value * blob.speed + blob.offset;
-    // x and y drift at unrelated rates, so the path never closes on itself.
+
     const driftX = blob.driftX * width * Math.sin(t);
     const driftY = blob.driftY * height * Math.sin(t * 1.37 + 1.1);
     const breathe = 0.04 * Math.sin(t * 0.71 + 2.3);
     const swell = blob.swell * drive;
 
     return {
-      // Wakes up with the voice as a whole, then follows its band.
       opacity:
         blob.rest +
         (blob.peak - blob.rest) * Math.max(drive, 0.5 * active.value),
@@ -253,17 +245,10 @@ const GlowBlob: React.FC<GlowBlobProps> = ({
 };
 
 interface VoiceGlowProps {
-  /** Loudness drivers from useVoiceLevels. */
   levels: VoiceLevels;
-  /** Stop the drift (the voice still moves it). @default false */
   paused?: boolean;
 }
 
-/**
- * The voice-reactive glow along the bottom of the voice assistant: idles in a
- * slow drift, and rises, swells and brightens with whoever is talking — the
- * user through the mic, the assistant through its playback envelope.
- */
 export const VoiceGlow: React.FC<VoiceGlowProps> = ({
   levels,
   paused = false,
@@ -273,8 +258,6 @@ export const VoiceGlow: React.FC<VoiceGlowProps> = ({
   const reducedMotion = useReducedMotion();
 
   const height = Math.round(windowSize.height * HEIGHT_RATIO);
-  // The drawer is as wide as the window, which makes a good first guess; the
-  // layout pass then reports the real width.
   const [width, setWidth] = useState(windowSize.width);
 
   const gradients = useMemo<Record<Tone, string>>(
@@ -289,10 +272,6 @@ export const VoiceGlow: React.FC<VoiceGlowProps> = ({
   const { level, active } = levels;
   const phase = useSharedValue(0);
 
-  // Memoised on the shared values it closes over, all stable for the hook's
-  // lifetime: useFrameCallback re-registers whenever the callback's identity
-  // changes, and the first frame after that has no previous timestamp, so the
-  // drift would hitch on every render.
   const onFrame = useCallback(
     (info: FrameInfo) => {
       'worklet';
@@ -341,11 +320,6 @@ const styles = StyleSheet.create({
   glowContainer: {
     position: 'absolute',
     left: 0,
-    // Overhangs the right edge by one corner so all four corners can share a
-    // radius: the bottom-left one is the drawer's, the top two sit where the
-    // glow has faded out, and the bottom-right one is off screen. One radius
-    // clips with the layer's own corner radius; mixed radii would take a mask
-    // layer, re-rendered off screen every frame.
     right: -CORNER_RADIUS,
     bottom: 0,
     borderRadius: CORNER_RADIUS,

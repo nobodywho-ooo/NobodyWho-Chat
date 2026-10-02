@@ -109,9 +109,6 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
       {!showPreferences && (
         <VoiceGlow
           levels={voiceLevels.levels}
-          // Also paused while the drawer is shut: this screen is always
-          // mounted, so an unpaused glow would keep drifting off screen for as
-          // long as the app runs.
           paused={!isReady || !isDrawerOpen}
         />
       )}

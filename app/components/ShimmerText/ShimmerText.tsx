@@ -135,8 +135,7 @@ export const ShimmerText: React.FC<ShimmerTextProps> = ({
     return () => cancelAnimation(progress);
   }, [isSweeping, periodMs, progress]);
 
-  // At 0 the band sits just left of the text; at 1 it has crossed and cleared
-  // it.
+  // At 0 the band sits just left of the text; at 1 it has crossed and cleared it.
   const sweepStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: (progress.value - 1) * travel }],
   }));
