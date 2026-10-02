@@ -1,36 +1,99 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly ShimmerText 1`] = `
-<SkiaText
-  text="Thinking…"
-  x={0}
-  y={14}
+<View
+  onLayout={[Function]}
+  style={
+    [
+      {
+        "flexShrink": 1,
+      },
+      false,
+    ]
+  }
 >
-  <SkiaLinearGradient
-    colors={
-      [
-        "#7c7c7c",
-        "#000000",
-        "#7c7c7c",
-      ]
-    }
-    end={
+  <Text
+    numberOfLines={1}
+    style={
       {
-        "value": null,
+        "color": "#000000",
+        "fontFamily": undefined,
+        "fontSize": 14,
+        "fontWeight": "600",
+        "lineHeight": 19,
+        "textAlign": "left",
       }
     }
-    positions={
-      [
-        0,
-        0.5,
-        1,
-      ]
-    }
-    start={
+  >
+    Thinking…
+  </Text>
+  <View
+    pointerEvents="none"
+    style={
       {
-        "value": null,
+        "bottom": 0,
+        "left": 0,
+        "overflow": "hidden",
+        "position": "absolute",
+        "right": 0,
+        "top": 0,
       }
     }
-  />
-</SkiaText>
+  >
+    <View
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "top": 0,
+          },
+          {
+            "width": 340,
+          },
+          {},
+        ]
+      }
+    >
+      <LinearGradient
+        colors={
+          [
+            "rgba(255, 255, 255, 0.4863)",
+            "rgba(255, 255, 255, 0.4863)",
+            "rgba(255, 255, 255, 0)",
+            "rgba(255, 255, 255, 0.4863)",
+            "rgba(255, 255, 255, 0.4863)",
+          ]
+        }
+        end={
+          {
+            "x": 1,
+            "y": 0,
+          }
+        }
+        locations={
+          [
+            0,
+            0.4117647058823529,
+            0.5,
+            0.5882352941176471,
+            1,
+          ]
+        }
+        start={
+          {
+            "x": 0,
+            "y": 0,
+          }
+        }
+        style={
+          {
+            "flex": 1,
+          }
+        }
+      />
+    </View>
+  </View>
+</View>
 `;

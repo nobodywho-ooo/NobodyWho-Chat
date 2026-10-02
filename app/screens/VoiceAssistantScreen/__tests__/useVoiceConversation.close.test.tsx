@@ -148,11 +148,11 @@ const mockSynthesizeSpeech = synthesizeSpeech as jest.Mock;
 const mockInsertMessage = insertMessage as jest.Mock;
 const mockNotifyConversationSync = notifyConversationSync as jest.Mock;
 
-// Stable across renders, the way the screen's useOrbLevels controller is: the
+// Stable across renders, the way the screen's useVoiceLevels controller is: the
 // turn's callbacks close over it.
 const level = { value: 0 };
-const orb = {
-  levels: { level, low: level, mid: level, high: level },
+const voiceLevels = {
+  levels: { level, low: level, high: level, active: level },
   feedPcm: jest.fn(),
   listen: jest.fn(),
   speak: jest.fn(),
@@ -180,7 +180,7 @@ const heldGeneration = () => {
 const renderConversation = () => {
   const view = renderHook(
     ({ active }: { active: boolean }) =>
-      useVoiceConversation({ orb: orb as never, active }),
+      useVoiceConversation({ voiceLevels: voiceLevels as never, active }),
     { initialProps: { active: true } },
   );
 
@@ -227,7 +227,7 @@ beforeEach(() => {
   mockPlayer.pause.mockClear();
   mockStream.start.mockClear();
   mockStream.stop.mockClear();
-  Object.values(orb).forEach(value => {
+  Object.values(voiceLevels).forEach(value => {
     if (jest.isMockFunction(value)) {
       value.mockClear();
     }
@@ -368,7 +368,7 @@ test('closing the screen mid-question releases the microphone', async () => {
 
   expect(mockStream.stop).toHaveBeenCalled();
   expect(mockSpeechService.release).toHaveBeenCalled();
-  expect(orb.rest).toHaveBeenCalled();
+  expect(voiceLevels.rest).toHaveBeenCalled();
   expect(result.current.status).toBe('idle');
 });
 

@@ -1,8 +1,9 @@
 // RIFF/WAVE container parsing, shared by the two helpers that need it: the one
 // that stitches synthesized WAVs together (ttsAudio) and the one that reads a
-// WAV back to drive the voice orb (audioLevels). One copy, so a container quirk
-// fixed for playback is also fixed for the animation — a second copy drifting
-// shows up only as a flat, unreactive orb, which reads as an animation bug.
+// WAV back to drive the voice glow (audioLevels). One copy, so a container
+// quirk fixed for playback is also fixed for the animation — a second copy
+// drifting shows up only as a flat, unreactive glow, which reads as an
+// animation bug.
 
 /** Read a four-char tag. */
 export const tagAt = (bytes: Uint8Array, p: number): string =>

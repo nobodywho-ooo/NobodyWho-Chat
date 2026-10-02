@@ -7,10 +7,10 @@ import {
 } from 'react-native-reanimated';
 import { AudioEnvelope, micBands } from 'helpers';
 
-// The orb's per-frame drivers, all 0–1 and all smoothed on the UI thread — read
-// them from the render worklet without a JS hop. Mirrors the reference orb's
-// VoiceLevels, minus its mid band: nothing in useVoiceOrbPicture renders it, and
-// carrying it cost an accumulator per captured sample plus a follow() per frame.
+// The voice glow's per-frame drivers, all 0–1 and all smoothed on the UI thread
+// — read them from its animated styles without a JS hop. There is no mid band:
+// nothing renders it, and carrying it cost an accumulator per captured sample
+// plus a follow() per frame.
 export interface VoiceLevels {
   /** Overall loudness. */
   level: SharedValue<number>;
@@ -28,7 +28,7 @@ const MIC = 1;
 const PLAYBACK = 2;
 
 // Envelope times. Fast attack so a syllable lands on the frame it happens; slow
-// release so the orb settles between words instead of strobing.
+// release so the glow settles between words instead of strobing.
 const ATTACK_MS = 45;
 const RELEASE_MS = 320;
 
@@ -36,7 +36,7 @@ const RELEASE_MS = 320;
 const VAD_ON = 0.2;
 const VAD_OFF = 0.09;
 
-export interface OrbLevelsController {
+export interface VoiceLevelsController {
   levels: VoiceLevels;
   /** Feed one window of mic PCM while listening (call per captured buffer). */
   feedPcm: (samples: Int16Array, sampleRate: number) => void;
@@ -49,15 +49,15 @@ export interface OrbLevelsController {
 }
 
 /**
- * Owns the orb's loudness drivers and the smoothing loop that animates them,
- * with two interchangeable inputs — live mic PCM ({@link feedPcm}, JS thread)
- * and a pre-analysed playback envelope ({@link speak}, sampled on the UI thread
- * by elapsed frame time). Exactly one is active at a time, so both can write the
- * same raw drivers without contending.
+ * Owns the voice glow's loudness drivers and the smoothing loop that animates
+ * them, with two interchangeable inputs — live mic PCM ({@link feedPcm}, JS
+ * thread) and a pre-analysed playback envelope ({@link speak}, sampled on the
+ * UI thread by elapsed frame time). Exactly one is active at a time, so both
+ * can write the same raw drivers without contending.
  */
-export const useOrbLevels = ({
+export const useVoiceLevels = ({
   active: enabled = true,
-}: { active?: boolean } = {}): OrbLevelsController => {
+}: { active?: boolean } = {}): VoiceLevelsController => {
   // Raw per-window values (mic) or per-hop samples (playback)…
   const rawLevel = useSharedValue(0);
   const rawLow = useSharedValue(0);

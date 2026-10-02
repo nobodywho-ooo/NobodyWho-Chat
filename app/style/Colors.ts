@@ -28,6 +28,12 @@ export type NWColors = {
   shadow: string;
   tabBarActive: string;
   tabBarInactive: string;
+  /** Voice assistant glow: the wash along the bottom edge. */
+  voiceGlowBody: string;
+  /** Voice assistant glow: the pale haze drifting over it. */
+  voiceGlowHaze: string;
+  /** Voice assistant glow: the deeper blue the voice lights up. */
+  voiceGlowCore: string;
 };
 
 export const lightColors: NWColors = {
@@ -58,6 +64,9 @@ export const lightColors: NWColors = {
   shadow: 'rgba(44, 44, 44, 0.24)',
   tabBarActive: '#628395',
   tabBarInactive: '#828282',
+  voiceGlowBody: '#A8C5E2',
+  voiceGlowHaze: '#D5E2EE',
+  voiceGlowCore: '#7FA6D1',
 };
 
 export const darkColors: NWColors = {
@@ -88,6 +97,9 @@ export const darkColors: NWColors = {
   shadow: 'rgba(43, 43, 43, 0.48)',
   tabBarActive: '#628395',
   tabBarInactive: '#9e9e9e',
+  voiceGlowBody: '#2E4F6B',
+  voiceGlowHaze: '#45667F',
+  voiceGlowCore: '#5B8CBA',
 };
 
 export const getColors = (theme: Theme): NWColors => {

@@ -80,8 +80,10 @@ import {
 import { computeGenerationMetrics } from './generationMetrics';
 import { parameterCountLabel } from './parameterCount';
 import { modelSizeLabel } from './modelSize';
+import { parseColor, withAlpha } from './color';
 
 export type { AudioBands, AudioEnvelope } from './audioLevels';
+export type { Rgba } from './color';
 export type { TtsEngine, TtsLanguageOption } from './ttsEngine';
 export type { SttLanguageOption } from './sttLanguages';
 export type { PipelineIcon } from './pipelineIcon';
@@ -164,4 +166,6 @@ export {
   parameterCountLabel,
   modelSizeLabel,
   MODELS_URL,
+  parseColor,
+  withAlpha,
 };
