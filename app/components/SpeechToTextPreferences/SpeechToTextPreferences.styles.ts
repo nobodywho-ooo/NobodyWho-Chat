@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import { Spacings } from 'style';
 
 export default StyleSheet.create({
-  blockHeader: {
+  block: {
     paddingTop: Spacings.xxl,
   },
   sectionHeader: {

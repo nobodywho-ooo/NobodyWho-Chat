@@ -1,0 +1,71 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Accordion renders a collapsed accordion 1`] = `
+<View>
+  <View
+    accessibilityLabel="Text to Speech"
+    accessibilityRole="button"
+    accessibilityState={
+      {
+        "busy": undefined,
+        "checked": undefined,
+        "disabled": undefined,
+        "expanded": false,
+        "selected": undefined,
+      }
+    }
+    accessibilityValue={
+      {
+        "max": undefined,
+        "min": undefined,
+        "now": undefined,
+        "text": undefined,
+      }
+    }
+    accessible={true}
+    collapsable={false}
+    focusable={true}
+    onBlur={[Function]}
+    onClick={[Function]}
+    onFocus={[Function]}
+    onResponderGrant={[Function]}
+    onResponderMove={[Function]}
+    onResponderRelease={[Function]}
+    onResponderTerminate={[Function]}
+    onResponderTerminationRequest={[Function]}
+    onStartShouldSetResponder={[Function]}
+    style={
+      [
+        {
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 8,
+        },
+        false,
+      ]
+    }
+  >
+    <Text
+      bold={true}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+      variant="h3"
+    >
+      Text to Speech
+    </Text>
+    <View
+      style={{}}
+    >
+      <PlatformIcon
+        androidIconName="keyboard_arrow_down"
+        color="#7c7c7c"
+        iosIconName="chevron.down"
+        size={16}
+      />
+    </View>
+  </View>
+</View>
+`;

@@ -1,4 +1,6 @@
+import { Accordion } from './Accordion/Accordion';
 import { Button } from './Button/Button';
+import { Chevron } from './Chevron/Chevron';
 import { ProgressBar } from './ProgressBar/ProgressBar';
 import { ErrorView } from './ErrorView/ErrorView';
 import { IconButton, IconButtonIconProps } from './IconButton/IconButton';
@@ -18,7 +20,9 @@ import { SpeechToTextPreferences } from './SpeechToTextPreferences/SpeechToTextP
 import { TextToSpeechPreferences } from './TextToSpeechPreferences/TextToSpeechPreferences';
 
 export {
+  Accordion,
   Button,
+  Chevron,
   ProgressBar,
   ErrorView,
   IconButton,

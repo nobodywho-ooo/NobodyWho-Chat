@@ -6,6 +6,7 @@ import { STT_LANGUAGE_OPTIONS } from 'helpers';
 import { useSlotModel, useStyled } from 'hooks';
 import { ModelSlot } from 'types';
 
+import { Accordion } from '../Accordion/Accordion';
 import { SelectablePill } from '../SelectablePill/SelectablePill';
 import { Text } from '../Text/Text';
 
@@ -28,11 +29,10 @@ export const SpeechToTextPreferences: React.FC<
   }
 
   return (
-    <>
-      <Text variant="h3" bold style={styles.blockHeader}>
-        {t('screens.customizeAssistant.speechToText')}
-      </Text>
-
+    <Accordion
+      title={t('screens.customizeAssistant.speechToText')}
+      style={styles.block}
+    >
       <Text bold style={styles.sectionHeader}>
         {t('screens.customizeAssistant.sttLanguage')}
       </Text>
@@ -54,6 +54,6 @@ export const SpeechToTextPreferences: React.FC<
           />
         ))}
       </View>
-    </>
+    </Accordion>
   );
 };

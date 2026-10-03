@@ -145,6 +145,9 @@ describe('with a transcription model in use', () => {
 
   test('picking a language persists its Whisper code', async () => {
     const screen = await renderScreen();
+    fireEvent.press(
+      screen.getByLabelText('screens.customizeAssistant.speechToText'),
+    );
 
     fireEvent.press(screen.getByLabelText('Danish'));
 
@@ -159,6 +162,9 @@ describe('with a transcription model in use', () => {
       assistantConfig: { ...DEFAULT_ASSISTANT_CONFIG, sttLanguage: 'da' },
     });
     const screen = await renderScreen();
+    fireEvent.press(
+      screen.getByLabelText('screens.customizeAssistant.speechToText'),
+    );
 
     fireEvent.press(
       screen.getByLabelText('screens.customizeAssistant.sttLanguageAutomatic'),

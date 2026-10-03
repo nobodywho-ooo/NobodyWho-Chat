@@ -144,7 +144,9 @@ test('opening the preferences replaces the voice body', () => {
 
   fireEvent.press(screen.getByLabelText('screens.voiceAssistant.preferences'));
 
-  expect(screen.getByText('screens.customizeAssistant.language')).toBeTruthy();
+  expect(
+    screen.getByText('screens.customizeAssistant.textToSpeech'),
+  ).toBeTruthy();
   expect(screen.queryByText('screens.voiceAssistant.status.idle')).toBeNull();
   expect(screen.queryByLabelText('screens.voiceAssistant.start')).toBeNull();
   // The glow goes too, rather than shining through the settings.
@@ -163,7 +165,9 @@ test('the close button steps back to the voice body instead of closing the drawe
 
   expect(onCloseDrawer).not.toHaveBeenCalled();
   expect(screen.getByText('screens.voiceAssistant.status.idle')).toBeTruthy();
-  expect(screen.queryByText('screens.customizeAssistant.language')).toBeNull();
+  expect(
+    screen.queryByText('screens.customizeAssistant.textToSpeech'),
+  ).toBeNull();
 
   // Back on the voice body, it closes the drawer again.
   fireEvent.press(screen.getByLabelText('screens.voiceAssistant.close'));
@@ -174,12 +178,16 @@ test('a turn starting while the panel is open takes it down', () => {
   const { screen } = renderAt('idle');
 
   fireEvent.press(screen.getByLabelText('screens.voiceAssistant.preferences'));
-  expect(screen.getByText('screens.customizeAssistant.language')).toBeTruthy();
+  expect(
+    screen.getByText('screens.customizeAssistant.textToSpeech'),
+  ).toBeTruthy();
 
   mockStatus = 'listening';
   screen.update(<VoiceAssistantScreen onCloseDrawer={jest.fn()} />);
 
-  expect(screen.queryByText('screens.customizeAssistant.language')).toBeNull();
+  expect(
+    screen.queryByText('screens.customizeAssistant.textToSpeech'),
+  ).toBeNull();
   expect(
     screen.getByText('screens.voiceAssistant.status.listening'),
   ).toBeTruthy();
@@ -193,6 +201,8 @@ test('an answer landing while the panel is open takes it down', () => {
   mockHasAnswered = true;
   screen.update(<VoiceAssistantScreen onCloseDrawer={jest.fn()} />);
 
-  expect(screen.queryByText('screens.customizeAssistant.language')).toBeNull();
+  expect(
+    screen.queryByText('screens.customizeAssistant.textToSpeech'),
+  ).toBeNull();
   expect(screen.getByText('screens.voiceAssistant.status.idle')).toBeTruthy();
 });

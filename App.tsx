@@ -35,19 +35,8 @@ Sentry.init({
   sendDefaultPii: false,
   tracesSampleRate: SAMPLE_RATE,
   profilesSampleRate: SAMPLE_RATE,
-  replaysOnErrorSampleRate: SAMPLE_RATE,
-  replaysSessionSampleRate: 0,
   enableLogs: true,
   integrations: [
-    ...(__DEV__
-      ? []
-      : [
-          Sentry.mobileReplayIntegration({
-            maskAllText: true,
-            maskAllImages: true,
-            enableFastViewRendering: true,
-          }),
-        ]),
     Sentry.reactNavigationIntegration({
       enableTimeToInitialDisplay: true,
     }),

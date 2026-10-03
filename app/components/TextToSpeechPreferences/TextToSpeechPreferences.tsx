@@ -6,6 +6,7 @@ import { ttsEngineForModel } from 'helpers';
 import { useSlotModel, useStyled } from 'hooks';
 import { ModelSlot } from 'types';
 
+import { Accordion } from '../Accordion/Accordion';
 import { SelectablePill } from '../SelectablePill/SelectablePill';
 import { Text } from '../Text/Text';
 
@@ -63,11 +64,10 @@ export const TextToSpeechPreferences: React.FC<
   };
 
   return (
-    <>
-      <Text variant="h3" bold style={styles.blockHeader}>
-        {t('screens.customizeAssistant.textToSpeech')}
-      </Text>
-
+    <Accordion
+      title={t('screens.customizeAssistant.textToSpeech')}
+      style={styles.block}
+    >
       {voices.length > 0 && (
         <>
           <Text bold style={styles.sectionHeader}>
@@ -109,6 +109,6 @@ export const TextToSpeechPreferences: React.FC<
           </View>
         </>
       )}
-    </>
+    </Accordion>
   );
 };
