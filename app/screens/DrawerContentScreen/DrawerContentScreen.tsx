@@ -76,6 +76,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         </Text>
         <IconButton
           icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
+          glass
           onPress={closeDrawer}
         />
       </View>

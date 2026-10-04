@@ -52,7 +52,4 @@ export default StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: Spacings.sm,
   },
-  headerSpacer: {
-    width: 36,
-  },
 });

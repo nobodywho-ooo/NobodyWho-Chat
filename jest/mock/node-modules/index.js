@@ -23,6 +23,12 @@ jest.mock('@react-native-menu/menu', () => {
   };
 });
 
+// The real iOS entry reads a TurboModule's constants at import time.
+jest.mock('@callstack/liquid-glass', () => ({
+  isLiquidGlassSupported: false,
+  LiquidGlassView: 'LiquidGlassView',
+}));
+
 jest.mock('react-native-haptic-feedback', () => {
   return {
     trigger: jest.fn(),

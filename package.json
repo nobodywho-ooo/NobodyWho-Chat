@@ -15,6 +15,7 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
+    "@callstack/liquid-glass": "^0.8.0",
     "@legendapp/list": "^3.3.11",
     "@op-engineering/op-sqlite": "^17.1.5",
     "@react-native-menu/menu": "^2.0.0",

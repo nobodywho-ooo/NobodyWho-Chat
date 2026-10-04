@@ -4,6 +4,10 @@ import {
   type SFSymbolProps,
   type MaterialSymbolProps,
 } from '@react-navigation/native';
+import {
+  LiquidGlassView,
+  isLiquidGlassSupported,
+} from '@callstack/liquid-glass';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { useStyled } from 'hooks';
 
@@ -19,6 +23,7 @@ interface IconButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   size?: number;
   color?: string;
   backgroundColor?: string;
+  glass?: boolean;
 }
 
 export const IconButton: React.FC<IconButtonProps> = ({
@@ -26,20 +31,25 @@ export const IconButton: React.FC<IconButtonProps> = ({
   size = 20,
   color,
   backgroundColor,
+  glass = false,
   ...props
 }) => {
   const { colors } = useStyled();
+  const isGlass = glass && isLiquidGlassSupported;
 
   return (
     <Pressable
       hitSlop={8}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: backgroundColor ?? colors.surfaceContainer },
-        pressed && { opacity: 0.6 },
+        isGlass
+          ? styles.glassButton
+          : { backgroundColor: backgroundColor ?? colors.surfaceContainer },
+        pressed && !isGlass && { opacity: 0.6 },
       ]}
       {...props}
     >
+      {isGlass && <LiquidGlassView interactive style={styles.glass} />}
       <PlatformIcon
         iosIconName={icon.iosIconName}
         androidIconName={icon.androidIconName}

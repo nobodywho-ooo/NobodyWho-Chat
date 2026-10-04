@@ -4,6 +4,7 @@ import { Chevron } from './Chevron/Chevron';
 import { ProgressBar } from './ProgressBar/ProgressBar';
 import { ErrorView } from './ErrorView/ErrorView';
 import { IconButton, IconButtonIconProps } from './IconButton/IconButton';
+import { iconButtonSize } from './IconButton/IconButton.styles';
 import { ListItem } from './ListItem/ListItem';
 import { MarkdownDocument } from './MarkdownDocument/MarkdownDocument';
 import { MessageListItem } from './MessageListItem/MessageListItem';
@@ -26,6 +27,7 @@ export {
   ProgressBar,
   ErrorView,
   IconButton,
+  iconButtonSize,
   ListItem,
   MarkdownDocument,
   MessageListItem,
