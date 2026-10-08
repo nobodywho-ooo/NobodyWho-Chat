@@ -44,9 +44,18 @@ export interface DiskSpaceCheck {
 // Whether the device has room for a model. When free space can't be read we let
 // the download run rather than block it on a missing number — the transfer
 // itself fails loudly if the disk fills up.
-export const checkDiskSpaceForModel = (model: Model): DiskSpaceCheck => {
+export const checkDiskSpaceForModel = (model: Model): DiskSpaceCheck =>
+  checkDiskSpaceForModels([model]);
+
+// Same check for a batch downloaded together: room for all of them at once,
+// with a single reserve.
+export const checkDiskSpaceForModels = (
+  models: readonly Model[],
+): DiskSpaceCheck => {
   const availableGB = availableDiskSpaceGB();
-  const requiredGB = modelDownloadSizeGB(model) + RESERVED_GB;
+  const requiredGB =
+    models.reduce((total, model) => total + modelDownloadSizeGB(model), 0) +
+    RESERVED_GB;
 
   return {
     fits: availableGB === undefined || availableGB >= requiredGB,

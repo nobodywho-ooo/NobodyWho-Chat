@@ -180,6 +180,16 @@
     }
   },
   "screens": {
+    "onboarding": {
+      "header": "Kom i gang",
+      "title": "Download en model",
+      "subtitle": "Hvilken slags model(ler) vil du downloade?\nVi downloader en lille model, så du kan komme i gang.",
+      "textOnly": "Kun tekstgenerering",
+      "textAndVoice": "Tekst & Stemme",
+      "skip": "Ikke nu",
+      "downloadProgress": "{{percent}}%",
+      "downloadUnavailable": "Kunne ikke downloade lige nu. Prøv igen senere."
+    },
     "noModelDownloaded": {
       "noModelAvailable": "Ingen model tilgængelig",
       "downloadModel": "Download en model"
@@ -252,8 +262,12 @@
       "stopDownloadTitle": "Stop denne download?",
       "stopDownloadMessage": "Downloadet annulleres, og dets fremskridt kasseres. Du kan starte det igen når som helst.",
       "stopDownload": "Stop download",
+      "downloadFailedTitle": "Download mislykkedes",
+      "downloadFailedMessage": "Tjek din forbindelse og prøv igen.",
+      "downloadFailedModelMessage": "{{name}} kunne ikke downloades. Tjek din forbindelse og prøv igen.",
       "notEnoughSpaceTitle": "Ikke nok lagerplads",
-      "notEnoughSpaceMessage": "{{name}} kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen."
+      "notEnoughSpaceMessage": "{{name}} kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen.",
+      "notEnoughSpaceMessageMultiple": "Disse modeller kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen."
     },
     "downloadedModels": {
       "noModelDownloaded": "Ingen model downloadet",

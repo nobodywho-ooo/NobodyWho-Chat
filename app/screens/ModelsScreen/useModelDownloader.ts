@@ -24,96 +24,156 @@ const DOWNLOAD_THROTTLE = 0.01; // 1% step
 
 // Live downloads keyed by model id, each with the AbortController that cancels
 // its loop. Module-level (not state) so it survives remounts and so the
-// resume-on-foreground effect and a user-initiated stop share the same map.
+// resume effect and a user-initiated stop share the same map.
 const activeDownloads = new Map<number, AbortController>();
 
-export const useModelDownloader = () => {
+interface DownloadOptions {
+  // Off for callers that download a batch and report its failure once.
+  alertOnFailure?: boolean;
+}
+
+// The download loop shared by a fresh start and a resume.
+const useRunDownload = () => {
   const { t } = useTranslation();
 
-  const runDownload = useCallback(async (download: ModelDownload) => {
-    const { model } = download;
+  return useCallback(
+    async (
+      download: ModelDownload,
+      { alertOnFailure = true }: DownloadOptions = {},
+    ) => {
+      const { model } = download;
 
-    if (activeDownloads.has(model.id)) {
-      return;
-    }
-
-    const controller = new AbortController();
-    activeDownloads.set(model.id, controller);
-
-    let modelDownloaded = false;
-
-    try {
-      const partsProgress = download.partsProgress.map(part => ({ ...part }));
-
-      for (let i = 0; i < partsProgress.length; i++) {
-        if (partsProgress[i].progress >= 1 && partsProgress[i].path) {
-          continue;
-        }
-
-        const path = await downloadModelPart(
-          model.id,
-          partsProgress[i].url,
-          partsProgress[i].fileName,
-          controller.signal,
-          (downloaded, total) => {
-            const progress = total > 0 ? downloaded / total : 0;
-            if (
-              progress - partsProgress[i].progress >= DOWNLOAD_THROTTLE ||
-              progress >= 1
-            ) {
-              partsProgress[i] = { ...partsProgress[i], progress };
-              updateModelDownloadParts(model.id, partsProgress).catch(error => {
-                log('runDownload updateModelDownloadParts', error);
-              });
-            }
-          },
-        );
-        partsProgress[i] = { ...partsProgress[i], progress: 1, path };
-        await updateModelDownloadParts(model.id, partsProgress);
-      }
-
-      if (controller.signal.aborted) {
+      if (activeDownloads.has(model.id)) {
         return;
       }
 
-      const downloadedParts: ModelPart[] = partsProgress.map(
-        ({ url, fileName, type, path, sizeGB }) => ({
-          url,
-          fileName,
-          type,
-          path,
-          sizeGB,
-        }),
-      );
+      const controller = new AbortController();
+      activeDownloads.set(model.id, controller);
+
+      let modelDownloaded = false;
 
       try {
-        await insertModel({ ...model, parts: downloadedParts });
-      } catch (error) {
+        const partsProgress = download.partsProgress.map(part => ({ ...part }));
+
+        for (let i = 0; i < partsProgress.length; i++) {
+          if (partsProgress[i].progress >= 1 && partsProgress[i].path) {
+            continue;
+          }
+
+          const path = await downloadModelPart(
+            model.id,
+            partsProgress[i].url,
+            partsProgress[i].fileName,
+            controller.signal,
+            (downloaded, total) => {
+              const progress = total > 0 ? downloaded / total : 0;
+              if (
+                progress - partsProgress[i].progress >= DOWNLOAD_THROTTLE ||
+                progress >= 1
+              ) {
+                partsProgress[i] = { ...partsProgress[i], progress };
+                updateModelDownloadParts(model.id, partsProgress).catch(
+                  error => {
+                    log('runDownload updateModelDownloadParts', error);
+                  },
+                );
+              }
+            },
+          );
+          partsProgress[i] = { ...partsProgress[i], progress: 1, path };
+          await updateModelDownloadParts(model.id, partsProgress);
+        }
+
+        if (controller.signal.aborted) {
+          return;
+        }
+
+        const downloadedParts: ModelPart[] = partsProgress.map(
+          ({ url, fileName, type, path, sizeGB }) => ({
+            url,
+            fileName,
+            type,
+            path,
+            sizeGB,
+          }),
+        );
+
+        try {
+          await insertModel({ ...model, parts: downloadedParts });
+        } catch (error) {
+          await deleteModelDownload(model.id);
+          deleteModelDirectory(model.id);
+          throw error;
+        }
+
+        modelDownloaded = true;
+
+        await selectModelIfSlotFree(model);
+
         await deleteModelDownload(model.id);
-        deleteModelDirectory(model.id);
-        throw error;
+      } catch (error) {
+        const capture =
+          !controller.signal.aborted && !(error instanceof NetworkError);
+        log('ModelsScreen runDownload', error, {
+          // TODO: delete capture when model downloading is stable
+          capture,
+        });
+
+        if (alertOnFailure && !controller.signal.aborted) {
+          Alert.alert(
+            t('screens.models.downloadFailedTitle'),
+            t('screens.models.downloadFailedModelMessage', {
+              name: model.name,
+            }),
+          );
+        }
+      } finally {
+        if (activeDownloads.get(model.id) === controller) {
+          activeDownloads.delete(model.id);
+        }
+
+        if (controller.signal.aborted && !modelDownloaded) {
+          deleteModelDirectory(model.id);
+        }
       }
+    },
+    [t],
+  );
+};
 
-      modelDownloaded = true;
+// Restarts every download left pending in the database
+export const useResumeModelDownloads = () => {
+  const runDownload = useRunDownload();
 
-      await selectModelIfSlotFree(model);
-
-      await deleteModelDownload(model.id);
-    } catch (error) {
-      log('ModelsScreen runDownload', error, {
-        // TODO: delete capture when model downloading is stable
-        capture: !controller.signal.aborted && !(error instanceof NetworkError),
-      });
-    } finally {
-      if (activeDownloads.get(model.id) === controller) {
-        activeDownloads.delete(model.id);
+  useEffect(() => {
+    const resumeDownloads = async () => {
+      try {
+        const pendingDownloads = await getModelDownloads();
+        for (const download of pendingDownloads) {
+          if (!activeDownloads.has(download.model.id)) {
+            runDownload(download);
+          }
+        }
+      } catch (error) {
+        log('useResumeModelDownloads resumeDownloads', error);
       }
+    };
 
-      if (controller.signal.aborted && !modelDownloaded) {
-        deleteModelDirectory(model.id);
+    resumeDownloads();
+
+    const subscription = AppState.addEventListener('change', state => {
+      if (state === 'active') {
+        resumeDownloads();
       }
-    }
-  }, []);
+    });
+
+    return () => subscription.remove();
+  }, [runDownload]);
+};
+
+export const useModelDownloader = () => {
+  const { t } = useTranslation();
+  const runDownload = useRunDownload();
 
   const warnNotEnoughSpace = useCallback(
     (model: Model, check: DiskSpaceCheck) =>
@@ -129,7 +189,7 @@ export const useModelDownloader = () => {
   );
 
   const startDownload = useCallback(
-    async (model: Model) => {
+    async (model: Model, options?: DownloadOptions) => {
       const spaceCheck = checkDiskSpaceForModel(model);
 
       if (!spaceCheck.fits) {
@@ -142,10 +202,13 @@ export const useModelDownloader = () => {
         return;
       }
 
-      await runDownload({
-        model,
-        partsProgress: model.parts.map(part => ({ ...part, progress: 0 })),
-      });
+      await runDownload(
+        {
+          model,
+          partsProgress: model.parts.map(part => ({ ...part, progress: 0 })),
+        },
+        options,
+      );
     },
     [runDownload, warnNotEnoughSpace],
   );
@@ -180,30 +243,6 @@ export const useModelDownloader = () => {
       ),
     [t, stopDownload],
   );
-
-  useEffect(() => {
-    const resumeDownloads = async () => {
-      try {
-        const pendingDownloads = await getModelDownloads();
-        for (const download of pendingDownloads) {
-          if (!activeDownloads.has(download.model.id)) {
-            runDownload(download);
-          }
-        }
-      } catch (error) {
-        log('ModelsScreen resumeDownloads', error);
-      }
-    };
-
-    resumeDownloads();
-
-    const subscription = AppState.addEventListener('change', state => {
-      if (state === 'active') {
-        resumeDownloads();
-      }
-    });
-    return () => subscription.remove();
-  }, [runDownload]);
 
   return { startDownload, stopDownload, promptStopDownload };
 };
