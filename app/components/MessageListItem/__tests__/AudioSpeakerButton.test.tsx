@@ -1,5 +1,4 @@
 import React from 'react';
-import { ActivityIndicator } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 
 import { AudioSpeakerButton } from '../AssistantMessage/AudioSpeakerButton';
@@ -7,10 +6,10 @@ import { AudioSpeakerButton } from '../AssistantMessage/AudioSpeakerButton';
 // The i18n `t` returns the key verbatim in tests, so labels are asserted by
 // their translation key; PlatformIcon is globally stubbed to a host element.
 
-test('shows a play control when idle and speaks the message on press', () => {
+test('shows a play control when idle and speaks the message on press', async () => {
   const onPlay = jest.fn();
   const onStop = jest.fn();
-  const { getByLabelText } = render(
+  const { getByLabelText } = await render(
     <AudioSpeakerButton
       isLoading={false}
       isPlaying={false}
@@ -21,15 +20,15 @@ test('shows a play control when idle and speaks the message on press', () => {
     />,
   );
 
-  fireEvent.press(getByLabelText('components.messageListItem.playAudio'));
+  await fireEvent.press(getByLabelText('components.messageListItem.playAudio'));
 
   expect(onPlay).toHaveBeenCalledWith('row:2', 'Hello world');
   expect(onStop).not.toHaveBeenCalled();
 });
 
-test('strips thinking blocks from the spoken text', () => {
+test('strips thinking blocks from the spoken text', async () => {
   const onPlay = jest.fn();
-  const { getByLabelText } = render(
+  const { getByLabelText } = await render(
     <AudioSpeakerButton
       isLoading={false}
       isPlaying={false}
@@ -39,15 +38,15 @@ test('strips thinking blocks from the spoken text', () => {
     />,
   );
 
-  fireEvent.press(getByLabelText('components.messageListItem.playAudio'));
+  await fireEvent.press(getByLabelText('components.messageListItem.playAudio'));
 
   expect(onPlay).toHaveBeenCalledWith('row:0', 'The answer is 42');
 });
 
-test('shows a stop control while playing and stops on press', () => {
+test('shows a stop control while playing and stops on press', async () => {
   const onPlay = jest.fn();
   const onStop = jest.fn();
-  const { getByLabelText, queryByLabelText } = render(
+  const { getByLabelText, queryByLabelText } = await render(
     <AudioSpeakerButton
       isLoading={false}
       isPlaying
@@ -61,16 +60,16 @@ test('shows a stop control while playing and stops on press', () => {
   // While playing there is no play affordance, only stop.
   expect(queryByLabelText('components.messageListItem.playAudio')).toBeNull();
 
-  fireEvent.press(getByLabelText('components.messageListItem.stopAudio'));
+  await fireEvent.press(getByLabelText('components.messageListItem.stopAudio'));
 
   expect(onStop).toHaveBeenCalledTimes(1);
   expect(onPlay).not.toHaveBeenCalled();
 });
 
-test('shows a spinner instead of a button while synthesizing', () => {
+test('shows a spinner instead of a button while synthesizing', async () => {
   const onPlay = jest.fn();
   const onStop = jest.fn();
-  const screen = render(
+  const screen = await render(
     <AudioSpeakerButton
       isLoading
       isPlaying={false}
@@ -81,7 +80,9 @@ test('shows a spinner instead of a button while synthesizing', () => {
     />,
   );
 
-  expect(screen.UNSAFE_queryByType(ActivityIndicator)).toBeTruthy();
+  expect(
+    screen.container.queryAll(node => node.type === 'ActivityIndicator'),
+  ).toHaveLength(1);
   expect(
     screen.queryByLabelText('components.messageListItem.playAudio'),
   ).toBeNull();
@@ -90,8 +91,8 @@ test('shows a spinner instead of a button while synthesizing', () => {
   ).toBeNull();
 });
 
-test('does not throw when pressed without handlers', () => {
-  const { getByLabelText } = render(
+test('does not throw when pressed without handlers', async () => {
+  const { getByLabelText } = await render(
     <AudioSpeakerButton
       isLoading={false}
       isPlaying={false}
@@ -101,13 +102,13 @@ test('does not throw when pressed without handlers', () => {
   );
 
   // onPlay/onStop are optional — an undefined handler must be a no-op, not a crash.
-  expect(() =>
+  await expect(
     fireEvent.press(getByLabelText('components.messageListItem.playAudio')),
-  ).not.toThrow();
+  ).resolves.not.toThrow();
 });
 
-test('matches the snapshot', () => {
-  const { toJSON } = render(
+test('matches the snapshot', async () => {
+  const { toJSON } = await render(
     <AudioSpeakerButton
       isLoading={false}
       isPlaying={false}

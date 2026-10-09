@@ -1,12 +1,11 @@
 import React from 'react';
-import { ActivityIndicator } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 
 import { buildModel } from 'jest/factories/model';
 import { mockUseSlotModel } from 'jest/mock/hooks';
 import { ModelPipeline } from 'types';
 
-import { VoiceGlow } from '../components';
 import type { VoiceStatus } from '../hooks';
 import { VoiceAssistantScreen } from '../VoiceAssistantScreen';
 
@@ -43,19 +42,32 @@ jest.mock('../hooks', () => {
   };
 });
 
-const renderAt = (
+// The glow is on screen when its radial-gradient blobs are; nothing else on
+// the screen paints a background image.
+const glowBlobsOf = (screen: Awaited<ReturnType<typeof render>>) =>
+  screen.container.queryAll(
+    node =>
+      typeof StyleSheet.flatten(node.props.style)
+        ?.experimental_backgroundImage === 'string',
+  );
+
+const renderAt = async (
   status: VoiceStatus,
   onCloseDrawer = jest.fn(),
   hasAnswered = false,
 ) => {
   mockStatus = status;
   mockHasAnswered = hasAnswered;
-  const screen = render(<VoiceAssistantScreen onCloseDrawer={onCloseDrawer} />);
+  const screen = await render(
+    <VoiceAssistantScreen onCloseDrawer={onCloseDrawer} />,
+  );
 
   return {
     screen,
     onCloseDrawer,
-    spinner: screen.UNSAFE_queryByType(ActivityIndicator),
+    spinner:
+      screen.container.queryAll(node => node.type === 'ActivityIndicator')[0] ??
+      null,
     stopButton: screen.queryByLabelText('screens.voiceAssistant.stop'),
     startButton: screen.queryByLabelText('screens.voiceAssistant.start'),
   };
@@ -63,8 +75,8 @@ const renderAt = (
 
 test.each<VoiceStatus>(['transcribing', 'thinking'])(
   'shows a spinner and no button while %s, so the work cannot be stopped',
-  status => {
-    const { spinner, stopButton, startButton } = renderAt(status);
+  async status => {
+    const { spinner, stopButton, startButton } = await renderAt(status);
 
     expect(spinner).toBeTruthy();
     expect(stopButton).toBeNull();
@@ -72,15 +84,15 @@ test.each<VoiceStatus>(['transcribing', 'thinking'])(
   },
 );
 
-test('offers a stop button while the user is talking', () => {
-  const { spinner, stopButton } = renderAt('listening');
+test('offers a stop button while the user is talking', async () => {
+  const { spinner, stopButton } = await renderAt('listening');
 
   expect(stopButton).toBeTruthy();
   expect(spinner).toBeNull();
 });
 
-test('offers a stop button while the answer is playing back', () => {
-  const { spinner, stopButton } = renderAt('speaking');
+test('offers a stop button while the answer is playing back', async () => {
+  const { spinner, stopButton } = await renderAt('speaking');
 
   expect(stopButton).toBeTruthy();
   expect(spinner).toBeNull();
@@ -88,8 +100,8 @@ test('offers a stop button while the answer is playing back', () => {
 
 test.each<VoiceStatus>(['idle', 'error'])(
   'offers a start button when %s',
-  status => {
-    const { spinner, startButton } = renderAt(status);
+  async status => {
+    const { spinner, startButton } = await renderAt(status);
 
     expect(startButton).toBeTruthy();
     expect(spinner).toBeNull();
@@ -119,18 +131,18 @@ test.each<VoiceStatus>([
   'synthesizing',
   'speaking',
   'error',
-])('offers no preferences button while %s', status => {
-  const { screen } = renderAt(status);
+])('offers no preferences button while %s', async status => {
+  const { screen } = await renderAt(status);
 
   expect(
     screen.queryByLabelText('screens.voiceAssistant.preferences'),
   ).toBeNull();
 });
 
-test('offers no preferences button once the assistant has answered', () => {
+test('offers no preferences button once the assistant has answered', async () => {
   // Voice and language are load-time options, so an edit here would reload the
   // engine in the middle of a conversation.
-  const { screen } = renderAt('idle', jest.fn(), true);
+  const { screen } = await renderAt('idle', jest.fn(), true);
 
   expect(
     screen.queryByLabelText('screens.voiceAssistant.preferences'),
@@ -138,11 +150,13 @@ test('offers no preferences button once the assistant has answered', () => {
   expect(screen.getByText('screens.voiceAssistant.status.idle')).toBeTruthy();
 });
 
-test('opening the preferences replaces the voice body', () => {
-  const { screen } = renderAt('idle');
-  expect(screen.UNSAFE_queryByType(VoiceGlow)).toBeTruthy();
+test('opening the preferences replaces the voice body', async () => {
+  const { screen } = await renderAt('idle');
+  expect(glowBlobsOf(screen).length).toBeGreaterThan(0);
 
-  fireEvent.press(screen.getByLabelText('screens.voiceAssistant.preferences'));
+  await fireEvent.press(
+    screen.getByLabelText('screens.voiceAssistant.preferences'),
+  );
 
   expect(
     screen.getByText('screens.customizeAssistant.textToSpeech'),
@@ -150,18 +164,20 @@ test('opening the preferences replaces the voice body', () => {
   expect(screen.queryByText('screens.voiceAssistant.status.idle')).toBeNull();
   expect(screen.queryByLabelText('screens.voiceAssistant.start')).toBeNull();
   // The glow goes too, rather than shining through the settings.
-  expect(screen.UNSAFE_queryByType(VoiceGlow)).toBeNull();
+  expect(glowBlobsOf(screen)).toHaveLength(0);
   // Nothing left to configure from here, so the button goes with the panel.
   expect(
     screen.queryByLabelText('screens.voiceAssistant.preferences'),
   ).toBeNull();
 });
 
-test('the close button steps back to the voice body instead of closing the drawer', () => {
-  const { screen, onCloseDrawer } = renderAt('idle');
+test('the close button steps back to the voice body instead of closing the drawer', async () => {
+  const { screen, onCloseDrawer } = await renderAt('idle');
 
-  fireEvent.press(screen.getByLabelText('screens.voiceAssistant.preferences'));
-  fireEvent.press(screen.getByLabelText('screens.voiceAssistant.close'));
+  await fireEvent.press(
+    screen.getByLabelText('screens.voiceAssistant.preferences'),
+  );
+  await fireEvent.press(screen.getByLabelText('screens.voiceAssistant.close'));
 
   expect(onCloseDrawer).not.toHaveBeenCalled();
   expect(screen.getByText('screens.voiceAssistant.status.idle')).toBeTruthy();
@@ -170,20 +186,22 @@ test('the close button steps back to the voice body instead of closing the drawe
   ).toBeNull();
 
   // Back on the voice body, it closes the drawer again.
-  fireEvent.press(screen.getByLabelText('screens.voiceAssistant.close'));
+  await fireEvent.press(screen.getByLabelText('screens.voiceAssistant.close'));
   expect(onCloseDrawer).toHaveBeenCalledTimes(1);
 });
 
-test('a turn starting while the panel is open takes it down', () => {
-  const { screen } = renderAt('idle');
+test('a turn starting while the panel is open takes it down', async () => {
+  const { screen } = await renderAt('idle');
 
-  fireEvent.press(screen.getByLabelText('screens.voiceAssistant.preferences'));
+  await fireEvent.press(
+    screen.getByLabelText('screens.voiceAssistant.preferences'),
+  );
   expect(
     screen.getByText('screens.customizeAssistant.textToSpeech'),
   ).toBeTruthy();
 
   mockStatus = 'listening';
-  screen.update(<VoiceAssistantScreen onCloseDrawer={jest.fn()} />);
+  await screen.rerender(<VoiceAssistantScreen onCloseDrawer={jest.fn()} />);
 
   expect(
     screen.queryByText('screens.customizeAssistant.textToSpeech'),
@@ -193,13 +211,15 @@ test('a turn starting while the panel is open takes it down', () => {
   ).toBeTruthy();
 });
 
-test('an answer landing while the panel is open takes it down', () => {
-  const { screen } = renderAt('idle');
+test('an answer landing while the panel is open takes it down', async () => {
+  const { screen } = await renderAt('idle');
 
-  fireEvent.press(screen.getByLabelText('screens.voiceAssistant.preferences'));
+  await fireEvent.press(
+    screen.getByLabelText('screens.voiceAssistant.preferences'),
+  );
 
   mockHasAnswered = true;
-  screen.update(<VoiceAssistantScreen onCloseDrawer={jest.fn()} />);
+  await screen.rerender(<VoiceAssistantScreen onCloseDrawer={jest.fn()} />);
 
   expect(
     screen.queryByText('screens.customizeAssistant.textToSpeech'),

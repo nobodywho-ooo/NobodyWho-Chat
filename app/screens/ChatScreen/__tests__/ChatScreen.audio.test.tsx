@@ -53,7 +53,7 @@ beforeEach(() => {
 test('a message rendered before the TTS engine was ready still gets its speaker button', async () => {
   mockTtsLoad.mockResolvedValue({ synthesize: jest.fn(), destroy: jest.fn() });
 
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <SlotProbe />
       <ChatScreen

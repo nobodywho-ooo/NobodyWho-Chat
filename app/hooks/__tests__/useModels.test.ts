@@ -10,11 +10,11 @@ const mockUseReactiveQuery = useReactiveQuery as jest.Mock;
 
 beforeEach(() => mockUseReactiveQuery.mockReset());
 
-test('queries the models table and wraps the result', () => {
+test('queries the models table and wraps the result', async () => {
   const models = [{ id: 1 }, { id: 2 }];
   mockUseReactiveQuery.mockReturnValue({ rows: models, loading: false });
 
-  const { result } = renderHook(() => useModels());
+  const { result } = await renderHook(() => useModels());
 
   expect(mockUseReactiveQuery).toHaveBeenCalledWith({
     query: 'SELECT * FROM models ORDER BY id',

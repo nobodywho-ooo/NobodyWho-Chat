@@ -1,5 +1,4 @@
 import React from 'react';
-import { Switch } from 'react-native';
 import { render, fireEvent, act } from '@testing-library/react-native';
 
 import { getAppState, setAppState, DEFAULT_ASSISTANT_CONFIG } from 'database';
@@ -22,7 +21,7 @@ beforeEach(async () => {
 });
 
 const renderScreen = async () => {
-  const screen = render(<CustomizeAssistantScreen />);
+  const screen = await render(<CustomizeAssistantScreen />);
   await act(async () => {});
   return screen;
 };
@@ -35,8 +34,8 @@ test('renders correctly CustomizeAssistantScreen', async () => {
 test('toggling thinking persists the config', async () => {
   const screen = await renderScreen();
 
-  const [thinkingSwitch] = screen.UNSAFE_getAllByType(Switch);
-  fireEvent(thinkingSwitch, 'valueChange', false);
+  const [thinkingSwitch] = screen.getAllByRole('switch');
+  await fireEvent(thinkingSwitch, 'valueChange', false);
 
   expect(getAppState().assistantConfig).toEqual({
     ...DEFAULT_ASSISTANT_CONFIG,
@@ -47,8 +46,8 @@ test('toggling thinking persists the config', async () => {
 test('toggling tool calling persists the config', async () => {
   const screen = await renderScreen();
 
-  const [, toolCallingSwitch] = screen.UNSAFE_getAllByType(Switch);
-  fireEvent(toolCallingSwitch, 'valueChange', false);
+  const [, toolCallingSwitch] = screen.getAllByRole('switch');
+  await fireEvent(toolCallingSwitch, 'valueChange', false);
 
   expect(getAppState().assistantConfig).toEqual({
     ...DEFAULT_ASSISTANT_CONFIG,
@@ -67,7 +66,7 @@ test('the stepper changes max tokens by 500 and clamps at both ends', async () =
   );
 
   // One press moves exactly one step off the default.
-  fireEvent.press(plus);
+  await fireEvent.press(plus);
   expect(getAppState().assistantConfig?.contextSize).toBe(
     DEFAULT_ASSISTANT_CONFIG.contextSize + TOKENS_STEP,
   );
@@ -78,21 +77,21 @@ test('the stepper changes max tokens by 500 and clamps at both ends', async () =
   const upPresses =
     (TOKENS_MAX - DEFAULT_ASSISTANT_CONFIG.contextSize) / TOKENS_STEP;
   for (let i = 1; i < upPresses; i++) {
-    fireEvent.press(plus);
+    await fireEvent.press(plus);
   }
   expect(getAppState().assistantConfig?.contextSize).toBe(TOKENS_MAX);
 
-  fireEvent.press(plus);
+  await fireEvent.press(plus);
   expect(getAppState().assistantConfig?.contextSize).toBe(TOKENS_MAX);
 
   // And back down to the floor, where the decrease button is likewise inert.
   const downPresses = (TOKENS_MAX - TOKENS_MIN) / TOKENS_STEP;
   for (let i = 0; i < downPresses; i++) {
-    fireEvent.press(minus);
+    await fireEvent.press(minus);
   }
   expect(getAppState().assistantConfig?.contextSize).toBe(TOKENS_MIN);
 
-  fireEvent.press(minus);
+  await fireEvent.press(minus);
   expect(getAppState().assistantConfig?.contextSize).toBe(TOKENS_MIN);
 });
 
@@ -102,11 +101,11 @@ test('editing the system prompt persists on end editing', async () => {
   const input = screen.getByPlaceholderText(
     'screens.customizeAssistant.systemPromptPlaceholder',
   );
-  fireEvent.changeText(input, 'You are a pirate.');
+  await fireEvent.changeText(input, 'You are a pirate.');
   // Typing alone is not persisted yet — only the local state changes.
   expect(getAppState().assistantConfig).toBeUndefined();
 
-  fireEvent(input, 'endEditing');
+  await fireEvent(input, 'endEditing');
   expect(getAppState().assistantConfig).toEqual({
     ...DEFAULT_ASSISTANT_CONFIG,
     systemPrompt: 'You are a pirate.',
@@ -119,10 +118,10 @@ test('pending changes are persisted when the screen closes', async () => {
   const input = screen.getByPlaceholderText(
     'screens.customizeAssistant.systemPromptPlaceholder',
   );
-  fireEvent.changeText(input, 'You are a pirate.');
+  await fireEvent.changeText(input, 'You are a pirate.');
   expect(getAppState().assistantConfig).toBeUndefined();
 
-  screen.unmount();
+  await screen.unmount();
   expect(getAppState().assistantConfig).toEqual({
     ...DEFAULT_ASSISTANT_CONFIG,
     systemPrompt: 'You are a pirate.',
@@ -145,11 +144,11 @@ describe('with a transcription model in use', () => {
 
   test('picking a language persists its Whisper code', async () => {
     const screen = await renderScreen();
-    fireEvent.press(
+    await fireEvent.press(
       screen.getByLabelText('screens.customizeAssistant.speechToText'),
     );
 
-    fireEvent.press(screen.getByLabelText('Danish'));
+    await fireEvent.press(screen.getByLabelText('Danish'));
 
     expect(getAppState().assistantConfig).toEqual({
       ...DEFAULT_ASSISTANT_CONFIG,
@@ -162,11 +161,11 @@ describe('with a transcription model in use', () => {
       assistantConfig: { ...DEFAULT_ASSISTANT_CONFIG, sttLanguage: 'da' },
     });
     const screen = await renderScreen();
-    fireEvent.press(
+    await fireEvent.press(
       screen.getByLabelText('screens.customizeAssistant.speechToText'),
     );
 
-    fireEvent.press(
+    await fireEvent.press(
       screen.getByLabelText('screens.customizeAssistant.sttLanguageAutomatic'),
     );
 

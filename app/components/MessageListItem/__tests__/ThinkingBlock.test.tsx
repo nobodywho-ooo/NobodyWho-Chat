@@ -10,24 +10,24 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-test('shows the "thought" label when not active', () => {
-  const { getByText } = render(
+test('shows the "thought" label when not active', async () => {
+  const { getByText } = await render(
     <ThinkingBlock thinking="reasoning" active={false} onPress={jest.fn()} />,
   );
 
   expect(getByText('components.messageListItem.thought')).toBeTruthy();
 });
 
-test('shows the "thinking" label while active', () => {
-  const { getByText } = render(
+test('shows the "thinking" label while active', async () => {
+  const { getByText } = await render(
     <ThinkingBlock thinking="reasoning" active onPress={jest.fn()} />,
   );
 
   expect(getByText('components.messageListItem.thinking')).toBeTruthy();
 });
 
-test('renders the reasoning into the preview with blank lines stripped', () => {
-  render(
+test('renders the reasoning into the preview with blank lines stripped', async () => {
+  await render(
     <ThinkingBlock
       thinking={'line one\n\n\nline two'}
       active={false}
@@ -39,18 +39,18 @@ test('renders the reasoning into the preview with blank lines stripped', () => {
   expect(mockStreamdown.mock.calls[0][0].markdown).toBe('line one\nline two');
 });
 
-test('calls onPress when tapped', () => {
+test('calls onPress when tapped', async () => {
   const onPress = jest.fn();
-  const { getByRole } = render(
+  const { getByRole } = await render(
     <ThinkingBlock thinking="reasoning" active={false} onPress={onPress} />,
   );
 
-  fireEvent.press(getByRole('button'));
+  await fireEvent.press(getByRole('button'));
   expect(onPress).toHaveBeenCalledTimes(1);
 });
 
-test('matches the snapshot', () => {
-  const { toJSON } = render(
+test('matches the snapshot', async () => {
+  const { toJSON } = await render(
     <ThinkingBlock thinking="reasoning" active={false} onPress={jest.fn()} />,
   );
   expect(toJSON()).toMatchSnapshot();

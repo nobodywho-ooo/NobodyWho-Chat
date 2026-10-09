@@ -1,66 +1,65 @@
 import React from 'react';
 import { Linking } from 'react-native';
-import { render, fireEvent } from '@testing-library/react-native';
+import {
+  render,
+  fireEvent,
+  type RenderResult,
+} from '@testing-library/react-native';
 
 import { mockNavigate } from 'jest/mock/node-modules';
 
 import { SettingsScreen } from '../SettingsScreen';
 
+const getRow = (screen: RenderResult, title: string) => {
+  const [row] = screen.container.queryAll(node => node.props.title === title);
+  return row;
+};
+
 beforeEach(() => {
   mockNavigate.mockClear();
 });
 
-test('renders correctly SettingsScreen', () => {
-  expect(render(<SettingsScreen />).toJSON()).toMatchSnapshot();
+test('renders correctly SettingsScreen', async () => {
+  expect((await render(<SettingsScreen />)).toJSON()).toMatchSnapshot();
 });
 
-test('pressing models navigates to the ModelsScreen', () => {
-  const screen = render(<SettingsScreen />);
+test('pressing models navigates to the ModelsScreen', async () => {
+  const screen = await render(<SettingsScreen />);
 
-  fireEvent.press(
-    screen.UNSAFE_getByProps({ title: 'screens.settings.models' }),
-  );
+  await fireEvent.press(getRow(screen, 'screens.settings.models'));
 
   expect(mockNavigate).toHaveBeenCalledWith('ModelsScreen');
 });
 
-test('pressing customize navigates to the CustomizeAssistantScreen', () => {
-  const screen = render(<SettingsScreen />);
+test('pressing customize navigates to the CustomizeAssistantScreen', async () => {
+  const screen = await render(<SettingsScreen />);
 
-  fireEvent.press(
-    screen.UNSAFE_getByProps({ title: 'screens.settings.customize' }),
-  );
+  await fireEvent.press(getRow(screen, 'screens.settings.customize'));
 
   expect(mockNavigate).toHaveBeenCalledWith('CustomizeAssistantScreen');
 });
 
-test('pressing terms & conditions navigates to the TermsScreen', () => {
-  const screen = render(<SettingsScreen />);
+test('pressing terms & conditions navigates to the TermsScreen', async () => {
+  const screen = await render(<SettingsScreen />);
 
-  fireEvent.press(
-    screen.UNSAFE_getByProps({ title: 'screens.settings.terms' }),
-  );
+  await fireEvent.press(getRow(screen, 'screens.settings.terms'));
 
   expect(mockNavigate).toHaveBeenCalledWith('TermsScreen');
 });
 
-test('pressing privacy policy navigates to the PrivacyPolicyScreen', () => {
-  const screen = render(<SettingsScreen />);
+test('pressing privacy policy navigates to the PrivacyPolicyScreen', async () => {
+  const screen = await render(<SettingsScreen />);
 
-  fireEvent.press(
-    screen.UNSAFE_getByProps({ title: 'screens.settings.privacyPolicy' }),
-  );
+  await fireEvent.press(getRow(screen, 'screens.settings.privacyPolicy'));
 
   expect(mockNavigate).toHaveBeenCalledWith('PrivacyPolicyScreen');
 });
 
-test('pressing website opens the NobodyWho site', () => {
+test('pressing website opens the NobodyWho site', async () => {
   const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
-  const screen = render(<SettingsScreen />);
+  const screen = await render(<SettingsScreen />);
 
-  fireEvent.press(
-    screen.UNSAFE_getByProps({ title: 'screens.settings.website' }),
-  );
+  await fireEvent.press(getRow(screen, 'screens.settings.website'));
 
   expect(openURL).toHaveBeenCalledWith('https://www.nobodywho.ai/');
 

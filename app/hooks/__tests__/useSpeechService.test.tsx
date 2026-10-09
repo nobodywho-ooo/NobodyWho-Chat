@@ -30,10 +30,13 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
 
 // The speech service reads the detection model off the shared AiService, so
 // each test drives the real provider and loads the (mocked) model via createVad.
-const renderSpeechService = () =>
-  renderHook(() => ({ speech: useSpeechService(), service: useAiService() }), {
-    wrapper,
-  });
+const renderSpeechService = async () =>
+  await renderHook(
+    () => ({ speech: useSpeechService(), service: useAiService() }),
+    {
+      wrapper,
+    },
+  );
 
 // The instance the provider is holding, with the mocked push/finish on it.
 type MockVad = {
@@ -43,8 +46,8 @@ type MockVad = {
   destroy: jest.Mock;
 };
 
-test('is disabled, and inert, with no detection model loaded', () => {
-  const { result } = renderSpeechService();
+test('is disabled, and inert, with no detection model loaded', async () => {
+  const { result } = await renderSpeechService();
 
   expect(result.current.speech.enabled).toBe(false);
   expect(result.current.speech.push(Int16Array.from([1, 2, 3]), 16000)).toBe(
@@ -54,7 +57,7 @@ test('is disabled, and inert, with no detection model loaded', () => {
 });
 
 test('reports the end of speech and hands back the captured segment', async () => {
-  const { result } = renderSpeechService();
+  const { result } = await renderSpeechService();
 
   await act(async () => {
     await result.current.service.slots.vad.create({ model: vadModel });
@@ -71,7 +74,7 @@ test('reports the end of speech and hands back the captured segment', async () =
 
   // Starting a turn claims the shared detector for this consumer; push is inert
   // until it does.
-  act(() => result.current.speech.reset());
+  await act(() => result.current.speech.reset());
 
   const chunk = Int16Array.from([1, 2, 3, 4]);
   expect(result.current.speech.push(chunk, 16000)).toBe(false);
@@ -85,7 +88,7 @@ test('reports the end of speech and hands back the captured segment', async () =
 });
 
 test('resamples the recording to the rate the detection model was loaded with', async () => {
-  const { result } = renderSpeechService();
+  const { result } = await renderSpeechService();
 
   await act(async () => {
     await result.current.service.slots.vad.create({ model: vadModel });
@@ -93,7 +96,7 @@ test('resamples the recording to the rate the detection model was loaded with', 
 
   const vad = result.current.service.slots.vad.ref
     .current as unknown as MockVad;
-  act(() => result.current.speech.reset());
+  await act(() => result.current.speech.reset());
   // 48 kHz hardware: six samples become two at the model's 16 kHz.
   result.current.speech.push(Int16Array.from([0, 3, 6, 10, 20, 30]), 48000);
 
@@ -102,7 +105,7 @@ test('resamples the recording to the rate the detection model was loaded with', 
 });
 
 test('treats an empty finish as no speech, so the caller keeps its own recording', async () => {
-  const { result } = renderSpeechService();
+  const { result } = await renderSpeechService();
 
   await act(async () => {
     await result.current.service.slots.vad.create({ model: vadModel });
@@ -110,14 +113,14 @@ test('treats an empty finish as no speech, so the caller keeps its own recording
 
   const vad = result.current.service.slots.vad.ref
     .current as unknown as MockVad;
-  act(() => result.current.speech.reset());
+  await act(() => result.current.speech.reset());
   vad.finish.mockReturnValueOnce([]);
 
   expect(result.current.speech.takeSpeechToTranscribe()).toBeUndefined();
 });
 
 test('reports itself unusable once push throws, so callers stop waiting on it', async () => {
-  const { result } = renderSpeechService();
+  const { result } = await renderSpeechService();
 
   await act(async () => {
     await result.current.service.slots.vad.create({ model: vadModel });
@@ -125,13 +128,13 @@ test('reports itself unusable once push throws, so callers stop waiting on it', 
 
   const vad = result.current.service.slots.vad.ref
     .current as unknown as MockVad;
-  act(() => result.current.speech.reset());
+  await act(() => result.current.speech.reset());
   vad.push.mockImplementationOnce(() => {
     throw new Error('native failure');
   });
 
   const chunk = Int16Array.from([1, 2, 3]);
-  act(() => {
+  await act(() => {
     expect(result.current.speech.push(chunk, 16000)).toBe(false);
   });
 
@@ -143,7 +146,7 @@ test('reports itself unusable once push throws, so callers stop waiting on it', 
   // Neither the next window nor the drain reaches the detector again, and a new
   // turn does not resurrect it — the native instance is broken until reloaded.
   expect(result.current.speech.push(chunk, 16000)).toBe(false);
-  act(() => result.current.speech.reset());
+  await act(() => result.current.speech.reset());
   expect(result.current.speech.push(chunk, 16000)).toBe(false);
   expect(vad.push).toHaveBeenCalledTimes(1);
   expect(result.current.speech.takeSpeechToTranscribe()).toBeUndefined();
@@ -152,7 +155,7 @@ test('reports itself unusable once push throws, so callers stop waiting on it', 
 test('a second consumer takes the detector and preempts the first', async () => {
   const onPreempted = jest.fn();
 
-  const { result } = renderHook(
+  const { result } = await renderHook(
     () => ({
       dictation: useSpeechService({ onPreempted }),
       assistant: useSpeechService(),
@@ -167,14 +170,14 @@ test('a second consumer takes the detector and preempts the first', async () => 
 
   const vad = result.current.service.slots.vad.ref
     .current as unknown as MockVad;
-  act(() => result.current.dictation.reset());
+  await act(() => result.current.dictation.reset());
 
   const chunk = Int16Array.from([1, 2, 3]);
   result.current.dictation.push(chunk, 16000);
   expect(vad.push).toHaveBeenCalledTimes(1);
 
   // The assistant starting a turn takes the shared instance over…
-  act(() => result.current.assistant.reset());
+  await act(() => result.current.assistant.reset());
   expect(onPreempted).toHaveBeenCalledTimes(1);
 
   // …after which the dictation's buffers no longer reach it, so its audio can't
@@ -187,7 +190,7 @@ test('a second consumer takes the detector and preempts the first', async () => 
 });
 
 test('reset clears the model so an abandoned turn cannot bleed into the next', async () => {
-  const { result } = renderSpeechService();
+  const { result } = await renderSpeechService();
 
   await act(async () => {
     await result.current.service.slots.vad.create({ model: vadModel });
@@ -195,7 +198,7 @@ test('reset clears the model so an abandoned turn cannot bleed into the next', a
 
   const vad = result.current.service.slots.vad.ref
     .current as unknown as MockVad;
-  act(() => result.current.speech.reset());
+  await act(() => result.current.speech.reset());
 
   expect(vad.finish).toHaveBeenCalledTimes(1);
 });

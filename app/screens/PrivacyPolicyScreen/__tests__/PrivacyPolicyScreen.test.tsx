@@ -8,8 +8,10 @@ jest.mock('react-native-enriched-markdown', () => ({
 import { PrivacyPolicyScreen } from '../PrivacyPolicyScreen';
 
 describe('PrivacyPolicyScreen', () => {
-  test('renders the privacy policy content for NobodyWho ApS', () => {
-    const json = JSON.stringify(render(<PrivacyPolicyScreen />).toJSON());
+  test('renders the privacy policy content for NobodyWho ApS', async () => {
+    const json = JSON.stringify(
+      (await render(<PrivacyPolicyScreen />)).toJSON(),
+    );
 
     expect(json).toContain('Privacy Policy');
     expect(json).toContain('NobodyWho ApS');

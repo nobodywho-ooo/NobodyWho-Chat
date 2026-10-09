@@ -1,11 +1,21 @@
 import React from 'react';
-import { render, fireEvent, act, within } from '@testing-library/react-native';
+import {
+  render,
+  fireEvent,
+  act,
+  type RenderResult,
+} from '@testing-library/react-native';
+import type { TestInstance } from 'test-renderer';
 
 import { buildModel } from 'jest/factories/model';
 import { getPipelineIcon } from 'helpers';
 import { ModelPipeline, pipelineLabel } from 'types';
 
 import { AvailableModels } from '../AvailableModels';
+
+const queryCards = (screen: RenderResult) =>
+  screen.container.queryAll(node => node.type === 'ModelCard');
+const isPlatformIcon = (node: TestInstance) => node.type === 'PlatformIcon';
 
 const defaultProps = {
   models: [],
@@ -17,13 +27,13 @@ const defaultProps = {
   onInfoPress: jest.fn(),
 };
 
-test('renders correctly AvailableModels while loading', () => {
-  const screen = render(<AvailableModels {...defaultProps} isLoading />);
+test('renders correctly AvailableModels while loading', async () => {
+  const screen = await render(<AvailableModels {...defaultProps} isLoading />);
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('renders correctly AvailableModels with a list of models', () => {
-  const screen = render(
+test('renders correctly AvailableModels with a list of models', async () => {
+  const screen = await render(
     <AvailableModels
       {...defaultProps}
       hasFetched
@@ -33,55 +43,57 @@ test('renders correctly AvailableModels with a list of models', () => {
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('renders correctly AvailableModels on error', () => {
-  const screen = render(
+test('renders correctly AvailableModels on error', async () => {
+  const screen = await render(
     <AvailableModels {...defaultProps} hasFetched hasError />,
   );
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('renders correctly AvailableModels when everything is downloaded', () => {
-  const screen = render(<AvailableModels {...defaultProps} hasFetched />);
+test('renders correctly AvailableModels when everything is downloaded', async () => {
+  const screen = await render(<AvailableModels {...defaultProps} hasFetched />);
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('renders a card per available model', () => {
+test('renders a card per available model', async () => {
   const models = [buildModel(1), buildModel(2), buildModel(3)];
-  const screen = render(
+  const screen = await render(
     <AvailableModels {...defaultProps} hasFetched models={models} />,
   );
 
-  const cards = screen.UNSAFE_getAllByType('ModelCard' as never);
+  const cards = queryCards(screen);
   expect(cards).toHaveLength(3);
 });
 
-test('does not show models while still loading', () => {
-  const screen = render(
+test('does not show models while still loading', async () => {
+  const screen = await render(
     <AvailableModels {...defaultProps} isLoading models={[buildModel(1)]} />,
   );
-  expect(screen.UNSAFE_queryAllByType('ModelCard' as never)).toHaveLength(0);
+  expect(queryCards(screen)).toHaveLength(0);
 });
 
-test('does not show the "all downloaded" message before the first fetch', () => {
-  const screen = render(<AvailableModels {...defaultProps} />);
+test('does not show the "all downloaded" message before the first fetch', async () => {
+  const screen = await render(<AvailableModels {...defaultProps} />);
   const tree = JSON.stringify(screen.toJSON());
   expect(tree).not.toContain('youHaveDownloadedAllTheModels');
 });
 
-test('pressing the info button invokes onInfoPress', () => {
+test('pressing the info button invokes onInfoPress', async () => {
   const onInfoPress = jest.fn();
-  const screen = render(
+  const screen = await render(
     <AvailableModels {...defaultProps} onInfoPress={onInfoPress} />,
   );
 
-  fireEvent.press(screen.getByLabelText('screens.models.chooseModelTitle'));
+  await fireEvent.press(
+    screen.getByLabelText('screens.models.chooseModelTitle'),
+  );
   expect(onInfoPress).toHaveBeenCalledTimes(1);
 });
 
-test('pressing a model invokes onModelPress', () => {
+test('pressing a model invokes onModelPress', async () => {
   const onModelPress = jest.fn();
   const model = buildModel(1);
-  const screen = render(
+  const screen = await render(
     <AvailableModels
       {...defaultProps}
       hasFetched
@@ -90,55 +102,57 @@ test('pressing a model invokes onModelPress', () => {
     />,
   );
 
-  const card = screen.UNSAFE_getByProps({ model });
-  act(() => card.props.onPress(model));
+  const [card] = screen.container.queryAll(node => node.props.model === model);
+  await act(() => card.props.onPress(model));
   expect(onModelPress).toHaveBeenCalledWith(model);
 });
 
-test('retrying from the error state invokes onRetry', () => {
+test('retrying from the error state invokes onRetry', async () => {
   const onRetry = jest.fn();
-  const screen = render(
+  const screen = await render(
     <AvailableModels {...defaultProps} hasFetched hasError onRetry={onRetry} />,
   );
 
-  const errorView = screen.UNSAFE_getByProps({ onRetry });
-  act(() => errorView.props.onRetry());
+  const [retryButton] = screen.container.queryAll(
+    node => node.type === 'Button' && node.props.onPress === onRetry,
+  );
+  await fireEvent.press(retryButton);
   expect(onRetry).toHaveBeenCalledTimes(1);
 });
 
 // --- Catalogue order -------------------------------------------------------
-test('models carrying an "order" come first, ascending, then the rest', () => {
+test('models carrying an "order" come first, ascending, then the rest', async () => {
   const models = [
     buildModel(1),
     buildModel(2, { order: 2 }),
     buildModel(3),
     buildModel(4, { order: 1 }),
   ];
-  const screen = render(
+  const screen = await render(
     <AvailableModels {...defaultProps} hasFetched models={models} />,
   );
 
-  const cards = screen.UNSAFE_getAllByType('ModelCard' as never);
+  const cards = queryCards(screen);
   // 4 and 2 are pinned; 1 and 3 keep the order the catalogue sent them in.
   expect(cards.map(card => card.props.model.id)).toEqual([4, 2, 1, 3]);
 });
 
-test('the order holds within a pipeline filter', () => {
+test('the order holds within a pipeline filter', async () => {
   const models = [
     buildModel(1, { pipeline: ModelPipeline.textToSpeech }),
     buildModel(2, { order: 1 }),
     buildModel(3, { pipeline: ModelPipeline.textToSpeech, order: 2 }),
     buildModel(4, { pipeline: ModelPipeline.textToSpeech, order: 1 }),
   ];
-  const screen = render(
+  const screen = await render(
     <AvailableModels {...defaultProps} hasFetched models={models} />,
   );
 
-  fireEvent.press(
+  await fireEvent.press(
     screen.getByLabelText(pipelineLabel[ModelPipeline.textToSpeech]),
   );
 
-  const cards = screen.UNSAFE_getAllByType('ModelCard' as never);
+  const cards = queryCards(screen);
   expect(cards.map(card => card.props.model.id)).toEqual([4, 3, 1]);
 });
 
@@ -149,11 +163,13 @@ const mixedModels = [
   buildModel(3, { pipeline: ModelPipeline.speechToText }),
 ];
 
-const renderMixed = (models = mixedModels) =>
-  render(<AvailableModels {...defaultProps} hasFetched models={models} />);
+const renderMixed = async (models = mixedModels) =>
+  await render(
+    <AvailableModels {...defaultProps} hasFetched models={models} />,
+  );
 
-test('offers a pill per pipeline on offer, plus "All", and starts unfiltered', () => {
-  const screen = renderMixed();
+test('offers a pill per pipeline on offer, plus "All", and starts unfiltered', async () => {
+  const screen = await renderMixed();
 
   expect(
     screen.getByLabelText('screens.models.allPipelines').props
@@ -169,17 +185,17 @@ test('offers a pill per pipeline on offer, plus "All", and starts unfiltered', (
   expect(
     screen.queryByLabelText(pipelineLabel[ModelPipeline.featureExtraction]),
   ).toBeNull();
-  expect(screen.UNSAFE_getAllByType('ModelCard' as never)).toHaveLength(3);
+  expect(queryCards(screen)).toHaveLength(3);
 });
 
-test("selecting a pipeline shows only that pipeline's models", () => {
-  const screen = renderMixed();
+test("selecting a pipeline shows only that pipeline's models", async () => {
+  const screen = await renderMixed();
 
-  fireEvent.press(
+  await fireEvent.press(
     screen.getByLabelText(pipelineLabel[ModelPipeline.textToSpeech]),
   );
 
-  const cards = screen.UNSAFE_getAllByType('ModelCard' as never);
+  const cards = queryCards(screen);
   expect(cards).toHaveLength(1);
   expect(cards[0].props.model.pipeline).toBe(ModelPipeline.textToSpeech);
   expect(
@@ -188,26 +204,26 @@ test("selecting a pipeline shows only that pipeline's models", () => {
   ).toBe(true);
 });
 
-test('"All" clears the filter', () => {
-  const screen = renderMixed();
+test('"All" clears the filter', async () => {
+  const screen = await renderMixed();
 
-  fireEvent.press(
+  await fireEvent.press(
     screen.getByLabelText(pipelineLabel[ModelPipeline.textToSpeech]),
   );
-  fireEvent.press(screen.getByLabelText('screens.models.allPipelines'));
+  await fireEvent.press(screen.getByLabelText('screens.models.allPipelines'));
 
-  expect(screen.UNSAFE_getAllByType('ModelCard' as never)).toHaveLength(3);
+  expect(queryCards(screen)).toHaveLength(3);
 });
 
-test('the filter resets when the selected pipeline leaves the catalogue', () => {
-  const screen = renderMixed();
+test('the filter resets when the selected pipeline leaves the catalogue', async () => {
+  const screen = await renderMixed();
 
-  fireEvent.press(
+  await fireEvent.press(
     screen.getByLabelText(pipelineLabel[ModelPipeline.textToSpeech]),
   );
 
   // The TTS model gets downloaded, so it drops off the available list.
-  screen.update(
+  await screen.rerender(
     <AvailableModels
       {...defaultProps}
       hasFetched
@@ -219,11 +235,11 @@ test('the filter resets when the selected pipeline leaves the catalogue', () => 
     screen.getByLabelText('screens.models.allPipelines').props
       .accessibilityState.selected,
   ).toBe(true);
-  expect(screen.UNSAFE_getAllByType('ModelCard' as never)).toHaveLength(2);
+  expect(queryCards(screen)).toHaveLength(2);
 });
 
-test('no filter row when every available model shares one pipeline', () => {
-  const screen = render(
+test('no filter row when every available model shares one pipeline', async () => {
+  const screen = await render(
     <AvailableModels
       {...defaultProps}
       hasFetched
@@ -237,13 +253,13 @@ test('no filter row when every available model shares one pipeline', () => {
   ).toBeNull();
 });
 
-test('no filter row while loading or on error', () => {
-  const loading = render(
+test('no filter row while loading or on error', async () => {
+  const loading = await render(
     <AvailableModels {...defaultProps} isLoading models={mixedModels} />,
   );
   expect(loading.queryByLabelText('screens.models.allPipelines')).toBeNull();
 
-  const errored = render(
+  const errored = await render(
     <AvailableModels
       {...defaultProps}
       hasError
@@ -254,13 +270,13 @@ test('no filter row while loading or on error', () => {
   expect(errored.queryByLabelText('screens.models.allPipelines')).toBeNull();
 });
 
-test('each pipeline pill carries its own icon, and "All" carries none', () => {
-  const screen = renderMixed();
+test('each pipeline pill carries its own icon, and "All" carries none', async () => {
+  const screen = await renderMixed();
 
   const ttsPill = screen.getByLabelText(
     pipelineLabel[ModelPipeline.textToSpeech],
   );
-  const icon = within(ttsPill).UNSAFE_getByType('PlatformIcon' as never);
+  const [icon] = ttsPill.queryAll(isPlatformIcon);
   expect(icon.props.iosIconName).toBe(
     getPipelineIcon(ModelPipeline.textToSpeech).iosIconName,
   );
@@ -269,7 +285,5 @@ test('each pipeline pill carries its own icon, and "All" carries none', () => {
   );
 
   const allPill = screen.getByLabelText('screens.models.allPipelines');
-  expect(
-    within(allPill).UNSAFE_queryAllByType('PlatformIcon' as never),
-  ).toHaveLength(0);
+  expect(allPill.queryAll(isPlatformIcon)).toHaveLength(0);
 });

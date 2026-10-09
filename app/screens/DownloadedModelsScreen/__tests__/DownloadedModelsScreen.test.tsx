@@ -1,6 +1,12 @@
 import React from 'react';
 import { Alert } from 'react-native';
-import { render, fireEvent, act, waitFor } from '@testing-library/react-native';
+import {
+  render,
+  act,
+  waitFor,
+  type RenderResult,
+} from '@testing-library/react-native';
+import type { Model } from 'types';
 
 import { getDocumentPathsByModelId } from 'repositories';
 import { deleteMessageDocuments } from 'helpers';
@@ -52,6 +58,11 @@ jest.mock('helpers', () => ({
 const mockGetDocumentPaths = getDocumentPathsByModelId as jest.Mock;
 const mockDeleteMessageDocuments = deleteMessageDocuments as jest.Mock;
 
+const getCard = (screen: RenderResult, model: Model) => {
+  const [card] = screen.container.queryAll(node => node.props.model === model);
+  return card;
+};
+
 const headerToggle = () => {
   const headerRight = mockSetOptions.mock.calls.at(-1)![0].headerRight;
   const [toggle] = React.Children.toArray(
@@ -75,26 +86,26 @@ beforeEach(() => {
   mockDeleteMessageDocuments.mockReset().mockResolvedValue(undefined);
 });
 
-test('renders correctly ModelsScreen when empty', () => {
-  const screen = render(<DownloadedModelsScreen />);
+test('renders correctly ModelsScreen when empty', async () => {
+  const screen = await render(<DownloadedModelsScreen />);
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('renders downloaded models with one selected', () => {
+test('renders downloaded models with one selected', async () => {
   mockUseModels.mockReturnValue({ models: [buildModel(1), buildModel(2)] });
   mockUseAppState.mockReturnValue({ modelIdInUse: 2 });
 
-  const screen = render(<DownloadedModelsScreen />);
+  const screen = await render(<DownloadedModelsScreen />);
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('pressing a model puts it in use, clear the conversation', () => {
+test('pressing a model puts it in use, clear the conversation', async () => {
   const models = [buildModel(1), buildModel(2)];
   mockUseModels.mockReturnValue({ models });
   mockUseAppState.mockReturnValue({ modelIdInUse: 1 });
 
-  const screen = render(<DownloadedModelsScreen />);
-  fireEvent.press(screen.UNSAFE_getByProps({ model: models[1] }), models[1]);
+  const screen = await render(<DownloadedModelsScreen />);
+  await act(() => getCard(screen, models[1]).props.onPress(models[1]));
 
   // Streaming is stopped before the model switch tears down the chat.
   expect(mockStopGeneration).toHaveBeenCalled();
@@ -109,13 +120,13 @@ test('pressing a model puts it in use, clear the conversation', () => {
   expect(mockGoBack).not.toHaveBeenCalled();
 });
 
-test('pressing the already-in-use model does not switch', () => {
+test('pressing the already-in-use model does not switch', async () => {
   const models = [buildModel(1), buildModel(2)];
   mockUseModels.mockReturnValue({ models });
   mockUseAppState.mockReturnValue({ modelIdInUse: 2 });
 
-  const screen = render(<DownloadedModelsScreen />);
-  fireEvent.press(screen.UNSAFE_getByProps({ model: models[1] }), models[1]);
+  const screen = await render(<DownloadedModelsScreen />);
+  await act(() => getCard(screen, models[1]).props.onPress(models[1]));
 
   expect(mockSetAppState).not.toHaveBeenCalled();
 });
@@ -127,17 +138,17 @@ test('delete mode: confirming the alert deletes the in-use model and clears it f
   mockUseAppState.mockReturnValue({ modelIdInUse: 2 });
   mockGetDocumentPaths.mockResolvedValue(['a.png', 'b.mp3']);
 
-  const screen = render(<DownloadedModelsScreen />);
+  const screen = await render(<DownloadedModelsScreen />);
 
   // The delete toggle lives in the header (set via navigation.setOptions); it is
   // the first header-right action, with the close button after it on iOS.
-  act(() => headerToggle().props.onPress());
+  await act(() => headerToggle().props.onPress());
 
   // In delete mode, pressing a model prompts for confirmation rather than
   // deleting outright.
-  const card = screen.UNSAFE_getByProps({ model: models[1] });
+  const card = getCard(screen, models[1]);
   expect(card.props.deleteMode).toBe(true);
-  act(() => card.props.onPress(models[1]));
+  await act(() => card.props.onPress(models[1]));
 
   expect(alertSpy).toHaveBeenCalled();
   expect(mockSetAppState).not.toHaveBeenCalled();
@@ -179,11 +190,9 @@ test('a failed attachment cleanup still releases the deleted chat model', async 
   mockGetDocumentPaths.mockResolvedValue(['a.png']);
   mockDeleteMessageDocuments.mockRejectedValue(new Error('unlink failed'));
 
-  const screen = render(<DownloadedModelsScreen />);
-  act(() => headerToggle().props.onPress());
-  act(() =>
-    screen.UNSAFE_getByProps({ model: models[1] }).props.onPress(models[1]),
-  );
+  const screen = await render(<DownloadedModelsScreen />);
+  await act(() => headerToggle().props.onPress());
+  await act(() => getCard(screen, models[1]).props.onPress(models[1]));
 
   const buttons = alertSpy.mock.calls.at(-1)![2]!;
   await act(async () => {
@@ -200,18 +209,18 @@ test('a failed attachment cleanup still releases the deleted chat model', async 
   alertSpy.mockRestore();
 });
 
-test('without canDelete (drawer entry) deletion is unavailable', () => {
+test('without canDelete (drawer entry) deletion is unavailable', async () => {
   const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   mockUseRoute.mockReturnValue({ params: { canDelete: false } });
   const models = [buildModel(1), buildModel(2)];
   mockUseModels.mockReturnValue({ models });
   mockUseAppState.mockReturnValue({ modelIdInUse: 1 });
 
-  const screen = render(<DownloadedModelsScreen />);
+  const screen = await render(<DownloadedModelsScreen />);
 
   // Pressing a model just selects it, with no confirmation alert. (Done before
   // rendering the header below, since a second render tree breaks fireEvent.)
-  fireEvent.press(screen.UNSAFE_getByProps({ model: models[1] }), models[1]);
+  await act(() => getCard(screen, models[1]).props.onPress(models[1]));
   expect(alertSpy).not.toHaveBeenCalled();
   expect(mockSetAppState).toHaveBeenCalledWith({
     modelIdInUse: 2,
@@ -220,15 +229,15 @@ test('without canDelete (drawer entry) deletion is unavailable', () => {
 
   // No delete toggle is rendered in the header (no trash icon).
   const headerRight = mockSetOptions.mock.calls.at(-1)![0].headerRight;
-  const header = render(headerRight());
-  expect(header.UNSAFE_queryAllByProps({ iosIconName: 'trash' })).toHaveLength(
-    0,
-  );
+  const header = await render(headerRight());
+  expect(
+    header.container.queryAll(node => node.props.iosIconName === 'trash'),
+  ).toHaveLength(0);
 
   alertSpy.mockRestore();
 });
 
-test('pressing a TTS model selects it as the voice — never as the chat model', () => {
+test('pressing a TTS model selects it as the voice — never as the chat model', async () => {
   const { ModelPipeline } = jest.requireActual('types');
   const models = [
     buildModel(1),
@@ -237,8 +246,8 @@ test('pressing a TTS model selects it as the voice — never as the chat model',
   mockUseModels.mockReturnValue({ models });
   mockUseAppState.mockReturnValue({ modelIdInUse: 1 });
 
-  const screen = render(<DownloadedModelsScreen />);
-  fireEvent.press(screen.UNSAFE_getByProps({ model: models[1] }), models[1]);
+  const screen = await render(<DownloadedModelsScreen />);
+  await act(() => getCard(screen, models[1]).props.onPress(models[1]));
 
   expect(mockSetAppState).toHaveBeenCalledWith(
     expect.objectContaining({ ttsModelIdInUse: 7 }),
@@ -250,7 +259,7 @@ test('pressing a TTS model selects it as the voice — never as the chat model',
   expect(mockStopGeneration).not.toHaveBeenCalled();
 });
 
-test('the checkmark reflects each pipeline against its own in-use slot', () => {
+test('the checkmark reflects each pipeline against its own in-use slot', async () => {
   const { ModelPipeline } = jest.requireActual('types');
   const models = [
     buildModel(1),
@@ -260,13 +269,9 @@ test('the checkmark reflects each pipeline against its own in-use slot', () => {
   // Chat slot points at 1, voice slot at 7 — both cards show as selected.
   mockUseAppState.mockReturnValue({ modelIdInUse: 1, ttsModelIdInUse: 7 });
 
-  const screen = render(<DownloadedModelsScreen />);
-  expect(screen.UNSAFE_getByProps({ model: models[0] }).props.isSelected).toBe(
-    true,
-  );
-  expect(screen.UNSAFE_getByProps({ model: models[1] }).props.isSelected).toBe(
-    true,
-  );
+  const screen = await render(<DownloadedModelsScreen />);
+  expect(getCard(screen, models[0]).props.isSelected).toBe(true);
+  expect(getCard(screen, models[1]).props.isSelected).toBe(true);
 });
 
 test('deleting the selected voice model disposes the engine and clears the slot', async () => {
@@ -279,11 +284,9 @@ test('deleting the selected voice model disposes the engine and clears the slot'
   mockUseModels.mockReturnValue({ models });
   mockUseAppState.mockReturnValue({ modelIdInUse: 1, ttsModelIdInUse: 7 });
 
-  const screen = render(<DownloadedModelsScreen />);
-  act(() => headerToggle().props.onPress());
-  act(() =>
-    screen.UNSAFE_getByProps({ model: models[1] }).props.onPress(models[1]),
-  );
+  const screen = await render(<DownloadedModelsScreen />);
+  await act(() => headerToggle().props.onPress());
+  await act(() => getCard(screen, models[1]).props.onPress(models[1]));
 
   const buttons = alertSpy.mock.calls.at(-1)![2]!;
   const confirm = buttons.find(button => button.style === 'destructive')!;

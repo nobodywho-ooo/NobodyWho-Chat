@@ -38,7 +38,7 @@ test('2 models to download, 2 models downloaded and 1 in use', async () => {
   mockUseAppState.mockReturnValue({ modelIdInUse: 10 });
   mockFetchResolve([buildModel(20), buildModel(21)]);
 
-  const screen = render(<ModelsScreen />);
+  const screen = await render(<ModelsScreen />);
   await act(async () => {});
   expect(screen.toJSON()).toMatchSnapshot();
 });
@@ -48,7 +48,7 @@ test('0 models to download (network failure), 1 model downloaded and 1 in use', 
   mockUseAppState.mockReturnValue({ modelIdInUse: 10 });
   mockFetchReject();
 
-  const screen = render(<ModelsScreen />);
+  const screen = await render(<ModelsScreen />);
   await act(async () => {});
   expect(screen.toJSON()).toMatchSnapshot();
 });
@@ -66,15 +66,16 @@ test('pressing a downloading model offers to stop the download', async () => {
   });
   const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
 
-  const screen = render(<ModelsScreen />);
+  const screen = await render(<ModelsScreen />);
   await act(async () => {});
 
   // The downloading card carries a downloadProgress; pressing it offers a
   // two-button alert: stop the current download, or cancel and keep going.
-  const card = screen
-    .UNSAFE_getAllByType('ModelCard' as never)
-    .find(node => node.props.downloadProgress !== undefined);
-  act(() => card?.props.onPress(downloading));
+  const [card] = screen.container.queryAll(
+    node =>
+      node.type === 'ModelCard' && node.props.downloadProgress !== undefined,
+  );
+  await act(() => card?.props.onPress(downloading));
 
   expect(alertSpy).toHaveBeenCalledWith(
     'screens.models.stopDownloadTitle',
@@ -97,7 +98,7 @@ test('hides models that need more RAM than the device has', async () => {
   const tooBig = buildModel(21, { parts: [part('chat-model', 7)] });
   mockFetchResolve([fits, tooBig]);
 
-  const screen = render(<ModelsScreen />);
+  const screen = await render(<ModelsScreen />);
   await act(async () => {});
 
   const tree = JSON.stringify(screen.toJSON());
@@ -110,7 +111,7 @@ test('0 models to download (network failure), 0 models downloaded and no model i
   mockUseAppState.mockReturnValue({});
   mockFetchReject();
 
-  const screen = render(<ModelsScreen />);
+  const screen = await render(<ModelsScreen />);
   await act(async () => {});
   expect(screen.toJSON()).toMatchSnapshot();
 });

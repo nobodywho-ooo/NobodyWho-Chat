@@ -28,12 +28,12 @@ jest.mock('expo-camera', () => {
   };
 });
 
-const renderModal = (
+const renderModal = async (
   props?: Partial<React.ComponentProps<typeof CameraCaptureModal>>,
 ) => {
   const onClose = jest.fn();
   const onCapture = jest.fn();
-  const screen = render(
+  const screen = await render(
     <CameraCaptureModal
       visible
       onClose={onClose}
@@ -50,56 +50,58 @@ beforeEach(() => {
   mockTakePicture.mockReset();
 });
 
-test('requests camera permission when shown without it', () => {
+test('requests camera permission when shown without it', async () => {
   mockPermission = { granted: false, canAskAgain: true };
-  renderModal();
+  await renderModal();
   expect(mockRequestPermission).toHaveBeenCalled();
 });
 
-test('does not request permission while it is not visible', () => {
+test('does not request permission while it is not visible', async () => {
   mockPermission = { granted: false, canAskAgain: true };
-  renderModal({ visible: false });
+  await renderModal({ visible: false });
   expect(mockRequestPermission).not.toHaveBeenCalled();
 });
 
-test('renders the shutter once permission is granted', () => {
+test('renders the shutter once permission is granted', async () => {
   mockPermission = { granted: true, canAskAgain: true };
-  const { screen } = renderModal();
+  const { screen } = await renderModal();
   expect(
     screen.getByLabelText('components.inputBar.attachCamera'),
   ).toBeTruthy();
   expect(mockRequestPermission).not.toHaveBeenCalled();
 });
 
-test('the prompt re-requests permission when it can still be asked', () => {
+test('the prompt re-requests permission when it can still be asked', async () => {
   mockPermission = { granted: false, canAskAgain: true };
-  const { screen } = renderModal();
+  const { screen } = await renderModal();
   // The mount effect already fired one request; isolate the button press.
   mockRequestPermission.mockClear();
 
   // The handler only calls the (mocked) permission request — no React state
   // update — so it is invoked directly rather than through act().
-  screen
-    .UNSAFE_getByProps({ title: 'components.cameraCapture.grant' })
-    .props.onPress();
+  const [button] = screen.container.queryAll(
+    node => node.props.title === 'components.cameraCapture.grant',
+  );
+  button.props.onPress();
 
   expect(mockRequestPermission).toHaveBeenCalledTimes(1);
 });
 
-test('the prompt opens system settings when permission is permanently denied', () => {
+test('the prompt opens system settings when permission is permanently denied', async () => {
   const openSettingsSpy = jest
     .spyOn(Linking, 'openSettings')
     .mockImplementation(() => Promise.resolve());
   mockPermission = { granted: false, canAskAgain: false };
 
-  const { screen } = renderModal();
+  const { screen } = await renderModal();
   // A permanently denied permission must not auto-prompt; the user is sent to
   // settings instead.
   expect(mockRequestPermission).not.toHaveBeenCalled();
 
-  screen
-    .UNSAFE_getByProps({ title: 'components.cameraCapture.openSettings' })
-    .props.onPress();
+  const [button] = screen.container.queryAll(
+    node => node.props.title === 'components.cameraCapture.openSettings',
+  );
+  button.props.onPress();
 
   expect(openSettingsSpy).toHaveBeenCalled();
   openSettingsSpy.mockRestore();
@@ -113,8 +115,10 @@ test('captures a photo and forwards it to onCapture', async () => {
     height: 100,
   });
 
-  const { screen, onCapture } = renderModal();
-  fireEvent.press(screen.getByLabelText('components.inputBar.attachCamera'));
+  const { screen, onCapture } = await renderModal();
+  await fireEvent.press(
+    screen.getByLabelText('components.inputBar.attachCamera'),
+  );
 
   await waitFor(() =>
     expect(onCapture).toHaveBeenCalledWith({
@@ -130,16 +134,20 @@ test('swallows a failed capture without calling onCapture', async () => {
   mockPermission = { granted: true, canAskAgain: true };
   mockTakePicture.mockRejectedValue(new Error('capture failed'));
 
-  const { screen, onCapture } = renderModal();
+  const { screen, onCapture } = await renderModal();
   await act(async () => {
-    fireEvent.press(screen.getByLabelText('components.inputBar.attachCamera'));
+    await fireEvent.press(
+      screen.getByLabelText('components.inputBar.attachCamera'),
+    );
   });
 
   expect(onCapture).not.toHaveBeenCalled();
 });
 
-test('the close button calls onClose', () => {
-  const { screen, onClose } = renderModal();
-  fireEvent.press(screen.getByLabelText('components.cameraCapture.close'));
+test('the close button calls onClose', async () => {
+  const { screen, onClose } = await renderModal();
+  await fireEvent.press(
+    screen.getByLabelText('components.cameraCapture.close'),
+  );
   expect(onClose).toHaveBeenCalled();
 });

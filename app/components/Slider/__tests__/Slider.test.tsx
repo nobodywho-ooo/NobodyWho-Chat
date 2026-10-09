@@ -3,23 +3,26 @@ import { render, fireEvent } from '@testing-library/react-native';
 
 import { Slider } from '../Slider';
 
-const layoutTrack = (screen: ReturnType<typeof render>, width = 200) => {
+const layoutTrack = async (
+  screen: Awaited<ReturnType<typeof render>>,
+  width = 200,
+) => {
   const slider = screen.getByRole('adjustable');
-  fireEvent(slider, 'layout', { nativeEvent: { layout: { width } } });
+  await fireEvent(slider, 'layout', { nativeEvent: { layout: { width } } });
   return slider;
 };
 
-test('renders correctly Slider', () => {
-  const screen = render(
+test('renders correctly Slider', async () => {
+  const screen = await render(
     <Slider value={0.8} minimumValue={0} maximumValue={2} step={0.1} />,
   );
-  layoutTrack(screen);
+  await layoutTrack(screen);
 
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('exposes its range and value for accessibility', () => {
-  const screen = render(
+test('exposes its range and value for accessibility', async () => {
+  const screen = await render(
     <Slider value={0.8} minimumValue={0} maximumValue={2} step={0.1} />,
   );
 
@@ -30,9 +33,9 @@ test('exposes its range and value for accessibility', () => {
   });
 });
 
-test('grabbing the thumb does not jump the value', () => {
+test('grabbing the thumb does not jump the value', async () => {
   const onValueChange = jest.fn();
-  const screen = render(
+  const screen = await render(
     <Slider
       value={1}
       minimumValue={0}
@@ -41,11 +44,11 @@ test('grabbing the thumb does not jump the value', () => {
       onValueChange={onValueChange}
     />,
   );
-  const slider = layoutTrack(screen);
+  const slider = await layoutTrack(screen);
 
   // A grant (touch down) starts the drag from the thumb's current position and
   // must not report a new value on its own — no snap to 0.
-  fireEvent(slider, 'responderGrant', {
+  await fireEvent(slider, 'responderGrant', {
     nativeEvent: { locationX: 5, touches: [], changedTouches: [] },
     touchHistory: { touchBank: [], mostRecentTimeStamp: 1 },
   });

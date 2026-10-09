@@ -24,8 +24,8 @@ const buildDownload = (id: number, progress: number): ModelDownload => {
   };
 };
 
-test('renders correctly DownloadingModels', () => {
-  const screen = render(
+test('renders correctly DownloadingModels', async () => {
+  const screen = await render(
     <DownloadingModels
       downloads={[buildDownload(1, 0.25), buildDownload(2, 0.75)]}
       onStopPress={jest.fn()}
@@ -34,32 +34,36 @@ test('renders correctly DownloadingModels', () => {
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('renders correctly DownloadingModels with no active downloads', () => {
-  const screen = render(
+test('renders correctly DownloadingModels with no active downloads', async () => {
+  const screen = await render(
     <DownloadingModels downloads={[]} onStopPress={jest.fn()} />,
   );
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('passes the weighted download progress to each card', () => {
+test('passes the weighted download progress to each card', async () => {
   const download = buildDownload(1, 0.5);
-  const screen = render(
+  const screen = await render(
     <DownloadingModels downloads={[download]} onStopPress={jest.fn()} />,
   );
 
-  const card = screen.UNSAFE_getByProps({ model: download.model });
+  const [card] = screen.container.queryAll(
+    node => node.props.model === download.model,
+  );
   expect(card.props.downloadProgress).toBeCloseTo(0.5);
 });
 
-test('pressing a downloading card invokes onStopPress with its model', () => {
+test('pressing a downloading card invokes onStopPress with its model', async () => {
   const onStopPress = jest.fn();
   const download = buildDownload(1, 0.5);
-  const screen = render(
+  const screen = await render(
     <DownloadingModels downloads={[download]} onStopPress={onStopPress} />,
   );
 
-  const card = screen.UNSAFE_getByProps({ model: download.model });
-  act(() => card.props.onPress(download.model));
+  const [card] = screen.container.queryAll(
+    node => node.props.model === download.model,
+  );
+  await act(() => card.props.onPress(download.model));
 
   expect(onStopPress).toHaveBeenCalledWith(download.model);
 });

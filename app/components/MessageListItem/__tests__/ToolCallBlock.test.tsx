@@ -20,8 +20,8 @@ describe('formatArguments', () => {
 });
 
 describe('ToolCallBlock', () => {
-  test('renders the tool name and an argument summary', () => {
-    const { getByText } = render(
+  test('renders the tool name and an argument summary', async () => {
+    const { getByText } = await render(
       <ToolCallBlock
         name="get_weather"
         arguments={{ city: 'Paris' }}
@@ -33,8 +33,8 @@ describe('ToolCallBlock', () => {
     expect(getByText('city: "Paris"')).toBeTruthy();
   });
 
-  test('omits the summary line when there are no arguments', () => {
-    const { getByText, queryByText } = render(
+  test('omits the summary line when there are no arguments', async () => {
+    const { getByText, queryByText } = await render(
       <ToolCallBlock name="get_time" arguments={{}} onPress={jest.fn()} />,
     );
 
@@ -43,9 +43,9 @@ describe('ToolCallBlock', () => {
     expect(queryByText(/: /)).toBeNull();
   });
 
-  test('calls onPress when tapped', () => {
+  test('calls onPress when tapped', async () => {
     const onPress = jest.fn();
-    const { getByRole } = render(
+    const { getByRole } = await render(
       <ToolCallBlock
         name="get_weather"
         arguments={{ city: 'Paris' }}
@@ -53,12 +53,12 @@ describe('ToolCallBlock', () => {
       />,
     );
 
-    fireEvent.press(getByRole('button'));
+    await fireEvent.press(getByRole('button'));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  test('matches the snapshot', () => {
-    const { toJSON } = render(
+  test('matches the snapshot', async () => {
+    const { toJSON } = await render(
       <ToolCallBlock
         name="get_weather"
         arguments={{ city: 'Paris' }}

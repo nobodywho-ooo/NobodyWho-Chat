@@ -5,14 +5,16 @@ import { PlatformIcon } from '../PlatformIcon';
 
 jest.unmock('../PlatformIcon');
 
-test('renders correctly PlatformIcon', () => {
-  const tree = render(
-    <PlatformIcon
-      iosIconName="bubble.fill"
-      androidIconName="chat_bubble"
-      size={48}
-      color={'red'}
-    />,
+test('renders correctly PlatformIcon', async () => {
+  const tree = (
+    await render(
+      <PlatformIcon
+        iosIconName="bubble.fill"
+        androidIconName="chat_bubble"
+        size={48}
+        color={'red'}
+      />,
+    )
   ).toJSON();
   expect(tree).toMatchSnapshot();
 });

@@ -8,30 +8,33 @@ jest.mock('react-native-enriched-markdown', () => ({
 }));
 
 describe('MarkdownDocument', () => {
-  test('forwards the markdown to EnrichedMarkdownText', () => {
+  test('forwards the markdown to EnrichedMarkdownText', async () => {
     const json = JSON.stringify(
-      render(<MarkdownDocument markdown="# Hello world" />).toJSON(),
+      (await render(<MarkdownDocument markdown="# Hello world" />)).toJSON(),
     );
 
     expect(json).toContain('# Hello world');
   });
 
-  test('opens a tapped link', () => {
+  test('opens a tapped link', async () => {
     jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
-    const { UNSAFE_getByType } = render(
+    const { container } = await render(
       <MarkdownDocument markdown="[link](https://example.com)" />,
     );
+    const [markdown] = container.queryAll(
+      node => node.type === 'EnrichedMarkdownText',
+    );
 
-    UNSAFE_getByType('EnrichedMarkdownText' as any).props.onLinkPress({
+    markdown.props.onLinkPress({
       url: 'https://example.com',
     });
 
     expect(Linking.openURL).toHaveBeenCalledWith('https://example.com');
   });
 
-  test('matches snapshot', () => {
+  test('matches snapshot', async () => {
     expect(
-      render(<MarkdownDocument markdown="# Hello world" />).toJSON(),
+      (await render(<MarkdownDocument markdown="# Hello world" />)).toJSON(),
     ).toMatchSnapshot();
   });
 });

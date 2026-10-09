@@ -29,9 +29,9 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-test('renders UserMessage for a user message', () => {
+test('renders UserMessage for a user message', async () => {
   const message: DisplayMessage = { role: 'user', content: 'hi' };
-  render(<MessageListItem message={message} />);
+  await render(<MessageListItem message={message} />);
 
   expect(mockUserMessage).toHaveBeenCalledTimes(1);
   expect(mockUserMessage.mock.calls[0][0]).toMatchObject({ message });
@@ -39,9 +39,9 @@ test('renders UserMessage for a user message', () => {
   expect(mockSystemBlock).not.toHaveBeenCalled();
 });
 
-test('renders AssistantMessage for an assistant message', () => {
+test('renders AssistantMessage for an assistant message', async () => {
   const message: DisplayMessage = { role: 'assistant', content: 'answer' };
-  render(<MessageListItem message={message} />);
+  await render(<MessageListItem message={message} />);
 
   expect(mockAssistantMessage).toHaveBeenCalledTimes(1);
   expect(mockAssistantMessage.mock.calls[0][0]).toMatchObject({ message });
@@ -49,9 +49,9 @@ test('renders AssistantMessage for an assistant message', () => {
   expect(mockSystemBlock).not.toHaveBeenCalled();
 });
 
-test('renders SystemBlock for a system message', () => {
+test('renders SystemBlock for a system message', async () => {
   const message: DisplayMessage = { role: 'system', content: 'be concise' };
-  render(<MessageListItem message={message} />);
+  await render(<MessageListItem message={message} />);
 
   expect(mockSystemBlock).toHaveBeenCalledTimes(1);
   expect(mockSystemBlock.mock.calls[0][0]).toMatchObject({
@@ -61,9 +61,9 @@ test('renders SystemBlock for a system message', () => {
   expect(mockAssistantMessage).not.toHaveBeenCalled();
 });
 
-test('renders nothing for an unknown role', () => {
+test('renders nothing for an unknown role', async () => {
   const message = { role: 'tool', content: 'x' } as unknown as DisplayMessage;
-  const { toJSON } = render(<MessageListItem message={message} />);
+  const { toJSON } = await render(<MessageListItem message={message} />);
 
   expect(toJSON()).toBeNull();
   expect(mockUserMessage).not.toHaveBeenCalled();
@@ -71,11 +71,11 @@ test('renders nothing for an unknown role', () => {
   expect(mockSystemBlock).not.toHaveBeenCalled();
 });
 
-test('forwards streaming and audio props to AssistantMessage', () => {
+test('forwards streaming and audio props to AssistantMessage', async () => {
   const message: DisplayMessage = { role: 'assistant', content: 'answer' };
   const onPlayAudio = jest.fn();
   const onStopAudio = jest.fn();
-  render(
+  await render(
     <MessageListItem
       message={message}
       isStreaming
@@ -100,9 +100,9 @@ test('forwards streaming and audio props to AssistantMessage', () => {
   });
 });
 
-test('applies default streaming/audio props to AssistantMessage when omitted', () => {
+test('applies default streaming/audio props to AssistantMessage when omitted', async () => {
   const message: DisplayMessage = { role: 'assistant', content: 'answer' };
-  render(<MessageListItem message={message} />);
+  await render(<MessageListItem message={message} />);
 
   expect(mockAssistantMessage.mock.calls[0][0]).toMatchObject({
     isStreaming: false,

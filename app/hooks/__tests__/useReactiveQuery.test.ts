@@ -17,7 +17,7 @@ beforeEach(() => {
 test('loads and maps the initial rows', async () => {
   db.execute.mockResolvedValue({ rows: [{ n: 1 }, { n: 2 }] });
 
-  const { result } = renderHook(() =>
+  const { result } = await renderHook(() =>
     useReactiveQuery<number>({
       query: 'SELECT * FROM t',
       tables: ['t'],
@@ -38,7 +38,7 @@ test('starts loading and clears once the initial load resolves', async () => {
     }),
   );
 
-  const { result } = renderHook(() =>
+  const { result } = await renderHook(() =>
     useReactiveQuery<number>({ query: 'Q', tables: ['t'], map: row => row.n }),
   );
 
@@ -51,7 +51,7 @@ test('starts loading and clears once the initial load resolves', async () => {
 });
 
 test('subscribes with the query, args and fireOn tables', async () => {
-  renderHook(() =>
+  await renderHook(() =>
     useReactiveQuery({
       query: 'Q',
       args: [5],
@@ -77,18 +77,18 @@ test('updates the result when the reactive callback fires', async () => {
     return jest.fn();
   });
 
-  const { result } = renderHook(() =>
+  const { result } = await renderHook(() =>
     useReactiveQuery<number>({ query: 'Q', tables: ['t'], map: row => row.n }),
   );
   await waitFor(() => expect(result.current.rows).toEqual([]));
 
-  act(() => captured.callback({ rows: [{ n: 7 }, { n: 8 }] }));
+  await act(() => captured.callback({ rows: [{ n: 7 }, { n: 8 }] }));
   expect(result.current.rows).toEqual([7, 8]);
   expect(result.current.loading).toBe(false);
 });
 
-test('when disabled, returns [] without querying or subscribing', () => {
-  const { result } = renderHook(() =>
+test('when disabled, returns [] without querying or subscribing', async () => {
+  const { result } = await renderHook(() =>
     useReactiveQuery({
       query: 'Q',
       tables: ['t'],
@@ -106,7 +106,7 @@ test('when disabled, returns [] without querying or subscribing', () => {
 test('handles a failing initial load without throwing', async () => {
   db.execute.mockRejectedValue(new Error('db boom'));
 
-  const { result } = renderHook(() =>
+  const { result } = await renderHook(() =>
     useReactiveQuery({ query: 'Q', tables: ['t'], map: row => row }),
   );
   await act(async () => {});
@@ -128,12 +128,12 @@ test('discards a stale initial load that resolves after a reactive update', asyn
     return jest.fn();
   });
 
-  const { result } = renderHook(() =>
+  const { result } = await renderHook(() =>
     useReactiveQuery<number>({ query: 'Q', tables: ['t'], map: row => row.n }),
   );
 
   // The reactive subscription delivers fresh rows first...
-  act(() => captured.callback({ rows: [{ n: 7 }] }));
+  await act(() => captured.callback({ rows: [{ n: 7 }] }));
   // ...then the slower initial load resolves with stale rows.
   await act(async () => resolveInitial!({ rows: [{ n: 1 }] }));
 
@@ -144,11 +144,11 @@ test('unsubscribes on unmount', async () => {
   const unsubscribe = jest.fn();
   db.reactiveExecute.mockReturnValue(unsubscribe);
 
-  const { unmount } = renderHook(() =>
+  const { unmount } = await renderHook(() =>
     useReactiveQuery({ query: 'Q', tables: ['t'], map: row => row }),
   );
   await act(async () => {});
-  unmount();
+  await unmount();
 
   expect(unsubscribe).toHaveBeenCalled();
 });

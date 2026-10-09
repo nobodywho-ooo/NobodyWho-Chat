@@ -7,7 +7,6 @@ import { buildModel } from 'jest/factories/model';
 import { buildConversation } from 'jest/factories/conversation';
 import { ModelPipeline } from 'types';
 import { getAppState, setAppState, DEFAULT_ASSISTANT_CONFIG } from 'database';
-import { InputBar } from '../../screens/ChatScreen/components/InputBar/InputBar';
 import {
   getModelById,
   getConversationById,
@@ -18,6 +17,15 @@ import {
 import { ChatScreen } from 'screens';
 
 import { ChatStackNavigator } from '../ChatStackNavigator';
+
+// ChatScreen stays real; wrapping it in a jest.fn lets a test read the props the
+// navigator hands it (test-renderer only exposes host elements).
+jest.mock('../../screens/ChatScreen/ChatScreen', () => {
+  const actual = jest.requireActual('../../screens/ChatScreen/ChatScreen');
+  return { ...actual, ChatScreen: jest.fn(actual.ChatScreen) };
+});
+const renderedConversationId = () =>
+  jest.mocked(ChatScreen).mock.lastCall?.[0].conversationId;
 
 jest.mock('@react-navigation/native-stack', () => {
   const mockReact = require('react');
@@ -201,9 +209,15 @@ const defaultCreateChatOpts = {
   toolCalling: false,
 };
 
+// InputBar is host-mocked ('InputBar'), so it's found by host type.
+const getInputBar = (screen: Awaited<ReturnType<typeof render>>) => {
+  const [bar] = screen.container.queryAll(node => node.type === 'InputBar');
+  return bar;
+};
+
 // An empty chat offers the message starters above the input bar; wait for the
 // chat screen to mount and confirm that empty state is visible.
-const showEmptyChat = async (screen: ReturnType<typeof render>) => {
+const showEmptyChat = async (screen: Awaited<ReturnType<typeof render>>) => {
   await waitFor(() => {
     expect(
       screen.getByText('components.messageStarters.planParisTrip.title'),
@@ -217,18 +231,21 @@ const showEmptyChat = async (screen: ReturnType<typeof render>) => {
 
 // Type a message into the input bar and send it, the way the user opens a
 // conversation the chat screen has to create for itself.
-const sendMessage = async (screen: ReturnType<typeof render>, text: string) => {
-  const bar = screen.UNSAFE_getByType(InputBar as never);
-  act(() => bar.props.onChangeText(text));
+const sendMessage = async (
+  screen: Awaited<ReturnType<typeof render>>,
+  text: string,
+) => {
+  const bar = getInputBar(screen);
+  await act(() => bar.props.onChangeText(text));
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onSend();
+    await getInputBar(screen).props.onSend();
   });
 };
 
-test('shows NoModelDownloadedScreen when no model is downloaded', () => {
+test('shows NoModelDownloadedScreen when no model is downloaded', async () => {
   mockUseModels.mockReturnValue({ models: [], loading: false });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
 
   expect(
     screen.getByText('screens.noModelDownloaded.noModelAvailable'),
@@ -241,7 +258,7 @@ test('shows the loading screen while models are still loading', async () => {
   mockUseModels.mockReturnValue({ models: [], loading: true });
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
 
   expect(
     screen.queryByText('screens.noModelDownloaded.noModelAvailable'),
@@ -257,8 +274,8 @@ test('shows the loading screen while models are still loading', async () => {
   );
 });
 
-test('shows NoModelSelectedScreen and starts no session when no model is in use', () => {
-  const screen = render(<ChatStackNavigator />);
+test('shows NoModelSelectedScreen and starts no session when no model is in use', async () => {
+  const screen = await render(<ChatStackNavigator />);
 
   expect(
     screen.getByText('screens.noModelSelected.pleaseSelectAModel'),
@@ -269,7 +286,7 @@ test('shows NoModelSelectedScreen and starts no session when no model is in use'
 test('mounts the in-use model and shows the empty chat', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
 
   await showEmptyChat(screen);
   expect(mockCreateChat).toHaveBeenCalledWith({
@@ -283,7 +300,7 @@ test('shows the error screen when the in-use model cannot be resolved', async ()
   mockGetModelById.mockResolvedValue(undefined);
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
 
   await waitFor(() =>
     expect(screen.getByText('common.somethingWentWrong')).toBeTruthy(),
@@ -295,7 +312,7 @@ test('disposes and rebuilds the chat when the in-use model changes', async () =>
   await setAppState({ modelIdInUse: 0 });
   mockGetModelById.mockImplementation(async (id: number) => buildModel(id));
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
 
   await act(async () => {
@@ -318,9 +335,9 @@ test('a model switch keeps the chat on screen, inert, behind a loading toast', a
   mockGetModelById.mockImplementation(async (id: number) => buildModel(id));
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
-  expect(screen.UNSAFE_getByType(InputBar as never).props.disabled).toBe(false);
+  expect(getInputBar(screen).props.disabled).toBe(false);
 
   // Hold the next load open so the loading state is observable.
   let finishLoad = () => {};
@@ -345,20 +362,20 @@ test('a model switch keeps the chat on screen, inert, behind a loading toast', a
     screen.getByText('components.messageStarters.planParisTrip.title'),
   ).toBeTruthy();
   expect(screen.getByText('screens.loadingScreen.loadingModel')).toBeTruthy();
-  expect(screen.UNSAFE_getByType(InputBar as never).props.disabled).toBe(true);
+  expect(getInputBar(screen).props.disabled).toBe(true);
 
   await act(async () => {
     finishLoad();
   });
 
   expect(screen.queryByText('screens.loadingScreen.loadingModel')).toBeNull();
-  expect(screen.UNSAFE_getByType(InputBar as never).props.disabled).toBe(false);
+  expect(getInputBar(screen).props.disabled).toBe(false);
 });
 
 test('disposes and rebuilds the chat when the assistant config changes', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
 
   await act(async () => {
@@ -399,7 +416,7 @@ test('loads a non-Supertonic TTS model with no voice or language', async () => {
     buildModel(5, { pipeline: ModelPipeline.textToSpeech, family: 'Kokoro' }),
   );
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
 
   await waitFor(() => expect(mockCreateTts).toHaveBeenCalled());
   expect(mockCreateTts).toHaveBeenLastCalledWith({
@@ -425,7 +442,7 @@ test('forwards the chosen voice and language to a Supertonic model', async () =>
     }),
   );
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
 
   await waitFor(() => expect(mockCreateTts).toHaveBeenCalled());
   expect(mockCreateTts).toHaveBeenLastCalledWith({
@@ -444,7 +461,7 @@ test('loads the selected STT model on start', async () => {
     }),
   );
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
 
   await waitFor(() => expect(mockCreateStt).toHaveBeenCalled());
   expect(mockCreateStt).toHaveBeenLastCalledWith({
@@ -464,7 +481,7 @@ test('forwards the chosen transcription language to the STT engine', async () =>
     }),
   );
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
 
   await waitFor(() => expect(mockCreateStt).toHaveBeenCalled());
   expect(mockCreateStt).toHaveBeenLastCalledWith({
@@ -487,7 +504,7 @@ test('reloads the STT engine when the transcription language changes', async () 
     }),
   );
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
   await waitFor(() => expect(mockCreateStt).toHaveBeenCalledTimes(1));
 
   await act(async () => {
@@ -512,7 +529,7 @@ test('disposes and reloads the STT engine when the transcription model changes',
     }),
   );
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
 
   // Selecting a transcription model loads it.
   await act(async () => {
@@ -536,7 +553,7 @@ test('unloads the STT engine on background and reloads it on foreground', async 
     }),
   );
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
   await waitFor(() => expect(mockCreateStt).toHaveBeenCalledTimes(1));
 
   await act(async () => {
@@ -559,7 +576,7 @@ test('loads the selected VAD model on start', async () => {
     }),
   );
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
 
   await waitFor(() => expect(mockCreateVad).toHaveBeenCalled());
   expect(mockCreateVad).toHaveBeenLastCalledWith({
@@ -575,7 +592,7 @@ test('disposes and reloads the VAD engine when the detection model changes', asy
     }),
   );
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
 
   await act(async () => {
     await setAppState({ vadModelIdInUse: 12 });
@@ -597,7 +614,7 @@ test('unloads the VAD engine on background and reloads it on foreground', async 
     }),
   );
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
   await waitFor(() => expect(mockCreateVad).toHaveBeenCalledTimes(1));
 
   await act(async () => {
@@ -636,7 +653,7 @@ test('injects restored assistant messages with an empty toolCalls array', async 
   ]);
   await setAppState({ modelIdInUse: 0, conversationIdInUse: 5 });
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
 
   await waitFor(() =>
     expect(mockChatInstance.setChatHistory).toHaveBeenCalled(),
@@ -661,7 +678,7 @@ test('injects restored assistant messages with an empty toolCalls array', async 
 test('reloads only the history when the in-use conversation changes', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
 
   mockGetConversationById.mockResolvedValue({
@@ -685,7 +702,7 @@ test('reloads only the history when the in-use conversation changes', async () =
 test('a voice turn adopts a freshly created conversation without resetting the chat', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
 
   // The initial empty-history injection is the only native reset we expect.
@@ -736,7 +753,7 @@ test('a voice turn on the in-use conversation refreshes the display only', async
   });
   await setAppState({ modelIdInUse: 0, conversationIdInUse: 5 });
 
-  render(<ChatStackNavigator />);
+  await render(<ChatStackNavigator />);
   await waitFor(() =>
     expect(mockGetMessagesByConversationId).toHaveBeenCalledWith(5),
   );
@@ -761,7 +778,7 @@ test('a voice turn on the in-use conversation refreshes the display only', async
 test('switching conversations keeps the chat screen mounted (no loading flash)', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
 
   mockGetConversationById.mockResolvedValue({
@@ -810,15 +827,15 @@ test('switching conversations keeps the chat screen mounted (no loading flash)',
 test('sending the first message persists in use without reloading the chat', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
   // Only the initial empty load so far.
   expect(mockChatInstance.setChatHistory).toHaveBeenCalledTimes(1);
 
-  const bar = screen.UNSAFE_getByType(InputBar as never);
-  act(() => bar.props.onChangeText('first message'));
+  const bar = getInputBar(screen);
+  await act(() => bar.props.onChangeText('first message'));
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onSend();
+    await getInputBar(screen).props.onSend();
   });
 
   // The new conversation is recorded as in use...
@@ -852,7 +869,7 @@ test('clearing the conversation after a load error reloads and recovers', async 
   });
   await setAppState({ modelIdInUse: 0, conversationIdInUse: 5 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await waitFor(() =>
     expect(screen.getByText('common.somethingWentWrong')).toBeTruthy(),
   );
@@ -868,7 +885,7 @@ test('clearing the conversation after a load error reloads and recovers', async 
 test('unloads the chat on background and rebuilds it on foreground', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
   expect(mockCreateChat).toHaveBeenCalledTimes(1);
 
@@ -897,7 +914,7 @@ test('a background mid-load is not reported as a failed session', async () => {
       }),
   );
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await waitFor(() => expect(mockCreateChat).toHaveBeenCalledTimes(1));
 
   // Loads take seconds, so the OS can background us in the middle of one. That
@@ -920,13 +937,13 @@ test('a background mid-load is not reported as a failed session', async () => {
   });
   await showEmptyChat(screen);
   expect(mockCreateChat).toHaveBeenCalledTimes(2);
-  expect(screen.UNSAFE_getByType(InputBar as never).props.disabled).toBe(false);
+  expect(getInputBar(screen).props.disabled).toBe(false);
 });
 
 test('keeps the model resident when a dialog we launched backgrounds the app', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
   expect(mockCreateChat).toHaveBeenCalledTimes(1);
 
@@ -952,7 +969,7 @@ test('keeps the model resident when a dialog we launched backgrounds the app', a
 test('does not unload on the transient inactive state', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
 
   // iOS emits 'inactive' for Control Center / app switcher / Face ID — the
@@ -969,7 +986,7 @@ test('does not unload on the transient inactive state', async () => {
 });
 
 test('does not unload on background when no model is in use', async () => {
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   expect(
     screen.getByText('screens.noModelSelected.pleaseSelectAModel'),
   ).toBeTruthy();
@@ -998,7 +1015,7 @@ test('New Chat clears a conversation the screen created itself', async () => {
     buildConversation(9, { modelId: 0 }),
   );
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
   await sendMessage(screen, 'first message');
 
@@ -1007,16 +1024,14 @@ test('New Chat clears a conversation the screen created itself', async () => {
   // The navigator records the conversation the screen created as the one it has
   // loaded. Left pointing at none, the reload below would hand the screen the
   // same "no conversation, empty history" it was already given on launch.
-  expect(screen.UNSAFE_getByType(ChatScreen).props.conversationId).toBe(9);
+  expect(renderedConversationId()).toBe(9);
 
   // What both header-menu actions do.
   await act(async () => {
     await setAppState({ conversationIdInUse: undefined });
   });
 
-  expect(
-    screen.UNSAFE_getByType(ChatScreen).props.conversationId,
-  ).toBeUndefined();
+  expect(renderedConversationId()).toBeUndefined();
 
   // The turn is off the screen and the empty state is back — the title saying
   // "New Chat" while the old conversation stays on screen was the bug.
@@ -1034,7 +1049,7 @@ test('a message after Delete Chat starts a new conversation, not the deleted one
     rows.get(id),
   );
 
-  const screen = render(<ChatStackNavigator />);
+  const screen = await render(<ChatStackNavigator />);
   await showEmptyChat(screen);
   await sendMessage(screen, 'first message');
 

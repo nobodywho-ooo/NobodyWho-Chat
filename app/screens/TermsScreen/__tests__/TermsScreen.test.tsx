@@ -8,8 +8,8 @@ jest.mock('react-native-enriched-markdown', () => ({
 import { TermsScreen } from '../TermsScreen';
 
 describe('TermsScreen', () => {
-  test('renders the terms content for NobodyWho ApS', () => {
-    const json = JSON.stringify(render(<TermsScreen />).toJSON());
+  test('renders the terms content for NobodyWho ApS', async () => {
+    const json = JSON.stringify((await render(<TermsScreen />)).toJSON());
 
     expect(json).toContain('Terms & Conditions');
     expect(json).toContain('NobodyWho ApS');
