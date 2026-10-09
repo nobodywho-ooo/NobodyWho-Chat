@@ -11,12 +11,21 @@ import { mockDeleteConversation } from 'jest/mock/repositories';
 import { buildConversation } from 'jest/factories/conversation';
 import { buildModel } from 'jest/factories/model';
 import { log } from 'helpers';
-import { MenuView } from '@react-native-menu/menu';
 import { AiServiceProvider } from 'services';
 
 import { DrawerNavigator } from '../DrawerNavigator';
 
 const mockLog = log as jest.Mock;
+
+// The shared MenuView mock is a Fragment wrapper, which leaves nothing to find;
+// a host mock keeps the menu (and its props) queryable here.
+jest.mock('@react-native-menu/menu', () => ({ MenuView: 'MenuView' }));
+const queryMenus = (screen: Awaited<ReturnType<typeof render>>) =>
+  screen.container.queryAll(node => node.type === 'MenuView');
+const getMenu = (screen: Awaited<ReturnType<typeof render>>) => {
+  const [menu] = queryMenus(screen);
+  return menu;
+};
 
 // Flattens the iOS divider sections (`displayInline` groups) and the flat
 // Android list to the underlying leaf actions.
@@ -34,8 +43,8 @@ beforeEach(() => {
   mockLog.mockClear();
 });
 
-test('shows the in-use conversation title and model name in the header', () => {
-  const screen = render(
+test('shows the in-use conversation title and model name in the header', async () => {
+  const screen = await render(
     <AiServiceProvider>
       <DrawerNavigator />
     </AiServiceProvider>,
@@ -45,13 +54,13 @@ test('shows the in-use conversation title and model name in the header', () => {
   expect(screen.getByText('Model 1 (1B)')).toBeTruthy();
 });
 
-test('falls back to the default title when no conversation is in use', () => {
+test('falls back to the default title when no conversation is in use', async () => {
   mockUseAppState.mockReturnValue({
     modelIdInUse: 1,
     conversationIdInUse: undefined,
   });
 
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <DrawerNavigator />
     </AiServiceProvider>,
@@ -60,29 +69,29 @@ test('falls back to the default title when no conversation is in use', () => {
   expect(screen.getByText('Navigation.newChat')).toBeTruthy();
 });
 
-test('hides the header menu when no conversation is in use', () => {
+test('hides the header menu when no conversation is in use', async () => {
   mockUseAppState.mockReturnValue({
     modelIdInUse: 1,
     conversationIdInUse: undefined,
   });
 
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <DrawerNavigator />
     </AiServiceProvider>,
   );
 
-  expect(screen.UNSAFE_queryByType(MenuView)).toBeNull();
+  expect(queryMenus(screen)).toHaveLength(0);
 });
 
-test('shows the header menu with New Chat and Delete Chat actions', () => {
-  const screen = render(
+test('shows the header menu with New Chat and Delete Chat actions', async () => {
+  const screen = await render(
     <AiServiceProvider>
       <DrawerNavigator />
     </AiServiceProvider>,
   );
 
-  const actions = leafActions(screen.UNSAFE_getByType(MenuView).props.actions);
+  const actions = leafActions(getMenu(screen).props.actions);
 
   expect(actions.map(action => action.id)).toEqual(['new-chat', 'delete-chat']);
   expect(actions.map(action => action.title)).toEqual([
@@ -94,12 +103,12 @@ test('shows the header menu with New Chat and Delete Chat actions', () => {
 });
 
 test('New Chat clears the conversation in use without deleting anything', async () => {
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <DrawerNavigator />
     </AiServiceProvider>,
   );
-  const { onPressAction } = screen.UNSAFE_getByType(MenuView).props;
+  const { onPressAction } = getMenu(screen).props;
 
   await act(async () => {
     await onPressAction({ nativeEvent: { event: 'new-chat' } });
@@ -112,12 +121,12 @@ test('New Chat clears the conversation in use without deleting anything', async 
 });
 
 test('Delete Chat deletes the current conversation and starts a new chat', async () => {
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <DrawerNavigator />
     </AiServiceProvider>,
   );
-  const { onPressAction } = screen.UNSAFE_getByType(MenuView).props;
+  const { onPressAction } = getMenu(screen).props;
 
   await act(async () => {
     await onPressAction({ nativeEvent: { event: 'delete-chat' } });
@@ -132,12 +141,12 @@ test('Delete Chat deletes the current conversation and starts a new chat', async
 test('Delete Chat logs and recovers when the deletion fails', async () => {
   mockDeleteConversation.mockRejectedValueOnce(new Error('boom'));
 
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <DrawerNavigator />
     </AiServiceProvider>,
   );
-  const { onPressAction } = screen.UNSAFE_getByType(MenuView).props;
+  const { onPressAction } = getMenu(screen).props;
 
   await act(async () => {
     await onPressAction({ nativeEvent: { event: 'delete-chat' } });

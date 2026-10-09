@@ -14,39 +14,59 @@ import { FLOATING_BUTTON_BOTTOM } from '../DrawerContentScreen.styles';
 // (not useNavigation — that resolves to the parent navigator in drawer content).
 const navigation = { navigate: mockNavigate } as never;
 
+// Button and ConversationsList are host-mocked, so they're found through the
+// container by their props / host type.
+type Screen = Awaited<ReturnType<typeof render>>;
+const queryNewChatButtons = (screen: Screen) =>
+  screen.container.queryAll(
+    node => node.props.title === 'screens.drawerContent.newChat',
+  );
+const getNewChatButton = (screen: Screen) => {
+  const [button] = queryNewChatButtons(screen);
+  return button;
+};
+const getConversationsList = (screen: Screen) => {
+  const [list] = screen.container.queryAll(
+    node => node.type === 'ConversationsList',
+  );
+  return list;
+};
+
 beforeEach(() => {
   mockNavigate.mockClear();
   mockSetAppState.mockClear();
   mockUseModels.mockReturnValue({ models: [] });
 });
 
-test('renders correctly DrawerContentScreen', () => {
-  const tree = render(
-    <AiServiceProvider>
-      <DrawerContentScreen navigation={navigation} onCloseDrawer={() => {}} />
-    </AiServiceProvider>,
+test('renders correctly DrawerContentScreen', async () => {
+  const tree = (
+    await render(
+      <AiServiceProvider>
+        <DrawerContentScreen navigation={navigation} onCloseDrawer={() => {}} />
+      </AiServiceProvider>,
+    )
   ).toJSON();
   expect(tree).toMatchSnapshot();
 });
 
-test('pressing settings navigates to the SettingsScreen', () => {
-  const screen = render(
+test('pressing settings navigates to the SettingsScreen', async () => {
+  const screen = await render(
     <AiServiceProvider>
       <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
-  fireEvent.press(screen.getByText('screens.drawerContent.settings'));
+  await fireEvent.press(screen.getByText('screens.drawerContent.settings'));
 
   expect(mockNavigate).toHaveBeenCalledWith('Chat', {
     screen: 'SettingsScreen',
   });
 });
 
-test('pressing new chat clears the conversation in use and closes the drawer', () => {
+test('pressing new chat clears the conversation in use and closes the drawer', async () => {
   mockUseModels.mockReturnValue({ models: [buildModel(1)] });
   const onCloseDrawer = jest.fn();
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <DrawerContentScreen
         navigation={navigation}
@@ -55,9 +75,7 @@ test('pressing new chat clears the conversation in use and closes the drawer', (
     </AiServiceProvider>,
   );
 
-  fireEvent.press(
-    screen.UNSAFE_getByProps({ title: 'screens.drawerContent.newChat' }),
-  );
+  await fireEvent.press(getNewChatButton(screen));
 
   expect(mockSetAppState).toHaveBeenCalledWith({
     conversationIdInUse: undefined,
@@ -68,22 +86,20 @@ test('pressing new chat clears the conversation in use and closes the drawer', (
 // The button floats over the conversations list rather than sitting below it,
 // so without this room the last conversations come to rest underneath it and
 // the button takes their taps.
-test('the conversations list leaves room to scroll clear of the new chat button', () => {
+test('the conversations list leaves room to scroll clear of the new chat button', async () => {
   mockUseModels.mockReturnValue({ models: [buildModel(1)] });
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
-  const list = () => screen.UNSAFE_getByType('ConversationsList' as never);
+  const list = () => getConversationsList(screen);
   const buttonHeight = 48;
 
-  fireEvent(
-    screen.UNSAFE_getByProps({ title: 'screens.drawerContent.newChat' }),
-    'layout',
-    { nativeEvent: { layout: { height: buttonHeight } } },
-  );
+  await fireEvent(getNewChatButton(screen), 'layout', {
+    nativeEvent: { layout: { height: buttonHeight } },
+  });
 
   // Asserted against what the button actually occupies rather than against the
   // formula, so the room stays sufficient however the spacing is retuned.
@@ -92,38 +108,34 @@ test('the conversations list leaves room to scroll clear of the new chat button'
   );
 });
 
-test('the conversations list reclaims the room when there is no new chat button', () => {
+test('the conversations list reclaims the room when there is no new chat button', async () => {
   mockUseModels.mockReturnValue({ models: [] });
 
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
-  expect(
-    screen.UNSAFE_getByType('ConversationsList' as never).props.bottomInset,
-  ).toBe(0);
+  expect(getConversationsList(screen).props.bottomInset).toBe(0);
 });
 
-test('hides the new chat button when no model is downloaded', () => {
+test('hides the new chat button when no model is downloaded', async () => {
   mockUseModels.mockReturnValue({ models: [] });
 
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
-  expect(
-    screen.UNSAFE_queryByProps({ title: 'screens.drawerContent.newChat' }),
-  ).toBeNull();
+  expect(queryNewChatButtons(screen)).toHaveLength(0);
 });
 
-test('hides the change model button with fewer than 2 downloaded models', () => {
+test('hides the change model button with fewer than 2 downloaded models', async () => {
   mockUseModels.mockReturnValue({ models: [buildModel(1)] });
 
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
@@ -132,16 +144,16 @@ test('hides the change model button with fewer than 2 downloaded models', () => 
   expect(screen.queryByText('screens.drawerContent.changeModel')).toBeNull();
 });
 
-test('pressing change model navigates to the DownloadedModelsScreen when 2+ models are downloaded', () => {
+test('pressing change model navigates to the DownloadedModelsScreen when 2+ models are downloaded', async () => {
   mockUseModels.mockReturnValue({ models: [buildModel(1), buildModel(2)] });
 
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
-  fireEvent.press(screen.getByText('screens.drawerContent.changeModel'));
+  await fireEvent.press(screen.getByText('screens.drawerContent.changeModel'));
 
   expect(mockNavigate).toHaveBeenCalledWith('Chat', {
     screen: 'DownloadedModelsScreen',

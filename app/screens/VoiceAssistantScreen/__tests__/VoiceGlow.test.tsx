@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { render } from '@testing-library/react-native';
 
 import { VoiceGlow } from '../components';
@@ -8,17 +8,17 @@ import { VoiceGlow } from '../components';
 const level = { value: 0 };
 const levels = { level, low: level, high: level, active: level } as never;
 
-const gradientsOf = (screen: ReturnType<typeof render>) =>
-  screen
-    .UNSAFE_getAllByType(View)
+const gradientsOf = (screen: Awaited<ReturnType<typeof render>>) =>
+  screen.container
+    .queryAll(node => node.type === 'View')
     .map(
       view =>
         StyleSheet.flatten(view.props.style)?.experimental_backgroundImage,
     )
     .filter((gradient): gradient is string => typeof gradient === 'string');
 
-test('piles soft radial blobs in the theme’s glow colours', () => {
-  const screen = render(<VoiceGlow levels={levels} />);
+test('piles soft radial blobs in the theme’s glow colours', async () => {
+  const screen = await render(<VoiceGlow levels={levels} />);
   const gradients = gradientsOf(screen);
 
   expect(gradients).toHaveLength(5);
@@ -30,8 +30,8 @@ test('piles soft radial blobs in the theme’s glow colours', () => {
   expect(gradients[0]).toContain('rgba(223, 184, 164, 0) 100%');
 });
 
-test('never takes a touch meant for the controls above it', () => {
-  const screen = render(<VoiceGlow levels={levels} />);
+test('never takes a touch meant for the controls above it', async () => {
+  const screen = await render(<VoiceGlow levels={levels} />);
 
-  expect(screen.root.props.pointerEvents).toBe('none');
+  expect(screen.root?.props.pointerEvents).toBe('none');
 });

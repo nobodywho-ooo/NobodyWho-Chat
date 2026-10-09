@@ -1,5 +1,4 @@
 import React from 'react';
-import { Modal } from 'react-native';
 import { fireEvent, render } from '@testing-library/react-native';
 
 import { ToolCallModal } from '../AssistantMessage/ToolCallModal';
@@ -10,8 +9,8 @@ const baseProps = {
   result: '{"temperatureCelsius":12}',
 };
 
-test('renders the tool name, arguments and result when visible', () => {
-  const { getByText } = render(
+test('renders the tool name, arguments and result when visible', async () => {
+  const { getByText } = await render(
     <ToolCallModal {...baseProps} visible onClose={jest.fn()} />,
   );
 
@@ -22,26 +21,31 @@ test('renders the tool name, arguments and result when visible', () => {
   expect(getByText('{"temperatureCelsius":12}')).toBeTruthy();
 });
 
-test('calls onClose when the close button is pressed', () => {
+test('calls onClose when the close button is pressed', async () => {
   const onClose = jest.fn();
-  const { getByLabelText } = render(
+  const { getByLabelText } = await render(
     <ToolCallModal {...baseProps} visible onClose={onClose} />,
   );
 
-  fireEvent.press(getByLabelText('components.messageListItem.closeToolCalls'));
+  await fireEvent.press(
+    getByLabelText('components.messageListItem.closeToolCalls'),
+  );
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
-test('is hidden when visible is false', () => {
-  const { UNSAFE_getByType } = render(
+test('is hidden when visible is false', async () => {
+  const { queryByLabelText, queryByText } = await render(
     <ToolCallModal {...baseProps} visible={false} onClose={jest.fn()} />,
   );
 
-  expect(UNSAFE_getByType(Modal).props.visible).toBe(false);
+  expect(queryByText('get_weather')).toBeNull();
+  expect(
+    queryByLabelText('components.messageListItem.closeToolCalls'),
+  ).toBeNull();
 });
 
-test('matches the snapshot when visible', () => {
-  const { toJSON } = render(
+test('matches the snapshot when visible', async () => {
+  const { toJSON } = await render(
     <ToolCallModal {...baseProps} visible onClose={jest.fn()} />,
   );
   expect(toJSON()).toMatchSnapshot();

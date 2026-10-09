@@ -1,7 +1,8 @@
 import React from 'react';
 import { render } from '@testing-library/react-native';
+import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
+import { StreamdownText } from 'react-native-streamdown';
 
-import { MessageListItem } from 'components';
 import { AiServiceProvider } from 'services';
 import { DisplayMessage } from 'types';
 import { ChatScreen } from '../ChatScreen';
@@ -11,8 +12,8 @@ jest.mock('../components/MessageStarters/starters', () => ({
   pickStarterIds: () => ['planParisTrip', 'summarizeText'],
 }));
 
-test('renders correctly empty ChatScreen', () => {
-  const screen = render(
+test('renders correctly empty ChatScreen', async () => {
+  const screen = await render(
     <AiServiceProvider>
       <ChatScreen
         conversationId={undefined}
@@ -28,13 +29,13 @@ test('renders correctly empty ChatScreen', () => {
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('renders ChatScreen with existing messages', () => {
+test('renders ChatScreen with existing messages', async () => {
   const messages: DisplayMessage[] = [
     { role: 'user', content: 'Hello there' },
     { role: 'assistant', content: 'Hi! How can I help you?' },
   ];
 
-  const { toJSON } = render(
+  const { toJSON } = await render(
     <AiServiceProvider>
       <ChatScreen
         conversationId={5}
@@ -50,7 +51,7 @@ test('renders ChatScreen with existing messages', () => {
   expect(toJSON()).toMatchSnapshot();
 });
 
-test('passes raw <think> blocks through to MessageListItem', () => {
+test('passes raw <think> blocks through to MessageListItem', async () => {
   const messages: DisplayMessage[] = [
     { role: 'user', content: 'hi' },
     {
@@ -59,8 +60,10 @@ test('passes raw <think> blocks through to MessageListItem', () => {
       toolCalls: [],
     },
   ];
+  jest.mocked(StreamdownText).mockClear();
+  jest.mocked(EnrichedMarkdownText).mockClear();
 
-  const screen = render(
+  const screen = await render(
     <AiServiceProvider>
       <ChatScreen
         conversationId={5}
@@ -70,10 +73,17 @@ test('passes raw <think> blocks through to MessageListItem', () => {
     </AiServiceProvider>,
   );
 
-  const items = screen.UNSAFE_getAllByType(MessageListItem);
   // The raw <think> tags are kept; MessageListItem renders the reasoning in a
   // dedicated ThinkingBlock rather than ChatScreen pre-formatting it.
-  expect(items[1].props.message.content).toBe('<think>reasoning</think>answer');
+  expect(
+    screen.getByLabelText('components.messageListItem.viewThinking'),
+  ).toBeOnTheScreen();
+  expect(
+    jest.mocked(StreamdownText).mock.calls.map(([props]) => props.markdown),
+  ).toContain('reasoning');
+  expect(jest.mocked(EnrichedMarkdownText).mock.lastCall?.[0].markdown).toBe(
+    'answer',
+  );
   // The user message passes through untouched.
-  expect(items[0].props.message.content).toBe('hi');
+  expect(screen.getByText('hi')).toBeOnTheScreen();
 });

@@ -1,7 +1,7 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`renders correctly DownloadingModels 1`] = `
-[
+<>
   <Text
     style={
       {
@@ -12,7 +12,7 @@ exports[`renders correctly DownloadingModels 1`] = `
     variant="h4"
   >
     screens.models.downloading
-  </Text>,
+  </Text>
   <ModelCard
     downloadProgress={0.25}
     model={
@@ -42,7 +42,7 @@ exports[`renders correctly DownloadingModels 1`] = `
       }
     }
     onPress={[MockFunction]}
-  />,
+  />
   <ModelCard
     downloadProgress={0.75}
     model={
@@ -72,8 +72,8 @@ exports[`renders correctly DownloadingModels 1`] = `
       }
     }
     onPress={[MockFunction]}
-  />,
-]
+  />
+</>
 `;
 
 exports[`renders correctly DownloadingModels with no active downloads 1`] = `

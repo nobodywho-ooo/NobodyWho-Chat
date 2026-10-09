@@ -1,11 +1,13 @@
 import React from 'react';
-import { Text, TextInput, View } from 'react-native';
+import { Text } from 'react-native';
 import { render, act, within } from '@testing-library/react-native';
-import { IconButton } from 'components';
 
 import { InputBar } from '../InputBar';
 
 jest.unmock('../InputBar');
+
+// IconButton is host-mocked ('IconButton'), so it's found by host type.
+const isIconButton = (node: { type: unknown }) => node.type === 'IconButton';
 
 const foo = () => {
   // do nothing.
@@ -31,35 +33,39 @@ const StatefulInputBar: React.FC<
   );
 };
 
-test('renders correctly InputBar', () => {
-  const tree = render(<StatefulInputBar />).toJSON();
+test('renders correctly InputBar', async () => {
+  const tree = (await render(<StatefulInputBar />)).toJSON();
   expect(tree).toMatchSnapshot();
 });
 
-test('renders correctly InputBar with value', () => {
-  const tree = render(<StatefulInputBar value={'Type here'} />).toJSON();
-  expect(tree).toMatchSnapshot();
-});
-
-test('renders correctly InputBar when streaming', () => {
-  const tree = render(<StatefulInputBar isStreaming />).toJSON();
-  expect(tree).toMatchSnapshot();
-});
-
-test('renders the collapsed + toggle when attachments are enabled', () => {
-  const tree = render(
-    <StatefulInputBar
-      showImageAttach
-      showAudioAttach
-      onAttachImage={foo}
-      onAttachAudio={foo}
-    />,
+test('renders correctly InputBar with value', async () => {
+  const tree = (
+    await render(<StatefulInputBar value={'Type here'} />)
   ).toJSON();
   expect(tree).toMatchSnapshot();
 });
 
-test('pressing + lists the attach options and keeps the text input', () => {
-  const screen = render(
+test('renders correctly InputBar when streaming', async () => {
+  const tree = (await render(<StatefulInputBar isStreaming />)).toJSON();
+  expect(tree).toMatchSnapshot();
+});
+
+test('renders the collapsed + toggle when attachments are enabled', async () => {
+  const tree = (
+    await render(
+      <StatefulInputBar
+        showImageAttach
+        showAudioAttach
+        onAttachImage={foo}
+        onAttachAudio={foo}
+      />,
+    )
+  ).toJSON();
+  expect(tree).toMatchSnapshot();
+});
+
+test('pressing + lists the attach options and keeps the text input', async () => {
+  const screen = await render(
     <StatefulInputBar
       showImageAttach
       showAudioAttach
@@ -69,19 +75,21 @@ test('pressing + lists the attach options and keeps the text input', () => {
   );
 
   const iconNames = () =>
-    screen
-      .UNSAFE_getAllByType(IconButton as never)
+    screen.container
+      .queryAll(isIconButton)
       .map(node => node.props.icon.iosIconName);
 
   // Collapsed: a single + toggle and the text input, no photo/waveform.
   expect(iconNames()).toContain('plus');
   expect(iconNames()).not.toContain('photo');
-  expect(screen.UNSAFE_queryByType(TextInput)).toBeTruthy();
+  expect(
+    screen.queryByPlaceholderText('components.inputBar.placeholder'),
+  ).toBeTruthy();
 
-  const toggle = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const toggle = screen.container
+    .queryAll(isIconButton)
     .find(node => node.props.icon.iosIconName === 'plus');
-  act(() => toggle?.props.onPress());
+  await act(() => toggle?.props.onPress());
 
   // Expanded: toggle becomes ×, the photo + camera + waveform options are
   // listed, and the text input stays visible.
@@ -92,21 +100,23 @@ test('pressing + lists the attach options and keeps the text input', () => {
   expect(screen.getByText('components.inputBar.photo')).toBeTruthy();
   expect(screen.getByText('components.inputBar.camera')).toBeTruthy();
   expect(screen.getByText('components.inputBar.audio')).toBeTruthy();
-  expect(screen.UNSAFE_queryByType(TextInput)).toBeTruthy();
+  expect(
+    screen.queryByPlaceholderText('components.inputBar.placeholder'),
+  ).toBeTruthy();
 });
 
-test('the camera button only appears for image-capable models', () => {
-  const screen = render(
+test('the camera button only appears for image-capable models', async () => {
+  const screen = await render(
     <StatefulInputBar showAudioAttach onAttachAudio={foo} />,
   );
 
-  const toggle = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const toggle = screen.container
+    .queryAll(isIconButton)
     .find(node => node.props.icon.iosIconName === 'plus');
-  act(() => toggle?.props.onPress());
+  await act(() => toggle?.props.onPress());
 
-  const iconNames = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const iconNames = screen.container
+    .queryAll(isIconButton)
     .map(node => node.props.icon.iosIconName);
 
   // Audio-only model: the audio option is offered, but neither photo nor camera.
@@ -117,8 +127,10 @@ test('the camera button only appears for image-capable models', () => {
 
 // Render an image-capable InputBar in its expanded state and report which attach
 // icons are visible.
-const expandedImageIcons = (imageSource?: 'photo' | 'camera'): string[] => {
-  const screen = render(
+const expandedImageIcons = async (
+  imageSource?: 'photo' | 'camera',
+): Promise<string[]> => {
+  const screen = await render(
     <StatefulInputBar
       showImageAttach
       imageSource={imageSource}
@@ -128,37 +140,37 @@ const expandedImageIcons = (imageSource?: 'photo' | 'camera'): string[] => {
   );
   // Find the toggle by its (stable) label, not its icon — the icon is a
   // paperclip rather than a + once an attachment is present.
-  const toggle = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const toggle = screen.container
+    .queryAll(isIconButton)
     .find(
       node => node.props.accessibilityLabel === 'components.inputBar.attach',
     );
-  act(() => toggle?.props.onPress());
-  return screen
-    .UNSAFE_getAllByType(IconButton as never)
+  await act(() => toggle?.props.onPress());
+  return screen.container
+    .queryAll(isIconButton)
     .map(node => node.props.icon.iosIconName);
 };
 
-test('with no image attached, both photo and camera are offered', () => {
-  const icons = expandedImageIcons(undefined);
+test('with no image attached, both photo and camera are offered', async () => {
+  const icons = await expandedImageIcons(undefined);
   expect(icons).toContain('photo');
   expect(icons).toContain('camera');
 });
 
-test('an image attached via Photo hides the Camera button', () => {
-  const icons = expandedImageIcons('photo');
+test('an image attached via Photo hides the Camera button', async () => {
+  const icons = await expandedImageIcons('photo');
   expect(icons).toContain('photo');
   expect(icons).not.toContain('camera');
 });
 
-test('an image captured via Camera hides the Photo button', () => {
-  const icons = expandedImageIcons('camera');
+test('an image captured via Camera hides the Photo button', async () => {
+  const icons = await expandedImageIcons('camera');
   expect(icons).toContain('camera');
   expect(icons).not.toContain('photo');
 });
 
-test('with an image attached, only the image option is listed', () => {
-  const screen = render(
+test('with an image attached, only the image option is listed', async () => {
+  const screen = await render(
     <StatefulInputBar
       showImageAttach
       showAudioAttach
@@ -169,15 +181,15 @@ test('with an image attached, only the image option is listed', () => {
     />,
   );
 
-  const toggle = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const toggle = screen.container
+    .queryAll(isIconButton)
     .find(
       node => node.props.accessibilityLabel === 'components.inputBar.attach',
     );
-  act(() => toggle?.props.onPress());
+  await act(() => toggle?.props.onPress());
 
-  const iconNames = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const iconNames = screen.container
+    .queryAll(isIconButton)
     .map(node => node.props.icon.iosIconName);
   expect(iconNames).toContain('photo');
   expect(iconNames).not.toContain('camera');
@@ -188,8 +200,8 @@ test('with an image attached, only the image option is listed', () => {
   expect(screen.getByText('components.inputBar.unselect')).toBeTruthy();
 });
 
-test('with audio attached, only the audio option is listed', () => {
-  const screen = render(
+test('with audio attached, only the audio option is listed', async () => {
+  const screen = await render(
     <StatefulInputBar
       showImageAttach
       showAudioAttach
@@ -200,15 +212,15 @@ test('with audio attached, only the audio option is listed', () => {
     />,
   );
 
-  const toggle = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const toggle = screen.container
+    .queryAll(isIconButton)
     .find(
       node => node.props.accessibilityLabel === 'components.inputBar.attach',
     );
-  act(() => toggle?.props.onPress());
+  await act(() => toggle?.props.onPress());
 
-  const iconNames = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const iconNames = screen.container
+    .queryAll(isIconButton)
     .map(node => node.props.icon.iosIconName);
   expect(iconNames).toContain('waveform');
   expect(iconNames).not.toContain('photo');
@@ -216,8 +228,8 @@ test('with audio attached, only the audio option is listed', () => {
   expect(screen.getByText('components.inputBar.unselect')).toBeTruthy();
 });
 
-test('the toggle shows a paperclip once an attachment is present', () => {
-  const screen = render(
+test('the toggle shows a paperclip once an attachment is present', async () => {
+  const screen = await render(
     <StatefulInputBar
       showImageAttach
       imageSource="photo"
@@ -226,8 +238,8 @@ test('the toggle shows a paperclip once an attachment is present', () => {
     />,
   );
 
-  const toggle = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const toggle = screen.container
+    .queryAll(isIconButton)
     .find(
       node => node.props.accessibilityLabel === 'components.inputBar.attach',
     );
@@ -235,31 +247,31 @@ test('the toggle shows a paperclip once an attachment is present', () => {
   expect(toggle?.props.icon.androidIconName).toBe('attach_file');
 });
 
-test('selecting an attachment collapses the expanded tray', () => {
+test('selecting an attachment collapses the expanded tray', async () => {
   const props = {
     showImageAttach: true,
     onAttachImage: foo,
     onAttachCamera: foo,
   };
-  const screen = render(<StatefulInputBar {...props} />);
+  const screen = await render(<StatefulInputBar {...props} />);
 
   // Open the tray — the attach options are listed above the input.
-  const toggle = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const toggle = screen.container
+    .queryAll(isIconButton)
     .find(
       node => node.props.accessibilityLabel === 'components.inputBar.attach',
     );
-  act(() => toggle?.props.onPress());
+  await act(() => toggle?.props.onPress());
   expect(screen.queryByText('components.inputBar.photo')).toBeTruthy();
 
   // An image gets attached (the parent updates imageSource) → tray collapses.
-  screen.rerender(<StatefulInputBar {...props} imageSource="photo" />);
+  await screen.rerender(<StatefulInputBar {...props} imageSource="photo" />);
   expect(screen.queryByText('components.inputBar.photo')).toBeNull();
 });
 
-test('sending closes the expanded tray', () => {
+test('sending closes the expanded tray', async () => {
   const onSend = jest.fn();
-  const screen = render(
+  const screen = await render(
     <StatefulInputBar
       value={'hello'}
       showImageAttach
@@ -269,19 +281,19 @@ test('sending closes the expanded tray', () => {
     />,
   );
 
-  const toggle = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const toggle = screen.container
+    .queryAll(isIconButton)
     .find(
       node => node.props.accessibilityLabel === 'components.inputBar.attach',
     );
-  act(() => toggle?.props.onPress());
+  await act(() => toggle?.props.onPress());
   expect(screen.queryByText('components.inputBar.photo')).toBeTruthy();
 
   // The send button is the icon button with the arrow-up icon.
-  const send = screen
-    .UNSAFE_getAllByType(IconButton as never)
+  const send = screen.container
+    .queryAll(isIconButton)
     .find(node => node.props.icon.iosIconName === 'arrow.up');
-  act(() => send?.props.onPress());
+  await act(() => send?.props.onPress());
 
   expect(onSend).toHaveBeenCalled();
   expect(screen.queryByText('components.inputBar.photo')).toBeNull();
@@ -290,8 +302,8 @@ test('sending closes the expanded tray', () => {
 // --- Focus -----------------------------------------------------------------
 
 // The bar's border is the last style on the View wrapping the text input.
-const barBorderColor = (screen: ReturnType<typeof render>): string => {
-  const input = screen.UNSAFE_getByType(TextInput);
+const barBorderColor = (screen: Awaited<ReturnType<typeof render>>): string => {
+  const input = screen.getByPlaceholderText('components.inputBar.placeholder');
   const bar = input.parent;
   const flattened = Object.assign(
     {},
@@ -300,38 +312,40 @@ const barBorderColor = (screen: ReturnType<typeof render>): string => {
   return flattened.borderColor;
 };
 
-test('highlights the bar border while the text input is focused', () => {
-  const screen = render(<StatefulInputBar />);
-  const input = screen.UNSAFE_getByType(TextInput);
+test('highlights the bar border while the text input is focused', async () => {
+  const screen = await render(<StatefulInputBar />);
+  const input = screen.getByPlaceholderText('components.inputBar.placeholder');
 
   expect(barBorderColor(screen)).toBe('#e1e1e1');
 
-  act(() => input.props.onFocus());
+  await act(() => input.props.onFocus());
   expect(barBorderColor(screen)).toBe('#c1c1c1');
 
-  act(() => input.props.onBlur());
+  await act(() => input.props.onBlur());
   expect(barBorderColor(screen)).toBe('#e1e1e1');
 });
 
-test('still forwards focus and blur to the parent', () => {
+test('still forwards focus and blur to the parent', async () => {
   const onFocus = jest.fn();
   const onBlur = jest.fn();
-  const screen = render(<StatefulInputBar onFocus={onFocus} onBlur={onBlur} />);
-  const input = screen.UNSAFE_getByType(TextInput);
+  const screen = await render(
+    <StatefulInputBar onFocus={onFocus} onBlur={onBlur} />,
+  );
+  const input = screen.getByPlaceholderText('components.inputBar.placeholder');
 
-  act(() => input.props.onFocus());
+  await act(() => input.props.onFocus());
   expect(onFocus).toHaveBeenCalled();
 
-  act(() => input.props.onBlur());
+  await act(() => input.props.onBlur());
   expect(onBlur).toHaveBeenCalled();
 });
 
 // --- Composer measurement --------------------------------------------------
 
-test('measures the field for the list inset, not the starters above it', () => {
+test('measures the field for the list inset, not the starters above it', async () => {
   const onComposerLayout = jest.fn();
 
-  const screen = render(
+  const screen = await render(
     <StatefulInputBar
       onComposerLayout={onComposerLayout}
       messageStarters={<Text testID="starters">starters</Text>}
@@ -341,9 +355,9 @@ test('measures the field for the list inset, not the starters above it', () => {
   // The view the list measures must not be the one wearing the starters: they
   // vanish the moment a conversation gets its first message, and folding them
   // into the inset collapses it mid-turn and slides the conversation down.
-  const measured = screen
-    .UNSAFE_getAllByType(View as never)
-    .find(node => node.props.onLayout === onComposerLayout);
+  const measured = screen.container.queryAll(
+    node => node.type === 'View' && node.props.onLayout === onComposerLayout,
+  )[0];
   expect(measured).toBeTruthy();
   expect(within(measured!).queryByTestId('starters')).toBeNull();
   // The starters are on screen, just not inside what gets measured.

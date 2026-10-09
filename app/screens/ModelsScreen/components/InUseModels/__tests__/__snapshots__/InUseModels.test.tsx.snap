@@ -1,7 +1,7 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`renders correctly InUseModels 1`] = `
-[
+<>
   <Text
     style={
       {
@@ -11,7 +11,7 @@ exports[`renders correctly InUseModels 1`] = `
     variant="h4"
   >
     screens.models.inUse
-  </Text>,
+  </Text>
   <ModelCard
     isSelected={true}
     model={
@@ -32,7 +32,7 @@ exports[`renders correctly InUseModels 1`] = `
         "toolCalling": false,
       }
     }
-  />,
+  />
   <ModelCard
     isSelected={true}
     model={
@@ -53,6 +53,6 @@ exports[`renders correctly InUseModels 1`] = `
         "toolCalling": false,
       }
     }
-  />,
-]
+  />
+</>
 `;

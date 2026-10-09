@@ -37,10 +37,10 @@ const scrollReportingSizes = (reports: number) => {
 };
 
 // Following the answer is what subscribes the hook to `totalSize`.
-const renderFollowingList = () => {
-  const view = renderHook(() => useMessageListScroll(messages));
+const renderFollowingList = async () => {
+  const view = await renderHook(() => useMessageListScroll(messages));
   view.result.current.listRef.current = listStub;
-  act(() => view.result.current.scrollToBottom());
+  await act(() => view.result.current.scrollToBottom());
   mockScrollToOffset.mockClear();
   return view;
 };
@@ -50,11 +50,13 @@ beforeEach(() => {
   mockScrollToOffset.mockReset();
 });
 
-it('does not recurse when its own scroll keeps reporting sizes', () => {
-  const view = renderFollowingList();
+it('does not recurse when its own scroll keeps reporting sizes', async () => {
+  const view = await renderFollowingList();
   scrollReportingSizes(Number.POSITIVE_INFINITY);
 
-  expect(() => act(() => mockListState.emitTotalSize(1200))).not.toThrow();
+  await expect(
+    act(() => mockListState.emitTotalSize(1200)),
+  ).resolves.not.toThrow();
   expect(mockScrollToOffset).toHaveBeenCalledTimes(1);
   expect(view.result.current.canScrollToBottom).toBe(false);
 });
@@ -65,13 +67,13 @@ it('does not recurse when its own scroll keeps reporting sizes', () => {
 // this suite it also used to land inside whatever test ran next, scrolling the
 // shared stub an extra time.)
 it('drops a pending replay when the screen goes away', async () => {
-  const view = renderFollowingList();
+  const view = await renderFollowingList();
   scrollReportingSizes(Number.POSITIVE_INFINITY);
 
-  act(() => mockListState.emitTotalSize(1200));
+  await act(() => mockListState.emitTotalSize(1200));
   expect(mockScrollToOffset).toHaveBeenCalledTimes(1); // the replay is now armed
 
-  view.unmount();
+  await view.unmount();
   mockScrollToOffset.mockClear();
 
   await act(async () => {
@@ -82,7 +84,7 @@ it('drops a pending replay when the screen goes away', async () => {
 });
 
 it('replays the scroll it had to skip', async () => {
-  renderFollowingList();
+  await renderFollowingList();
   scrollReportingSizes(1);
 
   await act(async () => {

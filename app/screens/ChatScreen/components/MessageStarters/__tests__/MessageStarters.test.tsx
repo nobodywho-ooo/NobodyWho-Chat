@@ -11,25 +11,25 @@ jest.mock('../starters', () => ({
 }));
 
 describe('MessageStarters', () => {
-  test('selecting a starter reports its body', () => {
+  test('selecting a starter reports its body', async () => {
     const onSelect = jest.fn();
-    const screen = render(
+    const screen = await render(
       <MessageStarters
         pipeline={ModelPipeline.textGeneration}
         onSelect={onSelect}
       />,
     );
 
-    fireEvent.press(screen.getByRole('button'));
+    await fireEvent.press(screen.getByRole('button'));
 
     expect(onSelect).toHaveBeenCalledWith(
       'components.messageStarters.planParisTrip.body',
     );
   });
 
-  test('disabled keeps the starters listed but unselectable', () => {
+  test('disabled keeps the starters listed but unselectable', async () => {
     const onSelect = jest.fn();
-    const screen = render(
+    const screen = await render(
       <MessageStarters
         pipeline={ModelPipeline.textGeneration}
         onSelect={onSelect}
@@ -43,7 +43,7 @@ describe('MessageStarters', () => {
       screen.getByText('components.messageStarters.planParisTrip.title'),
     ).toBeTruthy();
 
-    fireEvent.press(starter);
+    await fireEvent.press(starter);
 
     expect(onSelect).not.toHaveBeenCalled();
   });

@@ -9,17 +9,18 @@ beforeEach(() => {
   mockNavigate.mockClear();
 });
 
-test('renders correctly NoModelSelectedScreen', () => {
-  const tree = render(<NoModelSelectedScreen />).toJSON();
+test('renders correctly NoModelSelectedScreen', async () => {
+  const tree = (await render(<NoModelSelectedScreen />)).toJSON();
   expect(tree).toMatchSnapshot();
 });
 
-test('pressing the button opens the ModelsScreen', () => {
-  const screen = render(<NoModelSelectedScreen />);
+test('pressing the button opens the ModelsScreen', async () => {
+  const screen = await render(<NoModelSelectedScreen />);
 
-  fireEvent.press(
-    screen.UNSAFE_getByProps({ title: 'screens.noModelSelected.selectModel' }),
+  const [button] = screen.container.queryAll(
+    node => node.props.title === 'screens.noModelSelected.selectModel',
   );
+  await fireEvent.press(button);
 
   expect(mockNavigate).toHaveBeenCalledWith('ModelsScreen');
 });

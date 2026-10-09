@@ -5,44 +5,50 @@ import { render, fireEvent } from '@testing-library/react-native';
 import { SelectablePill } from '../SelectablePill';
 
 describe('SelectablePill', () => {
-  test('renders an unselected pill', () => {
-    const tree = render(
-      <SelectablePill label="Male 1" selected={false} onPress={jest.fn()} />,
+  test('renders an unselected pill', async () => {
+    const tree = (
+      await render(
+        <SelectablePill label="Male 1" selected={false} onPress={jest.fn()} />,
+      )
     ).toJSON();
     expect(tree).toMatchSnapshot();
   });
 
-  test('renders a selected pill', () => {
-    const tree = render(
-      <SelectablePill label="Male 1" selected onPress={jest.fn()} />,
+  test('renders a selected pill', async () => {
+    const tree = (
+      await render(
+        <SelectablePill label="Male 1" selected onPress={jest.fn()} />,
+      )
     ).toJSON();
     expect(tree).toMatchSnapshot();
   });
 
-  test('renders a pill with an icon', () => {
-    const tree = render(
-      <SelectablePill
-        label="Text to Speech"
-        icon={{
-          iosIconName: 'speaker.wave.2',
-          androidIconName: 'text_to_speech',
-        }}
-        selected={false}
-        onPress={jest.fn()}
-      />,
+  test('renders a pill with an icon', async () => {
+    const tree = (
+      await render(
+        <SelectablePill
+          label="Text to Speech"
+          icon={{
+            iosIconName: 'speaker.wave.2',
+            androidIconName: 'text_to_speech',
+          }}
+          selected={false}
+          onPress={jest.fn()}
+        />,
+      )
     ).toJSON();
     expect(tree).toMatchSnapshot();
   });
 
-  test('shows no icon unless one is given', () => {
-    const withoutIcon = render(
+  test('shows no icon unless one is given', async () => {
+    const withoutIcon = await render(
       <SelectablePill label="Male 1" selected={false} onPress={jest.fn()} />,
     );
     expect(
-      withoutIcon.UNSAFE_queryAllByType('PlatformIcon' as never),
+      withoutIcon.container.queryAll(node => node.type === 'PlatformIcon'),
     ).toHaveLength(0);
 
-    const withIcon = render(
+    const withIcon = await render(
       <SelectablePill
         label="Text to Speech"
         icon={{
@@ -53,13 +59,13 @@ describe('SelectablePill', () => {
         onPress={jest.fn()}
       />,
     );
-    expect(withIcon.UNSAFE_getAllByType('PlatformIcon' as never)).toHaveLength(
-      1,
-    );
+    expect(
+      withIcon.container.queryAll(node => node.type === 'PlatformIcon'),
+    ).toHaveLength(1);
   });
 
-  test('the icon takes the label colour and size', () => {
-    const { UNSAFE_getByType, getByText } = render(
+  test('the icon takes the label colour and size', async () => {
+    const { container, getByText } = await render(
       <SelectablePill
         label="Text to Speech"
         icon={{
@@ -72,7 +78,7 @@ describe('SelectablePill', () => {
       />,
     );
 
-    const icon = UNSAFE_getByType('PlatformIcon' as never);
+    const [icon] = container.queryAll(node => node.type === 'PlatformIcon');
     expect(icon.props.size).toBe(11);
     // Same colour the selected label uses, so the two read as one unit.
     expect(icon.props.color).toBe(
@@ -80,19 +86,19 @@ describe('SelectablePill', () => {
     );
   });
 
-  test('calls onPress when tapped', () => {
+  test('calls onPress when tapped', async () => {
     const onPress = jest.fn();
-    const { getByRole } = render(
+    const { getByRole } = await render(
       <SelectablePill label="English" selected={false} onPress={onPress} />,
     );
 
-    fireEvent.press(getByRole('button'));
+    await fireEvent.press(getByRole('button'));
 
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
-  test('is labelled by its text and exposes the selected state', () => {
-    const { getByRole } = render(
+  test('is labelled by its text and exposes the selected state', async () => {
+    const { getByRole } = await render(
       <SelectablePill label="English" selected onPress={jest.fn()} />,
     );
 

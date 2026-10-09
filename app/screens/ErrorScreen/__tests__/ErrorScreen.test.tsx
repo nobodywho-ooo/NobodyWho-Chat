@@ -4,25 +4,25 @@ import { fireEvent, render } from '@testing-library/react-native';
 
 import { ErrorScreen } from '../ErrorScreen';
 
-test('renders correctly ErrorScreen', () => {
-  const tree = render(<ErrorScreen onRetry={() => {}} />).toJSON();
+test('renders correctly ErrorScreen', async () => {
+  const tree = (await render(<ErrorScreen onRetry={() => {}} />)).toJSON();
   expect(tree).toMatchSnapshot();
 });
 
-test('hides the reset action when no onReset handler is given', () => {
-  const { queryByTestId } = render(<ErrorScreen onRetry={() => {}} />);
+test('hides the reset action when no onReset handler is given', async () => {
+  const { queryByTestId } = await render(<ErrorScreen onRetry={() => {}} />);
   expect(queryByTestId('error-reset-button')).toBeNull();
 });
 
-test('confirms before resetting and only resets on confirmation', () => {
+test('confirms before resetting and only resets on confirmation', async () => {
   const onReset = jest.fn();
   const alertSpy = jest.spyOn(Alert, 'alert');
 
-  const { getByTestId } = render(
+  const { getByTestId } = await render(
     <ErrorScreen onRetry={() => {}} onReset={onReset} />,
   );
 
-  fireEvent.press(getByTestId('error-reset-button'));
+  await fireEvent.press(getByTestId('error-reset-button'));
 
   // The reset is gated behind a confirmation dialog, not fired immediately.
   expect(alertSpy).toHaveBeenCalledTimes(1);

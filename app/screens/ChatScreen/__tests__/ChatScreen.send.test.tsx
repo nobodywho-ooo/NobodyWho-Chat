@@ -1,13 +1,10 @@
 import React from 'react';
-import { Alert, ScrollView } from 'react-native';
+import { Alert } from 'react-native';
 import { fireEvent, render, act } from '@testing-library/react-native';
+import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { Prompt } from 'react-native-nobodywho';
 import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
 
-import { MessageListItem } from 'components';
-
-import { InputBar } from '../components/InputBar/InputBar';
-import { CameraCaptureModal } from '../components/CameraCaptureModal/CameraCaptureModal';
 import { insertConversation, insertMessage } from 'repositories';
 import { implicitThinkOpen } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
@@ -103,6 +100,12 @@ jest.mock('repositories', () => ({
   insertMessage: jest.fn(),
 }));
 
+// Host stub for the camera sheet, so a test can hand ChatScreen a captured photo
+// through the onCapture prop it passes down.
+jest.mock('../components/CameraCaptureModal/CameraCaptureModal', () => ({
+  CameraCaptureModal: 'CameraCaptureModal',
+}));
+
 const mockInsertConversation = insertConversation as jest.Mock;
 const mockInsertMessage = insertMessage as jest.Mock;
 
@@ -141,20 +144,22 @@ beforeEach(() => {
   mockListState.reset();
 });
 
-const send = async (
-  screen: ReturnType<typeof render>,
-  text: string,
-): Promise<void> => {
-  const bar = screen.UNSAFE_getByType(InputBar as never);
-  act(() => bar.props.onChangeText(text));
+type Screen = Awaited<ReturnType<typeof render>>;
+
+// The InputBar stub is a host element carrying the props ChatScreen hands it.
+const inputBar = (screen: Screen) =>
+  screen.container.queryAll(node => node.type === 'InputBar')[0];
+
+const send = async (screen: Screen, text: string): Promise<void> => {
+  await act(() => inputBar(screen).props.onChangeText(text));
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onSend();
+    await inputBar(screen).props.onSend();
   });
 };
 
 test('first send creates a conversation, persists both messages and notifies', async () => {
   const onConversationCreated = jest.fn();
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={undefined}
       messages={[]}
@@ -190,7 +195,7 @@ test('first send creates a conversation, persists both messages and notifies', a
 });
 
 test('a second send appends to the same conversation without creating another', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={undefined}
       messages={[]}
@@ -216,7 +221,7 @@ test('a second send appends to the same conversation without creating another', 
 });
 
 test('an existing conversation never creates a new one', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -244,7 +249,7 @@ test('persists the user message before generation starts (crash-safety)', async 
     })(),
   );
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -258,7 +263,7 @@ test('persists the user message before generation starts (crash-safety)', async 
 });
 
 test('records tokens/sec and time-to-first-token on the assistant message', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -283,7 +288,7 @@ test('a vision/hearing send attaches a picked image + audio as a Prompt', async 
   // An image+audio model is loaded, so both attach buttons are offered.
   mockChatPipeline = ModelPipeline.imageAudioTextToText;
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -293,10 +298,10 @@ test('a vision/hearing send attaches a picked image + audio as a Prompt', async 
 
   // Pick an image and an audio file (pickers mocked), then send.
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+    await inputBar(screen).props.onAttachImage();
   });
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onAttachAudio();
+    await inputBar(screen).props.onAttachAudio();
   });
   await send(screen, 'what is this');
 
@@ -324,7 +329,7 @@ test('a vision/hearing send attaches a picked image + audio as a Prompt', async 
 test('audio-only document picker restricts to audio MIME types', async () => {
   mockChatPipeline = ModelPipeline.audioTextToText;
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -333,7 +338,7 @@ test('audio-only document picker restricts to audio MIME types', async () => {
   );
 
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onAttachAudio();
+    await inputBar(screen).props.onAttachAudio();
   });
   await send(screen, 'what do you hear');
 
@@ -374,7 +379,7 @@ test('an imported image is re-encoded to a compressed JPEG before attaching', as
     ],
   });
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -383,7 +388,7 @@ test('an imported image is re-encoded to a compressed JPEG before attaching', as
   );
 
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+    await inputBar(screen).props.onAttachImage();
   });
   await send(screen, 'what is this');
 
@@ -404,7 +409,7 @@ test('an imported image is re-encoded to a compressed JPEG before attaching', as
 test('a photo captured from the camera is downscaled and attached as an image', async () => {
   mockChatPipeline = ModelPipeline.imageTextToText;
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -414,7 +419,10 @@ test('a photo captured from the camera is downscaled and attached as an image', 
 
   // Simulate the camera sheet returning a large captured photo.
   await act(async () => {
-    await screen.UNSAFE_getByType(CameraCaptureModal as never).props.onCapture({
+    const [camera] = screen.container.queryAll(
+      node => node.type === 'CameraCaptureModal',
+    );
+    await camera.props.onCapture({
       uri: 'file:///tmp/CAPTURE_123.jpg',
       width: 4000,
       height: 3000,
@@ -439,14 +447,14 @@ test('deselecting an attached image deletes its unsent copy from disk', async ()
   mockChatPipeline = ModelPipeline.imageTextToText;
   mockGetInfo.mockResolvedValue({ exists: true }); // the message-documents dir + copy exist
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
       onConversationCreated={jest.fn()}
     />,
   );
-  const bar = () => screen.UNSAFE_getByType(InputBar as never);
+  const bar = () => inputBar(screen);
 
   // Attach (copies into message-documents), then tap again to deselect.
   await act(async () => {
@@ -469,7 +477,7 @@ test('an unsent attachment is deleted when the screen unmounts', async () => {
   mockChatPipeline = ModelPipeline.imageTextToText;
   mockGetInfo.mockResolvedValue({ exists: true });
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -478,11 +486,9 @@ test('an unsent attachment is deleted when the screen unmounts', async () => {
   );
 
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+    await inputBar(screen).props.onAttachImage();
   });
-  await act(async () => {
-    screen.unmount();
-  });
+  await screen.unmount();
 
   expect(mockUnlink).toHaveBeenCalledWith(expect.stringContaining('IMG_0001'), {
     idempotent: true,
@@ -493,7 +499,7 @@ test('a sent attachment is NOT deleted on unmount (the message owns it)', async 
   mockChatPipeline = ModelPipeline.imageTextToText;
   mockGetInfo.mockResolvedValue({ exists: true });
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -502,13 +508,11 @@ test('a sent attachment is NOT deleted on unmount (the message owns it)', async 
   );
 
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+    await inputBar(screen).props.onAttachImage();
   });
   await send(screen, 'what is this');
   mockUnlink.mockClear();
-  await act(async () => {
-    screen.unmount();
-  });
+  await screen.unmount();
 
   // The image was sent (persisted into the message), so its copy survives.
   expect(mockUnlink).not.toHaveBeenCalled();
@@ -521,7 +525,7 @@ test('cancelling the image picker attaches nothing', async () => {
     assets: null,
   });
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -530,7 +534,7 @@ test('cancelling the image picker attaches nothing', async () => {
   );
 
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+    await inputBar(screen).props.onAttachImage();
   });
   await send(screen, 'hello');
 
@@ -547,7 +551,7 @@ test('a failing image picker alerts with the error and attaches nothing', async 
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   mockLaunchImageLibraryAsync.mockRejectedValue(new Error('no photo access'));
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -556,7 +560,7 @@ test('a failing image picker alerts with the error and attaches nothing', async 
   );
 
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+    await inputBar(screen).props.onAttachImage();
   });
 
   expect(alert).toHaveBeenCalledWith(
@@ -574,7 +578,7 @@ test('a plain text send carries no documents even when multimodal is ready', asy
   // Multimodal model loaded, but the user never tapped attach.
   mockChatPipeline = ModelPipeline.imageAudioTextToText;
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -602,7 +606,7 @@ test('a model swap mid-stream stops streaming without persisting the assistant',
     })(),
   );
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -620,7 +624,7 @@ test('a model swap mid-stream stops streaming without persisting the assistant',
 });
 
 test('stopping mid-stream persists the partial answer and a "stopped" system message', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -631,7 +635,7 @@ test('stopping mid-stream persists the partial answer and a "stopped" system mes
   mockChat.ask.mockImplementation(() =>
     (async function* () {
       yield 'partial';
-      screen.UNSAFE_getByType(InputBar as never).props.onStop();
+      inputBar(screen).props.onStop();
     })(),
   );
 
@@ -656,7 +660,7 @@ test('a generation error persists the partial answer and a "failed" system messa
     })(),
   );
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -698,7 +702,7 @@ const persistedRoles = async (): Promise<string[]> => {
 };
 
 test('a delete mid-stream drops the answer instead of writing it into rows that are gone', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -718,13 +722,11 @@ test('a delete mid-stream drops the answer instead of writing it into rows that 
   // Only the user message, written before the delete, made it to the database.
   expect(await persistedRoles()).toEqual(['user']);
   // And the turn released the input bar rather than leaving it mid-answer.
-  expect(screen.UNSAFE_getByType(InputBar as never).props.isStreaming).toBe(
-    false,
-  );
+  expect(inputBar(screen).props.isStreaming).toBe(false);
 });
 
 test('a delete after Stop leaves no "stopped" note behind', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -734,7 +736,7 @@ test('a delete after Stop leaves no "stopped" note behind', async () => {
   mockChat.ask.mockImplementation(() =>
     (async function* () {
       yield 'partial';
-      screen.UNSAFE_getByType(InputBar as never).props.onStop();
+      inputBar(screen).props.onStop();
       deleteConversationMidStream();
     })(),
   );
@@ -750,7 +752,7 @@ test('a delete after Stop leaves no "stopped" note behind', async () => {
 test('a conversation deleted before the first write is never asked for an answer', async () => {
   deleteConversationMidStream();
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -766,9 +768,7 @@ test('a conversation deleted before the first write is never asked for an answer
   expect(await persistedRoles()).toEqual([]);
   // Nothing could hold the answer, so the model is not put to work for it.
   expect(mockChat.ask).not.toHaveBeenCalled();
-  expect(screen.UNSAFE_getByType(InputBar as never).props.isStreaming).toBe(
-    false,
-  );
+  expect(inputBar(screen).props.isStreaming).toBe(false);
 });
 
 test('a model deleted before the first send drops the turn instead of stranding it', async () => {
@@ -780,7 +780,7 @@ test('a model deleted before the first send drops the turn instead of stranding 
   mockInsertConversation.mockResolvedValue(undefined);
   const onConversationCreated = jest.fn();
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={undefined}
       messages={[]}
@@ -796,9 +796,7 @@ test('a model deleted before the first send drops the turn instead of stranding 
   // The optimistic question and its empty answer are taken back off screen,
   // and the input bar is released rather than left mid-answer forever.
   expect(screen.queryByText('hi')).toBeNull();
-  expect(screen.UNSAFE_getByType(InputBar as never).props.isStreaming).toBe(
-    false,
-  );
+  expect(inputBar(screen).props.isStreaming).toBe(false);
 });
 
 test('a persistence failure that is not a delete still finishes the turn', async () => {
@@ -806,8 +804,9 @@ test('a persistence failure that is not a delete still finishes the turn', async
   // to the background, a full disk). The answer stays on screen and the turn
   // ends normally instead of the failure cascading out of handleSend.
   mockInsertMessage.mockRejectedValue(new Error('disk I/O error'));
+  jest.mocked(EnrichedMarkdownText).mockClear();
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -817,15 +816,15 @@ test('a persistence failure that is not a delete still finishes the turn', async
 
   await send(screen, 'hi');
 
-  const items = screen.UNSAFE_getAllByType(MessageListItem);
-  expect(items[items.length - 1].props.message.content).toBe('Hello world');
-  expect(screen.UNSAFE_getByType(InputBar as never).props.isStreaming).toBe(
-    false,
+  // The last row is the finished answer, rendered as markdown.
+  expect(jest.mocked(EnrichedMarkdownText).mock.lastCall?.[0].markdown).toBe(
+    'Hello world',
   );
+  expect(inputBar(screen).props.isStreaming).toBe(false);
 });
 
 test('puts the keyboard away when a message is sent', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -843,7 +842,7 @@ test('puts the keyboard away when a message is sent', async () => {
 });
 
 test('leaves the keyboard alone when there is nothing to send', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -852,7 +851,7 @@ test('leaves the keyboard alone when there is nothing to send', async () => {
   );
 
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onSend();
+    await inputBar(screen).props.onSend();
   });
 
   expect(mockKeyboardDismiss).not.toHaveBeenCalled();
@@ -861,11 +860,11 @@ test('leaves the keyboard alone when there is nothing to send', async () => {
 // --- Anchoring the sent message --------------------------------------------
 
 // The legend-list mock hangs the anchoring props on a `LegendList` wrapper.
-const listProps = (screen: ReturnType<typeof render>) =>
-  screen.UNSAFE_getByType('LegendList' as never).props;
+const listProps = (screen: Screen) =>
+  screen.container.queryAll(node => node.type === 'LegendList')[0].props;
 
 test('sending anchors the new message and rides it to the top', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -893,7 +892,7 @@ test('sending anchors the new message and rides it to the top', async () => {
 });
 
 test('a later send anchors that message and animates the ride up', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[
@@ -920,7 +919,7 @@ test('a later send anchors that message and animates the ride up', async () => {
 test('a message with an attachment anchors uncapped', async () => {
   mockChatPipeline = ModelPipeline.imageAudioTextToText;
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -929,7 +928,7 @@ test('a message with an attachment anchors uncapped', async () => {
   );
 
   await act(async () => {
-    await screen.UNSAFE_getByType(InputBar as never).props.onAttachImage();
+    await inputBar(screen).props.onAttachImage();
   });
   await send(screen, 'what is this');
 
@@ -939,7 +938,7 @@ test('a message with an attachment anchors uncapped', async () => {
 });
 
 test('a new chat getting its id mid-turn leaves the anchor alone', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={undefined}
       messages={[]}
@@ -959,7 +958,7 @@ test('a new chat getting its id mid-turn leaves the anchor alone', async () => {
   // later — while the answer is still streaming in. Reading that as a switch
   // drops the anchor and throws away the measured row heights underneath a
   // live turn, and the conversation visibly falls and jumps back.
-  screen.update(
+  await screen.rerender(
     <ChatScreen
       conversationId={42}
       messages={[]}
@@ -976,7 +975,7 @@ test('a new chat getting its id mid-turn leaves the anchor alone', async () => {
 });
 
 test('switching conversation drops the anchor and jumps to the latest message', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -987,7 +986,7 @@ test('switching conversation drops the anchor and jumps to the latest message', 
   await send(screen, 'hi');
   expect(listProps(screen).anchoredEndSpace).toBeDefined();
 
-  screen.update(
+  await screen.rerender(
     <ChatScreen
       conversationId={9}
       messages={[{ role: 'user', content: 'another chat' }]}
@@ -1008,11 +1007,11 @@ test('switching conversation drops the anchor and jumps to the latest message', 
 
 // --- Scroll-to-bottom chevron ----------------------------------------------
 
-const chevron = (screen: ReturnType<typeof render>) =>
+const chevron = (screen: Screen) =>
   screen.queryByLabelText('components.scrollToBottomButton.label');
 
 test('offers the chevron only while the end of the conversation is out of view', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -1025,15 +1024,15 @@ test('offers the chevron only while the end of the conversation is out of view',
   // Sitting at the end: nothing to scroll down to.
   expect(chevron(screen)).toBeNull();
 
-  act(() => mockListState.emitIsAtEnd(false));
+  await act(() => mockListState.emitIsAtEnd(false));
   expect(chevron(screen)).toBeTruthy();
 
-  act(() => mockListState.emitIsAtEnd(true));
+  await act(() => mockListState.emitIsAtEnd(true));
   expect(chevron(screen)).toBeNull();
 });
 
 test('the chevron does not flash while the list is still settling', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={undefined}
       messages={[]}
@@ -1051,8 +1050,8 @@ test('the chevron does not flash while the list is still settling', async () => 
   expect(chevron(screen)).toBeNull();
 });
 
-test('the chevron is never offered on an empty conversation', () => {
-  const screen = render(
+test('the chevron is never offered on an empty conversation', async () => {
+  const screen = await render(
     <ChatScreen
       conversationId={undefined}
       messages={[]}
@@ -1060,7 +1059,7 @@ test('the chevron is never offered on an empty conversation', () => {
     />,
   );
 
-  act(() => mockListState.emitIsAtEnd(false));
+  await act(() => mockListState.emitIsAtEnd(false));
   expect(chevron(screen)).toBeNull();
 });
 
@@ -1086,7 +1085,7 @@ test('follows the answer only while the reader has asked it to', async () => {
     });
   };
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -1094,11 +1093,11 @@ test('follows the answer only while the reader has asked it to', async () => {
     />,
   );
 
-  const bar = screen.UNSAFE_getByType(InputBar as never);
-  act(() => bar.props.onChangeText('hi'));
+  const bar = inputBar(screen);
+  await act(() => bar.props.onChangeText('hi'));
   let turn: Promise<void> | undefined;
   await act(async () => {
-    turn = screen.UNSAFE_getByType(InputBar as never).props.onSend();
+    turn = inputBar(screen).props.onSend();
   });
 
   // Nothing follows on its own: the sent message stays anchored where the
@@ -1112,8 +1111,8 @@ test('follows the answer only while the reader has asked it to', async () => {
   // They ask for the bottom. That lets the anchor go — while it holds, blank
   // space is reserved below the answer and the end of the list is the end of
   // that space rather than the newest token.
-  act(() => mockListState.emitIsAtEnd(false));
-  fireEvent.press(chevron(screen)!);
+  await act(() => mockListState.emitIsAtEnd(false));
+  await fireEvent.press(chevron(screen)!);
   expect(listProps(screen).anchoredEndSpace).toBeUndefined();
 
   // From here each token walks the tail along, animated, rather than the list
@@ -1127,15 +1126,17 @@ test('follows the answer only while the reader has asked it to', async () => {
 
   // While following there is nothing to offer: the reader is being held at the
   // bottom, and the end drifts out of view for a frame on every token.
-  act(() => mockListState.emitIsAtEnd(false));
+  await act(() => mockListState.emitIsAtEnd(false));
   expect(chevron(screen)).toBeNull();
 
   // Touching the conversation hands scrolling back to them, and the tokens
   // that follow leave it where they put it.
-  act(() =>
-    screen.UNSAFE_getByType(ScrollView as never).props.onScrollBeginDrag(),
+  await act(() =>
+    screen.container
+      .queryAll(node => node.type === 'RCTScrollView')[0]
+      .props.onScrollBeginDrag(),
   );
-  act(() => mockListState.emitIsAtEnd(false));
+  await act(() => mockListState.emitIsAtEnd(false));
   expect(chevron(screen)).toBeTruthy();
 
   mockScrollToOffset.mockClear();
@@ -1147,7 +1148,7 @@ test('follows the answer only while the reader has asked it to', async () => {
 });
 
 test('pressing the chevron scrolls the conversation to its end', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -1156,9 +1157,9 @@ test('pressing the chevron scrolls the conversation to its end', async () => {
   );
 
   await send(screen, 'hi');
-  act(() => mockListState.emitIsAtEnd(false));
+  await act(() => mockListState.emitIsAtEnd(false));
 
-  fireEvent.press(chevron(screen)!);
+  await fireEvent.press(chevron(screen)!);
 
   // Animated, and aimed at an offset past the bottom rather than at "the end":
   // the list works the end out from the last row's measured size, which trails
@@ -1171,7 +1172,7 @@ test('pressing the chevron scrolls the conversation to its end', async () => {
 });
 
 test('a turn that grows after its last token keeps its end in view', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -1180,8 +1181,8 @@ test('a turn that grows after its last token keeps its end in view', async () =>
   );
 
   await send(screen, 'hi');
-  act(() => mockListState.emitIsAtEnd(false));
-  fireEvent.press(chevron(screen)!);
+  await act(() => mockListState.emitIsAtEnd(false));
+  await fireEvent.press(chevron(screen)!);
 
   // The finished answer is taller than the last token left it: the footer row
   // under it — copy, speak, the metrics — arrives with the end of the turn, and
@@ -1189,7 +1190,7 @@ test('a turn that grows after its last token keeps its end in view', async () =>
   // again from the render that added it lands short, so the list's own report of
   // what it measured is what puts the reader back at the bottom.
   mockScrollToOffset.mockClear();
-  act(() => mockListState.emitTotalSize(1200));
+  await act(() => mockListState.emitTotalSize(1200));
 
   expect(mockScrollToOffset).toHaveBeenCalledWith(
     expect.objectContaining({ animated: false }),
@@ -1197,7 +1198,7 @@ test('a turn that grows after its last token keeps its end in view', async () =>
 });
 
 test('content measured after the reader has taken over leaves them where they are', async () => {
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -1206,19 +1207,21 @@ test('content measured after the reader has taken over leaves them where they ar
   );
 
   await send(screen, 'hi');
-  act(() => mockListState.emitIsAtEnd(false));
-  fireEvent.press(chevron(screen)!);
-  act(() =>
-    screen.UNSAFE_getByType(ScrollView as never).props.onScrollBeginDrag(),
+  await act(() => mockListState.emitIsAtEnd(false));
+  await fireEvent.press(chevron(screen)!);
+  await act(() =>
+    screen.container
+      .queryAll(node => node.type === 'RCTScrollView')[0]
+      .props.onScrollBeginDrag(),
   );
 
   mockScrollToOffset.mockClear();
-  act(() => mockListState.emitTotalSize(1200));
+  await act(() => mockListState.emitTotalSize(1200));
 
   expect(mockScrollToOffset).not.toHaveBeenCalled();
 });
 
-test('stopping mid-thinking keeps the block open for a template-opened model', () => {
+test('stopping mid-thinking keeps the block open for a template-opened model', async () => {
   // The model only ever emits the closing tag, so the opener is written into
   // the stream. Stopping before it closes must not strip that opener, or the
   // reasoning reloads as the answer itself.
@@ -1227,7 +1230,7 @@ test('stopping mid-thinking keeps the block open for a template-opened model', (
     true,
   );
 
-  const screen = render(
+  const screen = await render(
     <ChatScreen
       conversationId={7}
       messages={[]}
@@ -1237,7 +1240,7 @@ test('stopping mid-thinking keeps the block open for a template-opened model', (
   mockChat.ask.mockImplementation(() =>
     (async function* () {
       yield 'I was working out that';
-      screen.UNSAFE_getByType(InputBar as never).props.onStop();
+      inputBar(screen).props.onStop();
     })(),
   );
 

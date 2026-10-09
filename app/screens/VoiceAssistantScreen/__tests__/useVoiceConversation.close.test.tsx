@@ -177,8 +177,8 @@ const heldGeneration = () => {
   return () => release();
 };
 
-const renderConversation = () => {
-  const view = renderHook(
+const renderConversation = async () => {
+  const view = await renderHook(
     ({ active }: { active: boolean }) =>
       useVoiceConversation({ voiceLevels: voiceLevels as never, active }),
     { initialProps: { active: true } },
@@ -235,7 +235,7 @@ beforeEach(() => {
 });
 
 test('a whole turn runs to playback while the screen stays open', async () => {
-  const { result } = renderConversation();
+  const { result } = await renderConversation();
 
   await startListening(result);
   expect(result.current.status).toBe('listening');
@@ -253,13 +253,13 @@ test('a whole turn runs to playback while the screen stays open', async () => {
 
 test('closing the screen mid-answer stops the generation and never speaks it', async () => {
   const finishGeneration = heldGeneration();
-  const { result, close } = renderConversation();
+  const { result, close } = await renderConversation();
 
   await startListening(result);
   await stopTalking(result);
   expect(result.current.status).toBe('thinking');
 
-  close();
+  await close();
 
   // Dropping out of the token loop only closes the iterator; the native worker
   // keeps going to the end of the answer unless it is told to stop.
@@ -287,7 +287,7 @@ test('a turn whose conversation was deleted mid-answer stops writing it', async 
   // of raising `FOREIGN KEY constraint failed` out of persistTurn.
   mockInsertMessage.mockResolvedValue(undefined);
 
-  const { result } = renderConversation();
+  const { result } = await renderConversation();
 
   await startListening(result);
   await stopTalking(result);
@@ -311,13 +311,13 @@ test('closing the screen while transcribing never asks the model', async () => {
       }),
   }));
 
-  const { result, close } = renderConversation();
+  const { result, close } = await renderConversation();
 
   await startListening(result);
   await stopTalking(result);
   expect(result.current.status).toBe('transcribing');
 
-  close();
+  await close();
 
   await act(async () => {
     finishTranscription('what is the time');
@@ -334,7 +334,7 @@ test('a turn handed over after the screen closed starts no work at all', async (
   // is already gone.
   mockHoldReleaseMode = true;
 
-  const { result, close } = renderConversation();
+  const { result, close } = await renderConversation();
 
   await startListening(result);
 
@@ -344,7 +344,7 @@ test('a turn handed over after the screen closed starts no work at all', async (
   });
   expect(mockStt.transcribePcm).not.toHaveBeenCalled();
 
-  close();
+  await close();
 
   await act(async () => {
     mockReleaseMode?.();
@@ -359,12 +359,12 @@ test('a turn handed over after the screen closed starts no work at all', async (
 });
 
 test('closing the screen mid-question releases the microphone', async () => {
-  const { result, close } = renderConversation();
+  const { result, close } = await renderConversation();
 
   await startListening(result);
   expect(result.current.status).toBe('listening');
 
-  close();
+  await close();
 
   expect(mockStream.stop).toHaveBeenCalled();
   expect(mockSpeechService.release).toHaveBeenCalled();
@@ -373,13 +373,13 @@ test('closing the screen mid-question releases the microphone', async () => {
 });
 
 test('closing the screen mid-playback stops the audio', async () => {
-  const { result, close } = renderConversation();
+  const { result, close } = await renderConversation();
 
   await startListening(result);
   await stopTalking(result);
   expect(result.current.status).toBe('speaking');
 
-  close();
+  await close();
 
   expect(mockPlayer.pause).toHaveBeenCalled();
   expect(result.current.status).toBe('idle');
@@ -401,7 +401,7 @@ test('writes back a swallowed opening delimiter, and never speaks the reasoning'
     })(),
   );
 
-  const { result } = renderConversation();
+  const { result } = await renderConversation();
   await startListening(result);
   await stopTalking(result);
 

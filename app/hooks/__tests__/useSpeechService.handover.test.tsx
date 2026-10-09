@@ -131,7 +131,7 @@ const renderBothFeatures = async () => {
     delete mockEmitters[key];
   }
 
-  const { result } = renderHook(
+  const { result } = await renderHook(
     () => ({
       // Mounted first, like the drawer content it is.
       voice: useVoiceConversation({ voiceLevels, active: true }),

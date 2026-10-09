@@ -128,7 +128,7 @@ const sttModel = buildModel(11, {
 test('createChat loads the model and exposes the chat', async () => {
   const chat = { destroy: jest.fn() };
   mockFromPath.mockResolvedValue(chat);
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   let created: boolean | undefined;
   await act(async () => {
@@ -171,7 +171,7 @@ test('createChat wires the projection model and reports the chat pipeline', asyn
   });
   const chat = { destroy: jest.fn() };
   mockFromPath.mockResolvedValue(chat);
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await result.current.slots.chat.create({ model: visionModel });
@@ -207,7 +207,7 @@ describe('context sizing against the model ceiling', () => {
   test('clamps a configured context to what the model was trained for', async () => {
     mockMaxCtx(2048);
     mockFromPath.mockResolvedValue({ destroy: jest.fn() });
-    const { result } = renderHook(() => useAiService(), { wrapper });
+    const { result } = await renderHook(() => useAiService(), { wrapper });
 
     await act(async () => {
       await result.current.slots.chat.create({ model, contextSize: 8000 });
@@ -221,7 +221,7 @@ describe('context sizing against the model ceiling', () => {
   test('leaves a context the model can serve alone', async () => {
     mockMaxCtx(32768);
     mockFromPath.mockResolvedValue({ destroy: jest.fn() });
-    const { result } = renderHook(() => useAiService(), { wrapper });
+    const { result } = await renderHook(() => useAiService(), { wrapper });
 
     await act(async () => {
       await result.current.slots.chat.create({ model, contextSize: 8000 });
@@ -235,7 +235,7 @@ describe('context sizing against the model ceiling', () => {
   test('a ceiling below the engine default pulls an unset context down too', async () => {
     mockMaxCtx(1024);
     mockFromPath.mockResolvedValue({ destroy: jest.fn() });
-    const { result } = renderHook(() => useAiService(), { wrapper });
+    const { result } = await renderHook(() => useAiService(), { wrapper });
 
     await act(async () => {
       await result.current.slots.chat.create({ model });
@@ -249,7 +249,7 @@ describe('context sizing against the model ceiling', () => {
   test('a model that reports no usable ceiling is left to the engine default', async () => {
     mockMaxCtx(0);
     mockFromPath.mockResolvedValue({ destroy: jest.fn() });
-    const { result } = renderHook(() => useAiService(), { wrapper });
+    const { result } = await renderHook(() => useAiService(), { wrapper });
 
     await act(async () => {
       await result.current.slots.chat.create({ model });
@@ -278,20 +278,20 @@ test('disposeChat resets the chat pipeline to text-only', async () => {
     stopGeneration: jest.fn(),
     destroy: jest.fn(),
   });
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.slots.chat.create({ model: visionModel });
   });
   expect(result.current.chatPipeline).toBe(ModelPipeline.imageTextToText);
 
-  act(() => result.current.slots.chat.dispose());
+  await act(() => result.current.slots.chat.dispose());
 
   expect(result.current.chatPipeline).toBe(ModelPipeline.textGeneration);
 });
 
 test('createChat sets the error state and rethrows on failure', async () => {
   mockFromPath.mockRejectedValue(new Error('load boom'));
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await expect(result.current.slots.chat.create({ model })).rejects.toThrow(
@@ -312,7 +312,7 @@ test('createChat fails loudly when the model file is missing on disk', async () 
   const chat = { destroy: jest.fn() };
   mockFromPath.mockResolvedValue(chat);
   File.mockExists = false;
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   try {
     await act(async () => {
@@ -332,14 +332,14 @@ test('createChat fails loudly when the model file is missing on disk', async () 
 test('disposeChat destroys the current chat instance', async () => {
   const chat = { stopGeneration: jest.fn(), destroy: jest.fn() };
   mockFromPath.mockResolvedValue(chat);
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.slots.chat.create({ model });
   });
 
   // The ref/state clear synchronously; the native destroy is deferred onto the
   // load chain, so flush microtasks before asserting it ran.
-  act(() => result.current.slots.chat.dispose());
+  await act(() => result.current.slots.chat.dispose());
   expect(result.current.slots.chat.ref.current).toBeUndefined();
   expect(result.current.chatState).toBe(AiModelState.NotLoaded);
 
@@ -356,12 +356,12 @@ test('disposeChat stops generation before destroying the chat', async () => {
     destroy: jest.fn(() => order.push('destroy')),
   };
   mockFromPath.mockResolvedValue(chat);
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.slots.chat.create({ model });
   });
 
-  act(() => result.current.slots.chat.dispose());
+  await act(() => result.current.slots.chat.dispose());
   await act(async () => {
     await flushMicrotasks();
   });
@@ -379,13 +379,13 @@ test('disposeChat clears the chat even when destroy throws, so a reload works', 
     }),
   };
   mockFromPath.mockResolvedValueOnce(chat);
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.slots.chat.create({ model });
   });
 
   // The ref is cleared synchronously despite the (deferred) destroy throwing.
-  act(() => result.current.slots.chat.dispose());
+  await act(() => result.current.slots.chat.dispose());
   expect(result.current.slots.chat.ref.current).toBeUndefined();
   expect(result.current.chatState).toBe(AiModelState.NotLoaded);
 
@@ -412,13 +412,13 @@ test('a chat resolving after disposeChat is discarded and destroyed', async () =
       resolveFromPath = resolve;
     }),
   );
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   let createPromise: Promise<boolean> | undefined;
-  act(() => {
+  await act(() => {
     createPromise = result.current.slots.chat.create({ model });
   });
-  act(() => result.current.slots.chat.dispose());
+  await act(() => result.current.slots.chat.dispose());
 
   const staleChat = { destroy: jest.fn() };
   let created: boolean | undefined;
@@ -456,10 +456,10 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
   const modelA = buildModel(1, { parts: partFor('a.gguf') });
   const modelB = buildModel(2, { parts: partFor('b.gguf') });
 
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   // Start loading A; its fromPath is now in flight.
-  act(() => {
+  await act(() => {
     result.current.slots.chat.create({ model: modelA });
   });
   expect(mockFromPath).toHaveBeenCalledTimes(1);
@@ -469,8 +469,8 @@ test('switching models mid-load never runs two Chat.fromPath loads at once', asy
 
   // Switch to B (dispose + create) while A is still loading.
   let loadB: Promise<boolean> | undefined;
-  act(() => result.current.slots.chat.dispose());
-  act(() => {
+  await act(() => result.current.slots.chat.dispose());
+  await act(() => {
     loadB = result.current.slots.chat.create({ model: modelB });
   });
 
@@ -519,7 +519,7 @@ test('a reload waits for the previous chat teardown to settle before allocating'
   const chatA = { stopGeneration: jest.fn(), destroy: jest.fn() };
   const chatB = { destroy: jest.fn() };
   mockFromPath.mockResolvedValueOnce(chatA).mockResolvedValueOnce(chatB);
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await result.current.slots.chat.create({ model });
@@ -527,9 +527,9 @@ test('a reload waits for the previous chat teardown to settle before allocating'
   expect(result.current.slots.chat.ref.current).toBe(chatA);
 
   // Dispose enqueues an async teardown, then a reload starts immediately.
-  act(() => result.current.slots.chat.dispose());
+  await act(() => result.current.slots.chat.dispose());
   let reload: Promise<boolean> | undefined;
-  act(() => {
+  await act(() => {
     reload = result.current.slots.chat.create({ model });
   });
 
@@ -562,16 +562,16 @@ test('a reload still settles when another dispose is queued behind it', async ()
   const tts = { destroy: jest.fn() };
   mockFromPath.mockResolvedValueOnce(chatA).mockResolvedValueOnce(chatB);
   mockTtsLoad.mockResolvedValue(tts);
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await result.current.slots.chat.create({ model });
     await result.current.slots.tts.create({ model: ttsModel });
   });
 
-  act(() => result.current.slots.chat.dispose());
+  await act(() => result.current.slots.chat.dispose());
   let reload: Promise<boolean> | undefined;
-  act(() => {
+  await act(() => {
     reload = result.current.slots.chat.create({ model });
     // Lands after the reload was published, so it queues *behind* it — but it
     // is counted as pending the moment it is enqueued.
@@ -606,7 +606,9 @@ test('the exposed slots keep their identity across re-renders', async () => {
     stopGeneration: jest.fn(),
     destroy: jest.fn(),
   });
-  const { result, rerender } = renderHook(() => useAiService(), { wrapper });
+  const { result, rerender } = await renderHook(() => useAiService(), {
+    wrapper,
+  });
 
   const before = {
     slots: result.current.slots,
@@ -625,7 +627,7 @@ test('the exposed slots keep their identity across re-renders', async () => {
   };
 
   // A plain re-render changes nothing.
-  rerender(undefined);
+  await rerender(undefined);
   expectUnchanged();
 
   // Neither does a load, which re-renders the provider through its state.
@@ -640,7 +642,7 @@ test('the exposed slots keep their identity across re-renders', async () => {
 test('createTts loads the engine from the model directory', async () => {
   const tts = { synthesize: jest.fn(), destroy: jest.fn() };
   mockTtsLoad.mockResolvedValue(tts);
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await result.current.slots.tts.create({ model: ttsModel });
@@ -663,7 +665,7 @@ test('createTts loads the engine from the model directory', async () => {
 });
 
 test('createTts refuses a non-TTS model', async () => {
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await expect(result.current.slots.tts.create({ model })).rejects.toThrow(
@@ -678,7 +680,7 @@ test('createTts fails loudly when a TTS file is missing on disk', async () => {
   const { File } = jest.requireMock('expo-file-system');
   mockTtsLoad.mockResolvedValue({ synthesize: jest.fn(), destroy: jest.fn() });
   File.mockExists = false;
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   try {
     await act(async () => {
@@ -702,13 +704,13 @@ test('createTts serializes behind an in-flight chat load on the shared chain', a
   );
   const tts = { synthesize: jest.fn(), destroy: jest.fn() };
   mockTtsLoad.mockResolvedValue(tts);
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   let ttsLoad: Promise<boolean> | undefined;
-  act(() => {
+  await act(() => {
     result.current.slots.chat.create({ model });
   });
-  act(() => {
+  await act(() => {
     ttsLoad = result.current.slots.tts.create({ model: ttsModel });
   });
 
@@ -732,12 +734,12 @@ test('createTts serializes behind an in-flight chat load on the shared chain', a
 test('disposeTts destroys the engine via the teardown chain', async () => {
   const tts = { synthesize: jest.fn(), destroy: jest.fn() };
   mockTtsLoad.mockResolvedValue(tts);
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.slots.tts.create({ model: ttsModel });
   });
 
-  act(() => result.current.slots.tts.dispose());
+  await act(() => result.current.slots.tts.dispose());
   expect(result.current.slots.tts.ref.current).toBeUndefined();
   expect(result.current.ttsState).toBe(AiModelState.NotLoaded);
   // The architecture is cleared so a stale value can't survive a model switch.
@@ -751,7 +753,7 @@ test('disposeTts destroys the engine via the teardown chain', async () => {
 });
 
 test('createStt loads the engine from the model directory', async () => {
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await result.current.slots.stt.create({ model: sttModel });
@@ -773,7 +775,7 @@ test('createStt loads the engine from the model directory', async () => {
 });
 
 test('createStt refuses a non-STT model', async () => {
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await expect(result.current.slots.stt.create({ model })).rejects.toThrow(
@@ -787,7 +789,7 @@ test('createStt refuses a non-STT model', async () => {
 test('createStt fails loudly when an STT file is missing on disk', async () => {
   const { File } = jest.requireMock('expo-file-system');
   File.mockExists = false;
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   try {
     await act(async () => {
@@ -804,13 +806,13 @@ test('createStt fails loudly when an STT file is missing on disk', async () => {
 });
 
 test('disposeStt destroys the engine via the teardown chain', async () => {
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.slots.stt.create({ model: sttModel });
   });
   const instance = result.current.slots.stt.ref.current;
 
-  act(() => result.current.slots.stt.dispose());
+  await act(() => result.current.slots.stt.dispose());
   expect(result.current.slots.stt.ref.current).toBeUndefined();
   expect(result.current.sttState).toBe(AiModelState.NotLoaded);
 
@@ -826,13 +828,13 @@ test('dispose tears down both engines', async () => {
   const tts = { synthesize: jest.fn(), destroy: jest.fn() };
   mockFromPath.mockResolvedValue(chat);
   mockTtsLoad.mockResolvedValue(tts);
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.slots.chat.create({ model });
     await result.current.slots.tts.create({ model: ttsModel });
   });
 
-  act(() => result.current.disposeAll());
+  await act(() => result.current.disposeAll());
   expect(result.current.slots.chat.ref.current).toBeUndefined();
   expect(result.current.slots.tts.ref.current).toBeUndefined();
 
@@ -849,7 +851,7 @@ test('dispose tears down both engines', async () => {
 });
 
 test('createVad loads the detector from the model directory at its fixed rate', async () => {
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await result.current.slots.vad.create({ model: vadModel });
@@ -873,7 +875,7 @@ test('createVad loads the detector from the model directory at its fixed rate', 
 });
 
 test('createVad refuses a non-VAD model', async () => {
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await expect(result.current.slots.vad.create({ model })).rejects.toThrow(
@@ -887,7 +889,7 @@ test('createVad refuses a non-VAD model', async () => {
 test('createVad fails loudly when the VAD file is missing on disk', async () => {
   const { File } = jest.requireMock('expo-file-system');
   File.mockExists = false;
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   try {
     await act(async () => {
@@ -904,13 +906,13 @@ test('createVad fails loudly when the VAD file is missing on disk', async () => 
 });
 
 test('disposeVad destroys the detector via the teardown chain', async () => {
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.slots.vad.create({ model: vadModel });
   });
   const instance = result.current.slots.vad.ref.current;
 
-  act(() => result.current.slots.vad.dispose());
+  await act(() => result.current.slots.vad.dispose());
   expect(result.current.slots.vad.ref.current).toBeUndefined();
   expect(result.current.vadState).toBe(AiModelState.NotLoaded);
 
@@ -936,7 +938,7 @@ test('a load for a different model replaces the one already in the slot', async 
   const second = { synthesize: jest.fn(), destroy: jest.fn() };
   mockTtsLoad.mockResolvedValueOnce(first).mockResolvedValueOnce(second);
 
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   // Two loads for different models race without an intervening dispose, so both
   // see an empty slot and the same generation — the shape a background/foreground
@@ -962,7 +964,7 @@ test('a dispose during a replacement teardown leaves the slot unloaded, not load
   const second = { synthesize: jest.fn(), destroy: jest.fn() };
   mockTtsLoad.mockResolvedValueOnce(first).mockResolvedValueOnce(second);
 
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await result.current.slots.tts.create({ model: ttsModel });
@@ -999,7 +1001,7 @@ test('a repeat load of the model already in the slot is reused, not reloaded', a
   const tts = { synthesize: jest.fn(), destroy: jest.fn() };
   mockTtsLoad.mockResolvedValue(tts);
 
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.slots.tts.create({ model: ttsModel });
   });
@@ -1022,13 +1024,13 @@ test('a teardown waits for borrowed work instead of freeing the handle under it'
   const tts = { synthesize, destroy: jest.fn() };
   mockTtsLoad.mockResolvedValue(tts);
 
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
   await act(async () => {
     await result.current.slots.tts.create({ model: ttsModel });
   });
 
   let borrowed: Promise<Uint8Array | undefined>;
-  act(() => {
+  await act(() => {
     borrowed = result.current.slots.tts.borrow(engine =>
       engine.synthesize('hello'),
     );
@@ -1037,7 +1039,7 @@ test('a teardown waits for borrowed work instead of freeing the handle under it'
   // Disposing mid-call clears the slot immediately, but must not free the
   // native handle: none of these engines can be cancelled, so destroy() here
   // would pull the pointer out from under a running Rust future.
-  act(() => result.current.slots.tts.dispose());
+  await act(() => result.current.slots.tts.dispose());
   expect(result.current.slots.tts.ref.current).toBeUndefined();
 
   await act(async () => {
@@ -1055,7 +1057,7 @@ test('a teardown waits for borrowed work instead of freeing the handle under it'
 });
 
 test('borrowing an empty slot resolves to undefined rather than throwing', async () => {
-  const { result } = renderHook(() => useAiService(), { wrapper });
+  const { result } = await renderHook(() => useAiService(), { wrapper });
 
   await act(async () => {
     await expect(

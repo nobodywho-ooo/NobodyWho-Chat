@@ -1,7 +1,7 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`renders correctly AvailableModels on error 1`] = `
-[
+<>
   <View
     style={
       {
@@ -59,7 +59,7 @@ exports[`renders correctly AvailableModels on error 1`] = `
         size={20}
       />
     </View>
-  </View>,
+  </View>
   <View
     style={
       [
@@ -91,12 +91,12 @@ exports[`renders correctly AvailableModels on error 1`] = `
       onPress={[MockFunction]}
       title="common.retry"
     />
-  </View>,
-]
+  </View>
+</>
 `;
 
 exports[`renders correctly AvailableModels when everything is downloaded 1`] = `
-[
+<>
   <View
     style={
       {
@@ -154,15 +154,15 @@ exports[`renders correctly AvailableModels when everything is downloaded 1`] = `
         size={20}
       />
     </View>
-  </View>,
+  </View>
   <Text>
     screens.models.youHaveDownloadedAllTheModels
-  </Text>,
-]
+  </Text>
+</>
 `;
 
 exports[`renders correctly AvailableModels while loading 1`] = `
-[
+<>
   <View
     style={
       {
@@ -220,7 +220,7 @@ exports[`renders correctly AvailableModels while loading 1`] = `
         size={20}
       />
     </View>
-  </View>,
+  </View>
   <ActivityIndicator
     color="#7c7c7c"
     style={
@@ -228,12 +228,12 @@ exports[`renders correctly AvailableModels while loading 1`] = `
         "marginTop": 16,
       }
     }
-  />,
-]
+  />
+</>
 `;
 
 exports[`renders correctly AvailableModels with a list of models 1`] = `
-[
+<>
   <View
     style={
       {
@@ -291,7 +291,7 @@ exports[`renders correctly AvailableModels with a list of models 1`] = `
         size={20}
       />
     </View>
-  </View>,
+  </View>
   <ModelCard
     model={
       {
@@ -312,7 +312,7 @@ exports[`renders correctly AvailableModels with a list of models 1`] = `
       }
     }
     onPress={[MockFunction]}
-  />,
+  />
   <ModelCard
     model={
       {
@@ -333,6 +333,6 @@ exports[`renders correctly AvailableModels with a list of models 1`] = `
       }
     }
     onPress={[MockFunction]}
-  />,
-]
+  />
+</>
 `;

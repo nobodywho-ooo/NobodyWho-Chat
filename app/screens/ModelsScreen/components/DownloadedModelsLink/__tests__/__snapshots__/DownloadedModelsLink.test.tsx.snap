@@ -1,7 +1,7 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`renders correctly DownloadedModelsLink 1`] = `
-[
+<>
   <Text
     style={
       {
@@ -11,7 +11,7 @@ exports[`renders correctly DownloadedModelsLink 1`] = `
     variant="h4"
   >
     screens.models.readyToUse
-  </Text>,
+  </Text>
   <ListItem
     androidIconName="deployed_code_update"
     iconBackgroundColor="#628395"
@@ -19,12 +19,12 @@ exports[`renders correctly DownloadedModelsLink 1`] = `
     onPress={[MockFunction]}
     subtitle="screens.models.modelCount"
     title="screens.models.downloaded"
-  />,
-]
+  />
+</>
 `;
 
 exports[`renders correctly DownloadedModelsLink when not first 1`] = `
-[
+<>
   <Text
     style={
       {
@@ -35,7 +35,7 @@ exports[`renders correctly DownloadedModelsLink when not first 1`] = `
     variant="h4"
   >
     screens.models.readyToUse
-  </Text>,
+  </Text>
   <ListItem
     androidIconName="deployed_code_update"
     iconBackgroundColor="#628395"
@@ -43,6 +43,6 @@ exports[`renders correctly DownloadedModelsLink when not first 1`] = `
     onPress={[MockFunction]}
     subtitle="screens.models.modelCount"
     title="screens.models.downloaded"
-  />,
-]
+  />
+</>
 `;

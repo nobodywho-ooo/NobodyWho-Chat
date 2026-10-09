@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { useReducedMotion } from 'react-native-reanimated';
 import { fireEvent, render } from '@testing-library/react-native';
 import { useStyled } from 'hooks';
@@ -24,18 +24,19 @@ afterEach(() => {
   mockUseReducedMotion.mockReturnValue(false);
 });
 
-type Screen = ReturnType<typeof render>;
+type Screen = Awaited<ReturnType<typeof render>>;
 
 // Reports the box's size the way the native layout pass would.
 const layOut = (screen: Screen, width = 80) =>
-  fireEvent(screen.root, 'layout', {
+  fireEvent(screen.root!, 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width, height: 19 } },
   });
 
 const veilOf = (screen: Screen) =>
-  screen.UNSAFE_queryByType('LinearGradient' as never);
+  screen.container.queryAll(node => node.type === 'LinearGradient')[0] ?? null;
 
-const textOf = (screen: Screen) => screen.UNSAFE_getByType(Text);
+const textOf = (screen: Screen) =>
+  screen.container.queryAll(node => node.type === 'Text')[0];
 
 const colorOf = (screen: Screen) =>
   StyleSheet.flatten(textOf(screen).props.style).color;
@@ -43,31 +44,31 @@ const colorOf = (screen: Screen) =>
 // The opacity in a veil colour like rgba(255, 255, 255, 0.4863).
 const alphaOf = (rgba: string) => Number(rgba.split(',')[3].replace(')', ''));
 
-test('renders correctly ShimmerText', () => {
-  const screen = render(<ShimmerText text="Thinking…" />);
-  layOut(screen);
+test('renders correctly ShimmerText', async () => {
+  const screen = await render(<ShimmerText text="Thinking…" />);
+  await layOut(screen);
 
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
-test('is real text, so screen readers announce it', () => {
-  const screen = render(<ShimmerText text="Thinking…" />);
+test('is real text, so screen readers announce it', async () => {
+  const screen = await render(<ShimmerText text="Thinking…" />);
 
   expect(screen.getByText('Thinking…')).toBeTruthy();
 });
 
-test('draws the base colour, with no sweep, until the box is laid out', () => {
+test('draws the base colour, with no sweep, until the box is laid out', async () => {
   // The band's travel is unknown until layout. Drawing the
   // highlight before the veil is up would flash it for a frame.
-  const screen = render(<ShimmerText text="Thinking…" />);
+  const screen = await render(<ShimmerText text="Thinking…" />);
 
   expect(colorOf(screen)).toBe('#7c7c7c');
   expect(veilOf(screen)).toBeNull();
 });
 
-test('sweeps a veil of the background over the highlighted text', () => {
-  const screen = render(<ShimmerText text="Thinking…" />);
-  layOut(screen);
+test('sweeps a veil of the background over the highlighted text', async () => {
+  const screen = await render(<ShimmerText text="Thinking…" />);
+  await layOut(screen);
 
   expect(colorOf(screen)).toBe('#000000');
   const colors = veilOf(screen)!.props.colors as string[];
@@ -81,10 +82,10 @@ test.each([
   ['dark', darkColors],
 ])(
   'outside the band the %s highlight reads as exactly the base colour',
-  (_theme, colors) => {
+  async (_theme, colors) => {
     mockUseStyled.mockReturnValue({ colors });
-    const screen = render(<ShimmerText text="Thinking…" />);
-    layOut(screen);
+    const screen = await render(<ShimmerText text="Thinking…" />);
+    await layOut(screen);
 
     const alpha = alphaOf(veilOf(screen)!.props.colors[0]);
     const channel = (hex: string) => parseInt(hex.slice(1, 3), 16);
@@ -96,27 +97,27 @@ test.each([
   },
 );
 
-test('keeps the text on a single line', () => {
-  const screen = render(<ShimmerText text="Thinking really hard" />);
+test('keeps the text on a single line', async () => {
+  const screen = await render(<ShimmerText text="Thinking really hard" />);
 
   expect(textOf(screen).props.numberOfLines).toBe(1);
 });
 
-test('holds still in the base colour with reduced motion on', () => {
+test('holds still in the base colour with reduced motion on', async () => {
   mockUseReducedMotion.mockReturnValue(true);
-  const screen = render(<ShimmerText text="Thinking…" />);
-  layOut(screen);
+  const screen = await render(<ShimmerText text="Thinking…" />);
+  await layOut(screen);
 
   expect(colorOf(screen)).toBe('#7c7c7c');
   expect(veilOf(screen)).toBeNull();
 });
 
-test('falls back to the base colour on a surface it cannot veil with', () => {
+test('falls back to the base colour on a surface it cannot veil with', async () => {
   mockUseStyled.mockReturnValue({
     colors: { ...lightColors, surface: 'transparent' },
   });
-  const screen = render(<ShimmerText text="Thinking…" />);
-  layOut(screen);
+  const screen = await render(<ShimmerText text="Thinking…" />);
+  await layOut(screen);
 
   expect(colorOf(screen)).toBe('#7c7c7c');
   expect(veilOf(screen)).toBeNull();

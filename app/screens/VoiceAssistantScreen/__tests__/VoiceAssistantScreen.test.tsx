@@ -2,7 +2,6 @@ import React from 'react';
 import { render, fireEvent, act } from '@testing-library/react-native';
 
 import { buildModel } from 'jest/factories/model';
-import { IconButton } from 'components';
 import { ModelPipeline } from 'types';
 import { AiServiceProvider, useAiService } from 'services';
 
@@ -44,22 +43,22 @@ const CaptureService = () => {
   return null;
 };
 
-const renderScreen = (onCloseDrawer = jest.fn()) =>
-  render(
+const renderScreen = async (onCloseDrawer = jest.fn()) =>
+  await render(
     <AiServiceProvider>
       <CaptureService />
       <VoiceAssistantScreen onCloseDrawer={onCloseDrawer} />
     </AiServiceProvider>,
   );
 
-test('renders the voice assistant title', () => {
-  const screen = renderScreen();
+test('renders the voice assistant title', async () => {
+  const screen = await renderScreen();
 
   expect(screen.getByText('screens.voiceAssistant.title')).toBeTruthy();
 });
 
-test('prompts to set up voice models when none are loaded', () => {
-  const screen = renderScreen();
+test('prompts to set up voice models when none are loaded', async () => {
+  const screen = await renderScreen();
 
   // With nothing loaded the screen shows the setup checklist…
   expect(screen.getByText('screens.voiceAssistant.setup.title')).toBeTruthy();
@@ -71,7 +70,7 @@ test('prompts to set up voice models when none are loaded', () => {
 });
 
 test('stays unavailable until the voice detection model is loaded too', async () => {
-  const screen = renderScreen();
+  const screen = await renderScreen();
 
   // Chat, transcription and speech loaded — everything except detection.
   await act(async () => {
@@ -92,11 +91,11 @@ test('stays unavailable until the voice detection model is loaded too', async ()
   expect(screen.getByText('screens.voiceAssistant.status.idle')).toBeTruthy();
 });
 
-test('pressing the close button closes the drawer', () => {
+test('pressing the close button closes the drawer', async () => {
   const onCloseDrawer = jest.fn();
-  const screen = renderScreen(onCloseDrawer);
+  const screen = await renderScreen(onCloseDrawer);
 
-  fireEvent.press(screen.UNSAFE_getByType(IconButton));
+  await fireEvent.press(screen.getByLabelText('screens.voiceAssistant.close'));
 
   expect(onCloseDrawer).toHaveBeenCalled();
 });

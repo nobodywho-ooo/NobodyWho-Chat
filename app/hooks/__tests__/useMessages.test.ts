@@ -10,11 +10,11 @@ const mockUseReactiveQuery = useReactiveQuery as jest.Mock;
 
 beforeEach(() => mockUseReactiveQuery.mockReset());
 
-test('queries messages for the given conversation and wraps the result', () => {
+test('queries messages for the given conversation and wraps the result', async () => {
   const messages = [{ id: 1 }, { id: 2 }];
   mockUseReactiveQuery.mockReturnValue({ rows: messages, loading: false });
 
-  const { result } = renderHook(() => useMessages(5));
+  const { result } = await renderHook(() => useMessages(5));
 
   expect(mockUseReactiveQuery).toHaveBeenCalledWith({
     query:
@@ -27,10 +27,10 @@ test('queries messages for the given conversation and wraps the result', () => {
   expect(result.current).toEqual({ messages });
 });
 
-test('disables the query when no conversationId is provided', () => {
+test('disables the query when no conversationId is provided', async () => {
   mockUseReactiveQuery.mockReturnValue({ rows: [], loading: false });
 
-  renderHook(() => useMessages(undefined));
+  await renderHook(() => useMessages(undefined));
 
   expect(mockUseReactiveQuery).toHaveBeenCalledWith(
     expect.objectContaining({ args: [], enabled: false }),
