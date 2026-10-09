@@ -1,6 +1,6 @@
 import React from 'react';
 import { Alert } from 'react-native';
-import { act, fireEvent, render } from '@testing-library/react-native';
+import { fireEvent, render } from '@testing-library/react-native';
 
 import { OnboardingScreen } from '../OnboardingScreen';
 
@@ -27,9 +27,9 @@ beforeEach(() => {
   mockDownloads.progress = 0;
 });
 
-test('offers the two choices and Skip', () => {
+test('offers the two choices and Skip', async () => {
   const onFinish = jest.fn();
-  const { getByText, getByTestId } = render(
+  const { getByText, getByTestId } = await render(
     <OnboardingScreen onFinish={onFinish} />,
   );
 
@@ -45,26 +45,22 @@ test('offers the two choices and Skip', () => {
 
   const skip = getByTestId('onboarding-secondary-button');
   expect(skip.props.title).toBe('screens.onboarding.skip');
-  fireEvent.press(skip);
+  await fireEvent.press(skip);
   expect(onFinish).toHaveBeenCalledTimes(1);
 });
 
 test('downloads the matching requirements and finishes when done', async () => {
   mockDownloads.downloadMissing.mockResolvedValue('done');
   const onFinish = jest.fn();
-  const { getByTestId } = render(<OnboardingScreen onFinish={onFinish} />);
+  const { getByTestId } = await render(<OnboardingScreen onFinish={onFinish} />);
 
-  await act(async () => {
-    fireEvent.press(getByTestId('onboarding-text-only-button'));
-  });
+  await fireEvent.press(getByTestId('onboarding-text-only-button'));
   expect(mockDownloads.downloadMissing).toHaveBeenLastCalledWith(
     TEXT_REQUIREMENTS,
     { alertOnFailure: false },
   );
 
-  await act(async () => {
-    fireEvent.press(getByTestId('onboarding-text-voice-button'));
-  });
+  await fireEvent.press(getByTestId('onboarding-text-voice-button'));
   expect(mockDownloads.downloadMissing).toHaveBeenLastCalledWith(
     VOICE_REQUIREMENTS,
     { alertOnFailure: false },
@@ -76,11 +72,9 @@ test('leaves for the app with an alert when the download fails', async () => {
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   mockDownloads.downloadMissing.mockResolvedValue('failed');
   const onFinish = jest.fn();
-  const { getByTestId } = render(<OnboardingScreen onFinish={onFinish} />);
+  const { getByTestId } = await render(<OnboardingScreen onFinish={onFinish} />);
 
-  await act(async () => {
-    fireEvent.press(getByTestId('onboarding-text-only-button'));
-  });
+  await fireEvent.press(getByTestId('onboarding-text-only-button'));
 
   expect(alert).toHaveBeenCalledWith(
     'common.somethingWentWrong',
@@ -95,20 +89,18 @@ test('stays on the choices when the models do not fit', async () => {
     outcome: 'notEnoughSpace',
   });
   const onFinish = jest.fn();
-  const { getByTestId } = render(<OnboardingScreen onFinish={onFinish} />);
+  const { getByTestId } = await render(<OnboardingScreen onFinish={onFinish} />);
 
-  await act(async () => {
-    fireEvent.press(getByTestId('onboarding-text-voice-button'));
-  });
+  await fireEvent.press(getByTestId('onboarding-text-voice-button'));
 
   expect(onFinish).not.toHaveBeenCalled();
   getByTestId('onboarding-text-voice-button');
 });
 
-test('shows progress and Cancel instead of the choices while downloading', () => {
+test('shows progress and Cancel instead of the choices while downloading', async () => {
   mockDownloads.isDownloading = true;
   mockDownloads.progress = 0.42;
-  const { getByText, getByTestId, queryByTestId } = render(
+  const { getByText, getByTestId, queryByTestId } = await render(
     <OnboardingScreen onFinish={jest.fn()} />,
   );
 
@@ -118,6 +110,6 @@ test('shows progress and Cancel instead of the choices while downloading', () =>
 
   const cancel = getByTestId('onboarding-secondary-button');
   expect(cancel.props.title).toBe('common.cancel');
-  fireEvent.press(cancel);
+  await fireEvent.press(cancel);
   expect(mockDownloads.cancel).toHaveBeenCalledTimes(1);
 });

@@ -108,7 +108,7 @@ beforeEach(() => {
 test('the download screens leave resuming to useResumeModelDownloads', async () => {
   mockGetModelDownloads.mockResolvedValue([pendingDownload(110)]);
 
-  renderHook(() => useModelDownloader());
+  await renderHook(() => useModelDownloader());
   await act(async () => {});
 
   expect(mockGetModelDownloads).not.toHaveBeenCalled();
@@ -120,7 +120,7 @@ test('resumes pending downloads again when the app returns to the foreground', a
   const addListener = AppState.addEventListener as jest.Mock;
   mockDownloadModelPart.mockResolvedValue('/docs/models/111/model-111.gguf');
 
-  renderHook(() => useResumeModelDownloads());
+  await renderHook(() => useResumeModelDownloads());
   await waitFor(() => expect(mockGetModelDownloads).toHaveBeenCalledTimes(1));
   expect(mockDownloadModelPart).not.toHaveBeenCalled();
 
@@ -141,7 +141,7 @@ test('keeps the pending download on a transient error so it can resume later', a
   // A network failure mid-download (NOT an abort).
   mockDownloadModelPart.mockRejectedValue(new Error('network dropped'));
 
-  await renderHook(() => useModelDownloader());
+  await renderHook(() => useResumeModelDownloads());
 
   await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalled());
   // The record and the bytes on disk must survive so the foreground resume
@@ -157,7 +157,7 @@ test('alerts the user when a download fails', async () => {
   mockGetModelDownloads.mockResolvedValue([pendingDownload(107)]);
   mockDownloadModelPart.mockRejectedValue(new Error('network dropped'));
 
-  renderHook(() => useResumeModelDownloads());
+  await renderHook(() => useResumeModelDownloads());
 
   await waitFor(() =>
     expect(alert).toHaveBeenCalledWith(
@@ -172,7 +172,7 @@ test('leaves the failure alert to a caller that opts out', async () => {
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   mockDownloadModelPart.mockRejectedValue(new Error('network dropped'));
 
-  const { result } = renderHook(() => useModelDownloader());
+  const { result } = await renderHook(() => useModelDownloader());
   await act(async () => {
     await result.current.startDownload(pendingDownload(108).model, {
       alertOnFailure: false,
@@ -194,9 +194,9 @@ test('does not alert when the user stops a download', async () => {
       ),
   );
 
-  const { result } = renderHook(() => useModelDownloader());
+  const { result } = await renderHook(() => useModelDownloader());
   let started: Promise<void> = Promise.resolve();
-  act(() => {
+  await act(() => {
     started = result.current.startDownload(model);
   });
   await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalled());
@@ -214,7 +214,7 @@ test('reports an unexpected download failure to Sentry', async () => {
   mockGetModelDownloads.mockResolvedValue([pendingDownload(103)]);
   mockDownloadModelPart.mockRejectedValue(new Error('ranged chunk mismatch'));
 
-  await renderHook(() => useModelDownloader());
+  await renderHook(() => useResumeModelDownloads());
 
   await waitFor(() =>
     expect(mockLog).toHaveBeenCalledWith(
@@ -230,7 +230,7 @@ test('does not report an unreachable remote to Sentry', async () => {
   mockGetModelDownloads.mockResolvedValue([pendingDownload(104)]);
   mockDownloadModelPart.mockRejectedValue(new NetworkError('HEAD timed out'));
 
-  await renderHook(() => useModelDownloader());
+  await renderHook(() => useResumeModelDownloads());
 
   await waitFor(() =>
     expect(mockLog).toHaveBeenCalledWith(
@@ -246,7 +246,7 @@ test('installs the model and clears the download on success', async () => {
   mockGetModelDownloads.mockResolvedValue([download]);
   mockDownloadModelPart.mockResolvedValue('/docs/models/102/model-102.gguf');
 
-  await renderHook(() => useModelDownloader());
+  await renderHook(() => useResumeModelDownloads());
 
   await waitFor(() => expect(mockInsertModel).toHaveBeenCalled());
   expect(mockDeleteModelDownload).toHaveBeenCalledWith(102);
@@ -259,7 +259,7 @@ test('a first chat model fills the empty chat slot on completion', async () => {
   mockGetModelDownloads.mockResolvedValue([download]);
   mockDownloadModelPart.mockResolvedValue('/docs/models/103/model-103.gguf');
 
-  await renderHook(() => useModelDownloader());
+  await renderHook(() => useResumeModelDownloads());
 
   await waitFor(() =>
     expect(mockSetAppState).toHaveBeenCalledWith({
@@ -277,7 +277,7 @@ test('a TTS model fills the voice slot — never the chat slot', async () => {
   mockGetModelDownloads.mockResolvedValue([download]);
   mockDownloadModelPart.mockResolvedValue('/docs/models/104/model-104.gguf');
 
-  await renderHook(() => useModelDownloader());
+  await renderHook(() => useResumeModelDownloads());
 
   await waitFor(() =>
     expect(mockSetAppState).toHaveBeenCalledWith(
@@ -296,7 +296,7 @@ test('a failing insert drops the download row and files instead of retrying fore
   // e.g. a stale dev database whose pipeline CHECK predates this model.
   mockInsertModel.mockRejectedValue(new Error('CHECK constraint failed'));
 
-  await renderHook(() => useModelDownloader());
+  await renderHook(() => useResumeModelDownloads());
 
   await waitFor(() =>
     expect(mockDeleteModelDownload).toHaveBeenCalledWith(105),

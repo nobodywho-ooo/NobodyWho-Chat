@@ -64,7 +64,7 @@ const vad = buildModel(4, {
 });
 
 const renderLoaded = async () => {
-  const hook = renderHook(() => useMissingModelDownloads());
+  const hook = await renderHook(() => useMissingModelDownloads());
   await waitFor(() =>
     expect(hook.result.current.findMissingModels(TEXT_REQUIREMENTS)).toEqual([
       chat,
@@ -178,7 +178,7 @@ test('fails with an alert when the catalogue cannot be fetched', async () => {
   globalThis.fetch = jest.fn(async () => {
     throw new TypeError('Network request failed');
   }) as unknown as typeof fetch;
-  const { result } = renderHook(() => useMissingModelDownloads());
+  const { result } = await renderHook(() => useMissingModelDownloads());
 
   let outcome;
   await act(async () => {
@@ -200,7 +200,7 @@ test('retries the catalogue when it failed to load at mount', async () => {
     .mockRejectedValueOnce(new TypeError('Network request failed'))
     .mockResolvedValue({ json: async () => [chat] });
   globalThis.fetch = fetchMock as unknown as typeof fetch;
-  const { result } = renderHook(() => useMissingModelDownloads());
+  const { result } = await renderHook(() => useMissingModelDownloads());
   await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
 
   let outcome;
@@ -238,12 +238,12 @@ test('a cancelled batch neither alerts nor reports failure', async () => {
   const { result } = await renderLoaded();
 
   let pending: Promise<string> = Promise.resolve('');
-  act(() => {
+  await act(() => {
     pending = result.current.downloadMissing(TEXT_REQUIREMENTS);
   });
   await waitFor(() => expect(result.current.isDownloading).toBe(true));
 
-  act(() => result.current.cancel());
+  await act(() => result.current.cancel());
   await act(async () => {
     finishDownload();
     expect(await pending).toBe('cancelled');

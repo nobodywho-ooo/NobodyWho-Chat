@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly ModelCard 1`] = `
 <View
@@ -341,7 +341,7 @@ exports[`renders correctly ModelCard 1`] = `
     </View>
     <PlatformIcon
       androidIconName="download"
-      color="#628395"
+      color="#b44618"
       iosIconName="arrow.down.circle"
       size={28}
     />
@@ -846,7 +846,7 @@ exports[`renders correctly ModelCard when model is downloading 1`] = `
     </View>
     <PlatformIcon
       androidIconName="downloading"
-      color="#628395"
+      color="#b44618"
       iosIconName="arrow.down.circle.dotted"
       size={28}
     />

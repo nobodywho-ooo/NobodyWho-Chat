@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly InputBar 1`] = `
 <View
@@ -136,7 +136,7 @@ exports[`renders correctly InputBar 1`] = `
           />
         </View>
         <IconButton
-          backgroundColor="#b0c1cb"
+          backgroundColor="#e5bdaf"
           color="#FFFFFF"
           disabled={false}
           icon={
@@ -444,7 +444,7 @@ exports[`renders correctly InputBar with value 1`] = `
           />
         </View>
         <IconButton
-          backgroundColor="#628395"
+          backgroundColor="#b44618"
           color="#FFFFFF"
           disabled={false}
           icon={
@@ -621,7 +621,7 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
           />
         </View>
         <IconButton
-          backgroundColor="#b0c1cb"
+          backgroundColor="#e5bdaf"
           color="#FFFFFF"
           disabled={false}
           icon={
