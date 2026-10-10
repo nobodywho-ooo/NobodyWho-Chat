@@ -157,6 +157,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
             (isStreaming ? (
               <StreamdownText
                 containerStyle={styles.streamdownContainer}
+                flavor="github"
                 markdown={rest}
                 markdownStyle={markdownStyle}
                 onLinkPress={handleLinkPress}
@@ -164,6 +165,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
             ) : (
               <EnrichedMarkdownText
                 containerStyle={styles.streamdownContainer}
+                flavor="github"
                 markdown={rest}
                 markdownStyle={markdownStyle}
                 onLinkPress={handleLinkPress}
