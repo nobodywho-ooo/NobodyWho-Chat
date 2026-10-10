@@ -329,6 +329,23 @@ describe('implicitThinkOpen', () => {
     ).toBeUndefined();
   });
 
+  test('matches Bonsai only when the catalogue marks it thinking', () => {
+    // 27B prefills "<think>\n" like the Qwen3.5 template it derives from; the
+    // 4B and 8B siblings are `thinking: false`, so the gate keeps them out.
+    expect(
+      implicitThinkOpen(
+        model({ family: 'Bonsai', parameterCountBillions: 27 }),
+        true,
+      ),
+    ).toBeDefined();
+    expect(
+      implicitThinkOpen(
+        model({ family: 'Bonsai', parameterCountBillions: 8, thinking: false }),
+        false,
+      ),
+    ).toBeUndefined();
+  });
+
   test('leaves models that emit their own opening delimiter alone', () => {
     expect(implicitThinkOpen(model({ family: 'Qwen3' }), true)).toBeUndefined();
     expect(
