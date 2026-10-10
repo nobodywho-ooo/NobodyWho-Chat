@@ -56,6 +56,11 @@ const IMPLICIT_THINK_OPEN: ImplicitThinkOpen[] = [
     sites: ['turn', 'toolResult'],
   },
   {
+    family: 'Bonsai',
+    delimiters: THINK_TAGS,
+    sites: ['turn', 'toolResult'],
+  },
+  {
     family: 'Gemma 4',
     delimiters: THOUGHT_CHANNEL,
     sites: ['toolResult'],
