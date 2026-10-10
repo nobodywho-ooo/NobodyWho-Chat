@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly ProgressBar 1`] = `
 <View
@@ -24,7 +24,7 @@ exports[`renders correctly ProgressBar 1`] = `
           "height": "100%",
         },
         {
-          "backgroundColor": "#628395",
+          "backgroundColor": "#b44618",
           "width": "30%",
         },
       ]

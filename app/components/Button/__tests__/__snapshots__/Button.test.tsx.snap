@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`Button renders outline variant 1`] = `
 <View
@@ -124,7 +124,7 @@ exports[`Button renders primary variant 1`] = `
       },
       false,
       {
-        "backgroundColor": "#628395",
+        "backgroundColor": "#b44618",
       },
       undefined,
       false,
@@ -285,7 +285,7 @@ exports[`Button renders small 1`] = `
         "paddingVertical": 8,
       },
       {
-        "backgroundColor": "#628395",
+        "backgroundColor": "#b44618",
       },
       undefined,
       false,
@@ -366,7 +366,7 @@ exports[`Button renders with icon 1`] = `
       },
       false,
       {
-        "backgroundColor": "#628395",
+        "backgroundColor": "#b44618",
       },
       undefined,
       false,

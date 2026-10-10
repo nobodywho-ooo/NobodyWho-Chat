@@ -34,6 +34,7 @@ import {
 import {
   availableDiskSpaceGB,
   checkDiskSpaceForModel,
+  checkDiskSpaceForModels,
   modelDownloadSizeGB,
 } from './diskSpace';
 import { sleep } from './async';
@@ -113,6 +114,7 @@ export {
   multimodalContextSize,
   availableDiskSpaceGB,
   checkDiskSpaceForModel,
+  checkDiskSpaceForModels,
   modelDownloadSizeGB,
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,

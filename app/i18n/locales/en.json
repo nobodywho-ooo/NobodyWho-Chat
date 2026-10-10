@@ -180,6 +180,16 @@
     }
   },
   "screens": {
+    "onboarding": {
+      "header": "Get started",
+      "title": "Download a model",
+      "subtitle": "What kind of model(s) do you want to download?\nWe will download a small model to get started.",
+      "textOnly": "Text generation only",
+      "textAndVoice": "Text & Voice",
+      "skip": "Not now",
+      "downloadProgress": "{{percent}}%",
+      "downloadUnavailable": "Couldn't download at the moment, try again later."
+    },
     "noModelDownloaded": {
       "noModelAvailable": "No model available",
       "downloadModel": "Download a model"
@@ -252,8 +262,12 @@
       "stopDownloadTitle": "Stop this download?",
       "stopDownloadMessage": "The download will be cancelled and its progress discarded. You can start it again at any time.",
       "stopDownload": "Stop download",
+      "downloadFailedTitle": "Download failed",
+      "downloadFailedMessage": "Check your connection and try again.",
+      "downloadFailedModelMessage": "{{name}} could not be downloaded. Check your connection and try again.",
       "notEnoughSpaceTitle": "Not enough storage",
-      "notEnoughSpaceMessage": "{{name}} needs {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again."
+      "notEnoughSpaceMessage": "{{name}} needs {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again.",
+      "notEnoughSpaceMessageMultiple": "These models need {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again."
     },
     "downloadedModels": {
       "noModelDownloaded": "No model downloaded",
