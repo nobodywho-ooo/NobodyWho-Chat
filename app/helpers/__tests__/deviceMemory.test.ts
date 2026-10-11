@@ -19,7 +19,7 @@ const part = (type: string, sizeGB: number) => ({
 const GB = 1024 ** 3;
 
 beforeEach(() => {
-  // 8 GB total, 2 GB reserved for the OS on iOS -> 6 GB usable.
+  // 8 GB total on iOS.
   mockGetTotalMemory.mockResolvedValue(8 * GB);
 });
 
@@ -45,12 +45,14 @@ describe('modelRequiredMemoryGB', () => {
 });
 
 describe('filterModelsByDeviceMemory', () => {
+  // 8 GB - 2 GB for the OS - 0.5 GB for the voice models -> 5.5 GB usable.
   test('keeps models that fit in usable memory and drops the rest', async () => {
-    const fits = buildModel(1, { parts: [part('chat-model', 6)] });
-    const tooBig = buildModel(2, { parts: [part('chat-model', 7)] });
-    // 4 + 1*2 = 6 GB, exactly the usable budget -> kept.
+    const fits = buildModel(1, { parts: [part('chat-model', 5.5)] });
+    // Would fit without the voice models' reserve.
+    const tooBig = buildModel(2, { parts: [part('chat-model', 6)] });
+    // 3.5 + 1*2 = 5.5 GB, exactly the usable budget -> kept.
     const fitsWithProjection = buildModel(3, {
-      parts: [part('chat-model', 4), part('projection-model', 1)],
+      parts: [part('chat-model', 3.5), part('projection-model', 1)],
     });
 
     const result = await filterModelsByDeviceMemory([
@@ -149,4 +151,30 @@ describe('multimodalContextSize', () => {
       );
     },
   );
+});
+
+describe('on Android', () => {
+  // OS_RESERVED_GB is read from the platform when the module loads.
+  const loadAndroid = (): typeof import('../deviceMemory') => {
+    let deviceMemory!: typeof import('../deviceMemory');
+    jest.isolateModules(() => {
+      jest.doMock('../platform', () => ({ isIOS: false }));
+      deviceMemory = require('../deviceMemory');
+    });
+    return deviceMemory;
+  };
+
+  // An "8 GB" phone reports ~7.4 GB; the missing 0.6 GB is the kernel's and
+  // no app can use it: 7.4 - 3 for the OS - 0.5 for the voice models = 3.9 GB,
+  // not the 4.5 GB the marketed 8 GB would give.
+  test('budgets against the reported total, not the marketed RAM', async () => {
+    mockGetTotalMemory.mockResolvedValue(7.4 * GB);
+    const { filterModelsByDeviceMemory: filter } = loadAndroid();
+    const fits = buildModel(1, { parts: [part('chat-model', 3.8)] });
+    const fitsOnlyMarketed = buildModel(2, { parts: [part('chat-model', 4)] });
+
+    const result = await filter([fits, fitsOnlyMarketed]);
+
+    expect(result.map(model => model.id)).toEqual([1]);
+  });
 });

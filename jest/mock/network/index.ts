@@ -3,7 +3,7 @@ import { Model } from 'types';
 export const mockFetchResolve = (models: Model[]) => {
   (globalThis as any).fetch = jest
     .fn()
-    .mockResolvedValue({ json: () => Promise.resolve(models) });
+    .mockResolvedValue({ ok: true, json: () => Promise.resolve(models) });
 };
 
 export const mockFetchReject = () => {

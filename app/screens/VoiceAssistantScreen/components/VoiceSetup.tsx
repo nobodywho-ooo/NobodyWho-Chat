@@ -16,11 +16,11 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const {
-    hasMissingModels,
+    needsDownload,
     canDownload,
     isDownloading,
     progress,
-    downloadMissing,
+    downloadCurated,
     cancel,
   } = useVoiceModelDownloads();
 
@@ -93,11 +93,11 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
               t('screens.voiceAssistant.setup.vad'),
             )}
           </View>
-          {hasMissingModels ? (
+          {needsDownload ? (
             <Button
               title={t('screens.voiceAssistant.setup.downloadMissing')}
               disabled={!canDownload}
-              onPress={downloadMissing}
+              onPress={downloadCurated}
               style={styles.downloadButton}
             />
           ) : (

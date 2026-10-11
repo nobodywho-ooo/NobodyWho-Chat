@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { Alert, AppState } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
@@ -27,8 +27,47 @@ const DOWNLOAD_THROTTLE = 0.01; // 1% step
 // resume effect and a user-initiated stop share the same map.
 const activeDownloads = new Map<number, AbortController>();
 
+// Ids of the running loops, replaced (never mutated) on each change so it can
+// serve as the useActiveDownloadIds snapshot.
+let activeDownloadIds: ReadonlySet<number> = new Set();
+const activeDownloadsListeners = new Set<() => void>();
+
+const setActiveDownload = (
+  modelId: number,
+  controller: AbortController | undefined,
+) => {
+  if (controller) {
+    activeDownloads.set(modelId, controller);
+  } else {
+    activeDownloads.delete(modelId);
+  }
+  activeDownloadIds = new Set(activeDownloads.keys());
+  activeDownloadsListeners.forEach(listener => listener());
+};
+
+const subscribeActiveDownloads = (listener: () => void) => {
+  activeDownloadsListeners.add(listener);
+  return () => {
+    activeDownloadsListeners.delete(listener);
+  };
+};
+
+// Models whose failure the user was already told about. Resume retries pending
+// downloads on every return to the app, so one that keeps failing (offline)
+// would otherwise alert again each time.
+const reportedFailures = new Set<number>();
+
+// Whether a download loop is running for the model right now.
+export const isDownloadActive = (modelId: number): boolean =>
+  activeDownloads.has(modelId);
+
+// The models whose download loop is running, re-rendering when one starts or
+// stops: a pending download that isn't in it is paused (it failed, or the app
+// was closed mid-download).
+export const useActiveDownloadIds = (): ReadonlySet<number> =>
+  useSyncExternalStore(subscribeActiveDownloads, () => activeDownloadIds);
+
 interface DownloadOptions {
-  // Off for callers that download a batch and report its failure once.
   alertOnFailure?: boolean;
 }
 
@@ -48,7 +87,7 @@ const useRunDownload = () => {
       }
 
       const controller = new AbortController();
-      activeDownloads.set(model.id, controller);
+      setActiveDownload(model.id, controller);
 
       let modelDownloaded = false;
 
@@ -107,6 +146,7 @@ const useRunDownload = () => {
         }
 
         modelDownloaded = true;
+        reportedFailures.delete(model.id);
 
         await selectModelIfSlotFree(model);
 
@@ -119,7 +159,12 @@ const useRunDownload = () => {
           capture,
         });
 
-        if (alertOnFailure && !controller.signal.aborted) {
+        if (
+          alertOnFailure &&
+          !controller.signal.aborted &&
+          !reportedFailures.has(model.id)
+        ) {
+          reportedFailures.add(model.id);
           Alert.alert(
             t('screens.models.downloadFailedTitle'),
             t('screens.models.downloadFailedModelMessage', {
@@ -129,7 +174,7 @@ const useRunDownload = () => {
         }
       } finally {
         if (activeDownloads.get(model.id) === controller) {
-          activeDownloads.delete(model.id);
+          setActiveDownload(model.id, undefined);
         }
 
         if (controller.signal.aborted && !modelDownloaded) {
@@ -141,46 +186,66 @@ const useRunDownload = () => {
   );
 };
 
-// Restarts every download left pending in the database
-export const useResumeModelDownloads = () => {
+// Restarts every download left pending in the database whose loop isn't
+// running. `reportAgain` (the user asked for it) alerts on a failure even if
+// that download's failure was already reported.
+const useResumePendingDownloads = () => {
   const runDownload = useRunDownload();
 
-  useEffect(() => {
-    const resumeDownloads = async () => {
+  return useCallback(
+    async ({ reportAgain = false }: { reportAgain?: boolean } = {}) => {
       try {
         const pendingDownloads = await getModelDownloads();
         for (const download of pendingDownloads) {
           if (!activeDownloads.has(download.model.id)) {
+            if (reportAgain) {
+              reportedFailures.delete(download.model.id);
+            }
             runDownload(download);
           }
         }
       } catch (error) {
-        log('useResumeModelDownloads resumeDownloads', error);
+        log('resumePendingDownloads', error);
       }
-    };
+    },
+    [runDownload],
+  );
+};
 
-    resumeDownloads();
+// Resumes pending downloads at launch and on every return to the app.
+export const useResumeModelDownloads = () => {
+  const resumePendingDownloads = useResumePendingDownloads();
+
+  useEffect(() => {
+    resumePendingDownloads();
 
     const subscription = AppState.addEventListener('change', state => {
       if (state === 'active') {
-        resumeDownloads();
+        resumePendingDownloads();
       }
     });
 
     return () => subscription.remove();
-  }, [runDownload]);
+  }, [resumePendingDownloads]);
 };
 
 export const useModelDownloader = () => {
   const { t } = useTranslation();
   const runDownload = useRunDownload();
+  const resumePendingDownloads = useResumePendingDownloads();
+
+  const resumeDownloads = useCallback(
+    () => resumePendingDownloads({ reportAgain: true }),
+    [resumePendingDownloads],
+  );
 
   const warnNotEnoughSpace = useCallback(
-    (model: Model, check: DiskSpaceCheck) =>
+    (models: readonly Model[], check: DiskSpaceCheck) =>
       Alert.alert(
         t('screens.models.notEnoughSpaceTitle'),
         t('screens.models.notEnoughSpaceMessage', {
-          name: model.name,
+          count: models.length,
+          name: models[0].name,
           required: modelSizeLabel(check.requiredGB),
           available: modelSizeLabel(check.availableGB ?? 0),
         }),
@@ -190,10 +255,14 @@ export const useModelDownloader = () => {
 
   const startDownload = useCallback(
     async (model: Model, options?: DownloadOptions) => {
-      const spaceCheck = checkDiskSpaceForModel(model);
+      const inProgress = await getModelDownloads().catch(error => {
+        log('startDownload getModelDownloads', error);
+        return [];
+      });
+      const spaceCheck = checkDiskSpaceForModel(model, inProgress);
 
       if (!spaceCheck.fits) {
-        warnNotEnoughSpace(model, spaceCheck);
+        warnNotEnoughSpace([model], spaceCheck);
         return;
       }
 
@@ -214,15 +283,17 @@ export const useModelDownloader = () => {
   );
 
   const stopDownload = useCallback((model: Model) => {
+    reportedFailures.delete(model.id);
+
     deleteModelDownload(model.id).catch(error =>
       log('ModelsScreen stopDownload', error),
     );
 
     const controller = activeDownloads.get(model.id);
+
     if (controller) {
       controller.abort();
     } else {
-      // No live loop (e.g. it already failed) — clean the files up directly.
       deleteModelDirectory(model.id);
     }
   }, []);
@@ -244,5 +315,11 @@ export const useModelDownloader = () => {
     [t, stopDownload],
   );
 
-  return { startDownload, stopDownload, promptStopDownload };
+  return {
+    startDownload,
+    stopDownload,
+    promptStopDownload,
+    warnNotEnoughSpace,
+    resumeDownloads,
+  };
 };

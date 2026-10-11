@@ -7,7 +7,6 @@ export * from './NoModelDownloadedScreen/NoModelDownloadedScreen';
 export * from './OnboardingScreen/OnboardingScreen';
 export * from './NoModelSelectedScreen/NoModelSelectedScreen';
 export * from './ModelsScreen/ModelsScreen';
-export { useResumeModelDownloads } from './ModelsScreen/useModelDownloader';
 export * from './DownloadedModelsScreen/DownloadedModelsScreen';
 export * from './DrawerContentScreen/DrawerContentScreen';
 export * from './VoiceAssistantScreen/VoiceAssistantScreen';

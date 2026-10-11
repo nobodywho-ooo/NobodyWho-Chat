@@ -24,13 +24,8 @@ import {
 } from 'repositories';
 import { log } from 'helpers';
 import { isChatPipeline, MODEL_SLOTS } from 'types';
-import { useStyled } from 'hooks';
-import {
-  ErrorScreen,
-  LoadingScreen,
-  OnboardingScreen,
-  useResumeModelDownloads,
-} from 'screens';
+import { useResumeModelDownloads, useStyled } from 'hooks';
+import { ErrorScreen, LoadingScreen, OnboardingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
 import { RootDrawerNavigator } from 'navigation';
 import { useTranslation } from 'react-i18next';
@@ -108,13 +103,13 @@ function AppContent({ showOnboarding, onOnboardingFinish }: AppContentProps) {
         backgroundColor="transparent"
         translucent
       />
-      {showOnboarding ? (
-        <OnboardingScreen onFinish={onOnboardingFinish} />
-      ) : (
-        <Sentry.NavigationContainer theme={navigationTheme}>
+      <Sentry.NavigationContainer theme={navigationTheme}>
+        {showOnboarding ? (
+          <OnboardingScreen onFinish={onOnboardingFinish} />
+        ) : (
           <RootDrawerNavigator />
-        </Sentry.NavigationContainer>
-      )}
+        )}
+      </Sentry.NavigationContainer>
     </>
   );
 }
@@ -162,6 +157,10 @@ async function dropStaleIdsInUse(): Promise<void> {
 
 // Onboarding shows when no chat model is downloaded or in download
 async function needsOnboarding(): Promise<boolean> {
+  if (getAppState().modelIdInUse !== undefined) {
+    return false;
+  }
+
   const [models, downloads] = await Promise.all([
     getAllModels(),
     getModelDownloads(),

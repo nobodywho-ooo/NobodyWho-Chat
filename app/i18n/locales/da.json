@@ -182,17 +182,38 @@
   "screens": {
     "onboarding": {
       "header": "Kom i gang",
-      "title": "Download en model",
-      "subtitle": "Hvilken slags model(ler) vil du downloade?\nVi downloader en lille model, så du kan komme i gang.",
-      "textOnly": "Kun tekstgenerering",
-      "textAndVoice": "Tekst & Stemme",
-      "skip": "Ikke nu",
+      "voiceHeader": "Lidt ekstra",
+      "title": "Vælg din tekstmodel",
+      "subtitle": "Vælg en tekstmodel at chatte med. Du kan altid downloade flere senere.",
+      "modalityTitle": "Tilføj stemme?",
+      "modalitySubtitle": "Med stemmemodeller kan du tale med assistenten og høre dens svar læst højt.",
+      "textOnly": "Kun tekstmodel",
+      "textAndVoice": "Tekst- og stemmemodeller",
+      "skip": "Spring over",
+      "loadingModels": "Indlæser modeller...",
+      "downloadingHeader": "Vent venligst",
+      "downloadingTitle": "Downloader dine modeller",
+      "downloadingSubtitle": "Det kan tage et par minutter. Hold appen åben, indtil downloadet er færdigt.",
       "downloadProgress": "{{percent}}%",
-      "downloadUnavailable": "Kunne ikke downloade lige nu. Prøv igen senere."
+      "downloadUnavailable": "Kunne ikke downloade lige nu. Prøv igen senere.",
+      "doneTitle": "Alt er klar!",
+      "doneSubtitle": "Din AI kører udelukkende på din enhed, så dine samtaler forbliver private.",
+      "start": "Begynd at chatte"
     },
     "noModelDownloaded": {
       "noModelAvailable": "Ingen model tilgængelig",
-      "downloadModel": "Download en model"
+      "downloadModel": "Download en model",
+      "downloadingTitle_one": "Din model downloades",
+      "downloadingTitle_other": "Dine modeller downloades",
+      "pausedTitle_one": "Download sat på pause",
+      "pausedTitle_other": "Downloads sat på pause",
+      "downloadProgress": "{{percent}}%",
+      "pausedProgress": "Sat på pause · {{percent}}%",
+      "downloadingHint_one": "Du kan begynde at chatte, så snart den er færdig. Hold appen åben indtil da.",
+      "downloadingHint_other": "Du kan begynde at chatte, så snart en af dem er færdig. Hold appen åben indtil da.",
+      "pausedHint_one": "Tryk på Genoptag for at fortsætte, hvor den slap.",
+      "pausedHint_other": "Tryk på Genoptag for at fortsætte, hvor de slap.",
+      "resume": "Genoptag"
     },
     "noModelSelected": {
       "pleaseSelectAModel": "Vælg venligst en model",
@@ -266,8 +287,8 @@
       "downloadFailedMessage": "Tjek din forbindelse og prøv igen.",
       "downloadFailedModelMessage": "{{name}} kunne ikke downloades. Tjek din forbindelse og prøv igen.",
       "notEnoughSpaceTitle": "Ikke nok lagerplads",
-      "notEnoughSpaceMessage": "{{name}} kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen.",
-      "notEnoughSpaceMessageMultiple": "Disse modeller kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen."
+      "notEnoughSpaceMessage_one": "{{name}} kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen.",
+      "notEnoughSpaceMessage_other": "Modellerne, du prøver at downloade, kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen."
     },
     "downloadedModels": {
       "noModelDownloaded": "Ingen model downloadet",

@@ -1,6 +1,6 @@
 import { Paths } from 'expo-file-system';
 
-import { Model } from 'types';
+import { Model, ModelDownload } from 'types';
 import { log } from './log';
 
 const BYTES_PER_GB = 1024 ** 3;
@@ -35,24 +35,44 @@ export const modelDownloadSizeGB = (model: Model): number => {
   return partsTotal > 0 ? partsTotal : model.sizeGB;
 };
 
+// What a download in progress still has to write: each part's size times the
+// share of it not downloaded yet.
+export const remainingDownloadSizeGB = (download: ModelDownload): number =>
+  download.partsProgress.reduce(
+    (total, part) =>
+      total + (part.sizeGB ?? 0) * (1 - Math.min(part.progress, 1)),
+    0,
+  );
+
 export interface DiskSpaceCheck {
   fits: boolean;
   requiredGB: number; // Model size plus the reserve,
-  availableGB?: number; // Undefined when free space couldn't be read.
+  // Free space minus what downloads in progress still have to write; undefined
+  // when free space couldn't be read.
+  availableGB?: number;
 }
 
 // Whether the device has room for a model. When free space can't be read we let
 // the download run rather than block it on a missing number — the transfer
-// itself fails loudly if the disk fills up.
-export const checkDiskSpaceForModel = (model: Model): DiskSpaceCheck =>
-  checkDiskSpaceForModels([model]);
+// itself fails loudly if the disk fills up. Downloads already in progress
+// (`inProgress`) still have bytes to write, so that space isn't available.
+export const checkDiskSpaceForModel = (
+  model: Model,
+  inProgress: readonly ModelDownload[] = [],
+): DiskSpaceCheck => checkDiskSpaceForModels([model], inProgress);
 
 // Same check for a batch downloaded together: room for all of them at once,
 // with a single reserve.
 export const checkDiskSpaceForModels = (
   models: readonly Model[],
+  inProgress: readonly ModelDownload[] = [],
 ): DiskSpaceCheck => {
-  const availableGB = availableDiskSpaceGB();
+  const freeGB = availableDiskSpaceGB();
+  const pendingGB = inProgress
+    .filter(download => !models.some(model => model.id === download.model.id))
+    .reduce((total, download) => total + remainingDownloadSizeGB(download), 0);
+  const availableGB =
+    freeGB === undefined ? undefined : Math.max(0, freeGB - pendingGB);
   const requiredGB =
     models.reduce((total, model) => total + modelDownloadSizeGB(model), 0) +
     RESERVED_GB;

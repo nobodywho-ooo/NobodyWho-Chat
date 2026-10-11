@@ -1,38 +1,37 @@
 import { useCallback } from 'react';
-import {
-  useMissingModelDownloads,
-  VOICE_REQUIREMENTS,
-} from '../../ModelsScreen/useMissingModelDownloads';
+import { CURATED_VOICE_PIPELINE_MODELS } from 'helpers';
+import { useCuratedModels } from 'hooks';
 
 export interface VoiceModelDownloads {
-  hasMissingModels: boolean;
+  needsDownload: boolean;
   canDownload: boolean;
   isDownloading: boolean;
   progress: number;
-  downloadMissing: () => void;
+  downloadCurated: () => void;
   cancel: () => void;
 }
 
 export const useVoiceModelDownloads = (): VoiceModelDownloads => {
   const {
-    findMissingRequirements,
-    findMissingModels,
+    findCuratedToDownload,
+    findModelsToDownload,
     isDownloading,
     progress,
-    downloadMissing,
+    downloadCurated,
     cancel,
-  } = useMissingModelDownloads();
+  } = useCuratedModels();
 
-  const downloadMissingVoiceModels = useCallback(() => {
-    downloadMissing(VOICE_REQUIREMENTS);
-  }, [downloadMissing]);
+  const downloadCuratedVoiceModels = useCallback(() => {
+    downloadCurated(CURATED_VOICE_PIPELINE_MODELS);
+  }, [downloadCurated]);
 
   return {
-    hasMissingModels: findMissingRequirements(VOICE_REQUIREMENTS).length > 0,
-    canDownload: findMissingModels(VOICE_REQUIREMENTS).length > 0,
+    needsDownload:
+      findCuratedToDownload(CURATED_VOICE_PIPELINE_MODELS).length > 0,
+    canDownload: findModelsToDownload(CURATED_VOICE_PIPELINE_MODELS).length > 0,
     isDownloading,
     progress,
-    downloadMissing: downloadMissingVoiceModels,
+    downloadCurated: downloadCuratedVoiceModels,
     cancel,
   };
 };

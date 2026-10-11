@@ -6,6 +6,7 @@ import {
   availableDiskSpaceGB,
   checkDiskSpaceForModel,
   modelDownloadSizeGB,
+  remainingDownloadSizeGB,
 } from '../diskSpace';
 
 const GB = 1024 ** 3;
@@ -85,5 +86,52 @@ describe('checkDiskSpaceForModel', () => {
       requiredGB: 4.5,
       availableGB: undefined,
     });
+  });
+
+  test('keeps back what downloads in progress still have to write', () => {
+    // 3 GB left of another model's 4 GB part: 6 - 3 leaves 3 GB, short of 4.5.
+    const other = buildModel(2, { parts: [part('chat-model', 4)] });
+    const inProgress = [
+      {
+        model: other,
+        partsProgress: other.parts.map(p => ({ ...p, progress: 0.25 })),
+      },
+    ];
+    setAvailableDiskSpace(6 * GB);
+
+    expect(checkDiskSpaceForModel(model, inProgress)).toEqual({
+      fits: false,
+      requiredGB: 4.5,
+      availableGB: 3,
+    });
+  });
+
+  test("ignores the model's own download row", () => {
+    const inProgress = [
+      {
+        model,
+        partsProgress: model.parts.map(p => ({ ...p, progress: 0 })),
+      },
+    ];
+    setAvailableDiskSpace(5 * GB);
+
+    expect(checkDiskSpaceForModel(model, inProgress).fits).toBe(true);
+  });
+});
+
+describe('remainingDownloadSizeGB', () => {
+  test("weights each part's size by what is left of it", () => {
+    const model = buildModel(1, {
+      parts: [part('chat-model', 4), part('projection-model', 1)],
+    });
+    const download = {
+      model,
+      partsProgress: [
+        { ...model.parts[0], progress: 0.5 },
+        { ...model.parts[1], progress: 1 },
+      ],
+    };
+
+    expect(remainingDownloadSizeGB(download)).toBe(2);
   });
 });

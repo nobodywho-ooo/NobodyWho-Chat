@@ -680,6 +680,7 @@ jest.mock('@react-navigation/native', () => ({
   }),
   getFocusedRouteNameFromRoute: jest.fn(() => 'ChatScreen'),
   useRoute: () => mockUseRoute(),
+  usePreventRemove: jest.fn(),
   SFSymbol: 'SFSymbol',
   MaterialSymbol: 'MaterialSymbol',
 }));

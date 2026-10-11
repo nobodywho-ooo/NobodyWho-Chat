@@ -15,7 +15,21 @@ import { getFamilyIcon } from './familyIcon';
 import { getPipelineIcon } from './pipelineIcon';
 import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
-import { MODELS_URL } from './modelCatalogue';
+import {
+  byCatalogueOrder,
+  fetchModelCatalogue,
+  MODELS_URL,
+} from './modelCatalogue';
+import {
+  curatedChatModel,
+  FIRST_PICK_TAG,
+  fulfills,
+  resolveCuratedModels,
+  RECOMMENDED_TAG,
+  CURATED_TEXT_MODELS,
+  CURATED_VOICE_ONLY_MODELS,
+  CURATED_VOICE_PIPELINE_MODELS,
+} from './curatedModels';
 import {
   downloadModelPart,
   downloadedPartPath,
@@ -89,6 +103,7 @@ export type { TtsEngine, TtsLanguageOption } from './ttsEngine';
 export type { SttLanguageOption } from './sttLanguages';
 export type { PipelineIcon } from './pipelineIcon';
 export type { DiskSpaceCheck } from './diskSpace';
+export type { CuratedModel } from './curatedModels';
 export type {
   ImplicitThinkOpen,
   ParsedThinking,
@@ -168,6 +183,16 @@ export {
   parameterCountLabel,
   modelSizeLabel,
   MODELS_URL,
+  fetchModelCatalogue,
+  byCatalogueOrder,
+  curatedChatModel,
+  FIRST_PICK_TAG,
+  fulfills,
+  resolveCuratedModels,
+  RECOMMENDED_TAG,
+  CURATED_TEXT_MODELS,
+  CURATED_VOICE_ONLY_MODELS,
+  CURATED_VOICE_PIPELINE_MODELS,
   parseColor,
   withAlpha,
 };

@@ -19,6 +19,7 @@ import { ModelPipeline } from 'types';
 import { buildModel } from 'jest/factories/model';
 
 import {
+  useActiveDownloadIds,
   useModelDownloader,
   useResumeModelDownloads,
 } from '../useModelDownloader';
@@ -164,6 +165,92 @@ test('alerts the user when a download fails', async () => {
       'screens.models.downloadFailedTitle',
       'screens.models.downloadFailedModelMessage',
     ),
+  );
+  alert.mockRestore();
+});
+
+test('alerts once for a download that keeps failing on each return to the app', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const addListener = AppState.addEventListener as jest.Mock;
+  mockGetModelDownloads.mockResolvedValue([pendingDownload(112)]);
+  mockDownloadModelPart.mockRejectedValue(new Error('offline'));
+
+  await renderHook(() => useResumeModelDownloads());
+  await waitFor(() => expect(alert).toHaveBeenCalledTimes(1));
+
+  const onChange = [...addListener.mock.calls]
+    .reverse()
+    .find(([type]) => type === 'change')?.[1] as (state: string) => void;
+  await act(async () => onChange('active'));
+  await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(2));
+
+  expect(alert).toHaveBeenCalledTimes(1);
+  alert.mockRestore();
+});
+
+test('tracks whether a download is running, and resumes a paused one on request', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const download = pendingDownload(115);
+  let failPart: (error: Error) => void = () => {};
+  mockDownloadModelPart.mockImplementation(
+    () =>
+      new Promise((_, reject) => {
+        failPart = reject;
+      }),
+  );
+  mockGetModelDownloads.mockResolvedValue([download]);
+
+  const { result } = await renderHook(() => ({
+    downloader: useModelDownloader(),
+    isActive: useActiveDownloadIds().has(115),
+  }));
+  expect(result.current.isActive).toBe(false);
+
+  await act(async () => result.current.downloader.resumeDownloads());
+  expect(result.current.isActive).toBe(true);
+
+  await act(async () => failPart(new Error('offline')));
+  expect(result.current.isActive).toBe(false);
+  expect(alert).toHaveBeenCalledTimes(1);
+
+  // Asked for again: a repeated failure is reported again.
+  await act(async () => result.current.downloader.resumeDownloads());
+  await act(async () => failPart(new Error('offline')));
+  expect(alert).toHaveBeenCalledTimes(2);
+  alert.mockRestore();
+});
+
+test('checks disk space against what other downloads still have to write', async () => {
+  const other = pendingDownload(116);
+  mockGetModelDownloads.mockResolvedValue([other]);
+  mockCheckDiskSpaceForModel.mockReturnValue({
+    fits: false,
+    requiredGB: 1.5,
+    availableGB: 1,
+  });
+  const { model } = pendingDownload(117);
+
+  const { result } = await renderHook(() => useModelDownloader());
+  await act(async () => {
+    await result.current.startDownload(model);
+  });
+
+  expect(mockCheckDiskSpaceForModel).toHaveBeenCalledWith(model, [other]);
+  expect(mockDownloadModelPart).not.toHaveBeenCalled();
+});
+
+test('names the models in one alert when a batch does not fit', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const { result } = await renderHook(() => useModelDownloader());
+
+  result.current.warnNotEnoughSpace(
+    [pendingDownload(113).model, pendingDownload(114).model],
+    { fits: false, requiredGB: 4, availableGB: 1 },
+  );
+
+  expect(alert).toHaveBeenCalledWith(
+    'screens.models.notEnoughSpaceTitle',
+    'screens.models.notEnoughSpaceMessage',
   );
   alert.mockRestore();
 });
