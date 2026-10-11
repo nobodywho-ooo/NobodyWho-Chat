@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, ProgressBar, Text } from 'components';
 import { curatedOnboardingModels } from 'helpers';
 import { useCuratedModels, useStyled } from 'hooks';
+import { getModelById } from 'repositories';
 import { Spacings } from 'style';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
@@ -29,7 +30,8 @@ export const OnboardingDownload: React.FC<
   // The lock blocks going back too, so it is lifted before leaving.
   const [isLeaving, setIsLeaving] = useState(false);
 
-  const { progress, downloadCurated, cancel } = useCuratedModels(catalogue);
+  const { isLoaded, progress, downloadCurated, cancel } =
+    useCuratedModels(catalogue);
 
   useOnboardingHeader(navigation, !isLeaving);
 
@@ -39,29 +41,35 @@ export const OnboardingDownload: React.FC<
     }
   }, [isLeaving, navigation]);
 
-  // Once, on arrival: downloadCurated changes as the downloads progress.
   const hasStarted = useRef(false);
 
   useEffect(() => {
-    if (hasStarted.current) {
+    if (!isLoaded || hasStarted.current) {
       return;
     }
     hasStarted.current = true;
 
     downloadCurated(curatedOnboardingModels(modelId, setup), {
       alertOnFailure: false,
-    }).then(outcome => {
-      // The download itself selected the chat model into its free slot.
+    }).then(async outcome => {
       if (outcome === 'done') {
         setIsDone(true);
       }
 
-      // Still downloading in the background: the app shows its progress.
       if (outcome === 'inProgress') {
         onFinish();
       }
 
       if (outcome === 'failed') {
+        if ((await getModelById(modelId)) !== undefined) {
+          Alert.alert(
+            t('screens.models.downloadFailedTitle'),
+            t('screens.onboarding.voiceUnavailable'),
+          );
+          setIsDone(true);
+          return;
+        }
+
         Alert.alert(
           t('common.somethingWentWrong'),
           t('screens.onboarding.downloadUnavailable'),
@@ -69,12 +77,11 @@ export const OnboardingDownload: React.FC<
         onFinish();
       }
 
-      // The user was already told why; let them pick something smaller.
       if (outcome === 'notEnoughSpace') {
         setIsLeaving(true);
       }
     });
-  }, [downloadCurated, modelId, setup, onFinish, t]);
+  }, [isLoaded, downloadCurated, modelId, setup, onFinish, t]);
 
   const handleCancel = useCallback(() => {
     cancel();

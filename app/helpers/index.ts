@@ -54,6 +54,7 @@ import {
   modelDownloadProgress,
   modelDownloadSizeGB,
   overallDownloadProgress,
+  sizeWeightedProgress,
 } from './diskSpace';
 import { sleep } from './async';
 import {
@@ -138,6 +139,7 @@ export {
   modelDownloadProgress,
   modelDownloadSizeGB,
   overallDownloadProgress,
+  sizeWeightedProgress,
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,

@@ -49,12 +49,12 @@ jest.mock('repositories', () => ({
 
 jest.mock('helpers', () => ({
   ...jest.requireActual('helpers/curatedModels'),
+  ...jest.requireActual('helpers/diskSpace'),
   fetchModelCatalogue: jest.fn(async () => {
     const response = await fetch('https://catalogue');
     return response.json();
   }),
   log: jest.fn(),
-  modelDownloadProgress: jest.fn(() => 0),
   checkDiskSpaceForModels: jest.fn(() => ({
     fits: true,
     requiredGB: 2.5,
@@ -367,6 +367,8 @@ test('uses a catalogue it is given without fetching one', async () => {
   expect(mockStartDownload).toHaveBeenCalledWith(chat, {
     alertOnFailure: false,
     signal: expect.any(AbortSignal),
+    // The batch already checked room for all of its models.
+    skipSpaceCheck: true,
   });
   expect(globalThis.fetch).not.toHaveBeenCalled();
 });

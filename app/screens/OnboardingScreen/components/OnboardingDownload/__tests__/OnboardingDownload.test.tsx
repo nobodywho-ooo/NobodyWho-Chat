@@ -9,6 +9,7 @@ import {
 import { usePreventRemove } from '@react-navigation/native';
 
 import { CURATED_VOICE_ONLY_MODELS, ModelSetup } from 'helpers';
+import { getModelById } from 'repositories';
 import { buildModel } from 'jest/factories/model';
 
 import { OnboardingContext } from '../../../hooks/useOnboarding';
@@ -16,6 +17,7 @@ import { OnboardingScreenProps } from '../../../Onboarding.types';
 import { OnboardingDownload } from '../OnboardingDownload';
 
 const mockDownloads = {
+  isLoaded: true,
   progress: 0,
   downloadCurated: jest.fn(),
   cancel: jest.fn(),
@@ -24,6 +26,10 @@ const mockUseCuratedModels = jest.fn((_catalogue?: unknown) => mockDownloads);
 
 jest.mock('hooks/useCuratedModels', () => ({
   useCuratedModels: (catalogue?: unknown) => mockUseCuratedModels(catalogue),
+}));
+
+jest.mock('repositories', () => ({
+  getModelById: jest.fn(async () => undefined),
 }));
 
 const recommended = buildModel(1, { tags: ['Recommended'] });
@@ -60,7 +66,9 @@ let alertSpy: jest.SpyInstance;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockDownloads.isLoaded = true;
   mockDownloads.progress = 0;
+  (getModelById as jest.Mock).mockResolvedValue(undefined);
   // Still running unless a test settles it.
   mockDownloads.downloadCurated.mockReturnValue(new Promise(() => {}));
   alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
@@ -91,6 +99,29 @@ test('downloads only the picked text model, once', async () => {
   expect(curated[0].matches(recommended)).toBe(true);
   // Not the Great First Pick as well.
   expect(curated[0].matches(firstPick)).toBe(false);
+});
+
+test('waits for the installed models to load before downloading', async () => {
+  mockDownloads.isLoaded = false;
+  const { rerender } = await renderDownload();
+
+  // Everything would look missing: nothing starts yet.
+  expect(mockDownloads.downloadCurated).not.toHaveBeenCalled();
+  screen.getByText('screens.onboarding.downloadingTitle');
+
+  mockDownloads.isLoaded = true;
+  await rerender(
+    <OnboardingContext.Provider value={{ catalogue, onFinish: jest.fn() }}>
+      <OnboardingDownload
+        {...({
+          navigation,
+          route: { params: { modelId: recommended.id, setup: 'textOnly' } },
+        } as unknown as OnboardingScreenProps<'OnboardingDownload'>)}
+      />
+    </OnboardingContext.Provider>,
+  );
+
+  expect(mockDownloads.downloadCurated).toHaveBeenCalledTimes(1);
 });
 
 test('adds the voice models on request', async () => {
@@ -165,6 +196,21 @@ test('leaves for the app with an alert when the download fails', async () => {
     'common.somethingWentWrong',
     'screens.onboarding.downloadUnavailable',
   );
+});
+
+test('finishes with the chat model when only the voice models failed', async () => {
+  mockDownloads.downloadCurated.mockResolvedValue('failed');
+  (getModelById as jest.Mock).mockResolvedValue(recommended);
+  const onFinish = jest.fn();
+  await renderDownload({ setup: 'textAndVoice', onFinish });
+
+  await screen.findByText('screens.onboarding.doneTitle');
+  expect(getModelById).toHaveBeenCalledWith(recommended.id);
+  expect(alertSpy).toHaveBeenCalledWith(
+    'screens.models.downloadFailedTitle',
+    'screens.onboarding.voiceUnavailable',
+  );
+  expect(onFinish).not.toHaveBeenCalled();
 });
 
 test('goes back to the choices when the models do not fit', async () => {

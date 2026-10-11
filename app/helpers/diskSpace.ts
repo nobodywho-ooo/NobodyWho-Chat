@@ -51,11 +51,12 @@ export function modelDownloadProgress(download: ModelDownload): number {
   return downloaded / totalSize;
 }
 
-// Progress (0..1) across several downloads, weighted by each model's size.
-export const overallDownloadProgress = (
-  downloads: readonly ModelDownload[],
+// Progress (0..1) across several models, each weighted by what it writes to
+// disk.
+export const sizeWeightedProgress = (
+  entries: readonly { model: Model; progress: number }[],
 ): number => {
-  const totalGB = downloads.reduce(
+  const totalGB = entries.reduce(
     (sum, { model }) => sum + modelDownloadSizeGB(model),
     0,
   );
@@ -64,15 +65,25 @@ export const overallDownloadProgress = (
     return 0;
   }
 
-  const downloadedGB = downloads.reduce(
-    (sum, download) =>
-      sum +
-      modelDownloadProgress(download) * modelDownloadSizeGB(download.model),
+  const downloadedGB = entries.reduce(
+    (sum, { model, progress }) =>
+      sum + Math.min(progress, 1) * modelDownloadSizeGB(model),
     0,
   );
 
   return downloadedGB / totalGB;
 };
+
+// Progress (0..1) across several downloads in progress.
+export const overallDownloadProgress = (
+  downloads: readonly ModelDownload[],
+): number =>
+  sizeWeightedProgress(
+    downloads.map(download => ({
+      model: download.model,
+      progress: modelDownloadProgress(download),
+    })),
+  );
 
 // What a download in progress still has to write: the model's size times the
 // share of it not downloaded yet.

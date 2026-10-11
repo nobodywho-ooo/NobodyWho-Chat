@@ -1,7 +1,11 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-import { useActiveDownloadIds, useModelDownloads } from 'hooks';
+import {
+  useActiveDownloadIds,
+  useHasResumedAtLaunch,
+  useModelDownloads,
+} from 'hooks';
 import { buildModel } from 'jest/factories/model';
 import { ModelPipeline } from 'types';
 
@@ -14,6 +18,7 @@ jest.mock('hooks', () => ({
   ...jest.requireActual('hooks'),
   useModelDownloads: jest.fn(() => ({ downloads: [], loading: false })),
   useActiveDownloadIds: jest.fn(() => new Set()),
+  useHasResumedAtLaunch: jest.fn(() => true),
   useModelDownloader: () => ({
     resumeDownloads: mockResumeDownloads,
     promptStopDownloads: mockPromptStopDownloads,
@@ -53,6 +58,7 @@ const setDownloads = (downloads: unknown[], activeIds: number[]) => {
 beforeEach(() => {
   jest.clearAllMocks();
   setDownloads([], []);
+  (useHasResumedAtLaunch as jest.Mock).mockReturnValue(true);
 });
 
 test('renders correctly NoModelDownloadedScreen', async () => {
@@ -92,6 +98,15 @@ test('offers to resume once every chat model download is interrupted', async () 
   screen.getByText('screens.noModelDownloaded.interruptedTitle');
   await fireEvent.press(screen.getByTestId('resume-download-button'));
   expect(mockResumeDownloads).toHaveBeenCalledTimes(1);
+});
+
+test('shows downloading, not interrupted, until the launch resume has run', async () => {
+  (useHasResumedAtLaunch as jest.Mock).mockReturnValue(false);
+  setDownloads([lfm], []);
+  await render(<NoModelDownloadedScreen />);
+
+  screen.getByText('screens.noModelDownloaded.downloadingTitle');
+  expect(screen.queryByTestId('resume-download-button')).toBeNull();
 });
 
 test('hides Resume while a chat model is still downloading', async () => {

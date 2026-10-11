@@ -3,7 +3,12 @@ import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, Text } from 'components';
 import { overallDownloadProgress } from 'helpers';
-import { useActiveDownloadIds, useModelDownloader, useStyled } from 'hooks';
+import {
+  useActiveDownloadIds,
+  useHasResumedAtLaunch,
+  useModelDownloader,
+  useStyled,
+} from 'hooks';
 import { ModelDownload } from 'types';
 
 import styles from './DownloadingChatModels.styles';
@@ -21,10 +26,13 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
   const { colors } = useStyled();
   const { resumeDownloads, promptStopDownloads } = useModelDownloader();
   const activeIds = useActiveDownloadIds();
+  const hasResumedAtLaunch = useHasResumedAtLaunch();
 
   const count = downloads.length;
 
-  const isAnyActive = downloads.some(({ model }) => activeIds.has(model.id));
+  const isAnyActive =
+    !hasResumedAtLaunch ||
+    downloads.some(({ model }) => activeIds.has(model.id));
   const progress = overallDownloadProgress(downloads);
 
   return (
@@ -33,7 +41,7 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
         iosIconName={isAnyActive ? 'arrow.down.circle' : 'pause.circle'}
         androidIconName={isAnyActive ? 'downloading' : 'pause_circle'}
         size={50}
-        color={colors.ctaContentPrimary}
+        color={colors.primary}
       />
       <Text variant="h3" style={styles.title}>
         {t(

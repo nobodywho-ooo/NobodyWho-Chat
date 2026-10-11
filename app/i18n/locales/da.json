@@ -196,6 +196,7 @@
       "downloadingSubtitle": "Det kan tage et par minutter. Hold appen åben, indtil downloadet er færdigt.",
       "downloadProgress": "{{percent}}%",
       "downloadUnavailable": "Kunne ikke downloade lige nu. Prøv igen senere.",
+      "voiceUnavailable": "Stemmemodellerne kunne ikke downloades. Du kan genoptage dem senere fra stemmechatten.",
       "doneTitle": "Alt er klar!",
       "doneSubtitle": "Din AI kører udelukkende på din enhed, så dine samtaler forbliver private.",
       "start": "Begynd at chatte"

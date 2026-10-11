@@ -9,6 +9,7 @@ import {
   log,
   modelDownloadProgress,
   resolveCuratedModels,
+  sizeWeightedProgress,
 } from 'helpers';
 import { getModelById } from 'repositories';
 import { Model, ModelDownload } from 'types';
@@ -32,6 +33,7 @@ export interface CuratedModels {
     curated: readonly CuratedModel[],
   ) => readonly ModelDownload[];
   isCatalogueLoaded: boolean;
+  isLoaded: boolean;
   isDownloading: boolean;
   progress: number;
   downloadCurated: (
@@ -46,8 +48,8 @@ export const useCuratedModels = (
   reservedGB = 0,
 ): CuratedModels => {
   const { t } = useTranslation();
-  const { models: storedModels } = useModels();
-  const { downloads } = useModelDownloads();
+  const { models: storedModels, loading: isModelsLoading } = useModels();
+  const { downloads, loading: isDownloadsLoading } = useModelDownloads();
   const { startDownload, stopDownload, warnNotEnoughSpace } =
     useModelDownloader();
 
@@ -125,26 +127,23 @@ export const useCuratedModels = (
     [storedModels, downloads],
   );
 
-  const progress = useMemo(() => {
-    const totalGB = targets.reduce((sum, model) => sum + model.sizeGB, 0);
-    if (totalGB <= 0) {
-      return 0;
-    }
+  const progress = useMemo(
+    () =>
+      sizeWeightedProgress(
+        targets.map(model => {
+          const download = downloads.find(entry => entry.model.id === model.id);
 
-    const downloadedGB = targets.reduce((sum, model) => {
-      const download = downloads.find(entry => entry.model.id === model.id);
+          if (download) {
+            return { model, progress: modelDownloadProgress(download) };
+          }
 
-      if (download) {
-        return sum + modelDownloadProgress(download) * model.sizeGB;
-      }
+          const isStored = storedModels.some(stored => stored.id === model.id);
 
-      const isStored = storedModels.some(stored => stored.id === model.id);
-
-      return isStored ? sum + model.sizeGB : sum;
-    }, 0);
-
-    return downloadedGB / totalGB;
-  }, [targets, downloads, storedModels]);
+          return { model, progress: isStored ? 1 : 0 };
+        }),
+      ),
+    [targets, downloads, storedModels],
+  );
 
   const downloadCurated = useCallback(
     async (
@@ -227,6 +226,7 @@ export const useCuratedModels = (
             startDownload(model, {
               alertOnFailure: false,
               signal: batchAbort.signal,
+              skipSpaceCheck: true,
             }),
           ),
         );
@@ -294,6 +294,7 @@ export const useCuratedModels = (
     findModelsToDownload,
     findPendingDownloads,
     isCatalogueLoaded: catalogue.length > 0,
+    isLoaded: !isModelsLoading && !isDownloadsLoading,
     isDownloading,
     progress,
     downloadCurated,

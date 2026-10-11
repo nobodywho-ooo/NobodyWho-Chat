@@ -298,6 +298,28 @@ test('checks disk space against what other downloads still have to write', async
   expect(mockDownloadModelPart).not.toHaveBeenCalled();
 });
 
+test('leaves the space check to a batch that already did it', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  // Would refuse the model on its own.
+  mockCheckDiskSpaceForModel.mockReturnValue({
+    fits: false,
+    requiredGB: 1.5,
+    availableGB: 1,
+  });
+  mockDownloadModelPart.mockResolvedValue('/docs/models/121/model-121.gguf');
+  const { model } = pendingDownload(121);
+
+  const { result } = await renderHook(() => useModelDownloader());
+  await act(async () => {
+    await result.current.startDownload(model, { skipSpaceCheck: true });
+  });
+
+  expect(mockCheckDiskSpaceForModel).not.toHaveBeenCalled();
+  expect(createModelDownload).toHaveBeenCalledWith(model);
+  expect(alert).not.toHaveBeenCalled();
+  alert.mockRestore();
+});
+
 test('names the models in one alert when a batch does not fit', async () => {
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   const { result } = await renderHook(() => useModelDownloader());

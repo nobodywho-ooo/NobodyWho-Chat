@@ -52,6 +52,10 @@ const subscribeActiveDownloads = (listener: () => void) => {
   };
 };
 
+// False until the launch resume has restarted the pending downloads: until then
+// a pending download only looks interrupted.
+let hasResumedAtLaunch = false;
+
 // Models a foreground resume skipped because their loop still looked alive. A
 // task suspended in the background can fail only after the return; such a
 // loop is restarted instead of being left interrupted.
@@ -72,9 +76,14 @@ export const isDownloadActive = (modelId: number): boolean =>
 export const useActiveDownloadIds = (): ReadonlySet<number> =>
   useSyncExternalStore(subscribeActiveDownloads, () => activeDownloadIds);
 
+// Whether the launch resume has had its chance to restart pending downloads.
+export const useHasResumedAtLaunch = (): boolean =>
+  useSyncExternalStore(subscribeActiveDownloads, () => hasResumedAtLaunch);
+
 interface DownloadOptions {
   alertOnFailure?: boolean;
   signal?: AbortSignal;
+  skipSpaceCheck?: boolean;
 }
 
 // The download loop shared by a fresh start and a resume.
@@ -227,6 +236,11 @@ const useResumePendingDownloads = () => {
         }
       } catch (error) {
         log('resumePendingDownloads', error);
+      } finally {
+        if (!hasResumedAtLaunch) {
+          hasResumedAtLaunch = true;
+          activeDownloadsListeners.forEach(listener => listener());
+        }
       }
     },
     [runDownload],
@@ -276,19 +290,20 @@ export const useModelDownloader = () => {
 
   const startDownload = useCallback(
     async (model: Model, options?: DownloadOptions) => {
-      const inProgress = await getModelDownloads().catch(error => {
-        log('startDownload getModelDownloads', error);
-        return [];
-      });
+      if (!options?.skipSpaceCheck) {
+        const inProgress = await getModelDownloads().catch(error => {
+          log('startDownload getModelDownloads', error);
+          return [];
+        });
+        const spaceCheck = checkDiskSpaceForModel(model, inProgress);
 
-      if (options?.signal?.aborted) {
-        return;
+        if (!spaceCheck.fits) {
+          warnNotEnoughSpace([model], spaceCheck);
+          return;
+        }
       }
 
-      const spaceCheck = checkDiskSpaceForModel(model, inProgress);
-
-      if (!spaceCheck.fits) {
-        warnNotEnoughSpace([model], spaceCheck);
+      if (options?.signal?.aborted) {
         return;
       }
 

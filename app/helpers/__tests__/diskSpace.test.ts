@@ -8,6 +8,7 @@ import {
   modelDownloadProgress,
   modelDownloadSizeGB,
   overallDownloadProgress,
+  sizeWeightedProgress,
   remainingDownloadSizeGB,
 } from '../diskSpace';
 
@@ -177,5 +178,24 @@ describe('overallDownloadProgress', () => {
 
   test('is 0 with nothing to weigh', () => {
     expect(overallDownloadProgress([])).toBe(0);
+  });
+});
+
+describe('sizeWeightedProgress', () => {
+  test('weights each model by what it writes to disk, not its headline size', () => {
+    // Parts add up to 3 GB although the catalogue says 1 GB.
+    const big = buildModel(1, {
+      sizeGB: 1,
+      parts: [part('chat-model', 2), part('projection-model', 1)],
+    });
+    const small = buildModel(2, { sizeGB: 1, parts: [part('chat-model', 1)] });
+
+    // (3*1 + 1*0) / (3 + 1)
+    expect(
+      sizeWeightedProgress([
+        { model: big, progress: 1 },
+        { model: small, progress: 0 },
+      ]),
+    ).toBe(0.75);
   });
 });

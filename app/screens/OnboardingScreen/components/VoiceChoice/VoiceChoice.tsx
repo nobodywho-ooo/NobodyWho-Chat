@@ -2,7 +2,11 @@ import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PlatformIcon } from 'components';
-import { curatedOnboardingModels, ModelSetup } from 'helpers';
+import {
+  curatedOnboardingModels,
+  ModelSetup,
+  modelDownloadSizeGB,
+} from 'helpers';
 import { useCuratedModels, useStyled } from 'hooks';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
@@ -31,7 +35,7 @@ export const VoiceChoice: React.FC<OnboardingScreenProps<'VoiceChoice'>> = ({
   const downloadSizeGB = useCallback(
     (setup: ModelSetup) =>
       findModelsToDownload(curatedOnboardingModels(modelId, setup)).reduce(
-        (sum, model) => sum + model.sizeGB,
+        (sum, model) => sum + modelDownloadSizeGB(model),
         0,
       ),
     [findModelsToDownload, modelId],

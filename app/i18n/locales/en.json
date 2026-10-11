@@ -196,6 +196,7 @@
       "downloadingSubtitle": "This can take a few minutes. Keep the app open until it finishes.",
       "downloadProgress": "{{percent}}%",
       "downloadUnavailable": "Couldn't download at the moment, try again later.",
+      "voiceUnavailable": "The voice models couldn't be downloaded. You can resume them later from voice chat.",
       "doneTitle": "All set!",
       "doneSubtitle": "Your AI runs entirely on your device, so your conversations stay private.",
       "start": "Start chatting"
