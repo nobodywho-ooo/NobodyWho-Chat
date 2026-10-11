@@ -45,9 +45,6 @@ const whisper = downloadOf(3, 'Whisper', {
   pipeline: ModelPipeline.speechToText,
 });
 
-const progressBars = () =>
-  screen.container.queryAll(node => node.type === 'ProgressBar');
-
 const setDownloads = (downloads: unknown[], activeIds: number[]) => {
   mockUseModelDownloads.mockReturnValue({ downloads, loading: false });
   mockUseActiveDownloadIds.mockReturnValue(new Set(activeIds));
@@ -75,28 +72,24 @@ test('shows the chat model download in progress instead', async () => {
   expect(screen.queryByTestId('resume-download-button')).toBeNull();
 });
 
-test('shows one progress bar for every chat model download, weighted by size', async () => {
-  setDownloads(
-    [
-      downloadOf(1, 'LFM2.5', { sizeGB: 3, progress: 1 }),
-      downloadOf(2, 'Bonsai', { sizeGB: 1, progress: 0 }),
-    ],
-    [1, 2],
-  );
+test('shows one overall progress for every chat model download', async () => {
+  setDownloads([lfm, bonsai], [lfm.model.id, bonsai.model.id]);
   await render(<NoModelDownloadedScreen />);
 
-  // (3*1 + 1*0) / (3 + 1)
-  expect(progressBars().map(bar => bar.props.progress)).toEqual([0.75]);
-  // No per-model list.
+  // One percentage (weighted by size, see overallDownloadProgress), no
+  // per-model list.
+  expect(
+    screen.getAllByText('screens.noModelDownloaded.downloadProgress'),
+  ).toHaveLength(1);
   expect(screen.queryByText('LFM2.5')).toBeNull();
   expect(screen.queryByText('Bonsai')).toBeNull();
 });
 
-test('offers to resume once every chat model download is paused', async () => {
+test('offers to resume once every chat model download is interrupted', async () => {
   setDownloads([lfm], []);
   await render(<NoModelDownloadedScreen />);
 
-  screen.getByText('screens.noModelDownloaded.pausedTitle');
+  screen.getByText('screens.noModelDownloaded.interruptedTitle');
   await fireEvent.press(screen.getByTestId('resume-download-button'));
   expect(mockResumeDownloads).toHaveBeenCalledTimes(1);
 });
@@ -114,7 +107,7 @@ test('only a chat model download counts as downloading', async () => {
   setDownloads([lfm, whisper], [whisper.model.id]);
   await render(<NoModelDownloadedScreen />);
 
-  screen.getByText('screens.noModelDownloaded.pausedTitle');
+  screen.getByText('screens.noModelDownloaded.interruptedTitle');
   screen.getByTestId('resume-download-button');
 });
 

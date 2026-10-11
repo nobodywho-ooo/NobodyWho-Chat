@@ -22,6 +22,7 @@ import {
 } from './modelCatalogue';
 import {
   curatedChatModel,
+  curatedOnboardingModels,
   FIRST_PICK_TAG,
   fulfills,
   resolveCuratedModels,
@@ -52,6 +53,7 @@ import {
   checkDiskSpaceForModels,
   modelDownloadProgress,
   modelDownloadSizeGB,
+  overallDownloadProgress,
 } from './diskSpace';
 import { sleep } from './async';
 import {
@@ -105,7 +107,7 @@ export type { TtsEngine, TtsLanguageOption } from './ttsEngine';
 export type { SttLanguageOption } from './sttLanguages';
 export type { PipelineIcon } from './pipelineIcon';
 export type { DiskSpaceCheck } from './diskSpace';
-export type { CuratedModel } from './curatedModels';
+export type { CuratedModel, ModelSetup } from './curatedModels';
 export type {
   ImplicitThinkOpen,
   ParsedThinking,
@@ -135,6 +137,7 @@ export {
   checkDiskSpaceForModels,
   modelDownloadProgress,
   modelDownloadSizeGB,
+  overallDownloadProgress,
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,
@@ -190,6 +193,7 @@ export {
   fetchModelCatalogue,
   byCatalogueOrder,
   curatedChatModel,
+  curatedOnboardingModels,
   FIRST_PICK_TAG,
   fulfills,
   resolveCuratedModels,

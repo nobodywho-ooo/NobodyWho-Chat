@@ -247,7 +247,7 @@ test('does not start a download its caller gave up on', async () => {
   expect(mockDownloadModelPart).not.toHaveBeenCalled();
 });
 
-test('tracks whether a download is running, and resumes a paused one on request', async () => {
+test('tracks whether a download is running, and resumes an interrupted one on request', async () => {
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   const download = pendingDownload(115);
   let failPart: (error: Error) => void = () => {};

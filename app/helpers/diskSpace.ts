@@ -51,6 +51,29 @@ export function modelDownloadProgress(download: ModelDownload): number {
   return downloaded / totalSize;
 }
 
+// Progress (0..1) across several downloads, weighted by each model's size.
+export const overallDownloadProgress = (
+  downloads: readonly ModelDownload[],
+): number => {
+  const totalGB = downloads.reduce(
+    (sum, { model }) => sum + modelDownloadSizeGB(model),
+    0,
+  );
+
+  if (totalGB <= 0) {
+    return 0;
+  }
+
+  const downloadedGB = downloads.reduce(
+    (sum, download) =>
+      sum +
+      modelDownloadProgress(download) * modelDownloadSizeGB(download.model),
+    0,
+  );
+
+  return downloadedGB / totalGB;
+};
+
 // What a download in progress still has to write: the model's size times the
 // share of it not downloaded yet.
 export const remainingDownloadSizeGB = (download: ModelDownload): number =>

@@ -1,8 +1,8 @@
 import React from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button, PlatformIcon, ProgressBar, Text } from 'components';
-import { modelDownloadProgress, modelDownloadSizeGB } from 'helpers';
+import { Button, PlatformIcon, Text } from 'components';
+import { overallDownloadProgress } from 'helpers';
 import { useActiveDownloadIds, useModelDownloader, useStyled } from 'hooks';
 import { ModelDownload } from 'types';
 
@@ -11,26 +11,6 @@ import styles from './DownloadingChatModels.styles';
 interface DownloadingChatModelsProps {
   downloads: readonly ModelDownload[];
 }
-
-const overallProgress = (downloads: readonly ModelDownload[]): number => {
-  const totalGB = downloads.reduce(
-    (sum, { model }) => sum + modelDownloadSizeGB(model),
-    0,
-  );
-
-  if (totalGB <= 0) {
-    return 0;
-  }
-
-  const downloadedGB = downloads.reduce(
-    (sum, download) =>
-      sum +
-      modelDownloadProgress(download) * modelDownloadSizeGB(download.model),
-    0,
-  );
-
-  return downloadedGB / totalGB;
-};
 
 // Stands in for "No model available" while chat models are on their way, e.g.
 // after the app was closed during onboarding's download.
@@ -45,7 +25,7 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
   const count = downloads.length;
 
   const isAnyActive = downloads.some(({ model }) => activeIds.has(model.id));
-  const progress = overallProgress(downloads);
+  const progress = overallDownloadProgress(downloads);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
@@ -59,7 +39,7 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
         {t(
           isAnyActive
             ? 'screens.noModelDownloaded.downloadingTitle'
-            : 'screens.noModelDownloaded.pausedTitle',
+            : 'screens.noModelDownloaded.interruptedTitle',
           { count },
         )}
       </Text>
@@ -70,7 +50,7 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
         {t(
           isAnyActive
             ? 'screens.noModelDownloaded.downloadingHint'
-            : 'screens.noModelDownloaded.pausedHint',
+            : 'screens.noModelDownloaded.interruptedHint',
           { count },
         )}
       </Text>
@@ -80,7 +60,6 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
             percent: Math.round(Math.min(progress, 1) * 100),
           })}
         </Text>
-        <ProgressBar progress={progress} />
       </View>
       <View style={styles.buttonsContainer}>
         {isAnyActive ? (
@@ -88,6 +67,7 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
             title={t('screens.models.stopDownload', { count })}
             testID="stop-download-button"
             variant="secondary"
+            small
             onPress={() =>
               promptStopDownloads(downloads.map(({ model }) => model))
             }
@@ -98,6 +78,7 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
             testID="resume-download-button"
             icon={{ iosIconName: 'play.fill', androidIconName: 'play_arrow' }}
             onPress={resumeDownloads}
+            small
           />
         )}
       </View>

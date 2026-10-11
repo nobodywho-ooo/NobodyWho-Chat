@@ -21,6 +21,7 @@ export default StyleSheet.create({
   },
   buttonsContainer: {
     alignSelf: 'stretch',
+    alignItems: 'center',
     paddingTop: Spacings.xl,
     gap: Spacings.md,
   },

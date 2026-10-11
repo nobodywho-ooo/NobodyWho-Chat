@@ -1,15 +1,9 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Alert, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import React, { useCallback } from 'react';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button, PlatformIcon, ProgressBar, Text } from 'components';
-import {
-  curatedChatModel,
-  CuratedModel,
-  CURATED_VOICE_ONLY_MODELS,
-} from 'helpers';
+import { PlatformIcon } from 'components';
+import { curatedOnboardingModels, ModelSetup } from 'helpers';
 import { useCuratedModels, useStyled } from 'hooks';
-import { Spacings } from 'style';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
 import { useOnboarding } from '../../hooks/useOnboarding';
@@ -27,131 +21,27 @@ export const VoiceChoice: React.FC<OnboardingScreenProps<'VoiceChoice'>> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const { catalogue, onFinish } = useOnboarding();
+  const { catalogue } = useOnboarding();
   const { modelId } = route.params;
-  const insets = useSafeAreaInsets();
 
-  const [isDone, setIsDone] = useState(false);
+  const { findModelsToDownload } = useCuratedModels(catalogue);
 
-  const {
-    findModelsToDownload,
-    isDownloading,
-    progress,
-    downloadCurated,
-    cancel,
-  } = useCuratedModels(catalogue);
-
-  useOnboardingHeader(navigation, isDownloading || isDone);
-
-  const curatedTextModels = useMemo(
-    () => [curatedChatModel(modelId)],
-    [modelId],
-  );
-  const curatedVoiceModels = useMemo(
-    () => [...curatedTextModels, ...CURATED_VOICE_ONLY_MODELS],
-    [curatedTextModels],
-  );
+  useOnboardingHeader(navigation, false);
 
   const downloadSizeGB = useCallback(
-    (curated: readonly CuratedModel[]) =>
-      findModelsToDownload(curated).reduce(
+    (setup: ModelSetup) =>
+      findModelsToDownload(curatedOnboardingModels(modelId, setup)).reduce(
         (sum, model) => sum + model.sizeGB,
         0,
       ),
-    [findModelsToDownload],
+    [findModelsToDownload, modelId],
   );
 
   const download = useCallback(
-    async (curated: readonly CuratedModel[]) => {
-      const outcome = await downloadCurated(curated, {
-        alertOnFailure: false,
-      });
-
-      // The download itself selected the chat model into its free slot.
-      if (outcome === 'done') {
-        setIsDone(true);
-      }
-
-      // Still downloading in the background: the app shows its progress.
-      if (outcome === 'inProgress') {
-        onFinish();
-      }
-
-      if (outcome === 'failed') {
-        Alert.alert(
-          t('common.somethingWentWrong'),
-          t('screens.onboarding.downloadUnavailable'),
-        );
-        onFinish();
-      }
-    },
-    [downloadCurated, onFinish, t],
+    (setup: ModelSetup) =>
+      navigation.navigate('OnboardingDownload', { modelId, setup }),
+    [navigation, modelId],
   );
-
-  if (isDone) {
-    return (
-      <View
-        style={[
-          styles.doneContainer,
-          {
-            backgroundColor: colors.surface,
-            paddingBottom: insets.bottom + Spacings.lg,
-          },
-        ]}
-      >
-        <View style={styles.doneContent}>
-          <PlatformIcon
-            iosIconName="checkmark.circle.fill"
-            androidIconName="check_circle"
-            size={44}
-            color={colors.successSurface}
-          />
-          <Text variant="h1" style={styles.doneTitle}>
-            {t('screens.onboarding.doneTitle')}
-          </Text>
-          <Text
-            variant="body1"
-            style={[styles.doneSubtitle, { color: colors.onSurfaceVariant }]}
-          >
-            {t('screens.onboarding.doneSubtitle')}
-          </Text>
-        </View>
-        <Button
-          title={t('screens.onboarding.start')}
-          testID="onboarding-start-button"
-          onPress={onFinish}
-        />
-      </View>
-    );
-  }
-
-  if (isDownloading) {
-    return (
-      <OnboardingStep
-        header={t('screens.onboarding.downloadingHeader')}
-        title={t('screens.onboarding.downloadingTitle')}
-        subtitle={t('screens.onboarding.downloadingSubtitle')}
-        footer={
-          <Button
-            title={t('common.cancel')}
-            testID="onboarding-cancel-button"
-            variant="secondary"
-            onPress={cancel}
-            style={styles.cancelButton}
-          />
-        }
-      >
-        <View style={styles.progressContainer}>
-          <Text variant="body2" bold style={styles.progressLabel}>
-            {t('screens.onboarding.downloadProgress', {
-              percent: Math.round(Math.min(progress, 1) * 100),
-            })}
-          </Text>
-          <ProgressBar progress={progress} />
-        </View>
-      </OnboardingStep>
-    );
-  }
 
   return (
     <OnboardingStep
@@ -171,10 +61,10 @@ export const VoiceChoice: React.FC<OnboardingScreenProps<'VoiceChoice'>> = ({
           </View>
         }
         title={t('screens.onboarding.textOnly')}
-        sizeGB={downloadSizeGB(curatedTextModels)}
+        sizeGB={downloadSizeGB('textOnly')}
         small
         testID="onboarding-text-only-button"
-        onPress={() => download(curatedTextModels)}
+        onPress={() => download('textOnly')}
       />
       <OnboardingCard
         icon={
@@ -188,10 +78,10 @@ export const VoiceChoice: React.FC<OnboardingScreenProps<'VoiceChoice'>> = ({
           </View>
         }
         title={t('screens.onboarding.textAndVoice')}
-        sizeGB={downloadSizeGB(curatedVoiceModels)}
+        sizeGB={downloadSizeGB('textAndVoice')}
         small
         testID="onboarding-text-voice-button"
-        onPress={() => download(curatedVoiceModels)}
+        onPress={() => download('textAndVoice')}
       />
     </OnboardingStep>
   );

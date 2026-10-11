@@ -12,6 +12,24 @@ interface VoiceSetupProps {
   status: VoiceAssistantStatus;
 }
 
+const descriptionKey = ({
+  isDownloading,
+  isInterrupted,
+}: {
+  isDownloading: boolean;
+  isInterrupted: boolean;
+}) => {
+  if (isDownloading) {
+    return 'screens.voiceAssistant.setup.downloadInProgress';
+  }
+
+  if (isInterrupted) {
+    return 'screens.voiceAssistant.setup.downloadInterrupted';
+  }
+
+  return 'screens.voiceAssistant.setup.description';
+};
+
 export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
@@ -19,8 +37,10 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
     needsDownload,
     canDownload,
     isDownloading,
+    isInterrupted,
     progress,
     downloadCurated,
+    resume,
     cancel,
   } = useVoiceModelDownloads();
 
@@ -52,11 +72,7 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
         variant="body2"
         style={[styles.description, { color: colors.onSurfaceVariant }]}
       >
-        {t(
-          isDownloading
-            ? 'screens.voiceAssistant.setup.downloadInProgress'
-            : 'screens.voiceAssistant.setup.description',
-        )}
+        {t(descriptionKey({ isDownloading, isInterrupted }))}
       </Text>
       {isDownloading ? (
         <View style={styles.downloadContainer}>
@@ -98,6 +114,14 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
               title={t('screens.voiceAssistant.setup.downloadMissing')}
               disabled={!canDownload}
               onPress={downloadCurated}
+              style={styles.downloadButton}
+            />
+          ) : isInterrupted ? (
+            <Button
+              title={t('screens.voiceAssistant.setup.resumeDownload')}
+              testID="voice-resume-download-button"
+              icon={{ iosIconName: 'play.fill', androidIconName: 'play_arrow' }}
+              onPress={resume}
               style={styles.downloadButton}
             />
           ) : (

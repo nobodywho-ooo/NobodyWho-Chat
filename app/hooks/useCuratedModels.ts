@@ -11,7 +11,7 @@ import {
   resolveCuratedModels,
 } from 'helpers';
 import { getModelById } from 'repositories';
-import { Model } from 'types';
+import { Model, ModelDownload } from 'types';
 import { isDownloadActive, useModelDownloader } from './useModelDownloader';
 import { useModelDownloads } from './useModelDownloads';
 import { useModels } from './useModels';
@@ -28,6 +28,9 @@ export interface CuratedModels {
     curated: readonly CuratedModel[],
   ) => readonly CuratedModel[];
   findModelsToDownload: (curated: readonly CuratedModel[]) => Model[];
+  findPendingDownloads: (
+    curated: readonly CuratedModel[],
+  ) => readonly ModelDownload[];
   isCatalogueLoaded: boolean;
   isDownloading: boolean;
   progress: number;
@@ -108,6 +111,18 @@ export const useCuratedModels = (
     (curated: readonly CuratedModel[]) =>
       resolveCuratedModels(findCuratedToDownload(curated), catalogue),
     [findCuratedToDownload, catalogue],
+  );
+
+  const findPendingDownloads = useCallback(
+    (curated: readonly CuratedModel[]) =>
+      downloads.filter(download =>
+        curated.some(
+          entry =>
+            fulfills(download.model, entry) &&
+            !storedModels.some(model => fulfills(model, entry)),
+        ),
+      ),
+    [storedModels, downloads],
   );
 
   const progress = useMemo(() => {
@@ -277,6 +292,7 @@ export const useCuratedModels = (
   return {
     findCuratedToDownload,
     findModelsToDownload,
+    findPendingDownloads,
     isCatalogueLoaded: catalogue.length > 0,
     isDownloading,
     progress,

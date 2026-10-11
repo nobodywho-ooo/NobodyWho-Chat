@@ -2,6 +2,7 @@ import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { usePreventRemove } from '@react-navigation/native';
 
+import { CURATED_VOICE_ONLY_MODELS } from 'helpers';
 import { buildModel } from 'jest/factories/model';
 import { Model, ModelPipeline } from 'types';
 
@@ -16,6 +17,18 @@ const stt = buildModel(4, {
   pipeline: ModelPipeline.speechToText,
   tags: ['Recommended'],
 });
+
+// Voice models still to download unless a test says otherwise.
+const mockFindCuratedToDownload = jest.fn(
+  (curated: readonly unknown[]) => curated,
+);
+
+jest.mock('hooks/useCuratedModels', () => ({
+  useCuratedModels: () => ({
+    findCuratedToDownload: (curated: readonly unknown[]) =>
+      mockFindCuratedToDownload(curated),
+  }),
+}));
 
 const navigation = { navigate: jest.fn(), setOptions: jest.fn() };
 
@@ -36,6 +49,7 @@ const cardNames = () =>
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockFindCuratedToDownload.mockImplementation(curated => curated);
 });
 
 test('suggests the tagged chat models in catalogue order', async () => {
@@ -60,6 +74,21 @@ test('pressing a model opens the voice choice for it', async () => {
 
   expect(navigation.navigate).toHaveBeenCalledWith('VoiceChoice', {
     modelId: recommended.id,
+  });
+});
+
+test('goes straight to the download when the voice models are already there', async () => {
+  mockFindCuratedToDownload.mockReturnValue([]);
+  await renderChoice([recommended, firstPick]);
+
+  await fireEvent.press(screen.getByLabelText(recommended.name));
+
+  expect(mockFindCuratedToDownload).toHaveBeenCalledWith(
+    CURATED_VOICE_ONLY_MODELS,
+  );
+  expect(navigation.navigate).toHaveBeenCalledWith('OnboardingDownload', {
+    modelId: recommended.id,
+    setup: 'textOnly',
   });
 });
 

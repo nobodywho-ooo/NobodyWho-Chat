@@ -54,7 +54,7 @@ const subscribeActiveDownloads = (listener: () => void) => {
 
 // Models a foreground resume skipped because their loop still looked alive. A
 // task suspended in the background can fail only after the return; such a
-// loop is restarted instead of being left paused.
+// loop is restarted instead of being left interrupted.
 const skippedByResume = new Set<number>();
 
 // Models whose failure the user was already told about. Resume retries pending
@@ -67,7 +67,7 @@ export const isDownloadActive = (modelId: number): boolean =>
   activeDownloads.has(modelId);
 
 // The models whose download loop is running, re-rendering when one starts or
-// stops: a pending download that isn't in it is paused (it failed, or the app
+// stops: a pending download that isn't in it is interrupted (it failed, or the app
 // was closed mid-download).
 export const useActiveDownloadIds = (): ReadonlySet<number> =>
   useSyncExternalStore(subscribeActiveDownloads, () => activeDownloadIds);

@@ -39,6 +39,18 @@ export const CURATED_VOICE_ONLY_MODELS: readonly CuratedModel[] = [
   { accepts: isVadPipeline, matches: hasTag(RECOMMENDED_TAG) },
 ];
 
+// What onboarding downloads: the picked chat model alone, or with the voice
+// models.
+export type ModelSetup = 'textOnly' | 'textAndVoice';
+
+export const curatedOnboardingModels = (
+  modelId: number,
+  setup: ModelSetup,
+): CuratedModel[] => [
+  curatedChatModel(modelId),
+  ...(setup === 'textAndVoice' ? CURATED_VOICE_ONLY_MODELS : []),
+];
+
 export const CURATED_VOICE_PIPELINE_MODELS: readonly CuratedModel[] = [
   ...CURATED_TEXT_MODELS,
   ...CURATED_VOICE_ONLY_MODELS,

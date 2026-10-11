@@ -5,6 +5,7 @@ import { Model } from 'types';
 
 import { OnboardingParamList } from '../../Onboarding.types';
 import { OnboardingContext } from '../../hooks/useOnboarding';
+import { OnboardingDownload } from '../OnboardingDownload/OnboardingDownload';
 import { TextModelChoice } from '../TextModelChoice/TextModelChoice';
 import { VoiceChoice } from '../VoiceChoice/VoiceChoice';
 
@@ -35,6 +36,11 @@ export const OnboardingChoices: React.FC<OnboardingChoicesProps> = ({
       >
         <Stack.Screen name="TextModelChoice" component={TextModelChoice} />
         <Stack.Screen name="VoiceChoice" component={VoiceChoice} />
+        <Stack.Screen
+          name="OnboardingDownload"
+          component={OnboardingDownload}
+          options={{ headerShown: false }}
+        />
       </Stack.Navigator>
     </OnboardingContext.Provider>
   );

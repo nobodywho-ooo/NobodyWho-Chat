@@ -1,6 +1,12 @@
 import React, { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { byCatalogueOrder, FIRST_PICK_TAG, RECOMMENDED_TAG } from 'helpers';
+import {
+  byCatalogueOrder,
+  CURATED_VOICE_ONLY_MODELS,
+  FIRST_PICK_TAG,
+  RECOMMENDED_TAG,
+} from 'helpers';
+import { useCuratedModels } from 'hooks';
 import { isChatPipeline, Model } from 'types';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
@@ -26,13 +32,24 @@ export const TextModelChoice: React.FC<
   const { t } = useTranslation();
   const { catalogue } = useOnboarding();
 
+  const { findCuratedToDownload } = useCuratedModels(catalogue);
+
   useOnboardingHeader(navigation, false);
 
   const chatModels = useMemo(() => suggestedChatModels(catalogue), [catalogue]);
 
+  const hasVoiceModels =
+    findCuratedToDownload(CURATED_VOICE_ONLY_MODELS).length === 0;
+
   const handlePress = useCallback(
-    (model: Model) => navigation.navigate('VoiceChoice', { modelId: model.id }),
-    [navigation],
+    (model: Model) =>
+      hasVoiceModels
+        ? navigation.navigate('OnboardingDownload', {
+            modelId: model.id,
+            setup: 'textOnly',
+          })
+        : navigation.navigate('VoiceChoice', { modelId: model.id }),
+    [navigation, hasVoiceModels],
   );
 
   return (

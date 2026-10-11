@@ -175,7 +175,7 @@ test('alerts on failure and keeps the failed downloads to resume', async () => {
   });
 
   expect(outcome).toBe('failed');
-  // Paused, not discarded: the progress so far is kept for a resume.
+  // Interrupted, not discarded: the progress so far is kept for a resume.
   expect(mockStopDownload).not.toHaveBeenCalled();
   expect(alertSpy).toHaveBeenCalledWith(
     'screens.models.downloadFailedTitle',
@@ -336,6 +336,19 @@ test('fails rather than download part of the set', async () => {
 
   expect(outcome).toBe('failed');
   expect(mockStartDownload).not.toHaveBeenCalled();
+});
+
+test('finds the downloads standing in for curated models not installed yet', async () => {
+  const sttDownload = { model: stt, partsProgress: [] };
+  const extraTtsDownload = { model: tts, partsProgress: [] };
+  mockPendingDownloads = [sttDownload, extraTtsDownload];
+  // A TTS model is already installed: another TTS download is not needed.
+  mockStoredModels = [buildModel(9, { pipeline: ModelPipeline.textToSpeech })];
+  const { result } = await renderHook(() => useCuratedModels([]));
+
+  expect(
+    result.current.findPendingDownloads(CURATED_VOICE_PIPELINE_MODELS),
+  ).toEqual([sttDownload]);
 });
 
 test('uses a catalogue it is given without fetching one', async () => {

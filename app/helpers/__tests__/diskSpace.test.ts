@@ -7,6 +7,7 @@ import {
   checkDiskSpaceForModel,
   modelDownloadProgress,
   modelDownloadSizeGB,
+  overallDownloadProgress,
   remainingDownloadSizeGB,
 } from '../diskSpace';
 
@@ -155,5 +156,26 @@ describe('modelDownloadProgress', () => {
     expect(
       modelDownloadProgress({ model: buildModel(3), partsProgress: [] }),
     ).toBe(0);
+  });
+});
+
+describe('overallDownloadProgress', () => {
+  const downloadOf = (id: number, sizeGB: number, progress: number) => {
+    const chat = part('chat-model', sizeGB);
+    return {
+      model: buildModel(id, { parts: [chat] }),
+      partsProgress: [{ ...chat, progress }],
+    };
+  };
+
+  test('weights each download by its model size', () => {
+    // (3*1 + 1*0) / (3 + 1)
+    expect(
+      overallDownloadProgress([downloadOf(1, 3, 1), downloadOf(2, 1, 0)]),
+    ).toBe(0.75);
+  });
+
+  test('is 0 with nothing to weigh', () => {
+    expect(overallDownloadProgress([])).toBe(0);
   });
 });
