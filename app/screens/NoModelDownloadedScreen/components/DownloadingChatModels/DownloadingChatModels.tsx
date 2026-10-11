@@ -2,8 +2,8 @@ import React from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, ProgressBar, Text } from 'components';
+import { modelDownloadProgress, modelDownloadSizeGB } from 'helpers';
 import { useActiveDownloadIds, useModelDownloader, useStyled } from 'hooks';
-import { modelDownloadProgress } from 'repositories';
 import { ModelDownload } from 'types';
 
 import styles from './DownloadingChatModels.styles';
@@ -12,6 +12,26 @@ interface DownloadingChatModelsProps {
   downloads: readonly ModelDownload[];
 }
 
+const overallProgress = (downloads: readonly ModelDownload[]): number => {
+  const totalGB = downloads.reduce(
+    (sum, { model }) => sum + modelDownloadSizeGB(model),
+    0,
+  );
+
+  if (totalGB <= 0) {
+    return 0;
+  }
+
+  const downloadedGB = downloads.reduce(
+    (sum, download) =>
+      sum +
+      modelDownloadProgress(download) * modelDownloadSizeGB(download.model),
+    0,
+  );
+
+  return downloadedGB / totalGB;
+};
+
 // Stands in for "No model available" while chat models are on their way, e.g.
 // after the app was closed during onboarding's download.
 export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
@@ -19,12 +39,13 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const { resumeDownloads } = useModelDownloader();
+  const { resumeDownloads, promptStopDownloads } = useModelDownloader();
   const activeIds = useActiveDownloadIds();
 
   const count = downloads.length;
+
   const isAnyActive = downloads.some(({ model }) => activeIds.has(model.id));
-  const isAnyPaused = downloads.some(({ model }) => !activeIds.has(model.id));
+  const progress = overallProgress(downloads);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
@@ -32,7 +53,7 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
         iosIconName={isAnyActive ? 'arrow.down.circle' : 'pause.circle'}
         androidIconName={isAnyActive ? 'downloading' : 'pause_circle'}
         size={50}
-        color={colors.onSurfaceDisabled}
+        color={colors.ctaContentPrimary}
       />
       <Text variant="h3" style={styles.title}>
         {t(
@@ -42,31 +63,8 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
           { count },
         )}
       </Text>
-      <View style={styles.modelsContainer}>
-        {downloads.map(download => {
-          const { model } = download;
-          const progress = modelDownloadProgress(download);
-
-          return (
-            <View key={model.id} style={styles.modelContainer}>
-              <Text variant="h4" bold>
-                {model.name}
-              </Text>
-              <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
-                {t(
-                  activeIds.has(model.id)
-                    ? 'screens.noModelDownloaded.downloadProgress'
-                    : 'screens.noModelDownloaded.pausedProgress',
-                  { percent: Math.round(Math.min(progress, 1) * 100) },
-                )}
-              </Text>
-              <ProgressBar progress={progress} />
-            </View>
-          );
-        })}
-      </View>
       <Text
-        variant="body2"
+        variant="body1"
         style={[styles.hint, { color: colors.onSurfaceVariant }]}
       >
         {t(
@@ -76,14 +74,33 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
           { count },
         )}
       </Text>
-      {isAnyPaused && (
-        <Button
-          title={t('screens.noModelDownloaded.resume')}
-          testID="resume-download-button"
-          icon={{ iosIconName: 'play.fill', androidIconName: 'play_arrow' }}
-          onPress={resumeDownloads}
-        />
-      )}
+      <View style={styles.progressContainer}>
+        <Text variant="body2" bold>
+          {t('screens.noModelDownloaded.downloadProgress', {
+            percent: Math.round(Math.min(progress, 1) * 100),
+          })}
+        </Text>
+        <ProgressBar progress={progress} />
+      </View>
+      <View style={styles.buttonsContainer}>
+        {isAnyActive ? (
+          <Button
+            title={t('screens.models.stopDownload', { count })}
+            testID="stop-download-button"
+            variant="secondary"
+            onPress={() =>
+              promptStopDownloads(downloads.map(({ model }) => model))
+            }
+          />
+        ) : (
+          <Button
+            title={t('screens.noModelDownloaded.resume')}
+            testID="resume-download-button"
+            icon={{ iosIconName: 'play.fill', androidIconName: 'play_arrow' }}
+            onPress={resumeDownloads}
+          />
+        )}
+      </View>
     </View>
   );
 };

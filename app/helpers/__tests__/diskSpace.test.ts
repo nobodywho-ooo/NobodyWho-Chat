@@ -5,6 +5,7 @@ import { buildModel } from 'jest/factories/model';
 import {
   availableDiskSpaceGB,
   checkDiskSpaceForModel,
+  modelDownloadProgress,
   modelDownloadSizeGB,
   remainingDownloadSizeGB,
 } from '../diskSpace';
@@ -133,5 +134,26 @@ describe('remainingDownloadSizeGB', () => {
     };
 
     expect(remainingDownloadSizeGB(download)).toBe(2);
+  });
+});
+
+describe('modelDownloadProgress', () => {
+  test('weights each part by its size', () => {
+    const download = {
+      model: buildModel(3),
+      partsProgress: [
+        { ...part('chat-model', 3), progress: 1 }, // fully done, weight 3
+        { ...part('projection-model', 1), progress: 0 }, // not started, weight 1
+      ],
+    };
+
+    // (1*3 + 0*1) / (3 + 1) = 0.75
+    expect(modelDownloadProgress(download)).toBe(0.75);
+  });
+
+  test('returns 0 when there is no size to weigh', () => {
+    expect(
+      modelDownloadProgress({ model: buildModel(3), partsProgress: [] }),
+    ).toBe(0);
   });
 });

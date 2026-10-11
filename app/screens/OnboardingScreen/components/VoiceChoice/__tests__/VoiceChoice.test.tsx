@@ -159,13 +159,13 @@ test('shows All set once downloaded, and Start enters the app', async () => {
   expect(onFinish).toHaveBeenCalledTimes(1);
 });
 
-test('selects the picked model once downloaded, over any chat model already in place', async () => {
+test('leaves selecting the picked model to the download itself', async () => {
   mockDownloads.downloadCurated.mockResolvedValue('done');
   await renderChoice(firstPick.id);
 
   await fireEvent.press(screen.getByTestId('onboarding-text-only-button'));
 
-  expect(selectModel).toHaveBeenCalledWith(firstPick);
+  expect(selectModel).not.toHaveBeenCalled();
   screen.getByText('screens.onboarding.doneTitle');
 });
 

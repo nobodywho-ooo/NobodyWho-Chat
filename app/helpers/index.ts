@@ -44,11 +44,13 @@ import {
   filterModelsByDeviceMemory,
   modelRequiredMemoryGB,
   multimodalContextSize,
+  VOICE_MODELS_RESERVED_GB,
 } from './deviceMemory';
 import {
   availableDiskSpaceGB,
   checkDiskSpaceForModel,
   checkDiskSpaceForModels,
+  modelDownloadProgress,
   modelDownloadSizeGB,
 } from './diskSpace';
 import { sleep } from './async';
@@ -125,11 +127,13 @@ export {
   toFileUri,
   toPlainPath,
   filterModelsByDeviceMemory,
+  VOICE_MODELS_RESERVED_GB,
   modelRequiredMemoryGB,
   multimodalContextSize,
   availableDiskSpaceGB,
   checkDiskSpaceForModel,
   checkDiskSpaceForModels,
+  modelDownloadProgress,
   modelDownloadSizeGB,
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,

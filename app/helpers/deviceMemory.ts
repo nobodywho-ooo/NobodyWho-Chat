@@ -12,7 +12,8 @@ const OS_RESERVED_GB = isIOS ? 2 : 3;
 
 // RAM kept free for the voice models (speech-to-text, text-to-speech and voice
 // activity detection), which the voice assistant holds alongside the chat model.
-const VOICE_MODELS_RESERVED_GB = 0.5;
+// Only reserved where the voice pipeline is planned, not for every list.
+export const VOICE_MODELS_RESERVED_GB = 0.5;
 
 // The projection (mmproj) model is held in memory alongside the chat model, so
 // while running its weights effectively take up twice their on-disk size.
@@ -22,7 +23,12 @@ const deviceRamGB = async (): Promise<number | undefined> => {
   try {
     const bytes = await getTotalMemory();
 
-    return bytes > 0 ? bytes / BYTES_PER_GB : undefined;
+    // -1 when the platform can't answer; NaN or Infinity from a bad reading.
+    if (!Number.isFinite(bytes) || bytes <= 0) {
+      return undefined;
+    }
+
+    return bytes / BYTES_PER_GB;
   } catch (error) {
     log('deviceRamGB failed', error, { capture: true });
     return undefined;
@@ -38,11 +44,13 @@ const partMemoryGB = (part: ModelPart): number =>
 export const modelRequiredMemoryGB = (model: Model): number =>
   model.parts.reduce((total, part) => total + partMemoryGB(part), 0);
 
-// Keep only the models the device has enough RAM to run, with room left for the
-// voice models. If the device total memory can't be read, fall back to
-// returning every model rather than hiding all of them.
+// Keep only the models the device has enough RAM to run, with `reservedGB` left
+// over (e.g. VOICE_MODELS_RESERVED_GB for the voice pipeline). If the device
+// total memory can't be read, fall back to returning every model rather than
+// hiding all of them.
 export const filterModelsByDeviceMemory = async (
   models: Model[],
+  reservedGB = 0,
 ): Promise<Model[]> => {
   const deviceRam = await deviceRamGB();
 
@@ -50,7 +58,7 @@ export const filterModelsByDeviceMemory = async (
     return models;
   }
 
-  const usableMemoryGB = deviceRam - OS_RESERVED_GB - VOICE_MODELS_RESERVED_GB;
+  const usableMemoryGB = deviceRam - OS_RESERVED_GB - reservedGB;
 
   return models.filter(model => modelRequiredMemoryGB(model) <= usableMemoryGB);
 };

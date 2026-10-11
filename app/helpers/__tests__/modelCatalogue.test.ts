@@ -44,10 +44,10 @@ test('keeps only the models the device has the memory to run', async () => {
   jest.mocked(filterModelsByDeviceMemory).mockResolvedValueOnce(catalogue);
 
   await expect(fetchModelCatalogue()).resolves.toEqual(catalogue);
-  expect(filterModelsByDeviceMemory).toHaveBeenCalledWith([
-    ...catalogue,
-    tooBig,
-  ]);
+  expect(filterModelsByDeviceMemory).toHaveBeenCalledWith(
+    [...catalogue, tooBig],
+    0,
+  );
 });
 
 test('rejects on an HTTP error status', async () => {

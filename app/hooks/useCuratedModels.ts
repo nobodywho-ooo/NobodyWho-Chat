@@ -7,9 +7,10 @@ import {
   fetchModelCatalogue,
   fulfills,
   log,
+  modelDownloadProgress,
   resolveCuratedModels,
 } from 'helpers';
-import { getModelById, modelDownloadProgress } from 'repositories';
+import { getModelById } from 'repositories';
 import { Model } from 'types';
 import { isDownloadActive, useModelDownloader } from './useModelDownloader';
 import { useModelDownloads } from './useModelDownloads';
@@ -27,6 +28,7 @@ export interface CuratedModels {
     curated: readonly CuratedModel[],
   ) => readonly CuratedModel[];
   findModelsToDownload: (curated: readonly CuratedModel[]) => Model[];
+  isCatalogueLoaded: boolean;
   isDownloading: boolean;
   progress: number;
   downloadCurated: (
@@ -36,7 +38,10 @@ export interface CuratedModels {
   cancel: () => void;
 }
 
-export const useCuratedModels = (initialCatalogue?: Model[]): CuratedModels => {
+export const useCuratedModels = (
+  initialCatalogue?: Model[],
+  reservedGB = 0,
+): CuratedModels => {
   const { t } = useTranslation();
   const { models: storedModels } = useModels();
   const { downloads } = useModelDownloads();
@@ -53,6 +58,8 @@ export const useCuratedModels = (initialCatalogue?: Model[]): CuratedModels => {
   // Bumped by every downloadCurated/cancel so a batch settling after the user
   // cancelled (or started another one) can't reset the newer state.
   const batchRef = useRef(0);
+  // Aborted by cancel() so a download not started yet never starts.
+  const batchAbortRef = useRef<AbortController | undefined>(undefined);
   // cancel() may run from an awaited callback; read the latest values.
   const targetsRef = useRef(targets);
   targetsRef.current = targets;
@@ -67,7 +74,7 @@ export const useCuratedModels = (initialCatalogue?: Model[]): CuratedModels => {
   );
   const loadCatalogue = useCallback(() => {
     if (cataloguePromise.current === undefined) {
-      const promise = fetchModelCatalogue();
+      const promise = fetchModelCatalogue(reservedGB);
       cataloguePromise.current = promise;
 
       promise.then(
@@ -81,7 +88,7 @@ export const useCuratedModels = (initialCatalogue?: Model[]): CuratedModels => {
       );
     }
     return cataloguePromise.current;
-  }, []);
+  }, [reservedGB]);
 
   useEffect(() => {
     loadCatalogue().catch(() => {});
@@ -143,7 +150,12 @@ export const useCuratedModels = (initialCatalogue?: Model[]): CuratedModels => {
       const curatedToDownload = findCuratedToDownload(curated);
 
       if (curatedToDownload.length === 0) {
-        return 'done';
+        // Some may only be covered by a download still on its way.
+        const isInstalled = curated.every(entry =>
+          storedModels.some(model => fulfills(model, entry)),
+        );
+
+        return isInstalled ? 'done' : 'inProgress';
       }
 
       const endBatch = () => {
@@ -154,6 +166,8 @@ export const useCuratedModels = (initialCatalogue?: Model[]): CuratedModels => {
       // Shows progress while a catalogue that never loaded (offline at mount)
       // is fetched again, and lets the user cancel that wait.
       const batch = ++batchRef.current;
+      const batchAbort = new AbortController();
+      batchAbortRef.current = batchAbort;
       setIsDownloading(true);
 
       let modelsToDownload: Model[] = [];
@@ -169,7 +183,10 @@ export const useCuratedModels = (initialCatalogue?: Model[]): CuratedModels => {
         return 'cancelled';
       }
 
-      if (modelsToDownload.length === 0) {
+      if (
+        modelsToDownload.length === 0 ||
+        modelsToDownload.length < curatedToDownload.length
+      ) {
         endBatch();
         return fail();
       }
@@ -192,7 +209,10 @@ export const useCuratedModels = (initialCatalogue?: Model[]): CuratedModels => {
       try {
         await Promise.all(
           modelsToDownload.map(model =>
-            startDownload(model, { alertOnFailure: false }),
+            startDownload(model, {
+              alertOnFailure: false,
+              signal: batchAbort.signal,
+            }),
           ),
         );
 
@@ -225,17 +245,14 @@ export const useCuratedModels = (initialCatalogue?: Model[]): CuratedModels => {
         return 'inProgress';
       }
 
-      // Drop the half-finished downloads so the user can simply retry.
-      stillFailed?.forEach(stopDownload);
-
       return fail();
     },
     [
       downloads,
+      storedModels,
       findCuratedToDownload,
       loadCatalogue,
       startDownload,
-      stopDownload,
       warnNotEnoughSpace,
       t,
     ],
@@ -243,6 +260,7 @@ export const useCuratedModels = (initialCatalogue?: Model[]): CuratedModels => {
 
   const cancel = useCallback(() => {
     batchRef.current++;
+    batchAbortRef.current?.abort();
     // Only the ones still in flight: stopping a model that already landed would
     // take the "no live download" branch in stopDownload and delete the files
     // of a model that is now installed (and possibly selected into its slot).
@@ -259,6 +277,7 @@ export const useCuratedModels = (initialCatalogue?: Model[]): CuratedModels => {
   return {
     findCuratedToDownload,
     findModelsToDownload,
+    isCatalogueLoaded: catalogue.length > 0,
     isDownloading,
     progress,
     downloadCurated,

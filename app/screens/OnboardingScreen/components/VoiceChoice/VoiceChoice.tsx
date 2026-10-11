@@ -7,10 +7,8 @@ import {
   curatedChatModel,
   CuratedModel,
   CURATED_VOICE_ONLY_MODELS,
-  log,
 } from 'helpers';
 import { useCuratedModels, useStyled } from 'hooks';
-import { selectModel } from 'services';
 import { Spacings } from 'style';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
@@ -69,15 +67,8 @@ export const VoiceChoice: React.FC<OnboardingScreenProps<'VoiceChoice'>> = ({
         alertOnFailure: false,
       });
 
+      // The download itself selected the chat model into its free slot.
       if (outcome === 'done') {
-        const chatModel = catalogue.find(model => model.id === modelId);
-
-        if (chatModel) {
-          await selectModel(chatModel).catch(error =>
-            log('VoiceChoice selectModel', error),
-          );
-        }
-
         setIsDone(true);
       }
 
@@ -94,7 +85,7 @@ export const VoiceChoice: React.FC<OnboardingScreenProps<'VoiceChoice'>> = ({
         onFinish();
       }
     },
-    [catalogue, modelId, downloadCurated, onFinish, t],
+    [downloadCurated, onFinish, t],
   );
 
   if (isDone) {

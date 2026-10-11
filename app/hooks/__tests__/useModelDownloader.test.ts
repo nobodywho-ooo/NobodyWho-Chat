@@ -188,6 +188,65 @@ test('alerts once for a download that keeps failing on each return to the app', 
   alert.mockRestore();
 });
 
+test('restarts, without alerting, a download that fails only after a return to the app skipped it', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const addListener = AppState.addEventListener as jest.Mock;
+  let failPart: (error: Error) => void = () => {};
+  mockDownloadModelPart
+    .mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          failPart = reject;
+        }),
+    )
+    .mockResolvedValueOnce('/docs/models/118/model-118.gguf');
+  mockGetModelDownloads.mockResolvedValue([pendingDownload(118)]);
+
+  await renderHook(() => useResumeModelDownloads());
+  await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(1));
+
+  // Back in the app while the task suspended in the background still looks
+  // alive, so the resume skips it; then it fails.
+  const onChange = [...addListener.mock.calls]
+    .reverse()
+    .find(([type]) => type === 'change')?.[1] as (state: string) => void;
+  await act(async () => onChange('active'));
+  await act(async () => failPart(new Error('connection lost')));
+
+  await waitFor(() => expect(mockInsertModel).toHaveBeenCalled());
+  expect(mockDownloadModelPart).toHaveBeenCalledTimes(2);
+  expect(alert).not.toHaveBeenCalled();
+  alert.mockRestore();
+});
+
+test('does not start a download its caller gave up on', async () => {
+  const controller = new AbortController();
+  const { result } = await renderHook(() => useModelDownloader());
+
+  // Cancelled before the row is created...
+  controller.abort();
+  await act(async () => {
+    await result.current.startDownload(pendingDownload(119).model, {
+      signal: controller.signal,
+    });
+  });
+  expect(createModelDownload).not.toHaveBeenCalled();
+
+  // ...or while it was being created: the row goes again.
+  const late = new AbortController();
+  (createModelDownload as jest.Mock).mockImplementationOnce(async () => {
+    late.abort();
+    return true;
+  });
+  await act(async () => {
+    await result.current.startDownload(pendingDownload(120).model, {
+      signal: late.signal,
+    });
+  });
+  expect(mockDeleteModelDownload).toHaveBeenCalledWith(120);
+  expect(mockDownloadModelPart).not.toHaveBeenCalled();
+});
+
 test('tracks whether a download is running, and resumes a paused one on request', async () => {
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   const download = pendingDownload(115);

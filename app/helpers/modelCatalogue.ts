@@ -4,7 +4,7 @@ import { filterModelsByDeviceMemory } from './deviceMemory';
 export const MODELS_URL =
   'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.2.0.json';
 
-export const TIMEOUT_MS = 5000;
+export const TIMEOUT_MS = 10000;
 
 const UNORDERED = Number.MAX_SAFE_INTEGER;
 
@@ -12,7 +12,7 @@ const UNORDERED = Number.MAX_SAFE_INTEGER;
 export const byCatalogueOrder = (a: Model, b: Model) =>
   (a.order ?? UNORDERED) - (b.order ?? UNORDERED);
 
-export const fetchModelCatalogue = async (): Promise<Model[]> => {
+export const fetchModelCatalogue = async (reservedGB = 0): Promise<Model[]> => {
   const controller = new AbortController();
 
   const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -26,7 +26,7 @@ export const fetchModelCatalogue = async (): Promise<Model[]> => {
 
     const data: Model[] = await response.json();
 
-    return await filterModelsByDeviceMemory(data);
+    return await filterModelsByDeviceMemory(data, reservedGB);
   } finally {
     clearTimeout(timeout);
   }

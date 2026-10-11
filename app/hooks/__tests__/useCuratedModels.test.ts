@@ -21,6 +21,7 @@ const mockStopDownload = jest.fn();
 const mockWarnNotEnoughSpace = jest.fn();
 const mockIsDownloadActive = jest.fn((_modelId: number) => false);
 let mockStoredModels: unknown[] = [];
+let mockPendingDownloads: unknown[] = [];
 
 jest.mock('../useModelDownloader', () => ({
   isDownloadActive: (modelId: number) => mockIsDownloadActive(modelId),
@@ -36,12 +37,14 @@ jest.mock('../useModels', () => ({
 }));
 
 jest.mock('../useModelDownloads', () => ({
-  useModelDownloads: () => ({ downloads: [], loading: false }),
+  useModelDownloads: () => ({
+    downloads: mockPendingDownloads,
+    loading: false,
+  }),
 }));
 
 jest.mock('repositories', () => ({
   getModelById: jest.fn(),
-  modelDownloadProgress: jest.fn(() => 0),
 }));
 
 jest.mock('helpers', () => ({
@@ -51,6 +54,7 @@ jest.mock('helpers', () => ({
     return response.json();
   }),
   log: jest.fn(),
+  modelDownloadProgress: jest.fn(() => 0),
   checkDiskSpaceForModels: jest.fn(() => ({
     fits: true,
     requiredGB: 2.5,
@@ -91,6 +95,7 @@ let alertSpy: jest.SpyInstance;
 beforeEach(() => {
   jest.clearAllMocks();
   mockStoredModels = [];
+  mockPendingDownloads = [];
   alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   globalThis.fetch = jest.fn(async () => ({
     ok: true,
@@ -155,7 +160,7 @@ test('refuses the whole batch with one alert when it does not fit', async () => 
   expect(alertSpy).not.toHaveBeenCalled();
 });
 
-test('alerts on failure and drops only the models that did not land', async () => {
+test('alerts on failure and keeps the failed downloads to resume', async () => {
   // stt never made it to the database; the others did.
   mockGetModelById.mockImplementation(async (id: number) =>
     id === stt.id ? undefined : buildModel(id),
@@ -170,7 +175,8 @@ test('alerts on failure and drops only the models that did not land', async () =
   });
 
   expect(outcome).toBe('failed');
-  expect(mockStopDownload.mock.calls.map(([model]) => model)).toEqual([stt]);
+  // Paused, not discarded: the progress so far is kept for a resume.
+  expect(mockStopDownload).not.toHaveBeenCalled();
   expect(alertSpy).toHaveBeenCalledWith(
     'screens.models.downloadFailedTitle',
     'screens.models.downloadFailedMessage',
@@ -265,7 +271,6 @@ test('leaves the failure alert to a caller that opts out', async () => {
   });
 
   expect(outcome).toBe('failed');
-  expect(mockStopDownload.mock.calls.map(([model]) => model)).toEqual([chat]);
   expect(alertSpy).not.toHaveBeenCalled();
 });
 
@@ -284,6 +289,12 @@ test('a cancelled batch neither alerts nor reports failure', async () => {
   await waitFor(() => expect(result.current.isDownloading).toBe(true));
 
   await act(() => result.current.cancel());
+  // A download that hasn't started yet sees the cancel and never starts.
+  const [, options] = mockStartDownload.mock.lastCall as [
+    unknown,
+    { signal: AbortSignal },
+  ];
+  expect(options.signal.aborted).toBe(true);
   await act(async () => {
     finishDownload();
     expect(await pending).toBe('cancelled');
@@ -291,6 +302,40 @@ test('a cancelled batch neither alerts nor reports failure', async () => {
 
   expect(alertSpy).not.toHaveBeenCalled();
   expect(result.current.isDownloading).toBe(false);
+});
+
+test('reports curated models covered only by a download as still in progress', async () => {
+  mockPendingDownloads = [{ model: chat, partsProgress: [] }];
+  const { result } = await renderHook(() => useCuratedModels([chat]));
+
+  expect(await result.current.downloadCurated(CURATED_TEXT_MODELS)).toBe(
+    'inProgress',
+  );
+  expect(mockStartDownload).not.toHaveBeenCalled();
+});
+
+test('reports curated models already installed as done', async () => {
+  mockStoredModels = [chat];
+  const { result } = await renderHook(() => useCuratedModels([chat]));
+
+  expect(await result.current.downloadCurated(CURATED_TEXT_MODELS)).toBe(
+    'done',
+  );
+});
+
+test('fails rather than download part of the set', async () => {
+  // No TTS model in the catalogue.
+  const { result } = await renderHook(() => useCuratedModels([chat, stt, vad]));
+
+  let outcome;
+  await act(async () => {
+    outcome = await result.current.downloadCurated(
+      CURATED_VOICE_PIPELINE_MODELS,
+    );
+  });
+
+  expect(outcome).toBe('failed');
+  expect(mockStartDownload).not.toHaveBeenCalled();
 });
 
 test('uses a catalogue it is given without fetching one', async () => {
@@ -308,6 +353,7 @@ test('uses a catalogue it is given without fetching one', async () => {
 
   expect(mockStartDownload).toHaveBeenCalledWith(chat, {
     alertOnFailure: false,
+    signal: expect.any(AbortSignal),
   });
   expect(globalThis.fetch).not.toHaveBeenCalled();
 });

@@ -14,13 +14,15 @@ export default StyleSheet.create({
     paddingBottom: Spacings.lg,
     textAlign: 'center',
   },
-  modelsContainer: {
+  progressContainer: {
     alignSelf: 'stretch',
-    gap: Spacings.xl,
-  },
-  modelContainer: {
     alignItems: 'center',
     gap: Spacings.sm,
+  },
+  buttonsContainer: {
+    alignSelf: 'stretch',
+    paddingTop: Spacings.xl,
+    gap: Spacings.md,
   },
   hint: {
     textAlign: 'center',

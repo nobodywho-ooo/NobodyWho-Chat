@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react-native';
 
-import { fetchModelCatalogue } from 'helpers';
+import { fetchModelCatalogue, VOICE_MODELS_RESERVED_GB } from 'helpers';
 import { buildModel } from 'jest/factories/model';
 import { ModelPipeline } from 'types';
 
@@ -67,6 +67,10 @@ test('fetches once and hands the catalogue to the choices', async () => {
   await rerender(<OnboardingScreen onFinish={nextOnFinish} />);
 
   expect(mockFetchModelCatalogue).toHaveBeenCalledTimes(1);
+  // Every text model offered leaves room for the voice models.
+  expect(mockFetchModelCatalogue).toHaveBeenCalledWith(
+    VOICE_MODELS_RESERVED_GB,
+  );
   const [onboardingChoices] = choices();
   expect(onboardingChoices.props.catalogue).toBe(catalogue);
   expect(onboardingChoices.props.onFinish).toBe(nextOnFinish);

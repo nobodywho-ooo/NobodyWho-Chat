@@ -6,6 +6,7 @@ import {
   filterModelsByDeviceMemory,
   modelRequiredMemoryGB,
   multimodalContextSize,
+  VOICE_MODELS_RESERVED_GB,
 } from '../deviceMemory';
 
 const part = (type: string, sizeGB: number) => ({
@@ -45,14 +46,13 @@ describe('modelRequiredMemoryGB', () => {
 });
 
 describe('filterModelsByDeviceMemory', () => {
-  // 8 GB - 2 GB for the OS - 0.5 GB for the voice models -> 5.5 GB usable.
+  // 8 GB - 2 GB for the OS -> 6 GB usable.
   test('keeps models that fit in usable memory and drops the rest', async () => {
     const fits = buildModel(1, { parts: [part('chat-model', 5.5)] });
-    // Would fit without the voice models' reserve.
-    const tooBig = buildModel(2, { parts: [part('chat-model', 6)] });
-    // 3.5 + 1*2 = 5.5 GB, exactly the usable budget -> kept.
+    const tooBig = buildModel(2, { parts: [part('chat-model', 6.5)] });
+    // 4 + 1*2 = 6 GB, exactly the usable budget -> kept.
     const fitsWithProjection = buildModel(3, {
-      parts: [part('chat-model', 3.5), part('projection-model', 1)],
+      parts: [part('chat-model', 4), part('projection-model', 1)],
     });
 
     const result = await filterModelsByDeviceMemory([
@@ -62,6 +62,21 @@ describe('filterModelsByDeviceMemory', () => {
     ]);
 
     expect(result.map(model => model.id)).toEqual([1, 3]);
+  });
+
+  // 6 GB usable - 0.5 GB for the voice models -> 5.5 GB.
+  test('keeps the requested reserve free on top', async () => {
+    const fits = buildModel(1, { parts: [part('chat-model', 5.5)] });
+    const fitsOnlyWithoutVoice = buildModel(2, {
+      parts: [part('chat-model', 6)],
+    });
+
+    const result = await filterModelsByDeviceMemory(
+      [fits, fitsOnlyWithoutVoice],
+      VOICE_MODELS_RESERVED_GB,
+    );
+
+    expect(result.map(model => model.id)).toEqual([1]);
   });
 
   test('returns every model when total memory cannot be read', async () => {
@@ -80,7 +95,7 @@ describe('filterModelsByDeviceMemory', () => {
   // platform can't answer. Read as a size it makes every budget negative, so
   // the whole catalogue filtered itself out and the Models screen came up empty
   // with nothing to explain why.
-  test.each([-1, 0, NaN])(
+  test.each([-1, 0, NaN, Infinity])(
     'returns every model when total memory reads as %p',
     async bytes => {
       mockGetTotalMemory.mockResolvedValue(bytes);
@@ -165,13 +180,15 @@ describe('on Android', () => {
   };
 
   // An "8 GB" phone reports ~7.4 GB; the missing 0.6 GB is the kernel's and
-  // no app can use it: 7.4 - 3 for the OS - 0.5 for the voice models = 3.9 GB,
-  // not the 4.5 GB the marketed 8 GB would give.
+  // no app can use it: 7.4 - 3 for the OS = 4.4 GB, not the 5 GB the marketed
+  // 8 GB would give.
   test('budgets against the reported total, not the marketed RAM', async () => {
     mockGetTotalMemory.mockResolvedValue(7.4 * GB);
     const { filterModelsByDeviceMemory: filter } = loadAndroid();
-    const fits = buildModel(1, { parts: [part('chat-model', 3.8)] });
-    const fitsOnlyMarketed = buildModel(2, { parts: [part('chat-model', 4)] });
+    const fits = buildModel(1, { parts: [part('chat-model', 4.2)] });
+    const fitsOnlyMarketed = buildModel(2, {
+      parts: [part('chat-model', 4.6)],
+    });
 
     const result = await filter([fits, fitsOnlyMarketed]);
 

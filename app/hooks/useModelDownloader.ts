@@ -52,6 +52,11 @@ const subscribeActiveDownloads = (listener: () => void) => {
   };
 };
 
+// Models a foreground resume skipped because their loop still looked alive. A
+// task suspended in the background can fail only after the return; such a
+// loop is restarted instead of being left paused.
+const skippedByResume = new Set<number>();
+
 // Models whose failure the user was already told about. Resume retries pending
 // downloads on every return to the app, so one that keeps failing (offline)
 // would otherwise alert again each time.
@@ -69,6 +74,7 @@ export const useActiveDownloadIds = (): ReadonlySet<number> =>
 
 interface DownloadOptions {
   alertOnFailure?: boolean;
+  signal?: AbortSignal;
 }
 
 // The download loop shared by a fresh start and a resume.
@@ -76,10 +82,10 @@ const useRunDownload = () => {
   const { t } = useTranslation();
 
   return useCallback(
-    async (
+    async function run(
       download: ModelDownload,
       { alertOnFailure = true }: DownloadOptions = {},
-    ) => {
+    ): Promise<void> {
       const { model } = download;
 
       if (activeDownloads.has(model.id)) {
@@ -90,10 +96,11 @@ const useRunDownload = () => {
       setActiveDownload(model.id, controller);
 
       let modelDownloaded = false;
+      let isTransferring = true;
+      let retryAfterResume = false;
+      const partsProgress = download.partsProgress.map(part => ({ ...part }));
 
       try {
-        const partsProgress = download.partsProgress.map(part => ({ ...part }));
-
         for (let i = 0; i < partsProgress.length; i++) {
           if (partsProgress[i].progress >= 1 && partsProgress[i].path) {
             continue;
@@ -122,6 +129,7 @@ const useRunDownload = () => {
           partsProgress[i] = { ...partsProgress[i], progress: 1, path };
           await updateModelDownloadParts(model.id, partsProgress);
         }
+        isTransferring = false;
 
         if (controller.signal.aborted) {
           return;
@@ -152,6 +160,10 @@ const useRunDownload = () => {
 
         await deleteModelDownload(model.id);
       } catch (error) {
+        retryAfterResume =
+          isTransferring &&
+          !controller.signal.aborted &&
+          skippedByResume.has(model.id);
         const capture =
           !controller.signal.aborted && !(error instanceof NetworkError);
         log('ModelsScreen runDownload', error, {
@@ -162,6 +174,7 @@ const useRunDownload = () => {
         if (
           alertOnFailure &&
           !controller.signal.aborted &&
+          !retryAfterResume &&
           !reportedFailures.has(model.id)
         ) {
           reportedFailures.add(model.id);
@@ -173,6 +186,8 @@ const useRunDownload = () => {
           );
         }
       } finally {
+        skippedByResume.delete(model.id);
+
         if (activeDownloads.get(model.id) === controller) {
           setActiveDownload(model.id, undefined);
         }
@@ -180,6 +195,10 @@ const useRunDownload = () => {
         if (controller.signal.aborted && !modelDownloaded) {
           deleteModelDirectory(model.id);
         }
+      }
+
+      if (retryAfterResume) {
+        await run({ model, partsProgress }, { alertOnFailure });
       }
     },
     [t],
@@ -197,7 +216,9 @@ const useResumePendingDownloads = () => {
       try {
         const pendingDownloads = await getModelDownloads();
         for (const download of pendingDownloads) {
-          if (!activeDownloads.has(download.model.id)) {
+          if (activeDownloads.has(download.model.id)) {
+            skippedByResume.add(download.model.id);
+          } else {
             if (reportAgain) {
               reportedFailures.delete(download.model.id);
             }
@@ -259,6 +280,11 @@ export const useModelDownloader = () => {
         log('startDownload getModelDownloads', error);
         return [];
       });
+
+      if (options?.signal?.aborted) {
+        return;
+      }
+
       const spaceCheck = checkDiskSpaceForModel(model, inProgress);
 
       if (!spaceCheck.fits) {
@@ -268,6 +294,13 @@ export const useModelDownloader = () => {
 
       const created = await createModelDownload(model);
       if (!created) {
+        return;
+      }
+
+      if (options?.signal?.aborted) {
+        await deleteModelDownload(model.id).catch(error =>
+          log('startDownload deleteModelDownload', error),
+        );
         return;
       }
 
@@ -298,27 +331,37 @@ export const useModelDownloader = () => {
     }
   }, []);
 
-  const promptStopDownload = useCallback(
-    (model: Model) =>
+  // One confirmation for every download in `models`.
+  const promptStopDownloads = useCallback(
+    (models: readonly Model[]) => {
+      const count = models.length;
+
       Alert.alert(
-        t('screens.models.stopDownloadTitle'),
-        t('screens.models.stopDownloadMessage'),
+        t('screens.models.stopDownloadTitle', { count }),
+        t('screens.models.stopDownloadMessage', { count }),
         [
           {
-            text: t('screens.models.stopDownload'),
+            text: t('screens.models.stopDownload', { count }),
             style: 'destructive',
-            onPress: () => stopDownload(model),
+            onPress: () => models.forEach(stopDownload),
           },
           { text: t('common.cancel'), style: 'cancel' },
         ],
-      ),
+      );
+    },
     [t, stopDownload],
+  );
+
+  const promptStopDownload = useCallback(
+    (model: Model) => promptStopDownloads([model]),
+    [promptStopDownloads],
   );
 
   return {
     startDownload,
     stopDownload,
     promptStopDownload,
+    promptStopDownloads,
     warnNotEnoughSpace,
     resumeDownloads,
   };

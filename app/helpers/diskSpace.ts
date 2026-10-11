@@ -35,14 +35,27 @@ export const modelDownloadSizeGB = (model: Model): number => {
   return partsTotal > 0 ? partsTotal : model.sizeGB;
 };
 
-// What a download in progress still has to write: each part's size times the
-// share of it not downloaded yet.
-export const remainingDownloadSizeGB = (download: ModelDownload): number =>
-  download.partsProgress.reduce(
-    (total, part) =>
-      total + (part.sizeGB ?? 0) * (1 - Math.min(part.progress, 1)),
+// Overall progress (0..1) weighted by each part's size, computed purely from
+// the stored row — no in-memory bookkeeping needed.
+export function modelDownloadProgress(download: ModelDownload): number {
+  const totalSize = download.partsProgress.reduce(
+    (sum, part) => sum + part.sizeGB,
     0,
   );
+  if (totalSize <= 0) return 0;
+
+  const downloaded = download.partsProgress.reduce(
+    (sum, part) => sum + part.progress * part.sizeGB,
+    0,
+  );
+  return downloaded / totalSize;
+}
+
+// What a download in progress still has to write: the model's size times the
+// share of it not downloaded yet.
+export const remainingDownloadSizeGB = (download: ModelDownload): number =>
+  modelDownloadSizeGB(download.model) *
+  (1 - Math.min(modelDownloadProgress(download), 1));
 
 export interface DiskSpaceCheck {
   fits: boolean;

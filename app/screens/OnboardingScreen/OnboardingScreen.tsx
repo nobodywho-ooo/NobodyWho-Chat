@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { fetchModelCatalogue, log } from 'helpers';
+import { fetchModelCatalogue, log, VOICE_MODELS_RESERVED_GB } from 'helpers';
 import { isChatPipeline, Model } from 'types';
 
 import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
@@ -24,7 +24,8 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
 
     const loadCatalogue = async () => {
       try {
-        const models = await fetchModelCatalogue();
+        const models = await fetchModelCatalogue(VOICE_MODELS_RESERVED_GB);
+
         if (!isMounted) {
           return;
         }
