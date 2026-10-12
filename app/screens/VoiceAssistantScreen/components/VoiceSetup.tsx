@@ -63,6 +63,46 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
     </View>
   );
 
+  const renderAction = () => {
+    if (needsDownload) {
+      return (
+        <Button
+          title={t('screens.voiceAssistant.setup.downloadMissing')}
+          disabled={!canDownload}
+          onPress={downloadCurated}
+          style={styles.downloadButton}
+          small
+        />
+      );
+    }
+
+    if (isInterrupted) {
+      return (
+        <Button
+          title={t('screens.voiceAssistant.setup.resumeDownload')}
+          testID="voice-resume-download-button"
+          icon={{ iosIconName: 'play.fill', androidIconName: 'play_arrow' }}
+          onPress={resume}
+          style={styles.downloadButton}
+          small
+        />
+      );
+    }
+
+    if (status.isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={colors.primary} />
+          <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
+            {t('screens.voiceAssistant.setup.loadingModels')}
+          </Text>
+        </View>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <View style={styles.container}>
       <Text variant="body1" bold style={styles.title}>
@@ -109,34 +149,7 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
               t('screens.voiceAssistant.setup.vad'),
             )}
           </View>
-          {needsDownload ? (
-            <Button
-              title={t('screens.voiceAssistant.setup.downloadMissing')}
-              disabled={!canDownload}
-              onPress={downloadCurated}
-              style={styles.downloadButton}
-            />
-          ) : isInterrupted ? (
-            <Button
-              title={t('screens.voiceAssistant.setup.resumeDownload')}
-              testID="voice-resume-download-button"
-              icon={{ iosIconName: 'play.fill', androidIconName: 'play_arrow' }}
-              onPress={resume}
-              style={styles.downloadButton}
-            />
-          ) : (
-            status.isLoading && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator color={colors.primary} />
-                <Text
-                  variant="body2"
-                  style={{ color: colors.onSurfaceVariant }}
-                >
-                  {t('screens.voiceAssistant.setup.loadingModels')}
-                </Text>
-              </View>
-            )
-          )}
+          {renderAction()}
         </>
       )}
     </View>
