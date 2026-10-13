@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useRef, useSyncExternalStore } from 'react';
 import { Alert, AppState } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
@@ -56,10 +56,12 @@ const subscribeActiveDownloads = (listener: () => void) => {
 // a pending download only looks interrupted.
 let hasResumedAtLaunch = false;
 
-// Models a foreground resume skipped because their loop still looked alive. A
-// task suspended in the background can fail only after the return; such a
-// loop is restarted instead of being left interrupted.
-const skippedByResume = new Set<number>();
+// When a foreground resume skipped each model because its loop still looked
+// alive. A task suspended in the background can fail right after the return;
+// such a loop is restarted instead of being left interrupted. A failure later
+// than RESUME_RETRY_WINDOW_MS has another cause and is reported as usual.
+const skippedByResume = new Map<number, number>();
+const RESUME_RETRY_WINDOW_MS = 30_000;
 
 // Models whose failure the user was already told about. Resume retries pending
 // downloads on every return to the app, so one that keeps failing (offline)
@@ -169,10 +171,12 @@ const useRunDownload = () => {
 
         await deleteModelDownload(model.id);
       } catch (error) {
+        const skippedAt = skippedByResume.get(model.id);
         retryAfterResume =
           isTransferring &&
           !controller.signal.aborted &&
-          skippedByResume.has(model.id);
+          skippedAt !== undefined &&
+          Date.now() - skippedAt < RESUME_RETRY_WINDOW_MS;
         const capture =
           !controller.signal.aborted && !(error instanceof NetworkError);
         log('ModelsScreen runDownload', error, {
@@ -214,24 +218,25 @@ const useRunDownload = () => {
   );
 };
 
-// Restarts every download left pending in the database whose loop isn't
-// running. `reportAgain` (the user asked for it) alerts on a failure even if
-// that download's failure was already reported.
+// Restarts every download left pending in the database
 const useResumePendingDownloads = () => {
   const runDownload = useRunDownload();
 
   return useCallback(
-    async ({ reportAgain = false }: { reportAgain?: boolean } = {}) => {
+    async ({
+      reportAgain = false,
+      alertOnFailure = true,
+    }: { reportAgain?: boolean; alertOnFailure?: boolean } = {}) => {
       try {
         const pendingDownloads = await getModelDownloads();
         for (const download of pendingDownloads) {
           if (activeDownloads.has(download.model.id)) {
-            skippedByResume.add(download.model.id);
+            skippedByResume.set(download.model.id, Date.now());
           } else {
             if (reportAgain) {
               reportedFailures.delete(download.model.id);
             }
-            runDownload(download);
+            runDownload(download, { alertOnFailure });
           }
         }
       } catch (error) {
@@ -248,15 +253,24 @@ const useResumePendingDownloads = () => {
 };
 
 // Resumes pending downloads at launch and on every return to the app.
-export const useResumeModelDownloads = () => {
+export const useResumeModelDownloads = ({
+  alertOnFailure = true,
+}: { alertOnFailure?: boolean } = {}) => {
   const resumePendingDownloads = useResumePendingDownloads();
 
+  // Read by each resume as it runs, so a change doesn't resume again.
+  const alertOnFailureRef = useRef(alertOnFailure);
+  alertOnFailureRef.current = alertOnFailure;
+
   useEffect(() => {
-    resumePendingDownloads();
+    const resume = () =>
+      resumePendingDownloads({ alertOnFailure: alertOnFailureRef.current });
+
+    resume();
 
     const subscription = AppState.addEventListener('change', state => {
       if (state === 'active') {
-        resumePendingDownloads();
+        resume();
       }
     });
 

@@ -169,6 +169,19 @@ test('alerts the user when a download fails', async () => {
   alert.mockRestore();
 });
 
+test('keeps the failures of resumed downloads quiet when asked', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  mockGetModelDownloads.mockResolvedValue([pendingDownload(123)]);
+  mockDownloadModelPart.mockRejectedValue(new Error('offline'));
+
+  await renderHook(() => useResumeModelDownloads({ alertOnFailure: false }));
+
+  await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalled());
+  await act(async () => {});
+  expect(alert).not.toHaveBeenCalled();
+  alert.mockRestore();
+});
+
 test('alerts once for a download that keeps failing on each return to the app', async () => {
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   const addListener = AppState.addEventListener as jest.Mock;
@@ -216,6 +229,40 @@ test('restarts, without alerting, a download that fails only after a return to t
   await waitFor(() => expect(mockInsertModel).toHaveBeenCalled());
   expect(mockDownloadModelPart).toHaveBeenCalledTimes(2);
   expect(alert).not.toHaveBeenCalled();
+  alert.mockRestore();
+});
+
+test('reports, without retrying, a failure long after a return to the app', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const addListener = AppState.addEventListener as jest.Mock;
+  let failPart: (error: Error) => void = () => {};
+  mockDownloadModelPart.mockImplementationOnce(
+    () =>
+      new Promise((_, reject) => {
+        failPart = reject;
+      }),
+  );
+  mockGetModelDownloads.mockResolvedValue([pendingDownload(122)]);
+  const now = jest.spyOn(Date, 'now').mockReturnValue(0);
+
+  await renderHook(() => useResumeModelDownloads());
+  await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(1));
+
+  // Back in the app while the download is healthy...
+  const onChange = [...addListener.mock.calls]
+    .reverse()
+    .find(([type]) => type === 'change')?.[1] as (state: string) => void;
+  await act(async () => onChange('active'));
+  // ...and an hour later the server errors.
+  now.mockReturnValue(60 * 60 * 1000);
+  await act(async () => failPart(new Error('server error')));
+
+  expect(mockDownloadModelPart).toHaveBeenCalledTimes(1);
+  expect(alert).toHaveBeenCalledWith(
+    'screens.models.downloadFailedTitle',
+    'screens.models.downloadFailedModelMessage',
+  );
+  now.mockRestore();
   alert.mockRestore();
 });
 

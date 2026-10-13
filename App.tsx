@@ -94,7 +94,7 @@ function AppContent({ showOnboarding, onOnboardingFinish }: AppContentProps) {
     },
   };
 
-  useResumeModelDownloads();
+  useResumeModelDownloads({ alertOnFailure: !showOnboarding });
 
   return (
     <>

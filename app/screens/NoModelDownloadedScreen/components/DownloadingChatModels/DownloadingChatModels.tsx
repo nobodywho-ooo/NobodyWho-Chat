@@ -76,6 +76,7 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
             testID="stop-download-button"
             variant="secondary"
             small
+            disabled={!hasResumedAtLaunch}
             onPress={() =>
               promptStopDownloads(downloads.map(({ model }) => model))
             }

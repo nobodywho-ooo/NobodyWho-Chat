@@ -107,6 +107,9 @@ test('shows downloading, not interrupted, until the launch resume has run', asyn
 
   screen.getByText('screens.noModelDownloaded.downloadingTitle');
   expect(screen.queryByTestId('resume-download-button')).toBeNull();
+
+  // Stopping now would race the resume, which could restart the download.
+  expect(screen.getByTestId('stop-download-button').props.disabled).toBe(true);
 });
 
 test('hides Resume while a chat model is still downloading', async () => {
@@ -130,7 +133,9 @@ test('offers to stop every chat model download at once', async () => {
   setDownloads([lfm, bonsai, whisper], [bonsai.model.id]);
   await render(<NoModelDownloadedScreen />);
 
-  await fireEvent.press(screen.getByTestId('stop-download-button'));
+  const stop = screen.getByTestId('stop-download-button');
+  expect(stop.props.disabled).toBe(false);
+  await fireEvent.press(stop);
   expect(mockPromptStopDownloads).toHaveBeenCalledWith([
     lfm.model,
     bonsai.model,

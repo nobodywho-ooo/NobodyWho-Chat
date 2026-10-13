@@ -213,6 +213,19 @@ test('finishes with the chat model when only the voice models failed', async () 
   expect(onFinish).not.toHaveBeenCalled();
 });
 
+test('still leaves with an alert when the failed batch cannot be checked', async () => {
+  mockDownloads.downloadCurated.mockResolvedValue('failed');
+  (getModelById as jest.Mock).mockRejectedValue(new Error('database closed'));
+  const onFinish = jest.fn();
+  await renderDownload({ onFinish });
+
+  await waitFor(() => expect(onFinish).toHaveBeenCalledTimes(1));
+  expect(alertSpy).toHaveBeenCalledWith(
+    'common.somethingWentWrong',
+    'screens.onboarding.downloadUnavailable',
+  );
+});
+
 test('goes back to the choices when the models do not fit', async () => {
   mockDownloads.downloadCurated.mockResolvedValue('notEnoughSpace');
   const onFinish = jest.fn();

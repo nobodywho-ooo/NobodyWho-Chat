@@ -3,7 +3,7 @@ import { Alert, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, ProgressBar, Text } from 'components';
-import { curatedOnboardingModels } from 'helpers';
+import { curatedOnboardingModels, log } from 'helpers';
 import { useCuratedModels, useStyled } from 'hooks';
 import { getModelById } from 'repositories';
 import { Spacings } from 'style';
@@ -61,7 +61,12 @@ export const OnboardingDownload: React.FC<
       }
 
       if (outcome === 'failed') {
-        if ((await getModelById(modelId)) !== undefined) {
+        const chatModel = await getModelById(modelId).catch(error => {
+          log('OnboardingDownload getModelById', error);
+          return undefined;
+        });
+
+        if (chatModel !== undefined) {
           Alert.alert(
             t('screens.models.downloadFailedTitle'),
             t('screens.onboarding.voiceUnavailable'),
