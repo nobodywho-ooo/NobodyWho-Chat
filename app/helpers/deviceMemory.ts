@@ -10,19 +10,27 @@ const BYTES_PER_GB = 1024 ** 3;
 // estimate to stay safe across devices.
 const OS_RESERVED_GB = isIOS ? 2 : 3;
 
+// RAM kept free for the voice models (speech-to-text, text-to-speech and voice
+// activity detection), which the voice assistant holds alongside the chat model.
+// Only reserved where the voice pipeline is planned, not for every list.
+export const VOICE_MODELS_RESERVED_GB = 0.5;
+
 // The projection (mmproj) model is held in memory alongside the chat model, so
 // while running its weights effectively take up twice their on-disk size.
 const PROJECTION_MODEL_MULTIPLIER = 2;
 
-const totalMemoryGB = async (): Promise<number | undefined> => {
+const deviceRamGB = async (): Promise<number | undefined> => {
   try {
     const bytes = await getTotalMemory();
 
-    return Number.isFinite(bytes) && bytes > 0
-      ? bytes / BYTES_PER_GB
-      : undefined;
+    // -1 when the platform can't answer; NaN or Infinity from a bad reading.
+    if (!Number.isFinite(bytes) || bytes <= 0) {
+      return undefined;
+    }
+
+    return bytes / BYTES_PER_GB;
   } catch (error) {
-    log('totalMemoryGB failed', error, { capture: true });
+    log('deviceRamGB failed', error, { capture: true });
     return undefined;
   }
 };
@@ -36,19 +44,21 @@ const partMemoryGB = (part: ModelPart): number =>
 export const modelRequiredMemoryGB = (model: Model): number =>
   model.parts.reduce((total, part) => total + partMemoryGB(part), 0);
 
-// Keep only the models the device has enough RAM to run. If the device total
-// memory can't be read, fall back to returning every model rather than hiding
-// all of them.
+// Keep only the models the device has enough RAM to run, with `reservedGB` left
+// over (e.g. VOICE_MODELS_RESERVED_GB for the voice pipeline). If the device
+// total memory can't be read, fall back to returning every model rather than
+// hiding all of them.
 export const filterModelsByDeviceMemory = async (
   models: Model[],
+  reservedGB = 0,
 ): Promise<Model[]> => {
-  const totalGB = await totalMemoryGB();
+  const deviceRam = await deviceRamGB();
 
-  if (totalGB === undefined) {
+  if (deviceRam === undefined) {
     return models;
   }
 
-  const usableMemoryGB = totalGB - OS_RESERVED_GB;
+  const usableMemoryGB = deviceRam - OS_RESERVED_GB - reservedGB;
 
   return models.filter(model => modelRequiredMemoryGB(model) <= usableMemoryGB);
 };
@@ -98,7 +108,7 @@ export const MULTIMODAL_CONTEXT_FALLBACK = 2048;
 // differently from one launch to the next, and the context size is fixed for
 // the life of the chat, so a lucky reading would be paid for later.
 export const multimodalContextSize = async (model: Model): Promise<number> => {
-  const totalGB = await totalMemoryGB();
+  const totalGB = await deviceRamGB();
 
   if (totalGB === undefined) {
     return MULTIMODAL_CONTEXT_FALLBACK;

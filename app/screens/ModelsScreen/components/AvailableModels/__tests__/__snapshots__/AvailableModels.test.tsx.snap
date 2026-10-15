@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly AvailableModels on error 1`] = `
 <>
@@ -54,7 +54,7 @@ exports[`renders correctly AvailableModels on error 1`] = `
     >
       <PlatformIcon
         androidIconName="info"
-        color="#628395"
+        color="#b44618"
         iosIconName="info.circle"
         size={20}
       />
@@ -149,7 +149,7 @@ exports[`renders correctly AvailableModels when everything is downloaded 1`] = `
     >
       <PlatformIcon
         androidIconName="info"
-        color="#628395"
+        color="#b44618"
         iosIconName="info.circle"
         size={20}
       />
@@ -215,7 +215,7 @@ exports[`renders correctly AvailableModels while loading 1`] = `
     >
       <PlatformIcon
         androidIconName="info"
-        color="#628395"
+        color="#b44618"
         iosIconName="info.circle"
         size={20}
       />
@@ -286,7 +286,7 @@ exports[`renders correctly AvailableModels with a list of models 1`] = `
     >
       <PlatformIcon
         androidIconName="info"
-        color="#628395"
+        color="#b44618"
         iosIconName="info.circle"
         size={20}
       />

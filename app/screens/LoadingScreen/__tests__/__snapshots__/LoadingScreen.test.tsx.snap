@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly LoadingScreen 1`] = `
 <View
@@ -16,7 +16,7 @@ exports[`renders correctly LoadingScreen 1`] = `
   }
 >
   <ActivityIndicator
-    color="#628395"
+    color="#b44618"
     size="large"
   />
 </View>

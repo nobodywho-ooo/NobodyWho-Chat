@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`matches the snapshot 1`] = `
 <View
@@ -63,7 +63,7 @@ exports[`matches the snapshot 1`] = `
           "width": 32,
         },
         {
-          "backgroundColor": "#628395",
+          "backgroundColor": "#b44618",
         },
         false,
       ]

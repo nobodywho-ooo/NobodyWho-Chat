@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, ProgressBar, Text } from 'components';
+import { progressPercent } from 'helpers';
 import { useStyled } from 'hooks';
 import { Spacings } from 'style';
 
@@ -12,15 +13,35 @@ interface VoiceSetupProps {
   status: VoiceAssistantStatus;
 }
 
+const descriptionKey = ({
+  isDownloading,
+  isInterrupted,
+}: {
+  isDownloading: boolean;
+  isInterrupted: boolean;
+}) => {
+  if (isDownloading) {
+    return 'screens.voiceAssistant.setup.downloadInProgress';
+  }
+
+  if (isInterrupted) {
+    return 'screens.voiceAssistant.setup.downloadInterrupted';
+  }
+
+  return 'screens.voiceAssistant.setup.description';
+};
+
 export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const {
-    hasMissingModels,
+    needsDownload,
     canDownload,
     isDownloading,
+    isInterrupted,
     progress,
-    downloadMissing,
+    downloadCurated,
+    resume,
     cancel,
   } = useVoiceModelDownloads();
 
@@ -43,6 +64,46 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
     </View>
   );
 
+  const renderAction = () => {
+    if (needsDownload) {
+      return (
+        <Button
+          title={t('screens.voiceAssistant.setup.downloadMissing')}
+          disabled={!canDownload}
+          onPress={downloadCurated}
+          style={styles.downloadButton}
+          small
+        />
+      );
+    }
+
+    if (isInterrupted) {
+      return (
+        <Button
+          title={t('screens.voiceAssistant.setup.resumeDownload')}
+          testID="voice-resume-download-button"
+          icon={{ iosIconName: 'play.fill', androidIconName: 'play_arrow' }}
+          onPress={resume}
+          style={styles.downloadButton}
+          small
+        />
+      );
+    }
+
+    if (status.isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={colors.primary} />
+          <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
+            {t('screens.voiceAssistant.setup.loadingModels')}
+          </Text>
+        </View>
+      );
+    }
+
+    return null;
+  };
+
   return (
     <View style={styles.container}>
       <Text variant="body1" bold style={styles.title}>
@@ -52,17 +113,13 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
         variant="body2"
         style={[styles.description, { color: colors.onSurfaceVariant }]}
       >
-        {t(
-          isDownloading
-            ? 'screens.voiceAssistant.setup.downloadInProgress'
-            : 'screens.voiceAssistant.setup.description',
-        )}
+        {t(descriptionKey({ isDownloading, isInterrupted }))}
       </Text>
       {isDownloading ? (
         <View style={styles.downloadContainer}>
           <Text variant="body2" bold style={styles.progressLabel}>
             {t('screens.voiceAssistant.setup.downloadProgress', {
-              percent: Math.round(Math.min(progress, 1) * 100),
+              percent: progressPercent(progress),
             })}
           </Text>
           <ProgressBar progress={progress} />
@@ -93,26 +150,7 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
               t('screens.voiceAssistant.setup.vad'),
             )}
           </View>
-          {hasMissingModels ? (
-            <Button
-              title={t('screens.voiceAssistant.setup.downloadMissing')}
-              disabled={!canDownload}
-              onPress={downloadMissing}
-              style={styles.downloadButton}
-            />
-          ) : (
-            status.isLoading && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator color={colors.primary} />
-                <Text
-                  variant="body2"
-                  style={{ color: colors.onSurfaceVariant }}
-                >
-                  {t('screens.voiceAssistant.setup.loadingModels')}
-                </Text>
-              </View>
-            )
-          )}
+          {renderAction()}
         </>
       )}
     </View>

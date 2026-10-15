@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly Slider 1`] = `
 <View
@@ -53,7 +53,7 @@ exports[`renders correctly Slider 1`] = `
             "height": "100%",
           },
           {
-            "backgroundColor": "#628395",
+            "backgroundColor": "#b44618",
             "width": 80,
           },
         ]
@@ -70,7 +70,7 @@ exports[`renders correctly Slider 1`] = `
           "width": 24,
         },
         {
-          "backgroundColor": "#628395",
+          "backgroundColor": "#b44618",
           "left": 70.4,
         },
       ]

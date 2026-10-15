@@ -15,7 +15,22 @@ import { getFamilyIcon } from './familyIcon';
 import { getPipelineIcon } from './pipelineIcon';
 import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
-import { MODELS_URL } from './modelCatalogue';
+import {
+  byCatalogueOrder,
+  fetchModelCatalogue,
+  MODELS_URL,
+} from './modelCatalogue';
+import {
+  curatedChatModel,
+  curatedOnboardingModels,
+  FIRST_PICK_TAG,
+  fulfills,
+  resolveCuratedModels,
+  RECOMMENDED_TAG,
+  CURATED_TEXT_MODELS,
+  CURATED_VOICE_ONLY_MODELS,
+  CURATED_VOICE_PIPELINE_MODELS,
+} from './curatedModels';
 import {
   downloadModelPart,
   downloadedPartPath,
@@ -30,11 +45,17 @@ import {
   filterModelsByDeviceMemory,
   modelRequiredMemoryGB,
   multimodalContextSize,
+  VOICE_MODELS_RESERVED_GB,
 } from './deviceMemory';
 import {
   availableDiskSpaceGB,
   checkDiskSpaceForModel,
+  checkDiskSpaceForModels,
+  modelDownloadProgress,
   modelDownloadSizeGB,
+  overallDownloadProgress,
+  progressPercent,
+  sizeWeightedProgress,
 } from './diskSpace';
 import { sleep } from './async';
 import {
@@ -88,6 +109,7 @@ export type { TtsEngine, TtsLanguageOption } from './ttsEngine';
 export type { SttLanguageOption } from './sttLanguages';
 export type { PipelineIcon } from './pipelineIcon';
 export type { DiskSpaceCheck } from './diskSpace';
+export type { CuratedModel, ModelSetup } from './curatedModels';
 export type {
   ImplicitThinkOpen,
   ParsedThinking,
@@ -109,11 +131,17 @@ export {
   toFileUri,
   toPlainPath,
   filterModelsByDeviceMemory,
+  VOICE_MODELS_RESERVED_GB,
   modelRequiredMemoryGB,
   multimodalContextSize,
   availableDiskSpaceGB,
   checkDiskSpaceForModel,
+  checkDiskSpaceForModels,
+  modelDownloadProgress,
   modelDownloadSizeGB,
+  overallDownloadProgress,
+  progressPercent,
+  sizeWeightedProgress,
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,
@@ -166,6 +194,17 @@ export {
   parameterCountLabel,
   modelSizeLabel,
   MODELS_URL,
+  fetchModelCatalogue,
+  byCatalogueOrder,
+  curatedChatModel,
+  curatedOnboardingModels,
+  FIRST_PICK_TAG,
+  fulfills,
+  resolveCuratedModels,
+  RECOMMENDED_TAG,
+  CURATED_TEXT_MODELS,
+  CURATED_VOICE_ONLY_MODELS,
+  CURATED_VOICE_PIPELINE_MODELS,
   parseColor,
   withAlpha,
 };

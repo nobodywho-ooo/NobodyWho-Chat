@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`0 models to download (network failure), 0 models downloaded and no model in use 1`] = `
 <RCTScrollView
@@ -69,7 +69,7 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
       >
         <PlatformIcon
           androidIconName="info"
-          color="#628395"
+          color="#b44618"
           iosIconName="info.circle"
           size={20}
         />
@@ -179,7 +179,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
     </Text>
     <ListItem
       androidIconName="deployed_code_update"
-      iconBackgroundColor="#628395"
+      iconBackgroundColor="#b44618"
       iosIconName="arrow.down.circle.fill"
       onPress={[Function]}
       subtitle="screens.models.modelCount"
@@ -237,7 +237,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
       >
         <PlatformIcon
           androidIconName="info"
-          color="#628395"
+          color="#b44618"
           iosIconName="info.circle"
           size={20}
         />
@@ -347,7 +347,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
     </Text>
     <ListItem
       androidIconName="deployed_code_update"
-      iconBackgroundColor="#628395"
+      iconBackgroundColor="#b44618"
       iosIconName="arrow.down.circle.fill"
       onPress={[Function]}
       subtitle="screens.models.modelCount"
@@ -405,7 +405,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
       >
         <PlatformIcon
           androidIconName="info"
-          color="#628395"
+          color="#b44618"
           iosIconName="info.circle"
           size={20}
         />

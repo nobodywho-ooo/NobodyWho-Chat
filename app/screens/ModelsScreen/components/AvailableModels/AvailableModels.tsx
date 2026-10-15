@@ -9,7 +9,7 @@ import {
   Text,
 } from 'components';
 import { useStyled } from 'hooks';
-import { getPipelineIcon } from 'helpers';
+import { byCatalogueOrder, getPipelineIcon } from 'helpers';
 import { Model, ModelPipeline, pipelineLabel } from 'types';
 import { Spacings } from 'style';
 
@@ -18,11 +18,6 @@ import styles from './AvailableModels.styles';
 const ALL_PIPELINES = 'all';
 
 type PipelineFilter = ModelPipeline | typeof ALL_PIPELINES;
-
-const UNORDERED = Number.MAX_SAFE_INTEGER;
-
-const byCatalogueOrder = (a: Model, b: Model) =>
-  (a.order ?? UNORDERED) - (b.order ?? UNORDERED);
 
 interface AvailableModelsProps {
   models: Model[];
