@@ -39,7 +39,6 @@ jest.mock('database', () => ({
 }));
 
 jest.mock('helpers', () => ({
-  NetworkError: class NetworkError extends Error {},
   downloadModelPart: jest.fn(),
   deleteModelDirectory: jest.fn(),
   log: jest.fn(),
@@ -457,33 +456,17 @@ test('does not alert when the user stops a download', async () => {
   alert.mockRestore();
 });
 
-test('reports an unexpected download failure to Sentry', async () => {
+test('logs a download failure without reporting it to Sentry', async () => {
   mockGetModelDownloads.mockResolvedValue([pendingDownload(103)]);
   mockDownloadModelPart.mockRejectedValue(new Error('ranged chunk mismatch'));
 
   await renderHook(() => useResumeModelDownloads());
 
+  // No `{ capture: true }` option: log only prints it.
   await waitFor(() =>
     expect(mockLog).toHaveBeenCalledWith(
       'ModelsScreen runDownload',
       expect.any(Error),
-      { capture: true },
-    ),
-  );
-});
-
-test('does not report an unreachable remote to Sentry', async () => {
-  const { NetworkError } = jest.requireMock('helpers');
-  mockGetModelDownloads.mockResolvedValue([pendingDownload(104)]);
-  mockDownloadModelPart.mockRejectedValue(new NetworkError('HEAD timed out'));
-
-  await renderHook(() => useResumeModelDownloads());
-
-  await waitFor(() =>
-    expect(mockLog).toHaveBeenCalledWith(
-      'ModelsScreen runDownload',
-      expect.any(Error),
-      { capture: false },
     ),
   );
 });
