@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, ProgressBar, Text } from 'components';
 import { curatedOnboardingModels, log, progressPercent } from 'helpers';
-import { useCuratedModels, useStyled } from 'hooks';
+import { useStyled } from 'hooks';
 import { getModelById } from 'repositories';
 import { Spacings } from 'style';
 
@@ -23,15 +23,14 @@ export const OnboardingDownload: React.FC<
   const { t } = useTranslation();
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
-  const { catalogue, onFinish } = useOnboarding();
+  const { onFinish, curatedModels } = useOnboarding();
   const { modelId, setup } = route.params;
 
   const [isDone, setIsDone] = useState(false);
   // The lock blocks going back too, so it is lifted before leaving.
   const [isLeaving, setIsLeaving] = useState(false);
 
-  const { isLoaded, progress, downloadCurated, cancel } =
-    useCuratedModels(catalogue);
+  const { isLoaded, progress, downloadCurated, cancel } = curatedModels;
 
   useOnboardingHeader(navigation, !isLeaving);
 

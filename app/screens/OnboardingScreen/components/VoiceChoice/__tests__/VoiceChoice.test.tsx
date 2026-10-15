@@ -7,6 +7,7 @@ import {
 } from '@testing-library/react-native';
 import { usePreventRemove } from '@react-navigation/native';
 
+import type { CuratedModels } from 'hooks';
 import { buildModel } from 'jest/factories/model';
 import { ModelPipeline } from 'types';
 
@@ -17,11 +18,7 @@ import { VoiceChoice } from '../VoiceChoice';
 const mockDownloads = {
   findModelsToDownload: jest.fn((_curated: unknown) => [] as unknown[]),
 };
-const mockUseCuratedModels = jest.fn((_catalogue?: unknown) => mockDownloads);
-
-jest.mock('hooks/useCuratedModels', () => ({
-  useCuratedModels: (catalogue?: unknown) => mockUseCuratedModels(catalogue),
-}));
+const curatedModels = mockDownloads as unknown as CuratedModels;
 
 const recommended = buildModel(1, { tags: ['Recommended'] });
 const stt = buildModel(3, {
@@ -34,7 +31,7 @@ const navigation = { navigate: jest.fn(), setOptions: jest.fn() };
 
 const renderChoice = (modelId = recommended.id, onFinish = jest.fn()) =>
   render(
-    <OnboardingContext.Provider value={{ catalogue, onFinish }}>
+    <OnboardingContext.Provider value={{ catalogue, onFinish, curatedModels }}>
       <VoiceChoice
         {...({
           navigation,
@@ -61,7 +58,6 @@ test('offers the two choices without the picked model, Skip in the header', asyn
   const onFinish = jest.fn();
   await renderChoice(recommended.id, onFinish);
 
-  expect(mockUseCuratedModels).toHaveBeenCalledWith(catalogue);
   screen.getByText('screens.onboarding.voiceHeader');
   screen.getByText('screens.onboarding.modalityTitle');
   screen.getByText('screens.onboarding.modalitySubtitle');

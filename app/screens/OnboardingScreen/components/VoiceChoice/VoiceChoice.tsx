@@ -7,7 +7,7 @@ import {
   ModelSetup,
   modelDownloadSizeGB,
 } from 'helpers';
-import { useCuratedModels, useStyled } from 'hooks';
+import { useStyled } from 'hooks';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
 import { useOnboarding } from '../../hooks/useOnboarding';
@@ -25,10 +25,10 @@ export const VoiceChoice: React.FC<OnboardingScreenProps<'VoiceChoice'>> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const { catalogue } = useOnboarding();
+  const {
+    curatedModels: { findModelsToDownload },
+  } = useOnboarding();
   const { modelId } = route.params;
-
-  const { findModelsToDownload } = useCuratedModels(catalogue);
 
   useOnboardingHeader(navigation, false);
 

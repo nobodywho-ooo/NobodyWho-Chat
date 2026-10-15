@@ -9,6 +9,7 @@ import {
 import { usePreventRemove } from '@react-navigation/native';
 
 import { CURATED_VOICE_ONLY_MODELS, ModelSetup } from 'helpers';
+import type { CuratedModels } from 'hooks';
 import { getModelById } from 'repositories';
 import { buildModel } from 'jest/factories/model';
 
@@ -22,11 +23,7 @@ const mockDownloads = {
   downloadCurated: jest.fn(),
   cancel: jest.fn(),
 };
-const mockUseCuratedModels = jest.fn((_catalogue?: unknown) => mockDownloads);
-
-jest.mock('hooks/useCuratedModels', () => ({
-  useCuratedModels: (catalogue?: unknown) => mockUseCuratedModels(catalogue),
-}));
+const curatedModels = mockDownloads as unknown as CuratedModels;
 
 jest.mock('repositories', () => ({
   getModelById: jest.fn(async () => undefined),
@@ -44,7 +41,7 @@ const renderDownload = ({
   onFinish = jest.fn(),
 } = {}) =>
   render(
-    <OnboardingContext.Provider value={{ catalogue, onFinish }}>
+    <OnboardingContext.Provider value={{ catalogue, onFinish, curatedModels }}>
       <OnboardingDownload
         {...({
           navigation,
@@ -81,7 +78,9 @@ afterEach(() => {
 test('downloads only the picked text model, once', async () => {
   const { rerender } = await renderDownload();
   await rerender(
-    <OnboardingContext.Provider value={{ catalogue, onFinish: jest.fn() }}>
+    <OnboardingContext.Provider
+      value={{ catalogue, onFinish: jest.fn(), curatedModels }}
+    >
       <OnboardingDownload
         {...({
           navigation,
@@ -91,7 +90,6 @@ test('downloads only the picked text model, once', async () => {
     </OnboardingContext.Provider>,
   );
 
-  expect(mockUseCuratedModels).toHaveBeenCalledWith(catalogue);
   expect(mockDownloads.downloadCurated).toHaveBeenCalledTimes(1);
   const [curated, options] = mockDownloads.downloadCurated.mock.lastCall;
   expect(options).toEqual({ alertOnFailure: false });
@@ -111,7 +109,9 @@ test('waits for the installed models to load before downloading', async () => {
 
   mockDownloads.isLoaded = true;
   await rerender(
-    <OnboardingContext.Provider value={{ catalogue, onFinish: jest.fn() }}>
+    <OnboardingContext.Provider
+      value={{ catalogue, onFinish: jest.fn(), curatedModels }}
+    >
       <OnboardingDownload
         {...({
           navigation,

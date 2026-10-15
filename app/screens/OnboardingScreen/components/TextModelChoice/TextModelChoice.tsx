@@ -6,7 +6,6 @@ import {
   FIRST_PICK_TAG,
   RECOMMENDED_TAG,
 } from 'helpers';
-import { useCuratedModels } from 'hooks';
 import { isChatPipeline, Model } from 'types';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
@@ -30,9 +29,10 @@ export const TextModelChoice: React.FC<
   OnboardingScreenProps<'TextModelChoice'>
 > = ({ navigation }) => {
   const { t } = useTranslation();
-  const { catalogue } = useOnboarding();
-
-  const { findCuratedToDownload } = useCuratedModels(catalogue);
+  const {
+    catalogue,
+    curatedModels: { findCuratedToDownload },
+  } = useOnboarding();
 
   useOnboardingHeader(navigation, false);
 

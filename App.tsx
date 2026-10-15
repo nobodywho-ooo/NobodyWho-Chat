@@ -155,20 +155,26 @@ async function dropStaleIdsInUse(): Promise<void> {
   }
 }
 
-// Onboarding shows when no chat model is downloaded or in download
+// Onboarding shows when no chat model is downloaded or in download.
 async function needsOnboarding(): Promise<boolean> {
   if (getAppState().modelIdInUse !== undefined) {
     return false;
   }
 
-  const [models, downloads] = await Promise.all([
-    getAllModels(),
-    getModelDownloads(),
-  ]);
-  return (
-    !models.some(model => isChatPipeline(model.pipeline)) &&
-    !downloads.some(download => isChatPipeline(download.model.pipeline))
-  );
+  try {
+    const [models, downloads] = await Promise.all([
+      getAllModels(),
+      getModelDownloads(),
+    ]);
+
+    return (
+      !models.some(model => isChatPipeline(model.pipeline)) &&
+      !downloads.some(download => isChatPipeline(download.model.pipeline))
+    );
+  } catch (error) {
+    log('needsOnboarding failed', error, { capture: true });
+    return false;
+  }
 }
 
 function AppLoader() {

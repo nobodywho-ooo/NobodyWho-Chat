@@ -197,10 +197,7 @@ export const useCuratedModels = (
         return 'cancelled';
       }
 
-      if (
-        modelsToDownload.length === 0 ||
-        modelsToDownload.length < curatedToDownload.length
-      ) {
+      if (modelsToDownload.length < curatedToDownload.length) {
         endBatch();
         return fail();
       }

@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { usePreventRemove } from '@react-navigation/native';
 
 import { CURATED_VOICE_ONLY_MODELS } from 'helpers';
+import type { CuratedModels } from 'hooks';
 import { buildModel } from 'jest/factories/model';
 import { Model, ModelPipeline } from 'types';
 
@@ -23,18 +24,16 @@ const mockFindCuratedToDownload = jest.fn(
   (curated: readonly unknown[]) => curated,
 );
 
-jest.mock('hooks/useCuratedModels', () => ({
-  useCuratedModels: () => ({
-    findCuratedToDownload: (curated: readonly unknown[]) =>
-      mockFindCuratedToDownload(curated),
-  }),
-}));
+const curatedModels = {
+  findCuratedToDownload: (curated: readonly unknown[]) =>
+    mockFindCuratedToDownload(curated),
+} as unknown as CuratedModels;
 
 const navigation = { navigate: jest.fn(), setOptions: jest.fn() };
 
 const renderChoice = (catalogue: Model[], onFinish = jest.fn()) =>
   render(
-    <OnboardingContext.Provider value={{ catalogue, onFinish }}>
+    <OnboardingContext.Provider value={{ catalogue, onFinish, curatedModels }}>
       <TextModelChoice
         {...({
           navigation,

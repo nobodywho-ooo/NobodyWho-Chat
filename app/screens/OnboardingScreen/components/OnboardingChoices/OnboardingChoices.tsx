@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { useStyled } from 'hooks';
+import { useCuratedModels, useStyled } from 'hooks';
 import { Model } from 'types';
 
 import { OnboardingParamList } from '../../Onboarding.types';
@@ -21,8 +21,12 @@ export const OnboardingChoices: React.FC<OnboardingChoicesProps> = ({
   onFinish,
 }) => {
   const { colors } = useStyled();
+  const curatedModels = useCuratedModels(catalogue);
 
-  const value = useMemo(() => ({ catalogue, onFinish }), [catalogue, onFinish]);
+  const value = useMemo(
+    () => ({ catalogue, onFinish, curatedModels }),
+    [catalogue, onFinish, curatedModels],
+  );
 
   return (
     <OnboardingContext.Provider value={value}>
