@@ -16,7 +16,6 @@ import {
   downloadModelPart,
   log,
   modelSizeLabel,
-  NetworkError,
 } from 'helpers';
 import { selectModelIfSlotFree } from 'services';
 
@@ -56,12 +55,12 @@ const subscribeActiveDownloads = (listener: () => void) => {
 // a pending download only looks interrupted.
 let hasResumedAtLaunch = false;
 
-// When a foreground resume skipped each model because its loop still looked
-// alive. A task suspended in the background can fail right after the return;
-// such a loop is restarted instead of being left interrupted. A failure later
-// than RESUME_RETRY_WINDOW_MS has another cause and is reported as usual.
-const skippedByResume = new Map<number, number>();
-const RESUME_RETRY_WINDOW_MS = 30_000;
+// Trips to the background so far, and whether the app is back from the last
+// one. The OS can cut a transfer while the app is away, and that failure lands
+// whenever it likes: in the background, on the way back, or just after the
+// return. A loop that was running across a trip treats its failure as that cut.
+let backgroundTrips = 0;
+let isInForeground = true;
 
 // Models whose failure the user was already told about. Resume retries pending
 // downloads on every return to the app, so one that keeps failing (offline)
@@ -108,7 +107,8 @@ const useRunDownload = () => {
 
       let modelDownloaded = false;
       let isTransferring = true;
-      let retryAfterResume = false;
+      let retryNow = false;
+      const tripsAtStart = backgroundTrips;
       const partsProgress = download.partsProgress.map(part => ({ ...part }));
 
       try {
@@ -171,23 +171,20 @@ const useRunDownload = () => {
 
         await deleteModelDownload(model.id);
       } catch (error) {
-        const skippedAt = skippedByResume.get(model.id);
-        retryAfterResume =
+        // Cut by a trip to the background: not reported. Restarted now if the
+        // app is back, else by the resume on its return (this loop is gone by
+        // then). Only once: the restart reports a failure of its own.
+        const wasCutInBackground =
           isTransferring &&
           !controller.signal.aborted &&
-          skippedAt !== undefined &&
-          Date.now() - skippedAt < RESUME_RETRY_WINDOW_MS;
-        const capture =
-          !controller.signal.aborted && !(error instanceof NetworkError);
-        log('ModelsScreen runDownload', error, {
-          // TODO: delete capture when model downloading is stable
-          capture,
-        });
+          backgroundTrips !== tripsAtStart;
+        retryNow = wasCutInBackground && isInForeground;
+        log('ModelsScreen runDownload', error);
 
         if (
           alertOnFailure &&
           !controller.signal.aborted &&
-          !retryAfterResume &&
+          !wasCutInBackground &&
           !reportedFailures.has(model.id)
         ) {
           reportedFailures.add(model.id);
@@ -199,8 +196,6 @@ const useRunDownload = () => {
           );
         }
       } finally {
-        skippedByResume.delete(model.id);
-
         if (activeDownloads.get(model.id) === controller) {
           setActiveDownload(model.id, undefined);
         }
@@ -210,7 +205,7 @@ const useRunDownload = () => {
         }
       }
 
-      if (retryAfterResume) {
+      if (retryNow) {
         await run({ model, partsProgress }, { alertOnFailure });
       }
     },
@@ -229,15 +224,16 @@ const useResumePendingDownloads = () => {
     }: { reportAgain?: boolean; alertOnFailure?: boolean } = {}) => {
       try {
         const pendingDownloads = await getModelDownloads();
+
         for (const download of pendingDownloads) {
           if (activeDownloads.has(download.model.id)) {
-            skippedByResume.set(download.model.id, Date.now());
-          } else {
-            if (reportAgain) {
-              reportedFailures.delete(download.model.id);
-            }
-            runDownload(download, { alertOnFailure });
+            continue;
           }
+
+          if (reportAgain) {
+            reportedFailures.delete(download.model.id);
+          }
+          runDownload(download, { alertOnFailure });
         }
       } catch (error) {
         log('resumePendingDownloads', error);
@@ -269,7 +265,13 @@ export const useResumeModelDownloads = ({
     resume();
 
     const subscription = AppState.addEventListener('change', state => {
+      if (state === 'background') {
+        backgroundTrips++;
+        isInForeground = false;
+      }
+
       if (state === 'active') {
+        isInForeground = true;
         resume();
       }
     });

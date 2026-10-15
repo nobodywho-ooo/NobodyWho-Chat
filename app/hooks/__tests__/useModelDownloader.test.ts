@@ -201,9 +201,14 @@ test('alerts once for a download that keeps failing on each return to the app', 
   alert.mockRestore();
 });
 
-test('restarts, without alerting, a download that fails only after a return to the app skipped it', async () => {
+// The listener useResumeModelDownloads registered on AppState.
+const appStateChange = () =>
+  [...(AppState.addEventListener as jest.Mock).mock.calls]
+    .reverse()
+    .find(([type]) => type === 'change')?.[1] as (state: string) => void;
+
+test('restarts, without alerting, a download cut while the app was in the background', async () => {
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-  const addListener = AppState.addEventListener as jest.Mock;
   let failPart: (error: Error) => void = () => {};
   mockDownloadModelPart
     .mockImplementationOnce(
@@ -220,9 +225,8 @@ test('restarts, without alerting, a download that fails only after a return to t
 
   // Back in the app while the task suspended in the background still looks
   // alive, so the resume skips it; then it fails.
-  const onChange = [...addListener.mock.calls]
-    .reverse()
-    .find(([type]) => type === 'change')?.[1] as (state: string) => void;
+  const onChange = appStateChange();
+  await act(async () => onChange('background'));
   await act(async () => onChange('active'));
   await act(async () => failPart(new Error('connection lost')));
 
@@ -232,37 +236,65 @@ test('restarts, without alerting, a download that fails only after a return to t
   alert.mockRestore();
 });
 
-test('reports, without retrying, a failure long after a return to the app', async () => {
+test('leaves a download cut before the app is back to the resume, without alerting', async () => {
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-  const addListener = AppState.addEventListener as jest.Mock;
   let failPart: (error: Error) => void = () => {};
-  mockDownloadModelPart.mockImplementationOnce(
+  mockDownloadModelPart
+    .mockImplementationOnce(
+      () =>
+        new Promise((_, reject) => {
+          failPart = reject;
+        }),
+    )
+    .mockResolvedValueOnce('/docs/models/124/model-124.gguf');
+  mockGetModelDownloads.mockResolvedValue([pendingDownload(124)]);
+
+  await renderHook(() => useResumeModelDownloads());
+  await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(1));
+
+  // The failure lands before the app reports being active again.
+  const onChange = appStateChange();
+  await act(async () => onChange('background'));
+  await act(async () => failPart(new Error('connection lost')));
+  expect(mockDownloadModelPart).toHaveBeenCalledTimes(1);
+
+  await act(async () => onChange('active'));
+
+  await waitFor(() => expect(mockInsertModel).toHaveBeenCalled());
+  expect(mockDownloadModelPart).toHaveBeenCalledTimes(2);
+  expect(alert).not.toHaveBeenCalled();
+  alert.mockRestore();
+});
+
+test('reports the restart of a cut download when it fails too', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  let failPart: (error: Error) => void = () => {};
+  mockDownloadModelPart.mockImplementation(
     () =>
       new Promise((_, reject) => {
         failPart = reject;
       }),
   );
   mockGetModelDownloads.mockResolvedValue([pendingDownload(122)]);
-  const now = jest.spyOn(Date, 'now').mockReturnValue(0);
 
   await renderHook(() => useResumeModelDownloads());
   await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(1));
 
-  // Back in the app while the download is healthy...
-  const onChange = [...addListener.mock.calls]
-    .reverse()
-    .find(([type]) => type === 'change')?.[1] as (state: string) => void;
+  const onChange = appStateChange();
+  await act(async () => onChange('background'));
   await act(async () => onChange('active'));
-  // ...and an hour later the server errors.
-  now.mockReturnValue(60 * 60 * 1000);
+  await act(async () => failPart(new Error('connection lost')));
+  await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(2));
+  expect(alert).not.toHaveBeenCalled();
+
+  // No trip to the background since the restart: a real failure.
   await act(async () => failPart(new Error('server error')));
 
-  expect(mockDownloadModelPart).toHaveBeenCalledTimes(1);
+  expect(mockDownloadModelPart).toHaveBeenCalledTimes(2);
   expect(alert).toHaveBeenCalledWith(
     'screens.models.downloadFailedTitle',
     'screens.models.downloadFailedModelMessage',
   );
-  now.mockRestore();
   alert.mockRestore();
 });
 
