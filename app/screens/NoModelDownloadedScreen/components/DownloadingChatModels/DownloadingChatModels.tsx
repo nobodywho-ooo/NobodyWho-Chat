@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, Text } from 'components';
-import { overallDownloadProgress } from 'helpers';
+import { overallDownloadProgress, progressPercent } from 'helpers';
 import {
   useActiveDownloadIds,
   useHasResumedAtLaunch,
@@ -65,7 +65,7 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
       <View style={styles.progressContainer}>
         <Text variant="body2" bold>
           {t('screens.noModelDownloaded.downloadProgress', {
-            percent: Math.round(Math.min(progress, 1) * 100),
+            percent: progressPercent(progress),
           })}
         </Text>
       </View>

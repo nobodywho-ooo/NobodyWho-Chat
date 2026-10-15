@@ -2,6 +2,7 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, ProgressBar, Text } from 'components';
+import { progressPercent } from 'helpers';
 import { useStyled } from 'hooks';
 import { Spacings } from 'style';
 
@@ -118,7 +119,7 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
         <View style={styles.downloadContainer}>
           <Text variant="body2" bold style={styles.progressLabel}>
             {t('screens.voiceAssistant.setup.downloadProgress', {
-              percent: Math.round(Math.min(progress, 1) * 100),
+              percent: progressPercent(progress),
             })}
           </Text>
           <ProgressBar progress={progress} />

@@ -74,6 +74,10 @@ export const sizeWeightedProgress = (
   return downloadedGB / totalGB;
 };
 
+// Progress (0..1) as a whole percentage for a label, capped at 100.
+export const progressPercent = (progress: number): number =>
+  Math.round(Math.min(progress, 1) * 100);
+
 // Progress (0..1) across several downloads in progress.
 export const overallDownloadProgress = (
   downloads: readonly ModelDownload[],

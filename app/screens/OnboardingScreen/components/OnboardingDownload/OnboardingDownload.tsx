@@ -3,7 +3,7 @@ import { Alert, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, ProgressBar, Text } from 'components';
-import { curatedOnboardingModels, log } from 'helpers';
+import { curatedOnboardingModels, log, progressPercent } from 'helpers';
 import { useCuratedModels, useStyled } from 'hooks';
 import { getModelById } from 'repositories';
 import { Spacings } from 'style';
@@ -148,7 +148,7 @@ export const OnboardingDownload: React.FC<
       <View style={styles.progressContainer}>
         <Text variant="body2" bold style={styles.progressLabel}>
           {t('screens.onboarding.downloadProgress', {
-            percent: Math.round(Math.min(progress, 1) * 100),
+            percent: progressPercent(progress),
           })}
         </Text>
         <ProgressBar progress={progress} />
