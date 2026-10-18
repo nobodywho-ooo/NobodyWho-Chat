@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, act } from '@testing-library/react-native';
+import { render, act, fireEvent } from '@testing-library/react-native';
 
 import {
   mockUseAppState,
@@ -8,6 +8,7 @@ import {
 } from 'jest/mock/hooks';
 import { mockSetAppState } from 'jest/mock/database';
 import { mockDeleteConversation } from 'jest/mock/repositories';
+import { mockNavigate } from 'jest/mock/node-modules';
 import { buildConversation } from 'jest/factories/conversation';
 import { buildModel } from 'jest/factories/model';
 import { log } from 'helpers';
@@ -41,23 +42,27 @@ beforeEach(() => {
   mockSetAppState.mockClear();
   mockDeleteConversation.mockReset().mockResolvedValue(undefined);
   mockLog.mockClear();
+  mockNavigate.mockClear();
 });
 
-test('shows the in-use conversation title and model name in the header', async () => {
+const queryHeaderChevrons = (screen: Awaited<ReturnType<typeof render>>) =>
+  screen.container.queryAll(node => node.props.iosIconName === 'chevron.right');
+
+test('shows only the in-use model name and parameter count in the header', async () => {
   const screen = await render(
     <AiServiceProvider>
       <DrawerNavigator />
     </AiServiceProvider>,
   );
 
-  expect(screen.getByText('Conversation 5')).toBeTruthy();
-  expect(screen.getByText('Model 1 (1B)')).toBeTruthy();
+  expect(screen.getByText('Model 1')).toBeTruthy();
+  expect(screen.getByText('1B')).toBeTruthy();
+  expect(screen.queryByText('Conversation 5')).toBeNull();
 });
 
-test('falls back to the default title when no conversation is in use', async () => {
-  mockUseAppState.mockReturnValue({
-    modelIdInUse: 1,
-    conversationIdInUse: undefined,
+test('shows the model logo before its name in the header', async () => {
+  mockUseModels.mockReturnValue({
+    models: [buildModel(1, { family: 'Qwen3' })],
   });
 
   const screen = await render(
@@ -66,7 +71,61 @@ test('falls back to the default title when no conversation is in use', async () 
     </AiServiceProvider>,
   );
 
-  expect(screen.getByText('Navigation.newChat')).toBeTruthy();
+  expect(
+    screen.container.queryAll(node => node.type === 'SvgMock'),
+  ).toHaveLength(1);
+});
+
+test('pressing the header title opens the downloaded models screen', async () => {
+  mockUseModels.mockReturnValue({ models: [buildModel(1), buildModel(2)] });
+
+  const screen = await render(
+    <AiServiceProvider>
+      <DrawerNavigator />
+    </AiServiceProvider>,
+  );
+
+  expect(queryHeaderChevrons(screen)).toHaveLength(1);
+
+  await fireEvent.press(screen.getByText('Model 1'));
+
+  expect(mockNavigate).toHaveBeenCalledWith('Chat', {
+    screen: 'DownloadedModelsScreen',
+    params: { canDelete: false },
+  });
+});
+
+// Mirrors the drawer, which only offers "Change model" with something to change to.
+test('hides the header chevron and ignores presses with a single model', async () => {
+  const screen = await render(
+    <AiServiceProvider>
+      <DrawerNavigator />
+    </AiServiceProvider>,
+  );
+
+  expect(queryHeaderChevrons(screen)).toHaveLength(0);
+
+  await fireEvent.press(screen.getByText('Model 1'));
+
+  expect(mockNavigate).not.toHaveBeenCalled();
+});
+
+test('shows no header title when no model is in use', async () => {
+  mockUseAppState.mockReturnValue({
+    modelIdInUse: undefined,
+    conversationIdInUse: undefined,
+  });
+  mockUseModels.mockReturnValue({ models: [buildModel(1), buildModel(2)] });
+
+  const screen = await render(
+    <AiServiceProvider>
+      <DrawerNavigator />
+    </AiServiceProvider>,
+  );
+
+  expect(screen.queryByText('Model 1')).toBeNull();
+  expect(screen.queryByText('1B')).toBeNull();
+  expect(queryHeaderChevrons(screen)).toHaveLength(0);
 });
 
 test('hides the header menu when no conversation is in use', async () => {

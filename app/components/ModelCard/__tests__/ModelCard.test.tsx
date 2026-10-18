@@ -37,6 +37,19 @@ test('renders correctly ModelCard', async () => {
   expect(tree).toMatchSnapshot();
 });
 
+test('centers the logo in a box stretched to the name and pipeline rows', async () => {
+  const screen = await render(<ModelCard model={mockModel} />);
+
+  const [logo] = screen.container.queryAll(node => node.type === 'SvgMock');
+  expect(logo.props).toEqual(
+    expect.objectContaining({ width: 28, height: 28 }),
+  );
+  expect(logo.parent).toHaveStyle({
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+  });
+});
+
 test('labels a sub-million parameter count in thousands', async () => {
   // A voice-detection model is ~300K parameters; the millions-only label used
   // to flatten every one of them to "(0M)".

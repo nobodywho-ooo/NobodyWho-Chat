@@ -19,6 +19,8 @@ import { Tag } from '../Tag/Tag';
 import styles from './ModelCard.styles';
 
 const HEAVY_PROCESSING_SIZE_GB = 2;
+const LOGO_SIZE = 28;
+const ACTION_ICON_SIZE = 24;
 
 interface ModelCardProps {
   style?: StyleProp<ViewStyle>;
@@ -82,114 +84,128 @@ export const ModelCard: React.FC<ModelCardProps> = ({
           { borderColor: isSelected ? colors.onSurfaceVariant : colors.border },
         ]}
       >
-        {FamilyIcon && (
-          <FamilyIcon width={28} height={28} color={colors.onSurface} />
-        )}
-
-        <View style={styles.infoContainer}>
-          <View style={styles.nameContainer}>
-            <Text
-              variant="h4"
-              bold
-              numberOfLines={1}
-              style={styles.modelContainer}
-            >
-              {name}
-            </Text>
-            {parameterLabel && (
-              <Text
-                variant="body1"
-                bold
-                style={{ color: colors.onSurfaceVariant }}
-              >
-                {`(${parameterLabel})`}
-              </Text>
-            )}
-          </View>
-          <View style={styles.pipelineContainer}>
-            <PlatformIcon
-              iosIconName={icon.iosIconName}
-              androidIconName={icon.androidIconName}
-              size={fontSizes.caption}
-              color={colors.onSurface}
-            />
-            <Text
-              variant="body2"
-              numberOfLines={1}
-              style={[styles.pipelineLabel, { color: colors.onSurfaceVariant }]}
-            >
-              {pipelineLabel[pipeline]}
-            </Text>
-            {isDownloading && (
-              <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
-                {`${Math.round(downloadProgress * 100)}%`}
-              </Text>
-            )}
-          </View>
-
-          {isDownloading ? (
-            <ProgressBar progress={downloadProgress} />
-          ) : (
-            <View style={styles.tagsContainer}>
-              <Tag
-                iosIconName="internaldrive"
-                androidIconName="hard_drive"
-                label={modelSizeLabel(sizeGB)}
+        <View style={styles.headerContainer}>
+          {FamilyIcon && (
+            <View style={styles.logoContainer}>
+              <FamilyIcon
+                width={LOGO_SIZE}
+                height={LOGO_SIZE}
+                color={colors.onSurface}
               />
-              {languages.length > 0 && (
-                <Tag
-                  iosIconName="globe"
-                  androidIconName="language"
-                  label={t('components.modelCard.languageCount', {
-                    count: languages.length,
-                  })}
-                />
-              )}
-              {thinking && (
-                <Tag
-                  iosIconName="lightbulb"
-                  androidIconName="lightbulb"
-                  label={t('components.modelCard.thinking')}
-                />
-              )}
-              {sizeGB > HEAVY_PROCESSING_SIZE_GB && (
-                <Tag
-                  iosIconName="cpu"
-                  androidIconName="memory"
-                  variant="warning"
-                  label={t('components.modelCard.heavyProcessing')}
-                />
-              )}
-              {tags.map(tag => (
-                <Tag key={tag} label={tag} />
-              ))}
             </View>
+          )}
+
+          <View style={styles.headingContainer}>
+            <View style={styles.nameContainer}>
+              <Text
+                variant="h4"
+                bold
+                numberOfLines={1}
+                style={styles.modelContainer}
+              >
+                {name}
+              </Text>
+              {parameterLabel && (
+                <Text
+                  variant="body1"
+                  bold
+                  style={{ color: colors.onSurfaceVariant }}
+                >
+                  {`(${parameterLabel})`}
+                </Text>
+              )}
+            </View>
+            <View style={styles.pipelineContainer}>
+              <PlatformIcon
+                iosIconName={icon.iosIconName}
+                androidIconName={icon.androidIconName}
+                size={fontSizes.caption}
+                color={colors.onSurface}
+              />
+              <Text
+                variant="body2"
+                numberOfLines={1}
+                style={[
+                  styles.pipelineLabel,
+                  { color: colors.onSurfaceVariant },
+                ]}
+              >
+                {pipelineLabel[pipeline]}
+              </Text>
+              {isDownloading && (
+                <Text
+                  variant="body2"
+                  style={{ color: colors.onSurfaceVariant }}
+                >
+                  {`${Math.round(downloadProgress * 100)}%`}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          {deleteMode && (
+            <PlatformIcon
+              iosIconName="trash"
+              androidIconName="delete"
+              size={ACTION_ICON_SIZE}
+              color={colors.dangerSurface}
+            />
+          )}
+          {!deleteMode && isSelected && (
+            <PlatformIcon
+              iosIconName="checkmark.circle.fill"
+              androidIconName="check_circle"
+              size={ACTION_ICON_SIZE}
+              color={colors.successSurface}
+            />
+          )}
+          {showDownloadIcon && (
+            <PlatformIcon
+              iosIconName={downloadIosIcon}
+              androidIconName={downloadAndroidIcon}
+              size={ACTION_ICON_SIZE}
+              color={colors.primary}
+            />
           )}
         </View>
 
-        {deleteMode && (
-          <PlatformIcon
-            iosIconName="trash"
-            androidIconName="delete"
-            size={24}
-            color={colors.dangerSurface}
-          />
-        )}
-        {!deleteMode && isSelected && (
-          <PlatformIcon
-            iosIconName="checkmark.circle.fill"
-            androidIconName="check_circle"
-            size={24}
-            color={colors.successSurface}
-          />
-        )}
-        {showDownloadIcon && (
-          <PlatformIcon
-            iosIconName={downloadIosIcon}
-            androidIconName={downloadAndroidIcon}
-            size={28}
-            color={colors.primary}
-          />
+        {isDownloading ? (
+          <ProgressBar progress={downloadProgress} />
+        ) : (
+          <View style={styles.tagsContainer}>
+            <Tag
+              iosIconName="internaldrive"
+              androidIconName="hard_drive"
+              label={modelSizeLabel(sizeGB)}
+            />
+            {languages.length > 0 && (
+              <Tag
+                iosIconName="globe"
+                androidIconName="language"
+                label={t('components.modelCard.languageCount', {
+                  count: languages.length,
+                })}
+              />
+            )}
+            {thinking && (
+              <Tag
+                iosIconName="lightbulb"
+                androidIconName="lightbulb"
+                label={t('components.modelCard.thinking')}
+              />
+            )}
+            {sizeGB > HEAVY_PROCESSING_SIZE_GB && (
+              <Tag
+                iosIconName="cpu"
+                androidIconName="memory"
+                variant="warning"
+                label={t('components.modelCard.heavyProcessing')}
+              />
+            )}
+            {tags.map(tag => (
+              <Tag key={tag} label={tag} />
+            ))}
+          </View>
         )}
       </View>
     </Pressable>
