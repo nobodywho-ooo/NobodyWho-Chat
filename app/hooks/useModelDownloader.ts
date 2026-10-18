@@ -55,12 +55,47 @@ const subscribeActiveDownloads = (listener: () => void) => {
 // a pending download only looks interrupted.
 let hasResumedAtLaunch = false;
 
+// Resolves once the model has no stopped loop still winding down. A stopped
+// loop deletes the model directory as it ends, so a restart must not begin
+// writing there until it has.
+const stoppedDownloadSettled = (modelId: number) =>
+  new Promise<void>(resolve => {
+    const check = () => {
+      if (!activeDownloads.get(modelId)?.signal.aborted) {
+        unsubscribe();
+        resolve();
+      }
+    };
+    const unsubscribe = subscribeActiveDownloads(check);
+    check();
+  });
+
 // Trips to the background so far, and whether the app is back from the last
 // one. The OS can cut a transfer while the app is away, and that failure lands
 // whenever it likes: in the background, on the way back, or just after the
 // return. A loop that was running across a trip treats its failure as that cut.
 let backgroundTrips = 0;
 let isInForeground = true;
+
+// Loops waiting for the app to come back, released by the 'active' event.
+const foregroundWaiters = new Set<() => void>();
+
+// Resolves once the app is in the foreground, or the download is stopped.
+const whenInForeground = (signal: AbortSignal) =>
+  new Promise<void>(resolve => {
+    if (isInForeground || signal.aborted) {
+      resolve();
+      return;
+    }
+
+    const release = () => {
+      foregroundWaiters.delete(release);
+      signal.removeEventListener('abort', release);
+      resolve();
+    };
+    foregroundWaiters.add(release);
+    signal.addEventListener('abort', release);
+  });
 
 // Models whose failure the user was already told about. Resume retries pending
 // downloads on every return to the app, so one that keeps failing (offline)
@@ -98,6 +133,12 @@ const useRunDownload = () => {
     ): Promise<void> {
       const { model } = download;
 
+      // Started again right after a stop: wait for the stopped loop to end
+      // rather than mistake it for this download already running.
+      if (activeDownloads.get(model.id)?.signal.aborted) {
+        await stoppedDownloadSettled(model.id);
+      }
+
       if (activeDownloads.has(model.id)) {
         return;
       }
@@ -107,7 +148,7 @@ const useRunDownload = () => {
 
       let modelDownloaded = false;
       let isTransferring = true;
-      let retryNow = false;
+      let restartAfterBackgroundCut = false;
       const tripsAtStart = backgroundTrips;
       const partsProgress = download.partsProgress.map(part => ({ ...part }));
 
@@ -167,22 +208,25 @@ const useRunDownload = () => {
         modelDownloaded = true;
         reportedFailures.delete(model.id);
 
-        await selectModelIfSlotFree(model);
-
+        // Dropped before the slot selection so a failure there can't leave an
+        // installed model looking like a pending download to resume.
         await deleteModelDownload(model.id);
+
+        await selectModelIfSlotFree(model);
       } catch (error) {
-        // Cut by a trip to the background: not reported. Restarted now if the
-        // app is back, else by the resume on its return (this loop is gone by
-        // then). Only once: the restart reports a failure of its own.
+        // Cut by a trip to the background: not reported, but restarted by this
+        // loop once the app is back. Only once: the restart reports a failure
+        // of its own.
         const wasCutInBackground =
           isTransferring &&
           !controller.signal.aborted &&
           backgroundTrips !== tripsAtStart;
-        retryNow = wasCutInBackground && isInForeground;
+        restartAfterBackgroundCut = wasCutInBackground;
         log('ModelsScreen runDownload', error);
 
         if (
           alertOnFailure &&
+          !modelDownloaded &&
           !controller.signal.aborted &&
           !wasCutInBackground &&
           !reportedFailures.has(model.id)
@@ -195,6 +239,12 @@ const useRunDownload = () => {
             }),
           );
         }
+
+        // Still registered as running while it waits, so the resume on return
+        // leaves it alone and a caller awaiting it gets the real outcome.
+        if (wasCutInBackground) {
+          await whenInForeground(controller.signal);
+        }
       } finally {
         if (activeDownloads.get(model.id) === controller) {
           setActiveDownload(model.id, undefined);
@@ -205,7 +255,7 @@ const useRunDownload = () => {
         }
       }
 
-      if (retryNow) {
+      if (restartAfterBackgroundCut && !controller.signal.aborted) {
         await run({ model, partsProgress }, { alertOnFailure });
       }
     },
@@ -272,6 +322,7 @@ export const useResumeModelDownloads = ({
 
       if (state === 'active') {
         isInForeground = true;
+        foregroundWaiters.forEach(release => release());
         resume();
       }
     });

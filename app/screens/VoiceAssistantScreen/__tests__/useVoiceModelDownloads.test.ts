@@ -37,7 +37,7 @@ const mockCurated = {
 const mockUseCuratedModels = jest.fn(
   (_catalogue?: unknown, _reservedGB?: unknown) => mockCurated,
 );
-const mockStopDownload = jest.fn();
+const mockPromptStopDownloads = jest.fn();
 const mockResumeDownloads = jest.fn();
 let mockActiveIds = new Set<number>();
 
@@ -45,7 +45,7 @@ jest.mock('hooks', () => ({
   useCuratedModels: (catalogue?: unknown, reservedGB?: unknown) =>
     mockUseCuratedModels(catalogue, reservedGB),
   useModelDownloader: () => ({
-    stopDownload: mockStopDownload,
+    promptStopDownloads: mockPromptStopDownloads,
     resumeDownloads: mockResumeDownloads,
   }),
   useActiveDownloadIds: () => mockActiveIds,
@@ -91,9 +91,9 @@ test('shows the progress of a voice model download started before a remount', as
   expect(result.current.isInterrupted).toBe(false);
   expect(result.current.progress).toBe(0.25);
 
-  // No batch of its own to cancel: stops the download it found.
+  // No batch of its own to cancel: asks before stopping the download it found.
   await act(async () => result.current.cancel());
-  expect(mockStopDownload).toHaveBeenCalledWith(tts);
+  expect(mockPromptStopDownloads).toHaveBeenCalledWith([tts]);
   expect(mockCurated.cancel).not.toHaveBeenCalled();
 });
 
@@ -109,7 +109,7 @@ test("follows and cancels the screen's own batch while it runs", async () => {
 
   await act(async () => result.current.cancel());
   expect(mockCurated.cancel).toHaveBeenCalledTimes(1);
-  expect(mockStopDownload).not.toHaveBeenCalled();
+  expect(mockPromptStopDownloads).not.toHaveBeenCalled();
 });
 
 test('is neither downloading nor interrupted with nothing on its way', async () => {

@@ -68,8 +68,6 @@ export const useCuratedModels = (
   // cancel() may run from an awaited callback; read the latest values.
   const targetsRef = useRef(targets);
   targetsRef.current = targets;
-  const storedModelsRef = useRef(storedModels);
-  storedModelsRef.current = storedModels;
 
   // The in-flight or settled fetch, shared by the mount-time load and
   // downloadCurated. Cleared on failure so the next download retries it (the
@@ -270,18 +268,24 @@ export const useCuratedModels = (
     ],
   );
 
+  // Only the ones not installed
   const cancel = useCallback(() => {
     batchRef.current++;
     batchAbortRef.current?.abort();
-    // Only the ones still in flight: stopping a model that already landed would
-    // take the "no live download" branch in stopDownload and delete the files
-    // of a model that is now installed (and possibly selected into its slot).
-    targetsRef.current
-      .filter(
-        target =>
-          !storedModelsRef.current.some(stored => stored.id === target.id),
-      )
-      .forEach(stopDownload);
+    targetsRef.current.forEach(target => {
+      if (isDownloadActive(target.id)) {
+        stopDownload(target);
+        return;
+      }
+
+      getModelById(target.id)
+        .then(stored => {
+          if (stored === undefined) {
+            stopDownload(target);
+          }
+        })
+        .catch(error => log('useCuratedModels cancel', error));
+    });
     setTargets([]);
     setIsDownloading(false);
   }, [stopDownload]);

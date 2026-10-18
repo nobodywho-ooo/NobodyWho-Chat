@@ -102,6 +102,8 @@ beforeEach(() => {
     json: async () => [chat, stt, tts, vad],
   })) as unknown as typeof fetch;
   mockGetModelById.mockImplementation(async (id: number) => buildModel(id));
+  // clearAllMocks keeps implementations: undo a test's running downloads.
+  mockIsDownloadActive.mockImplementation(() => false);
 });
 
 afterEach(() => {
@@ -302,6 +304,49 @@ test('a cancelled batch neither alerts nor reports failure', async () => {
 
   expect(alertSpy).not.toHaveBeenCalled();
   expect(result.current.isDownloading).toBe(false);
+});
+
+describe('cancel', () => {
+  // Starts a batch for the chat model whose download never settles on its own.
+  const startBatch = async () => {
+    mockStartDownload.mockImplementationOnce(() => new Promise<void>(() => {}));
+    const hook = await renderLoaded();
+    await act(() => {
+      hook.result.current.downloadCurated(CURATED_TEXT_MODELS);
+    });
+    await waitFor(() => expect(mockStartDownload).toHaveBeenCalled());
+    return hook;
+  };
+
+  test('stops a target whose download is still running', async () => {
+    mockIsDownloadActive.mockImplementation(modelId => modelId === chat.id);
+    const { result } = await startBatch();
+
+    await act(async () => result.current.cancel());
+
+    expect(mockStopDownload).toHaveBeenCalledWith(chat);
+    expect(mockGetModelById).not.toHaveBeenCalled();
+  });
+
+  test('leaves alone a target that just landed, before the installed list shows it', async () => {
+    // Not running any more and in the database, though useModels still lags.
+    mockGetModelById.mockResolvedValue(chat);
+    const { result } = await startBatch();
+
+    await act(async () => result.current.cancel());
+
+    expect(mockGetModelById).toHaveBeenCalledWith(chat.id);
+    expect(mockStopDownload).not.toHaveBeenCalled();
+  });
+
+  test('cleans up a target that failed and is not installed', async () => {
+    mockGetModelById.mockResolvedValue(undefined);
+    const { result } = await startBatch();
+
+    await act(async () => result.current.cancel());
+
+    expect(mockStopDownload).toHaveBeenCalledWith(chat);
+  });
 });
 
 test('reports curated models covered only by a download as still in progress', async () => {

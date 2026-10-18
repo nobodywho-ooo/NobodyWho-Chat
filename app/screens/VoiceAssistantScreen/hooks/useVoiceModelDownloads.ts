@@ -32,7 +32,7 @@ export const useVoiceModelDownloads = (): VoiceModelDownloads => {
     downloadCurated,
     cancel: cancelBatch,
   } = useCuratedModels(undefined, VOICE_MODELS_RESERVED_GB);
-  const { stopDownload, resumeDownloads } = useModelDownloader();
+  const { promptStopDownloads, resumeDownloads } = useModelDownloader();
   const activeIds = useActiveDownloadIds();
 
   // Voice models on their way outside a batch of this screen: one it started
@@ -52,8 +52,8 @@ export const useVoiceModelDownloads = (): VoiceModelDownloads => {
       return;
     }
 
-    pendingDownloads.forEach(({ model }) => stopDownload(model));
-  }, [isBatchDownloading, cancelBatch, pendingDownloads, stopDownload]);
+    promptStopDownloads(pendingDownloads.map(({ model }) => model));
+  }, [isBatchDownloading, cancelBatch, pendingDownloads, promptStopDownloads]);
 
   return {
     needsDownload:
