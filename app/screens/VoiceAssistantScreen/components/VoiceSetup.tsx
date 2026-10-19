@@ -65,6 +65,17 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
   );
 
   const renderAction = () => {
+    if (status.isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={colors.primary} />
+          <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
+            {t('screens.voiceAssistant.setup.loadingModels')}
+          </Text>
+        </View>
+      );
+    }
+
     if (needsDownload) {
       return (
         <Button
@@ -87,17 +98,6 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
           style={styles.downloadButton}
           small
         />
-      );
-    }
-
-    if (status.isLoading) {
-      return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator color={colors.primary} />
-          <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
-            {t('screens.voiceAssistant.setup.loadingModels')}
-          </Text>
-        </View>
       );
     }
 
