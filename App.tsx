@@ -185,6 +185,8 @@ function AppLoader() {
 
   const running = useRef(false);
 
+  const finishOnboarding = useCallback(() => setShowOnboarding(false), []);
+
   const init = useCallback(async () => {
     if (running.current) {
       return;
@@ -248,7 +250,7 @@ function AppLoader() {
     <AiServiceProvider>
       <AppContent
         showOnboarding={showOnboarding}
-        onOnboardingFinish={() => setShowOnboarding(false)}
+        onOnboardingFinish={finishOnboarding}
       />
     </AiServiceProvider>
   );

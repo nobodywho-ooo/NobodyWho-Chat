@@ -290,15 +290,31 @@ export const useCuratedModels = (
     setIsDownloading(false);
   }, [stopDownload]);
 
-  return {
-    findCuratedToDownload,
-    findModelsToDownload,
-    findPendingDownloads,
-    isCatalogueLoaded: catalogue.length > 0,
-    isLoaded: !isModelsLoading && !isDownloadsLoading,
-    isDownloading,
-    progress,
-    downloadCurated,
-    cancel,
-  };
+  const isCatalogueLoaded = catalogue.length > 0;
+  const isLoaded = !isModelsLoading && !isDownloadsLoading;
+
+  return useMemo(
+    () => ({
+      findCuratedToDownload,
+      findModelsToDownload,
+      findPendingDownloads,
+      isCatalogueLoaded,
+      isLoaded,
+      isDownloading,
+      progress,
+      downloadCurated,
+      cancel,
+    }),
+    [
+      findCuratedToDownload,
+      findModelsToDownload,
+      findPendingDownloads,
+      isCatalogueLoaded,
+      isLoaded,
+      isDownloading,
+      progress,
+      downloadCurated,
+      cancel,
+    ],
+  );
 };

@@ -6,6 +6,7 @@ import { Button, PlatformIcon, Text } from 'components';
 import { useModelDownloads, useStyled } from 'hooks';
 import { isChatPipeline } from 'types';
 
+import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
 import { DownloadingChatModels } from './components';
 import styles from './NoModelDownloadedScreen.styles';
 
@@ -13,11 +14,15 @@ export const NoModelDownloadedScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const navigation = useNavigation();
-  const { downloads } = useModelDownloads();
+  const { downloads, loading } = useModelDownloads();
 
   const chatDownloads = downloads.filter(download =>
     isChatPipeline(download.model.pipeline),
   );
+
+  if (loading) {
+    return <LoadingScreen />;
+  }
 
   if (chatDownloads.length > 0) {
     return <DownloadingChatModels downloads={chatDownloads} />;
