@@ -1,6 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
+import { FIRST_PICK_TAG } from 'helpers';
 import { useStyled } from 'hooks';
 import { Text } from '../Text/Text';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
@@ -8,8 +9,6 @@ import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import styles from './Tag.styles';
 
 export type TagVariant = 'default' | 'highlight' | 'warning';
-
-const CATALOGUE_HIGHLIGHT_LABEL = 'Great First Pick';
 
 interface TagProps {
   label: string;
@@ -27,7 +26,7 @@ export const Tag: React.FC<TagProps> = ({
   const { colors } = useStyled();
 
   const resolvedVariant: TagVariant =
-    variant ?? (label === CATALOGUE_HIGHLIGHT_LABEL ? 'highlight' : 'default');
+    variant ?? (label === FIRST_PICK_TAG ? 'highlight' : 'default');
 
   const { textColor, backgroundColor } = {
     default: {

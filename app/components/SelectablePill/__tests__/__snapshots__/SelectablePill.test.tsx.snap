@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`SelectablePill renders a pill with an icon 1`] = `
 <View
@@ -118,7 +118,7 @@ exports[`SelectablePill renders a selected pill 1`] = `
         "paddingVertical": 8,
       },
       {
-        "backgroundColor": "#628395",
+        "backgroundColor": "#b44618",
         "borderColor": "transparent",
       },
       false,

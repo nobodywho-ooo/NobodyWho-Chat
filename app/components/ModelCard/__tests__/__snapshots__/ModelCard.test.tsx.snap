@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly ModelCard 1`] = `
 <View
@@ -46,11 +46,9 @@ exports[`renders correctly ModelCard 1`] = `
     style={
       [
         {
-          "alignItems": "center",
           "borderRadius": 12,
           "borderWidth": 1,
-          "flexDirection": "row",
-          "gap": 12,
+          "gap": 8,
           "marginBottom": 8,
           "padding": 12,
         },
@@ -60,291 +58,310 @@ exports[`renders correctly ModelCard 1`] = `
       ]
     }
   >
-    <SvgMock
-      color="#000000"
-      height={28}
-      width={28}
-    />
     <View
       style={
         {
-          "flex": 1,
-          "gap": 4,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 12,
         }
       }
     >
       <View
         style={
           {
-            "alignItems": "center",
-            "flexDirection": "row",
-            "gap": 8,
+            "alignSelf": "stretch",
+            "justifyContent": "center",
+            "paddingHorizontal": 8,
           }
         }
       >
-        <Text
-          bold={true}
-          numberOfLines={1}
-          style={
-            {
-              "flexShrink": 1,
-            }
-          }
-          variant="h4"
-        >
-          Qwen3 4B Q4 K M
-        </Text>
-        <Text
-          bold={true}
-          style={
-            {
-              "color": "#7c7c7c",
-            }
-          }
-          variant="body1"
-        >
-          (4B)
-        </Text>
+        <SvgMock
+          color="#000000"
+          height={28}
+          width={28}
+        />
       </View>
       <View
         style={
           {
-            "alignItems": "center",
-            "flexDirection": "row",
+            "flex": 1,
             "gap": 4,
           }
         }
       >
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "flexDirection": "row",
+              "gap": 8,
+            }
+          }
+        >
+          <Text
+            bold={true}
+            numberOfLines={1}
+            style={
+              {
+                "flexShrink": 1,
+              }
+            }
+            variant="h4"
+          >
+            Qwen3 4B Q4 K M
+          </Text>
+          <Text
+            bold={true}
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+            variant="body1"
+          >
+            (4B)
+          </Text>
+        </View>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "flexDirection": "row",
+              "gap": 4,
+            }
+          }
+        >
+          <PlatformIcon
+            androidIconName="chat"
+            color="#000000"
+            iosIconName="text.bubble"
+            size={12}
+          />
+          <Text
+            numberOfLines={1}
+            style={
+              [
+                {
+                  "flex": 1,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+            variant="body2"
+          >
+            Text generation
+          </Text>
+        </View>
+      </View>
+      <PlatformIcon
+        androidIconName="download"
+        color="#b44618"
+        iosIconName="arrow.down.circle"
+        size={24}
+      />
+    </View>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "flexWrap": "wrap",
+          "gap": 4,
+        }
+      }
+    >
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
+        }
+      >
         <PlatformIcon
-          androidIconName="chat"
-          color="#000000"
-          iosIconName="text.bubble"
+          androidIconName="hard_drive"
+          color="#7c7c7c"
+          iosIconName="internaldrive"
           size={12}
         />
         <Text
-          numberOfLines={1}
           style={
             [
               {
-                "flex": 1,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
                 "color": "#7c7c7c",
               },
             ]
           }
-          variant="body2"
         >
-          Text generation
+          2.5 GB
         </Text>
       </View>
       <View
         style={
-          {
-            "flexDirection": "row",
-            "flexWrap": "wrap",
-            "gap": 4,
-            "marginTop": 4,
-          }
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
         }
       >
-        <View
+        <PlatformIcon
+          androidIconName="language"
+          color="#7c7c7c"
+          iosIconName="globe"
+          size={12}
+        />
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "#f7f7f7",
+                "color": "#7c7c7c",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="hard_drive"
-            color="#7c7c7c"
-            iosIconName="internaldrive"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            2.5 GB
-          </Text>
-        </View>
-        <View
+          components.modelCard.languageCount
+        </Text>
+      </View>
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="lightbulb"
+          color="#7c7c7c"
+          iosIconName="lightbulb"
+          size={12}
+        />
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "#f7f7f7",
+                "color": "#7c7c7c",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="language"
-            color="#7c7c7c"
-            iosIconName="globe"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            components.modelCard.languageCount
-          </Text>
-        </View>
-        <View
+          components.modelCard.thinking
+        </Text>
+      </View>
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "rgba(230, 184, 0, 0.15)",
+            },
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="memory"
+          color="#e6b800"
+          iosIconName="cpu"
+          size={12}
+        />
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "#f7f7f7",
+                "color": "#e6b800",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="lightbulb"
-            color="#7c7c7c"
-            iosIconName="lightbulb"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            components.modelCard.thinking
-          </Text>
-        </View>
-        <View
+          components.modelCard.heavyProcessing
+        </Text>
+      </View>
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
+        }
+      >
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "rgba(230, 184, 0, 0.15)",
+                "color": "#7c7c7c",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="memory"
-            color="#e6b800"
-            iosIconName="cpu"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#e6b800",
-                },
-              ]
-            }
-          >
-            components.modelCard.heavyProcessing
-          </Text>
-        </View>
-        <View
-          style={
-            [
-              {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
-              },
-              {
-                "backgroundColor": "#f7f7f7",
-              },
-            ]
-          }
-        >
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            Multilingual
-          </Text>
-        </View>
+          Multilingual
+        </Text>
       </View>
     </View>
-    <PlatformIcon
-      androidIconName="download"
-      color="#628395"
-      iosIconName="arrow.down.circle"
-      size={28}
-    />
   </View>
 </View>
 `;
@@ -395,11 +412,9 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
     style={
       [
         {
-          "alignItems": "center",
           "borderRadius": 12,
           "borderWidth": 1,
-          "flexDirection": "row",
-          "gap": 12,
+          "gap": 8,
           "marginBottom": 8,
           "padding": 12,
         },
@@ -409,283 +424,302 @@ exports[`renders correctly ModelCard when model is downloaded 1`] = `
       ]
     }
   >
-    <SvgMock
-      color="#000000"
-      height={28}
-      width={28}
-    />
     <View
       style={
         {
-          "flex": 1,
-          "gap": 4,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 12,
         }
       }
     >
       <View
         style={
           {
-            "alignItems": "center",
-            "flexDirection": "row",
-            "gap": 8,
+            "alignSelf": "stretch",
+            "justifyContent": "center",
+            "paddingHorizontal": 8,
           }
         }
       >
-        <Text
-          bold={true}
-          numberOfLines={1}
-          style={
-            {
-              "flexShrink": 1,
-            }
-          }
-          variant="h4"
-        >
-          Qwen3 4B Q4 K M
-        </Text>
-        <Text
-          bold={true}
-          style={
-            {
-              "color": "#7c7c7c",
-            }
-          }
-          variant="body1"
-        >
-          (4B)
-        </Text>
+        <SvgMock
+          color="#000000"
+          height={28}
+          width={28}
+        />
       </View>
       <View
         style={
           {
-            "alignItems": "center",
-            "flexDirection": "row",
+            "flex": 1,
             "gap": 4,
           }
         }
       >
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "flexDirection": "row",
+              "gap": 8,
+            }
+          }
+        >
+          <Text
+            bold={true}
+            numberOfLines={1}
+            style={
+              {
+                "flexShrink": 1,
+              }
+            }
+            variant="h4"
+          >
+            Qwen3 4B Q4 K M
+          </Text>
+          <Text
+            bold={true}
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+            variant="body1"
+          >
+            (4B)
+          </Text>
+        </View>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "flexDirection": "row",
+              "gap": 4,
+            }
+          }
+        >
+          <PlatformIcon
+            androidIconName="chat"
+            color="#000000"
+            iosIconName="text.bubble"
+            size={12}
+          />
+          <Text
+            numberOfLines={1}
+            style={
+              [
+                {
+                  "flex": 1,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+            variant="body2"
+          >
+            Text generation
+          </Text>
+        </View>
+      </View>
+    </View>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "flexWrap": "wrap",
+          "gap": 4,
+        }
+      }
+    >
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
+        }
+      >
         <PlatformIcon
-          androidIconName="chat"
-          color="#000000"
-          iosIconName="text.bubble"
+          androidIconName="hard_drive"
+          color="#7c7c7c"
+          iosIconName="internaldrive"
           size={12}
         />
         <Text
-          numberOfLines={1}
           style={
             [
               {
-                "flex": 1,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
                 "color": "#7c7c7c",
               },
             ]
           }
-          variant="body2"
         >
-          Text generation
+          2.5 GB
         </Text>
       </View>
       <View
         style={
-          {
-            "flexDirection": "row",
-            "flexWrap": "wrap",
-            "gap": 4,
-            "marginTop": 4,
-          }
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
         }
       >
-        <View
+        <PlatformIcon
+          androidIconName="language"
+          color="#7c7c7c"
+          iosIconName="globe"
+          size={12}
+        />
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "#f7f7f7",
+                "color": "#7c7c7c",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="hard_drive"
-            color="#7c7c7c"
-            iosIconName="internaldrive"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            2.5 GB
-          </Text>
-        </View>
-        <View
+          components.modelCard.languageCount
+        </Text>
+      </View>
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="lightbulb"
+          color="#7c7c7c"
+          iosIconName="lightbulb"
+          size={12}
+        />
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "#f7f7f7",
+                "color": "#7c7c7c",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="language"
-            color="#7c7c7c"
-            iosIconName="globe"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            components.modelCard.languageCount
-          </Text>
-        </View>
-        <View
+          components.modelCard.thinking
+        </Text>
+      </View>
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "rgba(230, 184, 0, 0.15)",
+            },
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="memory"
+          color="#e6b800"
+          iosIconName="cpu"
+          size={12}
+        />
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "#f7f7f7",
+                "color": "#e6b800",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="lightbulb"
-            color="#7c7c7c"
-            iosIconName="lightbulb"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            components.modelCard.thinking
-          </Text>
-        </View>
-        <View
+          components.modelCard.heavyProcessing
+        </Text>
+      </View>
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
+        }
+      >
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "rgba(230, 184, 0, 0.15)",
+                "color": "#7c7c7c",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="memory"
-            color="#e6b800"
-            iosIconName="cpu"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#e6b800",
-                },
-              ]
-            }
-          >
-            components.modelCard.heavyProcessing
-          </Text>
-        </View>
-        <View
-          style={
-            [
-              {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
-              },
-              {
-                "backgroundColor": "#f7f7f7",
-              },
-            ]
-          }
-        >
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            Multilingual
-          </Text>
-        </View>
+          Multilingual
+        </Text>
       </View>
     </View>
   </View>
@@ -738,11 +772,9 @@ exports[`renders correctly ModelCard when model is downloading 1`] = `
     style={
       [
         {
-          "alignItems": "center",
           "borderRadius": 12,
           "borderWidth": 1,
-          "flexDirection": "row",
-          "gap": 12,
+          "gap": 8,
           "marginBottom": 8,
           "padding": 12,
         },
@@ -752,103 +784,123 @@ exports[`renders correctly ModelCard when model is downloading 1`] = `
       ]
     }
   >
-    <SvgMock
-      color="#000000"
-      height={28}
-      width={28}
-    />
     <View
       style={
         {
-          "flex": 1,
-          "gap": 4,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 12,
         }
       }
     >
       <View
         style={
           {
-            "alignItems": "center",
-            "flexDirection": "row",
-            "gap": 8,
+            "alignSelf": "stretch",
+            "justifyContent": "center",
+            "paddingHorizontal": 8,
           }
         }
       >
-        <Text
-          bold={true}
-          numberOfLines={1}
-          style={
-            {
-              "flexShrink": 1,
-            }
-          }
-          variant="h4"
-        >
-          Qwen3 4B Q4 K M
-        </Text>
-        <Text
-          bold={true}
-          style={
-            {
-              "color": "#7c7c7c",
-            }
-          }
-          variant="body1"
-        >
-          (4B)
-        </Text>
+        <SvgMock
+          color="#000000"
+          height={28}
+          width={28}
+        />
       </View>
       <View
         style={
           {
-            "alignItems": "center",
-            "flexDirection": "row",
+            "flex": 1,
             "gap": 4,
           }
         }
       >
-        <PlatformIcon
-          androidIconName="chat"
-          color="#000000"
-          iosIconName="text.bubble"
-          size={12}
-        />
-        <Text
-          numberOfLines={1}
-          style={
-            [
-              {
-                "flex": 1,
-              },
-              {
-                "color": "#7c7c7c",
-              },
-            ]
-          }
-          variant="body2"
-        >
-          Text generation
-        </Text>
-        <Text
+        <View
           style={
             {
-              "color": "#7c7c7c",
+              "alignItems": "center",
+              "flexDirection": "row",
+              "gap": 8,
             }
           }
-          variant="body2"
         >
-          40%
-        </Text>
+          <Text
+            bold={true}
+            numberOfLines={1}
+            style={
+              {
+                "flexShrink": 1,
+              }
+            }
+            variant="h4"
+          >
+            Qwen3 4B Q4 K M
+          </Text>
+          <Text
+            bold={true}
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+            variant="body1"
+          >
+            (4B)
+          </Text>
+        </View>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "flexDirection": "row",
+              "gap": 4,
+            }
+          }
+        >
+          <PlatformIcon
+            androidIconName="chat"
+            color="#000000"
+            iosIconName="text.bubble"
+            size={12}
+          />
+          <Text
+            numberOfLines={1}
+            style={
+              [
+                {
+                  "flex": 1,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+            variant="body2"
+          >
+            Text generation
+          </Text>
+          <Text
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+            variant="body2"
+          >
+            40%
+          </Text>
+        </View>
       </View>
-      <ProgressBar
-        progress={0.4}
+      <PlatformIcon
+        androidIconName="downloading"
+        color="#b44618"
+        iosIconName="arrow.down.circle.dotted"
+        size={24}
       />
     </View>
-    <PlatformIcon
-      androidIconName="downloading"
-      color="#628395"
-      iosIconName="arrow.down.circle.dotted"
-      size={28}
+    <ProgressBar
+      progress={0.4}
     />
   </View>
 </View>
@@ -900,11 +952,9 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
     style={
       [
         {
-          "alignItems": "center",
           "borderRadius": 12,
           "borderWidth": 1,
-          "flexDirection": "row",
-          "gap": 12,
+          "gap": 8,
           "marginBottom": 8,
           "padding": 12,
         },
@@ -914,291 +964,310 @@ exports[`renders correctly ModelCard when model is selected 1`] = `
       ]
     }
   >
-    <SvgMock
-      color="#000000"
-      height={28}
-      width={28}
-    />
     <View
       style={
         {
-          "flex": 1,
-          "gap": 4,
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 12,
         }
       }
     >
       <View
         style={
           {
-            "alignItems": "center",
-            "flexDirection": "row",
-            "gap": 8,
+            "alignSelf": "stretch",
+            "justifyContent": "center",
+            "paddingHorizontal": 8,
           }
         }
       >
-        <Text
-          bold={true}
-          numberOfLines={1}
-          style={
-            {
-              "flexShrink": 1,
-            }
-          }
-          variant="h4"
-        >
-          Qwen3 4B Q4 K M
-        </Text>
-        <Text
-          bold={true}
-          style={
-            {
-              "color": "#7c7c7c",
-            }
-          }
-          variant="body1"
-        >
-          (4B)
-        </Text>
+        <SvgMock
+          color="#000000"
+          height={28}
+          width={28}
+        />
       </View>
       <View
         style={
           {
-            "alignItems": "center",
-            "flexDirection": "row",
+            "flex": 1,
             "gap": 4,
           }
         }
       >
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "flexDirection": "row",
+              "gap": 8,
+            }
+          }
+        >
+          <Text
+            bold={true}
+            numberOfLines={1}
+            style={
+              {
+                "flexShrink": 1,
+              }
+            }
+            variant="h4"
+          >
+            Qwen3 4B Q4 K M
+          </Text>
+          <Text
+            bold={true}
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+            variant="body1"
+          >
+            (4B)
+          </Text>
+        </View>
+        <View
+          style={
+            {
+              "alignItems": "center",
+              "flexDirection": "row",
+              "gap": 4,
+            }
+          }
+        >
+          <PlatformIcon
+            androidIconName="chat"
+            color="#000000"
+            iosIconName="text.bubble"
+            size={12}
+          />
+          <Text
+            numberOfLines={1}
+            style={
+              [
+                {
+                  "flex": 1,
+                },
+                {
+                  "color": "#7c7c7c",
+                },
+              ]
+            }
+            variant="body2"
+          >
+            Text generation
+          </Text>
+        </View>
+      </View>
+      <PlatformIcon
+        androidIconName="check_circle"
+        color="#2ec728"
+        iosIconName="checkmark.circle.fill"
+        size={24}
+      />
+    </View>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "flexWrap": "wrap",
+          "gap": 4,
+        }
+      }
+    >
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
+        }
+      >
         <PlatformIcon
-          androidIconName="chat"
-          color="#000000"
-          iosIconName="text.bubble"
+          androidIconName="hard_drive"
+          color="#7c7c7c"
+          iosIconName="internaldrive"
           size={12}
         />
         <Text
-          numberOfLines={1}
           style={
             [
               {
-                "flex": 1,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
                 "color": "#7c7c7c",
               },
             ]
           }
-          variant="body2"
         >
-          Text generation
+          2.5 GB
         </Text>
       </View>
       <View
         style={
-          {
-            "flexDirection": "row",
-            "flexWrap": "wrap",
-            "gap": 4,
-            "marginTop": 4,
-          }
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
         }
       >
-        <View
+        <PlatformIcon
+          androidIconName="language"
+          color="#7c7c7c"
+          iosIconName="globe"
+          size={12}
+        />
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "#f7f7f7",
+                "color": "#7c7c7c",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="hard_drive"
-            color="#7c7c7c"
-            iosIconName="internaldrive"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            2.5 GB
-          </Text>
-        </View>
-        <View
+          components.modelCard.languageCount
+        </Text>
+      </View>
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="lightbulb"
+          color="#7c7c7c"
+          iosIconName="lightbulb"
+          size={12}
+        />
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "#f7f7f7",
+                "color": "#7c7c7c",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="language"
-            color="#7c7c7c"
-            iosIconName="globe"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            components.modelCard.languageCount
-          </Text>
-        </View>
-        <View
+          components.modelCard.thinking
+        </Text>
+      </View>
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "rgba(230, 184, 0, 0.15)",
+            },
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="memory"
+          color="#e6b800"
+          iosIconName="cpu"
+          size={12}
+        />
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "#f7f7f7",
+                "color": "#e6b800",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="lightbulb"
-            color="#7c7c7c"
-            iosIconName="lightbulb"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            components.modelCard.thinking
-          </Text>
-        </View>
-        <View
+          components.modelCard.heavyProcessing
+        </Text>
+      </View>
+      <View
+        style={
+          [
+            {
+              "alignItems": "center",
+              "borderRadius": 6,
+              "flexDirection": "row",
+              "gap": 2,
+              "paddingHorizontal": 8,
+              "paddingVertical": 4,
+            },
+            {
+              "backgroundColor": "#f7f7f7",
+            },
+          ]
+        }
+      >
+        <Text
           style={
             [
               {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
+                "fontSize": 12,
+                "marginLeft": 2,
               },
               {
-                "backgroundColor": "rgba(230, 184, 0, 0.15)",
+                "color": "#7c7c7c",
               },
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="memory"
-            color="#e6b800"
-            iosIconName="cpu"
-            size={12}
-          />
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#e6b800",
-                },
-              ]
-            }
-          >
-            components.modelCard.heavyProcessing
-          </Text>
-        </View>
-        <View
-          style={
-            [
-              {
-                "alignItems": "center",
-                "borderRadius": 6,
-                "flexDirection": "row",
-                "gap": 2,
-                "paddingHorizontal": 8,
-                "paddingVertical": 4,
-              },
-              {
-                "backgroundColor": "#f7f7f7",
-              },
-            ]
-          }
-        >
-          <Text
-            style={
-              [
-                {
-                  "fontSize": 12,
-                  "marginLeft": 2,
-                },
-                {
-                  "color": "#7c7c7c",
-                },
-              ]
-            }
-          >
-            Multilingual
-          </Text>
-        </View>
+          Multilingual
+        </Text>
       </View>
     </View>
-    <PlatformIcon
-      androidIconName="check_circle"
-      color="#2ec728"
-      iosIconName="checkmark.circle.fill"
-      size={24}
-    />
   </View>
 </View>
 `;

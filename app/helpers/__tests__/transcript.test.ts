@@ -13,6 +13,13 @@ describe('cleanTranscript', () => {
     expect(cleanTranscript('[MUSIC] [BLANK_AUDIO]')).toBe('');
   });
 
+  test('drops body-sound labels like a cough', () => {
+    expect(cleanTranscript('[COUGH]')).toBe('');
+    expect(cleanTranscript('(coughing)')).toBe('');
+    expect(cleanTranscript('[Clears throat] [SNEEZES]')).toBe('');
+    expect(cleanTranscript('[COUGH] Set a timer.')).toBe('Set a timer.');
+  });
+
   test('keeps the speech around a label and collapses the gap', () => {
     expect(cleanTranscript('[BLANK_AUDIO] What is the weather?')).toBe(
       'What is the weather?',

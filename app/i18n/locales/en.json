@@ -5,10 +5,10 @@
     "retry": "Retry",
     "loading": "Loading…",
     "error": "Error",
-    "somethingWentWrong": "Something went wrong"
+    "somethingWentWrong": "Something went wrong",
+    "cancelDownload": "Cancel download"
   },
   "navigation": {
-    "newChat": "New Chat",
     "models": "Models",
     "settings": "Settings",
     "customizeAssistant": "Customize",
@@ -180,9 +180,55 @@
     }
   },
   "screens": {
+    "onboarding": {
+      "welcome": {
+        "title": "Welcome to",
+        "assistant": {
+          "title": "AI Assistant",
+          "subtitle": "A clever assistant that runs entirely on your phone. No account, no internet needed."
+        },
+        "private": {
+          "title": "Private and Secure",
+          "subtitle": "Your conversations never leave your device. No cloud processing, no tracking."
+        },
+        "fast": {
+          "title": "Fast",
+          "subtitle": "Powerful language and vision models running smoothly on your phone."
+        },
+        "continue": "Continue"
+      },
+      "header": "Get started",
+      "voiceHeader": "A little extra",
+      "title": "Choose your text model",
+      "subtitle": "Pick a text model to chat with. You can download more anytime later.",
+      "modalityTitle": "Add voice?",
+      "modalitySubtitle": "Voice models let you talk to the assistant and hear its replies out loud.",
+      "textOnly": "Text model only",
+      "textAndVoice": "Text & Voice models",
+      "skip": "Skip",
+      "downloadingHeader": "Please wait",
+      "downloadingTitle": "Downloading your models",
+      "downloadingSubtitle": "This can take a few minutes. Keep the app open until it finishes.",
+      "downloadProgress": "{{percent}}%",
+      "downloadUnavailable": "Couldn't download at the moment, try again later.",
+      "voiceUnavailable": "The voice models couldn't be downloaded. You can resume them later from voice chat.",
+      "doneTitle": "All set!",
+      "doneSubtitle": "Your AI runs entirely on your device, so your conversations stay private.",
+      "start": "Start chatting"
+    },
     "noModelDownloaded": {
       "noModelAvailable": "No model available",
-      "downloadModel": "Download a model"
+      "downloadModel": "Download a model",
+      "downloadingTitle_one": "Your chat model is downloading",
+      "downloadingTitle_other": "Your chat models are downloading",
+      "interruptedTitle_one": "Download interrupted",
+      "interruptedTitle_other": "Downloads interrupted",
+      "downloadProgress": "{{percent}}%",
+      "downloadingHint_one": "You can start chatting as soon as it's done. Keep the app open until then.",
+      "downloadingHint_other": "You can start chatting as soon as one is done. Keep the app open until then.",
+      "interruptedHint_one": "Tap Resume to continue where it left off.",
+      "interruptedHint_other": "Tap Resume to continue where they left off.",
+      "resume": "Resume"
     },
     "noModelSelected": {
       "pleaseSelectAModel": "Please select a model",
@@ -211,15 +257,17 @@
       "setup": {
         "title": "Set up voice chat",
         "description": "You need four models loaded at once.",
-        "downloadInProgress": "Download in progress",
+        "downloadInProgress": "Download in progress. Keep the app open until then.",
+        "downloadInterrupted": "Download interrupted",
         "chat": "Chat model",
         "stt": "Speech-to-text model",
         "tts": "Text-to-speech model",
         "vad": "Voice Activity Detection model",
         "downloadMissing": "Download missing models",
+        "resumeDownload": "Resume download",
+        "browseModels": "Browse models",
         "loadingModels": "Loading models…",
-        "downloadProgress": "{{percent}}%",
-        "cancelDownload": "Cancel Download"
+        "downloadProgress": "{{percent}}%"
       }
     },
     "settings": {
@@ -249,11 +297,18 @@
       "youHaveDownloadedAllTheModels": "You have downloaded all the models.",
       "chooseModelTitle": "Choosing the Right Model",
       "chooseModelMessage": "Model sizes are defined by their parameter count (e.g., 0.6B, 1,2B...). While bigger models are often smarter, they demand more resources and slow down performance. Therefore, if you don’t have a recent phone, start with a smaller model to ensure smooth performance.",
-      "stopDownloadTitle": "Stop this download?",
-      "stopDownloadMessage": "The download will be cancelled and its progress discarded. You can start it again at any time.",
-      "stopDownload": "Stop download",
+      "stopDownloadTitle_one": "Stop this download?",
+      "stopDownloadTitle_other": "Stop these downloads?",
+      "stopDownloadMessage_one": "The download will be cancelled and its progress discarded. You can start it again at any time.",
+      "stopDownloadMessage_other": "The downloads will be cancelled and their progress discarded. You can start them again at any time.",
+      "stopDownload_one": "Stop download",
+      "stopDownload_other": "Stop downloads",
+      "downloadFailedTitle": "Download failed",
+      "downloadFailedMessage": "Check your connection and try again.",
+      "downloadFailedModelMessage": "{{name}} could not be downloaded. Check your connection and try again.",
       "notEnoughSpaceTitle": "Not enough storage",
-      "notEnoughSpaceMessage": "{{name}} needs {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again."
+      "notEnoughSpaceMessage_one": "{{name}} needs {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again.",
+      "notEnoughSpaceMessage_other": "The models you're trying to download need {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again."
     },
     "downloadedModels": {
       "noModelDownloaded": "No model downloaded",

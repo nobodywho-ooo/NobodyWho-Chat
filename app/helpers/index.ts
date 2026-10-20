@@ -15,7 +15,23 @@ import { getFamilyIcon } from './familyIcon';
 import { getPipelineIcon } from './pipelineIcon';
 import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
-import { MODELS_URL } from './modelCatalogue';
+import {
+  byCatalogueOrder,
+  fetchDeviceCatalogue,
+  fetchModelCatalogue,
+  MODELS_URL,
+} from './modelCatalogue';
+import {
+  curatedChatModel,
+  curatedOnboardingModels,
+  FIRST_PICK_TAG,
+  onboardingChatModels,
+  curatedAvailability,
+  RECOMMENDED_TAG,
+  CURATED_TEXT_MODELS,
+  CURATED_VOICE_ONLY_MODELS,
+  CURATED_VOICE_PIPELINE_MODELS,
+} from './curatedModels';
 import {
   downloadModelPart,
   downloadedPartPath,
@@ -28,13 +44,19 @@ import {
 import { toFileUri, toPlainPath } from './fileUri';
 import {
   filterModelsByDeviceMemory,
+  fitsInDeviceMemory,
   modelRequiredMemoryGB,
   multimodalContextSize,
 } from './deviceMemory';
 import {
   availableDiskSpaceGB,
   checkDiskSpaceForModel,
+  checkDiskSpaceForModels,
+  modelDownloadProgress,
   modelDownloadSizeGB,
+  overallDownloadProgress,
+  progressPercent,
+  sizeWeightedProgress,
 } from './diskSpace';
 import { sleep } from './async';
 import {
@@ -80,7 +102,7 @@ import {
 import { computeGenerationMetrics } from './generationMetrics';
 import { parameterCountLabel } from './parameterCount';
 import { modelSizeLabel } from './modelSize';
-import { parseColor, withAlpha } from './color';
+import { colorBetween, parseColor, withAlpha } from './color';
 
 export type { AudioBands, AudioEnvelope } from './audioLevels';
 export type { Rgba } from './color';
@@ -88,6 +110,13 @@ export type { TtsEngine, TtsLanguageOption } from './ttsEngine';
 export type { SttLanguageOption } from './sttLanguages';
 export type { PipelineIcon } from './pipelineIcon';
 export type { DiskSpaceCheck } from './diskSpace';
+export type {
+  CuratedModel,
+  CuratedAvailability,
+  ModelInventory,
+  ModelSetup,
+} from './curatedModels';
+export type { DeviceCatalogue } from './modelCatalogue';
 export type {
   ImplicitThinkOpen,
   ParsedThinking,
@@ -109,11 +138,17 @@ export {
   toFileUri,
   toPlainPath,
   filterModelsByDeviceMemory,
+  fitsInDeviceMemory,
   modelRequiredMemoryGB,
   multimodalContextSize,
   availableDiskSpaceGB,
   checkDiskSpaceForModel,
+  checkDiskSpaceForModels,
+  modelDownloadProgress,
   modelDownloadSizeGB,
+  overallDownloadProgress,
+  progressPercent,
+  sizeWeightedProgress,
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,
@@ -166,6 +201,19 @@ export {
   parameterCountLabel,
   modelSizeLabel,
   MODELS_URL,
+  fetchDeviceCatalogue,
+  fetchModelCatalogue,
+  byCatalogueOrder,
+  curatedChatModel,
+  curatedOnboardingModels,
+  FIRST_PICK_TAG,
+  onboardingChatModels,
+  curatedAvailability,
+  RECOMMENDED_TAG,
+  CURATED_TEXT_MODELS,
+  CURATED_VOICE_ONLY_MODELS,
+  CURATED_VOICE_PIPELINE_MODELS,
+  colorBetween,
   parseColor,
   withAlpha,
 };

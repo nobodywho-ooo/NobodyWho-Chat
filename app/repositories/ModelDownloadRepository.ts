@@ -29,22 +29,6 @@ export function rowToModelDownload(row: Record<string, any>): ModelDownload {
   };
 }
 
-// Overall progress (0..1) weighted by each part's size, computed purely from
-// the stored row — no in-memory bookkeeping needed.
-export function modelDownloadProgress(download: ModelDownload): number {
-  const totalSize = download.partsProgress.reduce(
-    (sum, part) => sum + part.sizeGB,
-    0,
-  );
-  if (totalSize <= 0) return 0;
-
-  const downloaded = download.partsProgress.reduce(
-    (sum, part) => sum + part.progress * part.sizeGB,
-    0,
-  );
-  return downloaded / totalSize;
-}
-
 // Creates the in-progress row, with every part seeded at 0% progress. Returns
 // false (without touching an existing row) when a download for this model is
 // already tracked — an atomic, race-safe guard against duplicate starts, so

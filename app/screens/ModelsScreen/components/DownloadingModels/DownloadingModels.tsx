@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ModelCard } from 'components';
-import { modelDownloadProgress } from 'repositories';
+import { modelDownloadProgress } from 'helpers';
 import { Model, ModelDownload } from 'types';
 
 import { SectionHeader } from '../SectionHeader/SectionHeader';

@@ -1,11 +1,20 @@
 import * as React from 'react';
-import { Dimensions, Platform, StyleSheet, View } from 'react-native';
+import {
+  Dimensions,
+  Platform,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   createDrawerNavigator,
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
-import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
+import {
+  getFocusedRouteNameFromRoute,
+  useNavigation,
+} from '@react-navigation/native';
 import {
   MenuView,
   type MenuAction,
@@ -13,23 +22,23 @@ import {
 } from '@react-native-menu/menu';
 import { useTranslation } from 'react-i18next';
 import { setAppState } from 'database';
-import { isChatPipeline } from 'types';
 import {
   deleteConversation,
   getDocumentPathsByConversationId,
 } from 'repositories';
 import { DrawerContentScreen } from 'screens';
-import { PlatformIcon, Text } from 'components';
+import { PlatformIcon, Text, fontSizes } from 'components';
 import {
   log,
   isIOS,
-  capitalize,
   deleteMessageDocuments,
+  getFamilyIcon,
   parameterCountLabel,
 } from 'helpers';
-import { useAppState, useConversations, useModels, useStyled } from 'hooks';
+import { useAppState, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
 import { Spacings } from 'style';
+import { isChatPipeline } from 'types';
 
 import { ChatStackNavigator } from './ChatStackNavigator';
 import {
@@ -39,6 +48,7 @@ import {
 } from './DrawerCoordination';
 
 const ICON_SIZE = 22;
+const HEADER_LOGO_SIZE = 22;
 const MENU_ACTION_NEW_CHAT = 'new-chat';
 const MENU_ACTION_DELETE_CHAT = 'delete-chat';
 
@@ -140,36 +150,77 @@ const ChatHeaderRight = () => {
 
 const renderChatHeaderRight = () => <ChatHeaderRight />;
 
-const ChatHeaderTitle = ({ title }: { title: string }) => {
+const ChatHeaderTitle = () => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
+  const navigation = useNavigation();
   const { modelIdInUse } = useAppState();
   const { models } = useModels();
+  const { slots } = useAiService();
 
   const model = models.find(({ id }) => id === modelIdInUse);
-  const modelName = model?.name;
   const parameterLabel = parameterCountLabel(model?.parameterCountBillions);
+  const FamilyIcon = model ? getFamilyIcon(model.family) : undefined;
+  // Only chat models can take the chat's place; voice models don't count.
+  const canChangeModel =
+    models.filter(({ pipeline }) => isChatPipeline(pipeline)).length >= 2;
+
+  const handlePress = React.useCallback(() => {
+    slots.chat.ref.current?.stopGeneration();
+    // @ts-ignore
+    navigation.navigate('Chat', {
+      screen: 'DownloadedModelsScreen',
+      params: { canDelete: false },
+    });
+  }, [navigation, slots]);
+
+  if (!model?.name) {
+    return null;
+  }
 
   return (
-    <View style={styles.titleContainer}>
-      <Text variant="body1" bold numberOfLines={1}>
-        {capitalize(title)}
-      </Text>
-      {modelName ? (
-        <Text
-          variant="caption"
-          numberOfLines={1}
-          style={{ color: colors.onSurfaceVariant }}
-        >
-          {parameterLabel ? `${modelName} (${parameterLabel})` : modelName}
+    <Pressable
+      onPress={handlePress}
+      disabled={!canChangeModel}
+      accessibilityRole={canChangeModel ? 'button' : undefined}
+      accessibilityHint={
+        canChangeModel ? t('screens.drawerContent.changeModel') : undefined
+      }
+      style={({ pressed }) => [
+        styles.titleContainer,
+        { opacity: pressed ? 0.7 : 1 },
+      ]}
+    >
+      {FamilyIcon && (
+        <FamilyIcon
+          width={HEADER_LOGO_SIZE}
+          height={HEADER_LOGO_SIZE}
+          color={colors.onSurface}
+        />
+      )}
+      <View style={styles.titleTextContainer}>
+        <Text variant="h4" bold numberOfLines={1} style={styles.titleText}>
+          {model.name}
         </Text>
-      ) : null}
-    </View>
+        {parameterLabel ? (
+          <Text variant="h4" style={{ color: colors.onSurfaceVariant }}>
+            {parameterLabel}
+          </Text>
+        ) : null}
+      </View>
+      {canChangeModel && (
+        <PlatformIcon
+          iosIconName="chevron.right"
+          androidIconName="chevron_right"
+          size={fontSizes.h4 - 4}
+          color={colors.onSurfaceVariant}
+        />
+      )}
+    </Pressable>
   );
 };
 
-const renderChatHeaderTitle = ({ children }: { children: string }) => (
-  <ChatHeaderTitle title={children} />
-);
+const renderChatHeaderTitle = () => <ChatHeaderTitle />;
 
 const renderDrawerContent = ({ navigation }: DrawerContentComponentProps) => (
   <>
@@ -182,25 +233,11 @@ const renderDrawerContent = ({ navigation }: DrawerContentComponentProps) => (
 );
 
 export const DrawerNavigator = () => {
-  const { t } = useTranslation();
   const { colors } = useStyled();
   const { conversationIdInUse } = useAppState();
-  const { conversations } = useConversations();
-  const { models } = useModels();
   const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
 
   const insets = useSafeAreaInsets();
-
-  const currentConversationTitle = conversations.find(
-    ({ id }) => id === conversationIdInUse,
-  )?.title;
-
-  let title: string | undefined =
-    currentConversationTitle ?? t('navigation.newChat');
-
-  if (!models.some(model => isChatPipeline(model.pipeline))) {
-    title = undefined;
-  }
 
   return (
     <Drawer.Navigator
@@ -238,7 +275,6 @@ export const DrawerNavigator = () => {
             headerShown: isIOS || isAtRoot,
             // Disabled while the right drawer is open so its close gesture wins.
             swipeEnabled: (isIOS || isAtRoot) && openSide !== 'right',
-            title: title,
             headerTitle: renderChatHeaderTitle,
             headerTitleContainerStyle: { marginHorizontal: 8 },
             headerRight:
@@ -262,9 +298,20 @@ const styles = StyleSheet.create({
   titleContainer: {
     flexShrink: 1,
     minWidth: 0,
-    justifyContent: 'center',
-    alignItems: isIOS ? 'center' : 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: isIOS ? 'center' : 'flex-start',
+    gap: Spacings.sm,
     paddingRight: isIOS ? undefined : Spacings.md,
     marginHorizontal: Spacings.xl,
+  },
+  titleTextContainer: {
+    flexShrink: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: Spacings.xs,
+  },
+  titleText: {
+    flexShrink: 1,
   },
 });

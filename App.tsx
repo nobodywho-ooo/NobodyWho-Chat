@@ -16,11 +16,16 @@ import {
   getAppState,
   setAppState,
 } from 'database';
-import { getConversationById, getModelById } from 'repositories';
+import {
+  getAllModels,
+  getConversationById,
+  getModelById,
+  getModelDownloads,
+} from 'repositories';
 import { log } from 'helpers';
-import { MODEL_SLOTS } from 'types';
-import { useStyled } from 'hooks';
-import { ErrorScreen, LoadingScreen } from 'screens';
+import { isChatPipeline, MODEL_SLOTS } from 'types';
+import { useResumeModelDownloads, useStyled } from 'hooks';
+import { ErrorScreen, LoadingScreen, OnboardingScreen } from 'screens';
 import { AiServiceProvider } from 'services';
 import { RootDrawerNavigator } from 'navigation';
 import { useTranslation } from 'react-i18next';
@@ -72,7 +77,12 @@ Sentry.init({
   },
 });
 
-function AppContent() {
+interface AppContentProps {
+  showOnboarding: boolean;
+  onOnboardingFinish: () => void;
+}
+
+function AppContent({ showOnboarding, onOnboardingFinish }: AppContentProps) {
   const { colors } = useStyled();
   const isDarkMode = isDarkModeEnabled();
 
@@ -84,6 +94,8 @@ function AppContent() {
     },
   };
 
+  useResumeModelDownloads({ alertOnFailure: !showOnboarding });
+
   return (
     <>
       <StatusBar
@@ -92,7 +104,11 @@ function AppContent() {
         translucent
       />
       <Sentry.NavigationContainer theme={navigationTheme}>
-        <RootDrawerNavigator />
+        {showOnboarding ? (
+          <OnboardingScreen onFinish={onOnboardingFinish} />
+        ) : (
+          <RootDrawerNavigator />
+        )}
       </Sentry.NavigationContainer>
     </>
   );
@@ -139,12 +155,37 @@ async function dropStaleIdsInUse(): Promise<void> {
   }
 }
 
+// Onboarding shows when no chat model is downloaded or in download.
+async function needsOnboarding(): Promise<boolean> {
+  if (getAppState().modelIdInUse !== undefined) {
+    return false;
+  }
+
+  try {
+    const [models, downloads] = await Promise.all([
+      getAllModels(),
+      getModelDownloads(),
+    ]);
+
+    return (
+      !models.some(model => isChatPipeline(model.pipeline)) &&
+      !downloads.some(download => isChatPipeline(download.model.pipeline))
+    );
+  } catch (error) {
+    log('needsOnboarding failed', error, { capture: true });
+    return false;
+  }
+}
+
 function AppLoader() {
   const [dbReady, setDbReady] = useState(false);
   const [dbError, setDbError] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { t } = useTranslation();
 
   const running = useRef(false);
+
+  const finishOnboarding = useCallback(() => setShowOnboarding(false), []);
 
   const init = useCallback(async () => {
     if (running.current) {
@@ -163,6 +204,7 @@ function AppLoader() {
       await initDatabase();
       await hydrateAppState();
       await dropStaleIdsInUse();
+      setShowOnboarding(await needsOnboarding());
 
       Sentry.appLoaded();
       setDbReady(true);
@@ -206,7 +248,10 @@ function AppLoader() {
 
   return (
     <AiServiceProvider>
-      <AppContent />
+      <AppContent
+        showOnboarding={showOnboarding}
+        onOnboardingFinish={finishOnboarding}
+      />
     </AiServiceProvider>
   );
 }

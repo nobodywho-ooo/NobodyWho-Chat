@@ -5,10 +5,10 @@
     "retry": "Prøv igen",
     "loading": "Indlæser…",
     "error": "Fejl",
-    "somethingWentWrong": "Noget gik galt"
+    "somethingWentWrong": "Noget gik galt",
+    "cancelDownload": "Annuller download"
   },
   "navigation": {
-    "newChat": "Ny chat",
     "models": "Modeller",
     "settings": "Indstillinger",
     "customizeAssistant": "Tilpas",
@@ -180,9 +180,55 @@
     }
   },
   "screens": {
+    "onboarding": {
+      "welcome": {
+        "title": "Velkommen til",
+        "assistant": {
+          "title": "AI-assistent",
+          "subtitle": "En klog assistent, der kører helt på din telefon. Ingen konto og intet internet nødvendigt."
+        },
+        "private": {
+          "title": "Privat og sikker",
+          "subtitle": "Dine samtaler forlader aldrig din enhed. Ingen behandling i skyen, ingen sporing."
+        },
+        "fast": {
+          "title": "Hurtig",
+          "subtitle": "Kraftfulde sprog- og billedmodeller, der kører gnidningsfrit på din telefon."
+        },
+        "continue": "Fortsæt"
+      },
+      "header": "Kom i gang",
+      "voiceHeader": "Lidt ekstra",
+      "title": "Vælg din tekstmodel",
+      "subtitle": "Vælg en tekstmodel at chatte med. Du kan altid downloade flere senere.",
+      "modalityTitle": "Tilføj stemme?",
+      "modalitySubtitle": "Med stemmemodeller kan du tale med assistenten og høre dens svar læst højt.",
+      "textOnly": "Kun tekstmodel",
+      "textAndVoice": "Tekst- og stemmemodeller",
+      "skip": "Spring over",
+      "downloadingHeader": "Vent venligst",
+      "downloadingTitle": "Downloader dine modeller",
+      "downloadingSubtitle": "Det kan tage et par minutter. Hold appen åben, indtil downloadet er færdigt.",
+      "downloadProgress": "{{percent}}%",
+      "downloadUnavailable": "Kunne ikke downloade lige nu. Prøv igen senere.",
+      "voiceUnavailable": "Stemmemodellerne kunne ikke downloades. Du kan genoptage dem senere fra stemmechatten.",
+      "doneTitle": "Alt er klar!",
+      "doneSubtitle": "Din AI kører udelukkende på din enhed, så dine samtaler forbliver private.",
+      "start": "Begynd at chatte"
+    },
     "noModelDownloaded": {
       "noModelAvailable": "Ingen model tilgængelig",
-      "downloadModel": "Download en model"
+      "downloadModel": "Download en model",
+      "downloadingTitle_one": "Din chatmodel downloades",
+      "downloadingTitle_other": "Dine chatmodeller downloades",
+      "interruptedTitle_one": "Download afbrudt",
+      "interruptedTitle_other": "Downloads afbrudt",
+      "downloadProgress": "{{percent}}%",
+      "downloadingHint_one": "Du kan begynde at chatte, så snart den er færdig. Hold appen åben indtil da.",
+      "downloadingHint_other": "Du kan begynde at chatte, så snart en af dem er færdig. Hold appen åben indtil da.",
+      "interruptedHint_one": "Tryk på Genoptag for at fortsætte, hvor den slap.",
+      "interruptedHint_other": "Tryk på Genoptag for at fortsætte, hvor de slap.",
+      "resume": "Genoptag"
     },
     "noModelSelected": {
       "pleaseSelectAModel": "Vælg venligst en model",
@@ -211,15 +257,17 @@
       "setup": {
         "title": "Konfigurer stemmechat",
         "description": "Der skal indlæses fire modeller på én gang.",
-        "downloadInProgress": "Download i gang",
+        "downloadInProgress": "Download i gang. Hold appen åben indtil da.",
+        "downloadInterrupted": "Download afbrudt",
         "chat": "Chatmodel",
         "stt": "Tale-til-tekst-model",
         "tts": "Tekst-til-tale-model",
         "vad": "Detektion af stemmeaktivitet model",
         "downloadMissing": "Hent manglende modeller",
+        "resumeDownload": "Genoptag download",
+        "browseModels": "Gennemse modeller",
         "loadingModels": "Indlæser modeller…",
-        "downloadProgress": "{{percent}}%",
-        "cancelDownload": "Annuller download"
+        "downloadProgress": "{{percent}}%"
       }
     },
     "settings": {
@@ -249,11 +297,18 @@
       "youHaveDownloadedAllTheModels": "Du har downloadet alle modellerne.",
       "chooseModelTitle": "Vælg den rigtige model",
       "chooseModelMessage": "Modellers størrelse defineres ud fra deres antal parametre (f.eks. 0,6B, 1,2B ...). Større modeller er ofte klogere, men de kræver flere ressourcer og gør ydelsen langsommere. Hvis du ikke har en ny telefon, bør du derfor starte med en mindre model for at sikre en jævn ydelse.",
-      "stopDownloadTitle": "Stop denne download?",
-      "stopDownloadMessage": "Downloadet annulleres, og dets fremskridt kasseres. Du kan starte det igen når som helst.",
-      "stopDownload": "Stop download",
+      "stopDownloadTitle_one": "Stop denne download?",
+      "stopDownloadTitle_other": "Stop disse downloads?",
+      "stopDownloadMessage_one": "Downloadet annulleres, og dets fremskridt kasseres. Du kan starte det igen når som helst.",
+      "stopDownloadMessage_other": "Downloadene annulleres, og deres fremskridt kasseres. Du kan starte dem igen når som helst.",
+      "stopDownload_one": "Stop download",
+      "stopDownload_other": "Stop downloads",
+      "downloadFailedTitle": "Download mislykkedes",
+      "downloadFailedMessage": "Tjek din forbindelse og prøv igen.",
+      "downloadFailedModelMessage": "{{name}} kunne ikke downloades. Tjek din forbindelse og prøv igen.",
       "notEnoughSpaceTitle": "Ikke nok lagerplads",
-      "notEnoughSpaceMessage": "{{name}} kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen."
+      "notEnoughSpaceMessage_one": "{{name}} kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen.",
+      "notEnoughSpaceMessage_other": "Modellerne, du prøver at downloade, kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen."
     },
     "downloadedModels": {
       "noModelDownloaded": "Ingen model downloadet",

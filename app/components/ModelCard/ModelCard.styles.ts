@@ -7,11 +7,19 @@ export default StyleSheet.create({
     borderRadius: 12,
     padding: Spacings.md,
     marginBottom: Spacings.sm,
+    gap: Spacings.sm,
+  },
+  headerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacings.md,
   },
-  infoContainer: {
+  logoContainer: {
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    paddingHorizontal: Spacings.sm,
+  },
+  headingContainer: {
     flex: 1,
     gap: Spacings.xs,
   },
@@ -29,7 +37,6 @@ export default StyleSheet.create({
     gap: Spacings.xs,
   },
   tagsContainer: {
-    marginTop: Spacings.xs,
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacings.xs,

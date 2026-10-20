@@ -3,12 +3,11 @@ import { Alert, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useModelDownloads, useStyled } from 'hooks';
+import { useModelDownloader, useModelDownloads, useStyled } from 'hooks';
 import { Spacings } from 'style';
 
 import styles from './ModelsScreen.styles';
 import { useAvailableModels } from './useAvailableModels';
-import { useModelDownloader } from './useModelDownloader';
 import {
   AvailableModels,
   DownloadedModelsLink,

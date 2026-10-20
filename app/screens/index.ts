@@ -4,6 +4,7 @@ export * from './ErrorScreen/ErrorScreen';
 export * from './LoadingScreen/LoadingScreen';
 export * from './SettingsScreen/SettingsScreen';
 export * from './NoModelDownloadedScreen/NoModelDownloadedScreen';
+export * from './OnboardingScreen/OnboardingScreen';
 export * from './NoModelSelectedScreen/NoModelSelectedScreen';
 export * from './ModelsScreen/ModelsScreen';
 export * from './DownloadedModelsScreen/DownloadedModelsScreen';

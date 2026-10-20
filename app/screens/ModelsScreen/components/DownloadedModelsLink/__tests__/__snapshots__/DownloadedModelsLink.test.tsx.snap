@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly DownloadedModelsLink 1`] = `
 <>
@@ -14,7 +14,7 @@ exports[`renders correctly DownloadedModelsLink 1`] = `
   </Text>
   <ListItem
     androidIconName="deployed_code_update"
-    iconBackgroundColor="#628395"
+    iconBackgroundColor="#b44618"
     iosIconName="arrow.down.circle.fill"
     onPress={[MockFunction]}
     subtitle="screens.models.modelCount"
@@ -38,7 +38,7 @@ exports[`renders correctly DownloadedModelsLink when not first 1`] = `
   </Text>
   <ListItem
     androidIconName="deployed_code_update"
-    iconBackgroundColor="#628395"
+    iconBackgroundColor="#b44618"
     iosIconName="arrow.down.circle.fill"
     onPress={[MockFunction]}
     subtitle="screens.models.modelCount"

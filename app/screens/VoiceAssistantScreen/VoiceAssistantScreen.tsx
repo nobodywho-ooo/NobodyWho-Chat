@@ -36,6 +36,7 @@ import styles from './VoiceAssistantScreen.styles';
 
 interface VoiceAssistantScreenProps {
   onCloseDrawer: () => void;
+  onOpenModels: () => void;
 }
 
 const STOPPABLE_STATUSES: VoiceStatus[] = ['listening', 'speaking'];
@@ -48,6 +49,7 @@ const NOT_STOPPABLE_STATUSES: VoiceStatus[] = [
 
 export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   onCloseDrawer,
+  onOpenModels,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
@@ -164,7 +166,10 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
                 </Text>
               </View>
             ) : (
-              <VoiceSetup status={voiceAssistantStatus} />
+              <VoiceSetup
+                status={voiceAssistantStatus}
+                onOpenModels={onOpenModels}
+              />
             )}
           </View>
 

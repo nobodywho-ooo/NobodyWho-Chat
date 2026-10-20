@@ -99,6 +99,36 @@ test('renders downloaded models with one selected', async () => {
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
+test('lists chat models first, then each other kind under its own title', async () => {
+  const { ModelPipeline } = jest.requireActual('types');
+  const models = [
+    buildModel(1, { pipeline: ModelPipeline.speechToText }),
+    buildModel(2),
+    buildModel(3, { pipeline: ModelPipeline.textToSpeech }),
+    buildModel(4, { pipeline: ModelPipeline.imageTextToText }),
+  ];
+  mockUseModels.mockReturnValue({ models });
+  const titles = ['Text generation', 'Text to Speech', 'Speech to Text'];
+
+  const screen = await render(<DownloadedModelsScreen />);
+
+  const order = screen.container
+    .queryAll(
+      node =>
+        node.props.model !== undefined || titles.includes(node.props.children),
+    )
+    .map(node => node.props.model?.id ?? node.props.children);
+  expect(order).toEqual([
+    'Text generation',
+    2,
+    4,
+    'Text to Speech',
+    3,
+    'Speech to Text',
+    1,
+  ]);
+});
+
 test('pressing a model puts it in use, clear the conversation', async () => {
   const models = [buildModel(1), buildModel(2)];
   mockUseModels.mockReturnValue({ models });

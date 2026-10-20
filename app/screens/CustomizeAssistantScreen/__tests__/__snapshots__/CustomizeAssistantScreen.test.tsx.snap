@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly CustomizeAssistantScreen 1`] = `
 <RCTScrollView
@@ -112,7 +112,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
                     "height": "100%",
                   },
                   {
-                    "backgroundColor": "#628395",
+                    "backgroundColor": "#b44618",
                     "width": 0,
                   },
                 ]
@@ -129,7 +129,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
                   "width": 24,
                 },
                 {
-                  "backgroundColor": "#628395",
+                  "backgroundColor": "#b44618",
                   "left": 0,
                 },
               ]
@@ -239,7 +239,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
           onChange={[Function]}
           onResponderTerminationRequest={[Function]}
           onStartShouldSetResponder={[Function]}
-          onTintColor="#628395"
+          onTintColor="#b44618"
           style={
             {
               "alignSelf": "flex-start",
@@ -296,7 +296,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
           onChange={[Function]}
           onResponderTerminationRequest={[Function]}
           onStartShouldSetResponder={[Function]}
-          onTintColor="#628395"
+          onTintColor="#b44618"
           style={
             {
               "alignSelf": "flex-start",

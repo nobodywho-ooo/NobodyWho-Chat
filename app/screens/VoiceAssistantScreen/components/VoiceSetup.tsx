@@ -2,27 +2,38 @@ import React from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, ProgressBar, Text } from 'components';
+import { progressPercent } from 'helpers';
 import { useStyled } from 'hooks';
-import { Spacings } from 'style';
+import { Layout, Spacings } from 'style';
 
 import { useVoiceModelDownloads } from '../hooks';
-import type { VoiceAssistantStatus } from '../hooks';
+import type { VoiceAssistantStatus, VoiceSetupState } from '../hooks';
 
 interface VoiceSetupProps {
   status: VoiceAssistantStatus;
+  onOpenModels: () => void;
 }
 
-export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
+const descriptionKey = (state: VoiceSetupState) => {
+  if (state === 'downloading') {
+    return 'screens.voiceAssistant.setup.downloadInProgress';
+  }
+
+  if (state === 'interrupted') {
+    return 'screens.voiceAssistant.setup.downloadInterrupted';
+  }
+
+  return 'screens.voiceAssistant.setup.description';
+};
+
+export const VoiceSetup: React.FC<VoiceSetupProps> = ({
+  status,
+  onOpenModels,
+}) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const {
-    hasMissingModels,
-    canDownload,
-    isDownloading,
-    progress,
-    downloadMissing,
-    cancel,
-  } = useVoiceModelDownloads();
+  const { state, progress, download, resume, cancel } =
+    useVoiceModelDownloads();
 
   const renderChecklistRow = (loaded: boolean, label: string) => (
     <View style={styles.rowContainer}>
@@ -43,6 +54,59 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
     </View>
   );
 
+  const renderAction = () => {
+    if (status.isLoading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={colors.primary} />
+          <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
+            {t('screens.voiceAssistant.setup.loadingModels')}
+          </Text>
+        </View>
+      );
+    }
+
+    if (state === 'automatic' || state === 'loading') {
+      return (
+        <Button
+          title={t('screens.voiceAssistant.setup.downloadMissing')}
+          testID="voice-download-button"
+          disabled={state === 'loading'}
+          onPress={download}
+          style={styles.downloadButton}
+          small
+        />
+      );
+    }
+
+    if (state === 'manual') {
+      return (
+        <Button
+          title={t('screens.voiceAssistant.setup.browseModels')}
+          testID="voice-browse-models-button"
+          onPress={onOpenModels}
+          style={styles.downloadButton}
+          small
+        />
+      );
+    }
+
+    if (state === 'interrupted') {
+      return (
+        <Button
+          title={t('screens.voiceAssistant.setup.resumeDownload')}
+          testID="voice-resume-download-button"
+          icon={{ iosIconName: 'play.fill', androidIconName: 'play_arrow' }}
+          onPress={resume}
+          style={styles.downloadButton}
+          small
+        />
+      );
+    }
+
+    return null;
+  };
+
   return (
     <View style={styles.container}>
       <Text variant="body1" bold style={styles.title}>
@@ -52,22 +116,18 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
         variant="body2"
         style={[styles.description, { color: colors.onSurfaceVariant }]}
       >
-        {t(
-          isDownloading
-            ? 'screens.voiceAssistant.setup.downloadInProgress'
-            : 'screens.voiceAssistant.setup.description',
-        )}
+        {t(descriptionKey(state))}
       </Text>
-      {isDownloading ? (
+      {state === 'downloading' ? (
         <View style={styles.downloadContainer}>
           <Text variant="body2" bold style={styles.progressLabel}>
             {t('screens.voiceAssistant.setup.downloadProgress', {
-              percent: Math.round(Math.min(progress, 1) * 100),
+              percent: progressPercent(progress),
             })}
           </Text>
           <ProgressBar progress={progress} />
           <Button
-            title={t('screens.voiceAssistant.setup.cancelDownload')}
+            title={t('common.cancelDownload')}
             variant="secondary"
             onPress={cancel}
             style={styles.cancelButton}
@@ -93,26 +153,7 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
               t('screens.voiceAssistant.setup.vad'),
             )}
           </View>
-          {hasMissingModels ? (
-            <Button
-              title={t('screens.voiceAssistant.setup.downloadMissing')}
-              disabled={!canDownload}
-              onPress={downloadMissing}
-              style={styles.downloadButton}
-            />
-          ) : (
-            status.isLoading && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator color={colors.primary} />
-                <Text
-                  variant="body2"
-                  style={{ color: colors.onSurfaceVariant }}
-                >
-                  {t('screens.voiceAssistant.setup.loadingModels')}
-                </Text>
-              </View>
-            )
-          )}
+          {renderAction()}
         </>
       )}
     </View>
@@ -121,6 +162,7 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
 
 const styles = StyleSheet.create({
   container: {
+    ...Layout.content,
     alignItems: 'center',
     gap: Spacings.md,
     paddingHorizontal: Spacings.md,

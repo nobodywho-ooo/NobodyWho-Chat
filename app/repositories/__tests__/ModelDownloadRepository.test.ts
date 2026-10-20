@@ -1,10 +1,8 @@
 import { getDatabase } from 'database';
 import { buildModel } from 'jest/factories/model';
-import { ModelDownload } from 'types';
 
 import {
   rowToModelDownload,
-  modelDownloadProgress,
   createModelDownload,
   updateModelDownloadParts,
   getModelDownloads,
@@ -50,27 +48,6 @@ describe('rowToModelDownload', () => {
 
     expect(result.model.name).toBe('');
     expect(result.partsProgress).toEqual([]);
-  });
-});
-
-describe('modelDownloadProgress', () => {
-  test('weights each part by its size', () => {
-    const download: ModelDownload = {
-      model: buildModel(3),
-      partsProgress: [
-        part({ sizeGB: 3, progress: 1 }), // fully done, weight 3
-        part({ sizeGB: 1, progress: 0 }), // not started, weight 1
-      ],
-    };
-
-    // (1*3 + 0*1) / (3 + 1) = 0.75
-    expect(modelDownloadProgress(download)).toBe(0.75);
-  });
-
-  test('returns 0 when there is no size to weigh', () => {
-    expect(
-      modelDownloadProgress({ model: buildModel(3), partsProgress: [] }),
-    ).toBe(0);
   });
 });
 

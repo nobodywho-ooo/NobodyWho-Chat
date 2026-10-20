@@ -7,8 +7,9 @@ import {
 } from '@react-navigation/drawer';
 import { VoiceAssistantScreen } from 'screens';
 import { isIOS } from 'helpers';
-import { useStyled } from 'hooks';
+import { useSlotModel, useStyled } from 'hooks';
 import { Spacings } from 'style';
+import { ModelSlot } from 'types';
 
 import { DrawerNavigator } from './DrawerNavigator';
 import {
@@ -58,7 +59,16 @@ const renderVoiceAssistant = ({ navigation }: DrawerContentComponentProps) => (
   <>
     <DrawerStatusReporter side="right" />
     <DrawerOpenerReporter side="right" navigation={navigation} />
-    <VoiceAssistantScreen onCloseDrawer={() => navigation.closeDrawer()} />
+    <VoiceAssistantScreen
+      onCloseDrawer={() => navigation.closeDrawer()}
+      onOpenModels={() => {
+        navigation.navigate('Main', {
+          screen: 'Chat',
+          params: { screen: 'ModelsScreen' },
+        });
+        navigation.closeDrawer();
+      }}
+    />
   </>
 );
 
@@ -66,6 +76,7 @@ const RootDrawer = () => {
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
   const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
+  const chatModel = useSlotModel(ModelSlot.chat);
 
   return (
     <Drawer.Navigator
@@ -98,6 +109,7 @@ const RootDrawer = () => {
         component={DrawerNavigator}
         options={({ route }) => ({
           swipeEnabled:
+            chatModel !== undefined &&
             (isIOS || !MODAL_ROUTE_NAMES.has(getLeafRouteName(route))) &&
             // Disabled while the left drawer is open so its close gesture wins.
             openSide !== 'left',

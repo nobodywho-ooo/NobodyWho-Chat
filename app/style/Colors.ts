@@ -31,6 +31,8 @@ export type NWColors = {
   voiceGlowBody: string;
   voiceGlowHaze: string;
   voiceGlowCore: string;
+  brandGradientStart: string;
+  brandGradientEnd: string;
 };
 
 export const lightColors: NWColors = {
@@ -64,6 +66,8 @@ export const lightColors: NWColors = {
   voiceGlowBody: '#DFB8A4',
   voiceGlowHaze: '#EDDED4',
   voiceGlowCore: '#CF8B6E',
+  brandGradientStart: '#843616',
+  brandGradientEnd: '#3D0F11',
 };
 
 export const darkColors: NWColors = {
@@ -97,6 +101,8 @@ export const darkColors: NWColors = {
   voiceGlowBody: '#643C2B',
   voiceGlowHaze: '#775440',
   voiceGlowCore: '#BF6640',
+  brandGradientStart: '#b44618',
+  brandGradientEnd: '#F5E1D9',
 };
 
 export const getColors = (theme: Theme): NWColors => {
