@@ -1,4 +1,4 @@
-import React, { RefObject, useEffect } from 'react';
+import React, { ComponentRef, RefObject, useEffect } from 'react';
 import { ActivityIndicator, StyleProp, View, ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -23,7 +23,7 @@ interface ToastProps {
   message: string;
   loading?: boolean;
   style?: StyleProp<ViewStyle>;
-  blurTarget?: RefObject<View | null>;
+  blurTarget?: RefObject<ComponentRef<typeof View> | null>;
 }
 
 export const Toast: React.FC<ToastProps> = ({

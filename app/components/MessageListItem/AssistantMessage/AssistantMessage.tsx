@@ -127,7 +127,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
         <View style={styles.thinkingContainer}>
           <PlatformIcon
             iosIconName="sparkles"
-            androidIconName="auto_awesome"
+            androidIconName="star_shine"
             size={THINKING_FONT_SIZE}
             color={colors.onSurfaceVariant}
           />

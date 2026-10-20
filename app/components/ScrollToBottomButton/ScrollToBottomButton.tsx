@@ -1,4 +1,4 @@
-import React, { RefObject } from 'react';
+import React, { ComponentRef, RefObject } from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { BlurView } from 'expo-blur';
@@ -19,7 +19,7 @@ interface ScrollToBottomButtonProps {
   visible: boolean;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
-  blurTarget?: RefObject<View | null>;
+  blurTarget?: RefObject<ComponentRef<typeof View> | null>;
 }
 
 export const ScrollToBottomButton: React.FC<ScrollToBottomButtonProps> = ({

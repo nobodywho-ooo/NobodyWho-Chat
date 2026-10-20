@@ -1,4 +1,5 @@
 import React, {
+  ComponentRef,
   useCallback,
   useEffect,
   useMemo,
@@ -99,7 +100,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const [conversationId, setConversationId] = useState(initialConversationId);
   const [attachExpanded, setAttachExpanded] = useState(false);
 
-  const blurTargetRef = useRef<View>(null);
+  const blurTargetRef = useRef<ComponentRef<typeof View>>(null);
   const previousConversationIdRef = useRef<number | undefined | 'mount'>(
     'mount',
   );

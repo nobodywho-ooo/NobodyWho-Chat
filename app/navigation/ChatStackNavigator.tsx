@@ -1,4 +1,5 @@
 import React, {
+  ComponentRef,
   RefObject,
   createContext,
   useCallback,
@@ -92,9 +93,11 @@ const defaultChatRootValue: ChatRootContextValue = {
 const ChatRootContext =
   createContext<ChatRootContextValue>(defaultChatRootValue);
 
+type ViewRef = ComponentRef<typeof View>;
+
 const ChatRootScreen = () => {
   const ctx = useContext(ChatRootContext);
-  const [blurTargetNode, setBlurTargetNode] = useState<View | null>(null);
+  const [blurTargetNode, setBlurTargetNode] = useState<ViewRef | null>(null);
   const blurTarget = useMemo(
     () => ({ current: blurTargetNode }),
     [blurTargetNode],
@@ -120,7 +123,7 @@ const ChatRootScreen = () => {
   return (
     <View style={styles.chatRoot}>
       <BlurTargetView
-        ref={setBlurTargetNode as unknown as RefObject<View | null>}
+        ref={setBlurTargetNode as unknown as RefObject<ViewRef | null>}
         style={styles.chatRoot}
       >
         <ChatScreen

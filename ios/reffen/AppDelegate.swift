@@ -5,13 +5,15 @@ import React_RCTAppDelegate
 import ReactAppDependencyProvider
 
 @main
-class AppDelegate: ExpoAppDelegate {
+class AppDelegate: ExpoAppDelegate, ExpoReactNativeFactoryProvider {
   var window: UIWindow?
 
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
-  /// Kept for `SceneDelegate`, which starts React Native once the scene connects.
-  var launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+
+  /// Read by `SceneDelegate` (Expo's `ExpoAppSceneDelegate`) when it starts React Native.
+  /// Expo defaults to "main"; this app registers its root component as "reffen".
+  var reactNativeFactoryModuleName: String { "reffen" }
 
   override func application(
     _ application: UIApplication,
@@ -23,10 +25,9 @@ class AppDelegate: ExpoAppDelegate {
 
     reactNativeDelegate = delegate
     reactNativeFactory = factory
-    self.launchOptions = launchOptions
 
-    // The window is created by `SceneDelegate` — the UIScene life cycle is mandatory
-    // for apps built against the iOS 27 SDK (Xcode 27).
+    // The window is created and React Native is started by `SceneDelegate` — the UIScene
+    // life cycle is mandatory for apps built against the iOS 27 SDK (Xcode 27).
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }

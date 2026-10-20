@@ -83,8 +83,8 @@ jest.mock('expo-file-system', () => {
     write() {}
     open() {
       return {
-        readBytes: () => ({ length: 0 }),
-        writeBytes: () => {},
+        readBytes: () => Promise.resolve({ length: 0 }),
+        writeBytes: () => Promise.resolve(),
         close: () => {},
       };
     }

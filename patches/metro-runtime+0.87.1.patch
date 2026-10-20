@@ -13,7 +13,7 @@ index 534ac87..5773985 100644
      global.globalEvalWithSourceUrl(code, sourceURL);
    } else {
 diff --git a/node_modules/metro-runtime/src/polyfills/require.js b/node_modules/metro-runtime/src/polyfills/require.js
-index c46fb7c..2ba29ab 100644
+index e5a1123..ec0ecc4 100644
 --- a/node_modules/metro-runtime/src/polyfills/require.js
 +++ b/node_modules/metro-runtime/src/polyfills/require.js
 @@ -334,14 +334,14 @@ function unknownModuleError(id) {

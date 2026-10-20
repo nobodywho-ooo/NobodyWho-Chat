@@ -70,10 +70,11 @@ jest.mock('expo-file-system', () => {
           const size = sizes.get(uri) ?? 0;
           const n = Math.max(0, Math.min(length, size - cursor));
           cursor += n;
-          return { length: n };
+          return Promise.resolve({ length: n });
         },
         writeBytes(bytes: { length: number }) {
           sizes.set(uri, (sizes.get(uri) ?? 0) + bytes.length);
+          return Promise.resolve();
         },
         close() {},
       };
