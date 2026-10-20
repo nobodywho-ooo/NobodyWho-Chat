@@ -9,7 +9,7 @@ import { ActionButton, ConversationsList } from './components';
 import { useAiService } from 'services';
 import { useTheme } from 'context';
 import { useModels } from 'hooks';
-import { Theme } from 'types';
+import { Theme, isChatPipeline } from 'types';
 import { Spacings } from 'style';
 
 import styles, { FLOATING_BUTTON_BOTTOM } from './DrawerContentScreen.styles';
@@ -42,15 +42,6 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
     closeDrawer();
   }, [navigation, chat, closeDrawer]);
 
-  const handleChangeModelPress = useCallback(() => {
-    chat.current?.stopGeneration();
-    navigation.navigate('Chat', {
-      screen: 'DownloadedModelsScreen',
-      params: { canDelete: false },
-    });
-    closeDrawer();
-  }, [navigation, chat, closeDrawer]);
-
   const handleNewChatPress = useCallback(() => {
     setAppState({ conversationIdInUse: undefined });
     closeDrawer();
@@ -63,7 +54,8 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
     setNewChatHeight(current => (current === height ? current : height));
   }, []);
 
-  const showNewChat = models.length >= 1;
+  // A voice model alone has nothing to chat with.
+  const showNewChat = models.some(({ pipeline }) => isChatPipeline(pipeline));
   const listBottomInset = showNewChat
     ? FLOATING_BUTTON_BOTTOM + newChatHeight + Spacings.lg
     : 0;
@@ -72,7 +64,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
     <View style={styles.container}>
       <View style={styles.headerContainer}>
         <Text variant="h3" bold>
-          NobodyWho
+          nobodywho
         </Text>
         <IconButton
           icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
@@ -87,17 +79,6 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
           label={t('screens.drawerContent.settings')}
           onPress={handleSettingsPress}
         />
-
-        {models.length >= 2 && (
-          <ActionButton
-            icon={{
-              iosIconName: 'arrow.left.arrow.right',
-              androidIconName: 'swap_horiz',
-            }}
-            label={t('screens.drawerContent.changeModel')}
-            onPress={handleChangeModelPress}
-          />
-        )}
       </View>
 
       <ConversationsList

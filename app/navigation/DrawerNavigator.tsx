@@ -38,6 +38,7 @@ import {
 import { useAppState, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
 import { Spacings } from 'style';
+import { isChatPipeline } from 'types';
 
 import { ChatStackNavigator } from './ChatStackNavigator';
 import {
@@ -160,7 +161,9 @@ const ChatHeaderTitle = () => {
   const model = models.find(({ id }) => id === modelIdInUse);
   const parameterLabel = parameterCountLabel(model?.parameterCountBillions);
   const FamilyIcon = model ? getFamilyIcon(model.family) : undefined;
-  const canChangeModel = models.length >= 2;
+  // Only chat models can take the chat's place; voice models don't count.
+  const canChangeModel =
+    models.filter(({ pipeline }) => isChatPipeline(pipeline)).length >= 2;
 
   const handlePress = React.useCallback(() => {
     slots.chat.ref.current?.stopGeneration();

@@ -1,7 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { fetchModelCatalogue, log, VOICE_MODELS_RESERVED_GB } from 'helpers';
-import { isChatPipeline, Model } from 'types';
+import {
+  DeviceCatalogue,
+  fetchDeviceCatalogue,
+  log,
+  onboardingChatModels,
+} from 'helpers';
 
 import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
 import { OnboardingChoices } from './components';
@@ -13,8 +16,7 @@ interface OnboardingScreenProps {
 export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
   onFinish,
 }) => {
-  const { t } = useTranslation();
-  const [catalogue, setCatalogue] = useState<Model[]>();
+  const [catalogue, setCatalogue] = useState<DeviceCatalogue>();
 
   const onFinishRef = useRef(onFinish);
   onFinishRef.current = onFinish;
@@ -24,21 +26,21 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
 
     const loadCatalogue = async () => {
       try {
-        const models = await fetchModelCatalogue(VOICE_MODELS_RESERVED_GB);
+        const loaded = await fetchDeviceCatalogue();
 
         if (!isMounted) {
           return;
         }
 
-        if (!models.some(model => isChatPipeline(model.pipeline))) {
-          // No text model fits this device: nothing to pick from.
+        if (onboardingChatModels(loaded).length === 0) {
+          // Nothing to set up for the user: no onboarding.
           onFinishRef.current();
           return;
         }
 
-        setCatalogue(models);
+        setCatalogue(loaded);
       } catch (error) {
-        log('OnboardingScreen fetchModelCatalogue', error);
+        log('OnboardingScreen fetchDeviceCatalogue', error);
         if (isMounted) {
           onFinishRef.current();
         }
@@ -53,7 +55,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
   }, []);
 
   if (catalogue === undefined) {
-    return <LoadingScreen message={t('screens.onboarding.loadingModels')} />;
+    return <LoadingScreen />;
   }
 
   return <OnboardingChoices catalogue={catalogue} onFinish={onFinish} />;

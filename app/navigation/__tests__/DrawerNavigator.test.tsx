@@ -13,6 +13,7 @@ import { buildConversation } from 'jest/factories/conversation';
 import { buildModel } from 'jest/factories/model';
 import { log } from 'helpers';
 import { AiServiceProvider } from 'services';
+import { ModelPipeline } from 'types';
 
 import { DrawerNavigator } from '../DrawerNavigator';
 
@@ -97,6 +98,28 @@ test('pressing the header title opens the downloaded models screen', async () =>
 
 // Mirrors the drawer, which only offers "Change model" with something to change to.
 test('hides the header chevron and ignores presses with a single model', async () => {
+  const screen = await render(
+    <AiServiceProvider>
+      <DrawerNavigator />
+    </AiServiceProvider>,
+  );
+
+  expect(queryHeaderChevrons(screen)).toHaveLength(0);
+
+  await fireEvent.press(screen.getByText('Model 1'));
+
+  expect(mockNavigate).not.toHaveBeenCalled();
+});
+
+test('does not count voice models as models to change to', async () => {
+  mockUseModels.mockReturnValue({
+    models: [
+      buildModel(1),
+      buildModel(2, { pipeline: ModelPipeline.textToSpeech }),
+      buildModel(3, { pipeline: ModelPipeline.speechToText }),
+    ],
+  });
+
   const screen = await render(
     <AiServiceProvider>
       <DrawerNavigator />

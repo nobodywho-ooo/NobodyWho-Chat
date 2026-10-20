@@ -3,7 +3,7 @@ import type { CuratedModels } from 'hooks';
 import { Model } from 'types';
 
 interface OnboardingContextValue {
-  catalogue: Model[];
+  chatModels: readonly Model[];
   onFinish: () => void;
   curatedModels: CuratedModels;
 }

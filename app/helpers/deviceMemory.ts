@@ -2,24 +2,19 @@ import { getTotalMemory } from 'react-native-device-info';
 import { Model, ModelPart } from 'types';
 import { isIOS } from './platform';
 import { log } from './log';
-
-const BYTES_PER_GB = 1024 ** 3;
+import { BYTES_PER_GB } from './units';
 
 // RAM the OS keeps for itself and never makes available to a model. iOS sits
 // around 2 GB; on Android it varies by manufacturer, so we reserve the higher
 // estimate to stay safe across devices.
 const OS_RESERVED_GB = isIOS ? 2 : 3;
 
-// RAM kept free for the voice models (speech-to-text, text-to-speech and voice
-// activity detection), which the voice assistant holds alongside the chat model.
-// Only reserved where the voice pipeline is planned, not for every list.
-export const VOICE_MODELS_RESERVED_GB = 0.5;
-
 // The projection (mmproj) model is held in memory alongside the chat model, so
 // while running its weights effectively take up twice their on-disk size.
 const PROJECTION_MODEL_MULTIPLIER = 2;
 
-const deviceRamGB = async (): Promise<number | undefined> => {
+// Undefined when the platform can't tell.
+export const deviceRamGB = async (): Promise<number | undefined> => {
   try {
     const bytes = await getTotalMemory();
 
@@ -44,23 +39,24 @@ const partMemoryGB = (part: ModelPart): number =>
 export const modelRequiredMemoryGB = (model: Model): number =>
   model.parts.reduce((total, part) => total + partMemoryGB(part), 0);
 
-// Keep only the models the device has enough RAM to run, with `reservedGB` left
-// over (e.g. VOICE_MODELS_RESERVED_GB for the voice pipeline). If the device
-// total memory can't be read, fall back to returning every model rather than
-// hiding all of them.
+// Whether `models`, held in memory together, fit in a device with `ramGB` of
+// RAM. When the device RAM is unknown they're taken to fit, rather than hiding
+// everything on a missing number.
+export const fitsInDeviceMemory = (
+  models: readonly Model[],
+  ramGB: number | undefined,
+): boolean =>
+  ramGB === undefined ||
+  models.reduce((total, model) => total + modelRequiredMemoryGB(model), 0) <=
+    ramGB - OS_RESERVED_GB;
+
+// Keep only the models the device has enough RAM to run, each on its own.
 export const filterModelsByDeviceMemory = async (
   models: Model[],
-  reservedGB = 0,
 ): Promise<Model[]> => {
-  const deviceRam = await deviceRamGB();
+  const ramGB = await deviceRamGB();
 
-  if (deviceRam === undefined) {
-    return models;
-  }
-
-  const usableMemoryGB = deviceRam - OS_RESERVED_GB - reservedGB;
-
-  return models.filter(model => modelRequiredMemoryGB(model) <= usableMemoryGB);
+  return models.filter(model => fitsInDeviceMemory([model], ramGB));
 };
 
 // Context sizes for a chat that has a projection model loaded, chosen by how

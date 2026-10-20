@@ -59,7 +59,10 @@ const renderAt = async (
   mockStatus = status;
   mockHasAnswered = hasAnswered;
   const screen = await render(
-    <VoiceAssistantScreen onCloseDrawer={onCloseDrawer} />,
+    <VoiceAssistantScreen
+      onCloseDrawer={onCloseDrawer}
+      onOpenModels={jest.fn()}
+    />,
   );
 
   return {
@@ -201,7 +204,9 @@ test('a turn starting while the panel is open takes it down', async () => {
   ).toBeTruthy();
 
   mockStatus = 'listening';
-  await screen.rerender(<VoiceAssistantScreen onCloseDrawer={jest.fn()} />);
+  await screen.rerender(
+    <VoiceAssistantScreen onCloseDrawer={jest.fn()} onOpenModels={jest.fn()} />,
+  );
 
   expect(
     screen.queryByText('screens.customizeAssistant.textToSpeech'),
@@ -219,7 +224,9 @@ test('an answer landing while the panel is open takes it down', async () => {
   );
 
   mockHasAnswered = true;
-  await screen.rerender(<VoiceAssistantScreen onCloseDrawer={jest.fn()} />);
+  await screen.rerender(
+    <VoiceAssistantScreen onCloseDrawer={jest.fn()} onOpenModels={jest.fn()} />,
+  );
 
   expect(
     screen.queryByText('screens.customizeAssistant.textToSpeech'),

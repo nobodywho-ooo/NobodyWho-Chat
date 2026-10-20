@@ -16,8 +16,10 @@ export default StyleSheet.create({
   },
   progressContainer: {
     alignSelf: 'stretch',
-    alignItems: 'center',
     gap: Spacings.sm,
+  },
+  progressLabel: {
+    textAlign: 'center',
   },
   buttonsContainer: {
     alignSelf: 'stretch',

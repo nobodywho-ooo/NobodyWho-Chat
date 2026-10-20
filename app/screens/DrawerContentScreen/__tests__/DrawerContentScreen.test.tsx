@@ -6,6 +6,7 @@ import { mockNavigate } from 'jest/mock/node-modules';
 import { mockUseModels } from 'jest/mock/hooks';
 import { buildModel } from 'jest/factories/model';
 import { AiServiceProvider } from 'services';
+import { ModelPipeline } from 'types';
 
 import { DrawerContentScreen } from '../DrawerContentScreen';
 import { FLOATING_BUTTON_BOTTOM } from '../DrawerContentScreen.styles';
@@ -132,8 +133,13 @@ test('hides the new chat button when no model is downloaded', async () => {
   expect(queryNewChatButtons(screen)).toHaveLength(0);
 });
 
-test('hides the change model button with fewer than 2 downloaded models', async () => {
-  mockUseModels.mockReturnValue({ models: [buildModel(1)] });
+test('hides the new chat button when only voice models are downloaded', async () => {
+  mockUseModels.mockReturnValue({
+    models: [
+      buildModel(1, { pipeline: ModelPipeline.textToSpeech }),
+      buildModel(2, { pipeline: ModelPipeline.speechToText }),
+    ],
+  });
 
   const screen = await render(
     <AiServiceProvider>
@@ -141,10 +147,10 @@ test('hides the change model button with fewer than 2 downloaded models', async 
     </AiServiceProvider>,
   );
 
-  expect(screen.queryByText('screens.drawerContent.changeModel')).toBeNull();
+  expect(queryNewChatButtons(screen)).toHaveLength(0);
 });
 
-test('pressing change model navigates to the DownloadedModelsScreen when 2+ models are downloaded', async () => {
+test('has no change model button: the chat header does that', async () => {
   mockUseModels.mockReturnValue({ models: [buildModel(1), buildModel(2)] });
 
   const screen = await render(
@@ -153,10 +159,5 @@ test('pressing change model navigates to the DownloadedModelsScreen when 2+ mode
     </AiServiceProvider>,
   );
 
-  await fireEvent.press(screen.getByText('screens.drawerContent.changeModel'));
-
-  expect(mockNavigate).toHaveBeenCalledWith('Chat', {
-    screen: 'DownloadedModelsScreen',
-    params: { canDelete: false },
-  });
+  expect(screen.queryByText('screens.drawerContent.changeModel')).toBeNull();
 });

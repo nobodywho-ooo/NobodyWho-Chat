@@ -7,31 +7,29 @@ import {
 } from '@testing-library/react-native';
 import { usePreventRemove } from '@react-navigation/native';
 
+import type { CuratedAvailability } from 'helpers';
 import type { CuratedModels } from 'hooks';
 import { buildModel } from 'jest/factories/model';
-import { ModelPipeline } from 'types';
 
 import { OnboardingContext } from '../../../hooks/useOnboarding';
 import { OnboardingScreenProps } from '../../../Onboarding.types';
 import { VoiceChoice } from '../VoiceChoice';
 
 const mockDownloads = {
-  findModelsToDownload: jest.fn((_curated: unknown) => [] as unknown[]),
+  availabilityOf: jest.fn((_curated: unknown): CuratedAvailability => ({
+    kind: 'ready',
+  })),
 };
 const curatedModels = mockDownloads as unknown as CuratedModels;
 
 const recommended = buildModel(1, { tags: ['Recommended'] });
-const stt = buildModel(3, {
-  pipeline: ModelPipeline.speechToText,
-  tags: ['Recommended'],
-});
-const catalogue = [recommended, stt];
+const chatModels = [recommended];
 
 const navigation = { navigate: jest.fn(), setOptions: jest.fn() };
 
 const renderChoice = (modelId = recommended.id, onFinish = jest.fn()) =>
   render(
-    <OnboardingContext.Provider value={{ catalogue, onFinish, curatedModels }}>
+    <OnboardingContext.Provider value={{ chatModels, onFinish, curatedModels }}>
       <VoiceChoice
         {...({
           navigation,
@@ -51,7 +49,7 @@ const isRemovePrevented = () =>
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockDownloads.findModelsToDownload.mockReturnValue([]);
+  mockDownloads.availabilityOf.mockReturnValue({ kind: 'ready' });
 });
 
 test('offers the two choices without the picked model, Skip in the header', async () => {
@@ -75,13 +73,15 @@ test('offers the two choices without the picked model, Skip in the header', asyn
 });
 
 test('shows the size each choice would download', async () => {
-  mockDownloads.findModelsToDownload.mockImplementation(curated =>
-    (curated as unknown[]).length === 1 ? [recommended] : [],
+  mockDownloads.availabilityOf.mockImplementation(curated =>
+    (curated as unknown[]).length === 1
+      ? { kind: 'automatic', models: [recommended], sizeGB: 1 }
+      : { kind: 'manual' },
   );
   await renderChoice();
 
   within(screen.getByTestId('onboarding-text-only-button')).getByText('1 GB');
-  // Nothing to download for this choice: no size.
+  // Not an automatic download: no size.
   expect(
     within(screen.getByTestId('onboarding-text-voice-button')).queryByText(
       /[GM]B$/,

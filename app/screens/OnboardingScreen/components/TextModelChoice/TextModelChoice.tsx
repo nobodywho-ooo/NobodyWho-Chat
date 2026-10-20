@@ -1,11 +1,6 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  byCatalogueOrder,
-  CURATED_VOICE_ONLY_MODELS,
-  FIRST_PICK_TAG,
-  RECOMMENDED_TAG,
-} from 'helpers';
+import { curatedOnboardingModels } from 'helpers';
 import { isChatPipeline, Model } from 'types';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
@@ -14,42 +9,40 @@ import { useOnboardingHeader } from '../../hooks/useOnboardingHeader';
 import { OnboardingModelCard } from '../OnboardingModelCard/OnboardingModelCard';
 import { OnboardingStep } from '../OnboardingStep/OnboardingStep';
 
-const SUGGESTED_TAGS = [RECOMMENDED_TAG, FIRST_PICK_TAG];
-
-const suggestedChatModels = (catalogue: readonly Model[]): Model[] => {
-  const chatModels = catalogue.filter(model => isChatPipeline(model.pipeline));
-  const suggested = chatModels.filter(model =>
-    model.tags.some(tag => SUGGESTED_TAGS.includes(tag)),
-  );
-
-  return (suggested.length > 0 ? suggested : chatModels).sort(byCatalogueOrder);
-};
-
 export const TextModelChoice: React.FC<
   OnboardingScreenProps<'TextModelChoice'>
 > = ({ navigation }) => {
   const { t } = useTranslation();
   const {
-    catalogue,
-    curatedModels: { findCuratedToDownload },
+    chatModels,
+    curatedModels: { availabilityOf },
   } = useOnboarding();
 
   useOnboardingHeader(navigation, false);
 
-  const chatModels = useMemo(() => suggestedChatModels(catalogue), [catalogue]);
-
-  const hasVoiceModels =
-    findCuratedToDownload(CURATED_VOICE_ONLY_MODELS).length === 0;
-
   const handlePress = useCallback(
-    (model: Model) =>
-      hasVoiceModels
-        ? navigation.navigate('OnboardingDownload', {
-            modelId: model.id,
-            setup: 'textOnly',
-          })
-        : navigation.navigate('VoiceChoice', { modelId: model.id }),
-    [navigation, hasVoiceModels],
+    (model: Model) => {
+      const voiceAvailability = availabilityOf(
+        curatedOnboardingModels(model.id, 'textAndVoice'),
+      );
+
+      const offersVoice =
+        voiceAvailability.kind === 'automatic' &&
+        voiceAvailability.models.some(
+          ({ pipeline }) => !isChatPipeline(pipeline),
+        );
+
+      if (offersVoice) {
+        navigation.navigate('VoiceChoice', { modelId: model.id });
+        return;
+      }
+
+      navigation.navigate('OnboardingDownload', {
+        modelId: model.id,
+        setup: 'textOnly',
+      });
+    },
+    [navigation, availabilityOf],
   );
 
   return (

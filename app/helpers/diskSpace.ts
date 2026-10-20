@@ -2,8 +2,7 @@ import { Paths } from 'expo-file-system';
 
 import { Model, ModelDownload } from 'types';
 import { log } from './log';
-
-const BYTES_PER_GB = 1024 ** 3;
+import { BYTES_PER_GB } from './units';
 
 // Headroom kept free on top of the model itself: the transfer holds a transient
 // `.chunk` window (16 MiB) beside `.partial` while downloading, and a device

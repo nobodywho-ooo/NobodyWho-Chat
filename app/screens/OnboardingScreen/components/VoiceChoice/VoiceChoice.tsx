@@ -2,11 +2,7 @@ import React, { useCallback } from 'react';
 import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { PlatformIcon } from 'components';
-import {
-  curatedOnboardingModels,
-  ModelSetup,
-  modelDownloadSizeGB,
-} from 'helpers';
+import { curatedOnboardingModels, ModelSetup } from 'helpers';
 import { useStyled } from 'hooks';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
@@ -26,19 +22,23 @@ export const VoiceChoice: React.FC<OnboardingScreenProps<'VoiceChoice'>> = ({
   const { t } = useTranslation();
   const { colors } = useStyled();
   const {
-    curatedModels: { findModelsToDownload },
+    curatedModels: { availabilityOf },
   } = useOnboarding();
   const { modelId } = route.params;
 
   useOnboardingHeader(navigation, false);
 
   const downloadSizeGB = useCallback(
-    (setup: ModelSetup) =>
-      findModelsToDownload(curatedOnboardingModels(modelId, setup)).reduce(
-        (sum, model) => sum + modelDownloadSizeGB(model),
-        0,
-      ),
-    [findModelsToDownload, modelId],
+    (setup: ModelSetup) => {
+      const setupAvailability = availabilityOf(
+        curatedOnboardingModels(modelId, setup),
+      );
+
+      return setupAvailability.kind === 'automatic'
+        ? setupAvailability.sizeGB
+        : 0;
+    },
+    [availabilityOf, modelId],
   );
 
   const download = useCallback(

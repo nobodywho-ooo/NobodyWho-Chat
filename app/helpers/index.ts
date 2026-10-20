@@ -17,6 +17,7 @@ import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
 import {
   byCatalogueOrder,
+  fetchDeviceCatalogue,
   fetchModelCatalogue,
   MODELS_URL,
 } from './modelCatalogue';
@@ -24,8 +25,8 @@ import {
   curatedChatModel,
   curatedOnboardingModels,
   FIRST_PICK_TAG,
-  fulfills,
-  resolveCuratedModels,
+  onboardingChatModels,
+  curatedAvailability,
   RECOMMENDED_TAG,
   CURATED_TEXT_MODELS,
   CURATED_VOICE_ONLY_MODELS,
@@ -43,9 +44,9 @@ import {
 import { toFileUri, toPlainPath } from './fileUri';
 import {
   filterModelsByDeviceMemory,
+  fitsInDeviceMemory,
   modelRequiredMemoryGB,
   multimodalContextSize,
-  VOICE_MODELS_RESERVED_GB,
 } from './deviceMemory';
 import {
   availableDiskSpaceGB,
@@ -109,7 +110,13 @@ export type { TtsEngine, TtsLanguageOption } from './ttsEngine';
 export type { SttLanguageOption } from './sttLanguages';
 export type { PipelineIcon } from './pipelineIcon';
 export type { DiskSpaceCheck } from './diskSpace';
-export type { CuratedModel, ModelSetup } from './curatedModels';
+export type {
+  CuratedModel,
+  CuratedAvailability,
+  ModelInventory,
+  ModelSetup,
+} from './curatedModels';
+export type { DeviceCatalogue } from './modelCatalogue';
 export type {
   ImplicitThinkOpen,
   ParsedThinking,
@@ -131,7 +138,7 @@ export {
   toFileUri,
   toPlainPath,
   filterModelsByDeviceMemory,
-  VOICE_MODELS_RESERVED_GB,
+  fitsInDeviceMemory,
   modelRequiredMemoryGB,
   multimodalContextSize,
   availableDiskSpaceGB,
@@ -194,13 +201,14 @@ export {
   parameterCountLabel,
   modelSizeLabel,
   MODELS_URL,
+  fetchDeviceCatalogue,
   fetchModelCatalogue,
   byCatalogueOrder,
   curatedChatModel,
   curatedOnboardingModels,
   FIRST_PICK_TAG,
-  fulfills,
-  resolveCuratedModels,
+  onboardingChatModels,
+  curatedAvailability,
   RECOMMENDED_TAG,
   CURATED_TEXT_MODELS,
   CURATED_VOICE_ONLY_MODELS,

@@ -47,7 +47,10 @@ const renderScreen = async (onCloseDrawer = jest.fn()) =>
   await render(
     <AiServiceProvider>
       <CaptureService />
-      <VoiceAssistantScreen onCloseDrawer={onCloseDrawer} />
+      <VoiceAssistantScreen
+        onCloseDrawer={onCloseDrawer}
+        onOpenModels={jest.fn()}
+      />
     </AiServiceProvider>,
   );
 

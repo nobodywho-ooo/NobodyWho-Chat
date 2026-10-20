@@ -9,7 +9,7 @@ import {
   CURATED_VOICE_ONLY_MODELS,
   CURATED_VOICE_PIPELINE_MODELS,
 } from 'helpers';
-import { ModelPipeline } from 'types';
+import { Model, ModelPipeline } from 'types';
 import { buildModel } from 'jest/factories/model';
 
 import { useCuratedModels } from '../useCuratedModels';
@@ -22,6 +22,7 @@ const mockWarnNotEnoughSpace = jest.fn();
 const mockIsDownloadActive = jest.fn((_modelId: number) => false);
 let mockStoredModels: unknown[] = [];
 let mockPendingDownloads: unknown[] = [];
+let mockIsModelsLoading = false;
 
 jest.mock('../useModelDownloader', () => ({
   isDownloadActive: (modelId: number) => mockIsDownloadActive(modelId),
@@ -33,7 +34,11 @@ jest.mock('../useModelDownloader', () => ({
 }));
 
 jest.mock('../useModels', () => ({
-  useModels: () => ({ models: mockStoredModels, loading: false }),
+  useModels: () => ({ models: mockStoredModels, loading: mockIsModelsLoading }),
+}));
+
+jest.mock('../useAppState', () => ({
+  useAppState: () => ({}),
 }));
 
 jest.mock('../useModelDownloads', () => ({
@@ -50,9 +55,9 @@ jest.mock('repositories', () => ({
 jest.mock('helpers', () => ({
   ...jest.requireActual('helpers/curatedModels'),
   ...jest.requireActual('helpers/diskSpace'),
-  fetchModelCatalogue: jest.fn(async () => {
+  fetchDeviceCatalogue: jest.fn(async () => {
     const response = await fetch('https://catalogue');
-    return response.json();
+    return { models: await response.json(), ramGB: undefined };
   }),
   log: jest.fn(),
   checkDiskSpaceForModels: jest.fn(() => ({
@@ -80,12 +85,14 @@ const vad = buildModel(4, {
   tags: ['Recommended'],
 });
 
+const catalogueOf = (models: Model[]) => ({ models, ramGB: undefined });
+
 const renderLoaded = async () => {
   const hook = await renderHook(() => useCuratedModels());
   await waitFor(() =>
-    expect(
-      hook.result.current.findModelsToDownload(CURATED_TEXT_MODELS),
-    ).toEqual([chat]),
+    expect(hook.result.current.availabilityOf(CURATED_TEXT_MODELS).kind).toBe(
+      'automatic',
+    ),
   );
   return hook;
 };
@@ -96,6 +103,7 @@ beforeEach(() => {
   jest.clearAllMocks();
   mockStoredModels = [];
   mockPendingDownloads = [];
+  mockIsModelsLoading = false;
   alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
   globalThis.fetch = jest.fn(async () => ({
     ok: true,
@@ -222,11 +230,16 @@ test('cleans nothing up when the result cannot be read back', async () => {
   expect(result.current.isDownloading).toBe(false);
 });
 
-test('fails with an alert when the catalogue cannot be fetched', async () => {
+test('leaves it to the user when the catalogue cannot be fetched', async () => {
   globalThis.fetch = jest.fn(async () => {
     throw new TypeError('Network request failed');
   }) as unknown as typeof fetch;
   const { result } = await renderHook(() => useCuratedModels());
+  await waitFor(() =>
+    expect(result.current.availabilityOf(CURATED_TEXT_MODELS)).toEqual({
+      kind: 'manual',
+    }),
+  );
 
   let outcome;
   await act(async () => {
@@ -242,23 +255,15 @@ test('fails with an alert when the catalogue cannot be fetched', async () => {
   expect(result.current.isDownloading).toBe(false);
 });
 
-test('retries the catalogue when it failed to load at mount', async () => {
-  const fetchMock = jest
-    .fn()
-    .mockRejectedValueOnce(new TypeError('Network request failed'))
-    .mockResolvedValue({ json: async () => [chat] });
-  globalThis.fetch = fetchMock as unknown as typeof fetch;
-  const { result } = await renderHook(() => useCuratedModels());
-  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+test('knows no availability until the installed models are known', async () => {
+  mockIsModelsLoading = true;
+  const { result } = await renderHook(() =>
+    useCuratedModels(catalogueOf([chat])),
+  );
 
-  let outcome;
-  await act(async () => {
-    outcome = await result.current.downloadCurated(CURATED_TEXT_MODELS);
+  expect(result.current.availabilityOf(CURATED_TEXT_MODELS)).toEqual({
+    kind: 'loading',
   });
-
-  expect(fetchMock).toHaveBeenCalledTimes(2);
-  expect(outcome).toBe('done');
-  expect(mockStartDownload.mock.calls.map(([model]) => model)).toEqual([chat]);
 });
 
 test('leaves the failure alert to a caller that opts out', async () => {
@@ -351,7 +356,9 @@ describe('cancel', () => {
 
 test('reports curated models covered only by a download as still in progress', async () => {
   mockPendingDownloads = [{ model: chat, partsProgress: [] }];
-  const { result } = await renderHook(() => useCuratedModels([chat]));
+  const { result } = await renderHook(() =>
+    useCuratedModels(catalogueOf([chat])),
+  );
 
   expect(await result.current.downloadCurated(CURATED_TEXT_MODELS)).toBe(
     'inProgress',
@@ -361,16 +368,24 @@ test('reports curated models covered only by a download as still in progress', a
 
 test('reports curated models already installed as done', async () => {
   mockStoredModels = [chat];
-  const { result } = await renderHook(() => useCuratedModels([chat]));
+  const { result } = await renderHook(() =>
+    useCuratedModels(catalogueOf([chat])),
+  );
 
   expect(await result.current.downloadCurated(CURATED_TEXT_MODELS)).toBe(
     'done',
   );
 });
 
-test('fails rather than download part of the set', async () => {
+test('downloads no part of a set it leaves to the user', async () => {
   // No TTS model in the catalogue.
-  const { result } = await renderHook(() => useCuratedModels([chat, stt, vad]));
+  const { result } = await renderHook(() =>
+    useCuratedModels(catalogueOf([chat, stt, vad])),
+  );
+
+  expect(result.current.availabilityOf(CURATED_VOICE_PIPELINE_MODELS)).toEqual({
+    kind: 'manual',
+  });
 
   let outcome;
   await act(async () => {
@@ -383,27 +398,14 @@ test('fails rather than download part of the set', async () => {
   expect(mockStartDownload).not.toHaveBeenCalled();
 });
 
-test('finds the downloads standing in for curated models not installed yet', async () => {
-  const sttDownload = { model: stt, partsProgress: [] };
-  const extraTtsDownload = { model: tts, partsProgress: [] };
-  mockPendingDownloads = [sttDownload, extraTtsDownload];
-  // A TTS model is already installed: another TTS download is not needed.
-  mockStoredModels = [buildModel(9, { pipeline: ModelPipeline.textToSpeech })];
-  const { result } = await renderHook(() => useCuratedModels([]));
-
-  expect(
-    result.current.findPendingDownloads(CURATED_VOICE_PIPELINE_MODELS),
-  ).toEqual([sttDownload]);
-});
-
 test('uses a catalogue it is given without fetching one', async () => {
   const { result } = await renderHook(() =>
-    useCuratedModels([chat, stt, tts, vad]),
+    useCuratedModels(catalogueOf([chat, stt, tts, vad])),
   );
 
-  expect(
-    result.current.findModelsToDownload(CURATED_VOICE_PIPELINE_MODELS),
-  ).toEqual([chat, stt, tts, vad]);
+  expect(result.current.availabilityOf(CURATED_VOICE_PIPELINE_MODELS)).toEqual(
+    expect.objectContaining({ models: [chat, stt, tts, vad] }),
+  );
 
   await act(async () => {
     await result.current.downloadCurated(CURATED_TEXT_MODELS);
@@ -425,12 +427,12 @@ const startedModels = () =>
 
 test('the curated voice models download a single chat model, the Great First Pick', async () => {
   const { result } = await renderHook(() =>
-    useCuratedModels([recommendedChat, chat, stt, tts, vad]),
+    useCuratedModels(catalogueOf([recommendedChat, chat, stt, tts, vad])),
   );
 
-  expect(
-    result.current.findModelsToDownload(CURATED_VOICE_PIPELINE_MODELS),
-  ).toEqual([chat, stt, tts, vad]);
+  expect(result.current.availabilityOf(CURATED_VOICE_PIPELINE_MODELS)).toEqual(
+    expect.objectContaining({ models: [chat, stt, tts, vad] }),
+  );
 
   await act(async () => {
     await result.current.downloadCurated(CURATED_VOICE_PIPELINE_MODELS);
@@ -441,7 +443,7 @@ test('the curated voice models download a single chat model, the Great First Pic
 
 test('a chat model picked by id replaces the Great First Pick', async () => {
   const { result } = await renderHook(() =>
-    useCuratedModels([chat, recommendedChat, stt, tts, vad]),
+    useCuratedModels(catalogueOf([chat, recommendedChat, stt, tts, vad])),
   );
 
   await act(async () => {
@@ -458,10 +460,12 @@ test("any chat model covers the default pick, but not the user's own pick", asyn
   const otherChat = buildModel(9, { tags: ['Recommended'] });
   mockStoredModels = [otherChat];
   const { result } = await renderHook(() =>
-    useCuratedModels([chat, stt, tts, vad]),
+    useCuratedModels(catalogueOf([chat, stt, tts, vad])),
   );
 
-  expect(result.current.findModelsToDownload(CURATED_TEXT_MODELS)).toEqual([]);
+  expect(result.current.availabilityOf(CURATED_TEXT_MODELS)).toEqual({
+    kind: 'ready',
+  });
 
   let outcome;
   await act(async () => {

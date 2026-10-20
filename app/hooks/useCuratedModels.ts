@@ -4,15 +4,17 @@ import { useTranslation } from 'react-i18next';
 import {
   checkDiskSpaceForModels,
   CuratedModel,
-  fetchModelCatalogue,
-  fulfills,
+  CuratedAvailability,
+  DeviceCatalogue,
+  fetchDeviceCatalogue,
   log,
   modelDownloadProgress,
-  resolveCuratedModels,
+  curatedAvailability,
   sizeWeightedProgress,
 } from 'helpers';
 import { getModelById } from 'repositories';
-import { Model, ModelDownload } from 'types';
+import { MODEL_SLOTS, Model } from 'types';
+import { useAppState } from './useAppState';
 import { isDownloadActive, useModelDownloader } from './useModelDownloader';
 import { useModelDownloads } from './useModelDownloads';
 import { useModels } from './useModels';
@@ -25,14 +27,7 @@ interface DownloadCuratedOptions {
 }
 
 export interface CuratedModels {
-  findCuratedToDownload: (
-    curated: readonly CuratedModel[],
-  ) => readonly CuratedModel[];
-  findModelsToDownload: (curated: readonly CuratedModel[]) => Model[];
-  findPendingDownloads: (
-    curated: readonly CuratedModel[],
-  ) => readonly ModelDownload[];
-  isCatalogueLoaded: boolean;
+  availabilityOf: (curated: readonly CuratedModel[]) => CuratedAvailability;
   isLoaded: boolean;
   isDownloading: boolean;
   progress: number;
@@ -44,16 +39,18 @@ export interface CuratedModels {
 }
 
 export const useCuratedModels = (
-  initialCatalogue?: Model[],
-  reservedGB = 0,
+  initialCatalogue?: DeviceCatalogue,
 ): CuratedModels => {
   const { t } = useTranslation();
+  const appState = useAppState();
   const { models: storedModels, loading: isModelsLoading } = useModels();
   const { downloads, loading: isDownloadsLoading } = useModelDownloads();
   const { startDownload, stopDownload, warnNotEnoughSpace } =
     useModelDownloader();
 
-  const [catalogue, setCatalogue] = useState<Model[]>(initialCatalogue ?? []);
+  const [catalogue, setCatalogue] = useState<
+    DeviceCatalogue | 'loading' | 'failed'
+  >(initialCatalogue ?? 'loading');
 
   // The models the user asked for in this session, kept so progress can still
   // count a model whose download row has already gone (it finished).
@@ -69,60 +66,56 @@ export const useCuratedModels = (
   const targetsRef = useRef(targets);
   targetsRef.current = targets;
 
-  // The in-flight or settled fetch, shared by the mount-time load and
-  // downloadCurated. Cleared on failure so the next download retries it (the
-  // device may have come back online since).
-  const cataloguePromise = useRef<Promise<Model[]> | undefined>(
-    initialCatalogue && Promise.resolve(initialCatalogue),
-  );
-  const loadCatalogue = useCallback(() => {
-    if (cataloguePromise.current === undefined) {
-      const promise = fetchModelCatalogue(reservedGB);
-      cataloguePromise.current = promise;
-
-      promise.then(
-        models => setCatalogue(models),
-        error => {
-          if (cataloguePromise.current === promise) {
-            cataloguePromise.current = undefined;
-          }
-          log('useCuratedModels fetchCatalogue', error);
-        },
-      );
-    }
-    return cataloguePromise.current;
-  }, [reservedGB]);
+  const hasInitialCatalogue = initialCatalogue !== undefined;
 
   useEffect(() => {
-    loadCatalogue().catch(() => {});
-  }, [loadCatalogue]);
+    if (hasInitialCatalogue) {
+      return;
+    }
 
-  const findCuratedToDownload = useCallback(
-    (curated: readonly CuratedModel[]) =>
-      curated.filter(
-        entry =>
-          !storedModels.some(model => fulfills(model, entry)) &&
-          !downloads.some(download => fulfills(download.model, entry)),
-      ),
-    [storedModels, downloads],
+    let isMounted = true;
+
+    fetchDeviceCatalogue().then(
+      loaded => {
+        if (isMounted) {
+          setCatalogue(loaded);
+        }
+      },
+      error => {
+        log('useCuratedModels fetchDeviceCatalogue', error);
+        if (isMounted) {
+          setCatalogue('failed');
+        }
+      },
+    );
+
+    return () => {
+      isMounted = false;
+    };
+  }, [hasInitialCatalogue]);
+
+  const isLoaded = !isModelsLoading && !isDownloadsLoading;
+
+  const inUseIds = useMemo(
+    () =>
+      MODEL_SLOTS.flatMap(({ appStateKey }) => {
+        const id = appState[appStateKey];
+        return id === undefined ? [] : [id];
+      }),
+    [appState],
   );
 
-  const findModelsToDownload = useCallback(
-    (curated: readonly CuratedModel[]) =>
-      resolveCuratedModels(findCuratedToDownload(curated), catalogue),
-    [findCuratedToDownload, catalogue],
-  );
-
-  const findPendingDownloads = useCallback(
-    (curated: readonly CuratedModel[]) =>
-      downloads.filter(download =>
-        curated.some(
-          entry =>
-            fulfills(download.model, entry) &&
-            !storedModels.some(model => fulfills(model, entry)),
-        ),
-      ),
-    [storedModels, downloads],
+  const availabilityOf = useCallback(
+    (curated: readonly CuratedModel[]): CuratedAvailability =>
+      isLoaded
+        ? curatedAvailability(curated, {
+            installed: storedModels,
+            downloads,
+            inUseIds,
+            catalogue,
+          })
+        : { kind: 'loading' },
+    [isLoaded, storedModels, downloads, inUseIds, catalogue],
   );
 
   const progress = useMemo(
@@ -159,58 +152,35 @@ export const useCuratedModels = (
         return 'failed';
       };
 
-      const curatedToDownload = findCuratedToDownload(curated);
+      const availability = availabilityOf(curated);
 
-      if (curatedToDownload.length === 0) {
-        // Some may only be covered by a download still on its way.
-        const isInstalled = curated.every(entry =>
-          storedModels.some(model => fulfills(model, entry)),
-        );
-
-        return isInstalled ? 'done' : 'inProgress';
+      if (availability.kind === 'ready') {
+        return 'done';
       }
 
-      const endBatch = () => {
-        setTargets([]);
-        setIsDownloading(false);
-      };
-
-      // Shows progress while a catalogue that never loaded (offline at mount)
-      // is fetched again, and lets the user cancel that wait.
-      const batch = ++batchRef.current;
-      const batchAbort = new AbortController();
-      batchAbortRef.current = batchAbort;
-      setIsDownloading(true);
-
-      let modelsToDownload: Model[] = [];
-
-      try {
-        modelsToDownload = resolveCuratedModels(
-          curatedToDownload,
-          await loadCatalogue(),
-        );
-      } catch {}
-
-      if (batch !== batchRef.current) {
-        return 'cancelled';
+      if (availability.kind === 'inProgress') {
+        return 'inProgress';
       }
 
-      if (modelsToDownload.length < curatedToDownload.length) {
-        endBatch();
+      if (availability.kind !== 'automatic') {
         return fail();
       }
 
-      // Checked for the whole batch up front
+      const modelsToDownload = availability.models;
+
       const spaceCheck = checkDiskSpaceForModels(modelsToDownload, downloads);
 
       if (!spaceCheck.fits) {
         warnNotEnoughSpace(modelsToDownload, spaceCheck);
-        endBatch();
 
         return 'notEnoughSpace';
       }
 
-      setTargets(modelsToDownload);
+      const batch = ++batchRef.current;
+      const batchAbort = new AbortController();
+      batchAbortRef.current = batchAbort;
+      setTargets([...modelsToDownload]);
+      setIsDownloading(true);
 
       // Stays undefined if that fails, so nothing is cleaned up on a guess
       let failedModels: Model[] | undefined;
@@ -241,7 +211,8 @@ export const useCuratedModels = (
         return 'cancelled';
       }
 
-      endBatch();
+      setTargets([]);
+      setIsDownloading(false);
 
       if (failedModels?.length === 0) {
         return 'done';
@@ -257,15 +228,7 @@ export const useCuratedModels = (
 
       return fail();
     },
-    [
-      downloads,
-      storedModels,
-      findCuratedToDownload,
-      loadCatalogue,
-      startDownload,
-      warnNotEnoughSpace,
-      t,
-    ],
+    [availabilityOf, downloads, startDownload, warnNotEnoughSpace, t],
   );
 
   // Only the ones not installed
@@ -290,15 +253,9 @@ export const useCuratedModels = (
     setIsDownloading(false);
   }, [stopDownload]);
 
-  const isCatalogueLoaded = catalogue.length > 0;
-  const isLoaded = !isModelsLoading && !isDownloadsLoading;
-
   return useMemo(
     () => ({
-      findCuratedToDownload,
-      findModelsToDownload,
-      findPendingDownloads,
-      isCatalogueLoaded,
+      availabilityOf,
       isLoaded,
       isDownloading,
       progress,
@@ -306,10 +263,7 @@ export const useCuratedModels = (
       cancel,
     }),
     [
-      findCuratedToDownload,
-      findModelsToDownload,
-      findPendingDownloads,
-      isCatalogueLoaded,
+      availabilityOf,
       isLoaded,
       isDownloading,
       progress,

@@ -189,7 +189,6 @@
       "textOnly": "Kun tekstmodel",
       "textAndVoice": "Tekst- og stemmemodeller",
       "skip": "Spring over",
-      "loadingModels": "Indlæser modeller...",
       "downloadingHeader": "Vent venligst",
       "downloadingTitle": "Downloader dine modeller",
       "downloadingSubtitle": "Det kan tage et par minutter. Hold appen åben, indtil downloadet er færdigt.",
@@ -249,6 +248,7 @@
         "vad": "Detektion af stemmeaktivitet model",
         "downloadMissing": "Hent manglende modeller",
         "resumeDownload": "Genoptag download",
+        "browseModels": "Gennemse modeller",
         "loadingModels": "Indlæser modeller…",
         "downloadProgress": "{{percent}}%",
         "cancelDownload": "Annuller download"

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { DeviceCatalogue, onboardingChatModels } from 'helpers';
 import { useCuratedModels, useStyled } from 'hooks';
-import { Model } from 'types';
 
 import { OnboardingParamList } from '../../Onboarding.types';
 import { OnboardingContext } from '../../hooks/useOnboarding';
@@ -12,7 +12,7 @@ import { VoiceChoice } from '../VoiceChoice/VoiceChoice';
 const Stack = createNativeStackNavigator<OnboardingParamList>();
 
 interface OnboardingChoicesProps {
-  catalogue: Model[];
+  catalogue: DeviceCatalogue;
   onFinish: () => void;
 }
 
@@ -22,10 +22,14 @@ export const OnboardingChoices: React.FC<OnboardingChoicesProps> = ({
 }) => {
   const { colors } = useStyled();
   const curatedModels = useCuratedModels(catalogue);
+  const chatModels = useMemo(
+    () => onboardingChatModels(catalogue),
+    [catalogue],
+  );
 
   const value = useMemo(
-    () => ({ catalogue, onFinish, curatedModels }),
-    [catalogue, onFinish, curatedModels],
+    () => ({ chatModels, onFinish, curatedModels }),
+    [chatModels, onFinish, curatedModels],
   );
 
   return (

@@ -2,47 +2,51 @@ import { useCallback } from 'react';
 import {
   CURATED_VOICE_PIPELINE_MODELS,
   overallDownloadProgress,
-  VOICE_MODELS_RESERVED_GB,
 } from 'helpers';
 import {
   useActiveDownloadIds,
   useCuratedModels,
   useModelDownloader,
 } from 'hooks';
+import { ModelDownload } from 'types';
+
+export type VoiceSetupState =
+  'loading' | 'ready' | 'automatic' | 'manual' | 'downloading' | 'interrupted';
 
 export interface VoiceModelDownloads {
-  needsDownload: boolean;
-  canDownload: boolean;
-  isDownloading: boolean;
-  isInterrupted: boolean;
+  state: VoiceSetupState;
   progress: number;
-  downloadCurated: () => void;
+  download: () => void;
   resume: () => void;
   cancel: () => void;
 }
 
+const NO_DOWNLOADS: readonly ModelDownload[] = [];
+
 export const useVoiceModelDownloads = (): VoiceModelDownloads => {
   const {
-    findCuratedToDownload,
-    findModelsToDownload,
-    findPendingDownloads,
-    isCatalogueLoaded,
+    availabilityOf,
     isDownloading: isBatchDownloading,
     progress: batchProgress,
     downloadCurated,
     cancel: cancelBatch,
-  } = useCuratedModels(undefined, VOICE_MODELS_RESERVED_GB);
+  } = useCuratedModels();
   const { promptStopDownloads, resumeDownloads } = useModelDownloader();
   const activeIds = useActiveDownloadIds();
 
+  const voiceAvailability = availabilityOf(CURATED_VOICE_PIPELINE_MODELS);
+
   // Voice models on their way outside a batch of this screen: one it started
   // before being left and re-entered, or one interrupted by a failure.
-  const pendingDownloads = findPendingDownloads(CURATED_VOICE_PIPELINE_MODELS);
+  const pendingDownloads =
+    voiceAvailability.kind === 'inProgress'
+      ? voiceAvailability.downloads
+      : NO_DOWNLOADS;
   const isPendingActive = pendingDownloads.some(({ model }) =>
     activeIds.has(model.id),
   );
 
-  const downloadCuratedVoiceModels = useCallback(() => {
+  const download = useCallback(() => {
     downloadCurated(CURATED_VOICE_PIPELINE_MODELS);
   }, [downloadCurated]);
 
@@ -55,19 +59,22 @@ export const useVoiceModelDownloads = (): VoiceModelDownloads => {
     promptStopDownloads(pendingDownloads.map(({ model }) => model));
   }, [isBatchDownloading, cancelBatch, pendingDownloads, promptStopDownloads]);
 
+  const state = ((): VoiceSetupState => {
+    if (isBatchDownloading || isPendingActive) {
+      return 'downloading';
+    }
+
+    return voiceAvailability.kind === 'inProgress'
+      ? 'interrupted'
+      : voiceAvailability.kind;
+  })();
+
   return {
-    needsDownload:
-      findCuratedToDownload(CURATED_VOICE_PIPELINE_MODELS).length > 0,
-    canDownload:
-      !isCatalogueLoaded ||
-      findModelsToDownload(CURATED_VOICE_PIPELINE_MODELS).length > 0,
-    isDownloading: isBatchDownloading || isPendingActive,
-    isInterrupted:
-      !isBatchDownloading && !isPendingActive && pendingDownloads.length > 0,
+    state,
     progress: isBatchDownloading
       ? batchProgress
       : overallDownloadProgress(pendingDownloads),
-    downloadCurated: downloadCuratedVoiceModels,
+    download,
     resume: resumeDownloads,
     cancel,
   };

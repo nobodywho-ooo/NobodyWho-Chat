@@ -7,4 +7,7 @@ export type {
   VoiceStatus,
 } from './useVoiceConversation';
 export { useVoiceModelDownloads } from './useVoiceModelDownloads';
-export type { VoiceModelDownloads } from './useVoiceModelDownloads';
+export type {
+  VoiceModelDownloads,
+  VoiceSetupState,
+} from './useVoiceModelDownloads';

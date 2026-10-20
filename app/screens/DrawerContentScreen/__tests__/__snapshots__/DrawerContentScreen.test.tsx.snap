@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+// Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`renders correctly DrawerContentScreen 1`] = `
 <View
@@ -24,7 +24,7 @@ exports[`renders correctly DrawerContentScreen 1`] = `
       bold={true}
       variant="h3"
     >
-      NobodyWho
+      nobodywho
     </Text>
     <IconButton
       glass={true}

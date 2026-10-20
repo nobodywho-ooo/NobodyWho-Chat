@@ -4,9 +4,9 @@ import { buildModel } from 'jest/factories/model';
 import {
   MULTIMODAL_CONTEXT_FALLBACK,
   filterModelsByDeviceMemory,
+  fitsInDeviceMemory,
   modelRequiredMemoryGB,
   multimodalContextSize,
-  VOICE_MODELS_RESERVED_GB,
 } from '../deviceMemory';
 
 const part = (type: string, sizeGB: number) => ({
@@ -64,21 +64,6 @@ describe('filterModelsByDeviceMemory', () => {
     expect(result.map(model => model.id)).toEqual([1, 3]);
   });
 
-  // 6 GB usable - 0.5 GB for the voice models -> 5.5 GB.
-  test('keeps the requested reserve free on top', async () => {
-    const fits = buildModel(1, { parts: [part('chat-model', 5.5)] });
-    const fitsOnlyWithoutVoice = buildModel(2, {
-      parts: [part('chat-model', 6)],
-    });
-
-    const result = await filterModelsByDeviceMemory(
-      [fits, fitsOnlyWithoutVoice],
-      VOICE_MODELS_RESERVED_GB,
-    );
-
-    expect(result.map(model => model.id)).toEqual([1]);
-  });
-
   test('returns every model when total memory cannot be read', async () => {
     mockGetTotalMemory.mockRejectedValue(new Error('unavailable'));
     const models = [
@@ -109,6 +94,26 @@ describe('filterModelsByDeviceMemory', () => {
       expect(result).toEqual(models);
     },
   );
+});
+
+describe('fitsInDeviceMemory', () => {
+  // 8 GB - 2 GB for the OS -> 6 GB usable.
+  const RAM_GB = 8;
+
+  test('counts the models held together, not each on its own', () => {
+    const chat = buildModel(1, { parts: [part('chat-model', 4)] });
+    const voice = buildModel(2, { parts: [part('tts-file', 1.5)] });
+    const moreVoice = buildModel(3, { parts: [part('stt-file', 1)] });
+
+    expect(fitsInDeviceMemory([chat, voice], RAM_GB)).toBe(true);
+    expect(fitsInDeviceMemory([chat, voice, moreVoice], RAM_GB)).toBe(false);
+  });
+
+  test('takes the models to fit when the device RAM is unknown', () => {
+    const huge = buildModel(1, { parts: [part('chat-model', 99)] });
+
+    expect(fitsInDeviceMemory([huge], undefined)).toBe(true);
+  });
 });
 
 describe('multimodalContextSize', () => {

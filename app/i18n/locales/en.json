@@ -189,7 +189,6 @@
       "textOnly": "Text model only",
       "textAndVoice": "Text & Voice models",
       "skip": "Skip",
-      "loadingModels": "Loading models...",
       "downloadingHeader": "Please wait",
       "downloadingTitle": "Downloading your models",
       "downloadingSubtitle": "This can take a few minutes. Keep the app open until it finishes.",
@@ -249,6 +248,7 @@
         "vad": "Voice Activity Detection model",
         "downloadMissing": "Download missing models",
         "resumeDownload": "Resume download",
+        "browseModels": "Browse models",
         "loadingModels": "Loading models…",
         "downloadProgress": "{{percent}}%",
         "cancelDownload": "Cancel Download"

@@ -7,43 +7,33 @@ import { useStyled } from 'hooks';
 import { Spacings } from 'style';
 
 import { useVoiceModelDownloads } from '../hooks';
-import type { VoiceAssistantStatus } from '../hooks';
+import type { VoiceAssistantStatus, VoiceSetupState } from '../hooks';
 
 interface VoiceSetupProps {
   status: VoiceAssistantStatus;
+  onOpenModels: () => void;
 }
 
-const descriptionKey = ({
-  isDownloading,
-  isInterrupted,
-}: {
-  isDownloading: boolean;
-  isInterrupted: boolean;
-}) => {
-  if (isDownloading) {
+const descriptionKey = (state: VoiceSetupState) => {
+  if (state === 'downloading') {
     return 'screens.voiceAssistant.setup.downloadInProgress';
   }
 
-  if (isInterrupted) {
+  if (state === 'interrupted') {
     return 'screens.voiceAssistant.setup.downloadInterrupted';
   }
 
   return 'screens.voiceAssistant.setup.description';
 };
 
-export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
+export const VoiceSetup: React.FC<VoiceSetupProps> = ({
+  status,
+  onOpenModels,
+}) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const {
-    needsDownload,
-    canDownload,
-    isDownloading,
-    isInterrupted,
-    progress,
-    downloadCurated,
-    resume,
-    cancel,
-  } = useVoiceModelDownloads();
+  const { state, progress, download, resume, cancel } =
+    useVoiceModelDownloads();
 
   const renderChecklistRow = (loaded: boolean, label: string) => (
     <View style={styles.rowContainer}>
@@ -76,19 +66,32 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
       );
     }
 
-    if (needsDownload) {
+    if (state === 'automatic' || state === 'loading') {
       return (
         <Button
           title={t('screens.voiceAssistant.setup.downloadMissing')}
-          disabled={!canDownload}
-          onPress={downloadCurated}
+          testID="voice-download-button"
+          disabled={state === 'loading'}
+          onPress={download}
           style={styles.downloadButton}
           small
         />
       );
     }
 
-    if (isInterrupted) {
+    if (state === 'manual') {
+      return (
+        <Button
+          title={t('screens.voiceAssistant.setup.browseModels')}
+          testID="voice-browse-models-button"
+          onPress={onOpenModels}
+          style={styles.downloadButton}
+          small
+        />
+      );
+    }
+
+    if (state === 'interrupted') {
       return (
         <Button
           title={t('screens.voiceAssistant.setup.resumeDownload')}
@@ -113,9 +116,9 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({ status }) => {
         variant="body2"
         style={[styles.description, { color: colors.onSurfaceVariant }]}
       >
-        {t(descriptionKey({ isDownloading, isInterrupted }))}
+        {t(descriptionKey(state))}
       </Text>
-      {isDownloading ? (
+      {state === 'downloading' ? (
         <View style={styles.downloadContainer}>
           <Text variant="body2" bold style={styles.progressLabel}>
             {t('screens.voiceAssistant.setup.downloadProgress', {

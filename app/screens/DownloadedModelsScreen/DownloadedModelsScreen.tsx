@@ -18,9 +18,53 @@ import {
   slotsHolding,
   useAiService,
 } from 'services';
-import { Model, ModelPipeline, ModelSlot, isChatPipeline } from 'types';
+import {
+  Model,
+  ModelPipeline,
+  ModelSlot,
+  isChatPipeline,
+  pipelineLabel,
+} from 'types';
 
 import styles from './DownloadedModelsScreen.styles';
+
+// Chat models share one section, since they compete for the one chat slot;
+// each card still names its exact pipeline.
+const sectionPipeline = (pipeline: ModelPipeline): ModelPipeline =>
+  isChatPipeline(pipeline) ? ModelPipeline.textGeneration : pipeline;
+
+const VOICE_PIPELINES: readonly ModelPipeline[] = [
+  ModelPipeline.textToSpeech,
+  ModelPipeline.speechToText,
+  ModelPipeline.voiceActivityDetection,
+];
+
+// Chat first, then the voice models, then anything else — derived from the
+// enum so a pipeline added later still gets a section.
+const SECTION_ORDER: readonly ModelPipeline[] = [
+  ModelPipeline.textGeneration,
+  ...VOICE_PIPELINES,
+  ...Object.values(ModelPipeline).filter(
+    pipeline =>
+      !isChatPipeline(pipeline) && !VOICE_PIPELINES.includes(pipeline),
+  ),
+];
+
+interface ModelSection {
+  pipeline: ModelPipeline;
+  models: Model[];
+}
+
+const toSections = (models: readonly Model[]): ModelSection[] =>
+  SECTION_ORDER.flatMap(pipeline => {
+    const sectionModels = models.filter(
+      model => sectionPipeline(model.pipeline) === pipeline,
+    );
+
+    return sectionModels.length > 0
+      ? [{ pipeline, models: sectionModels }]
+      : [];
+  });
 
 export const DownloadedModelsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -181,15 +225,26 @@ export const DownloadedModelsScreen: React.FC = () => {
       contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
-      {models.map(model => (
-        <ModelCard
-          key={model.id}
-          isDownloaded
-          deleteMode={deleteMode}
-          isSelected={inUseIdFor(model.pipeline) === model.id}
-          model={model}
-          onPress={handleModelPress}
-        />
+      {toSections(models).map(section => (
+        <View key={section.pipeline} style={styles.sectionContainer}>
+          <Text
+            variant="body2"
+            bold
+            style={[styles.sectionTitle, { color: colors.onSurfaceVariant }]}
+          >
+            {pipelineLabel[section.pipeline]}
+          </Text>
+          {section.models.map(model => (
+            <ModelCard
+              key={model.id}
+              isDownloaded
+              deleteMode={deleteMode}
+              isSelected={inUseIdFor(model.pipeline) === model.id}
+              model={model}
+              onPress={handleModelPress}
+            />
+          ))}
+        </View>
       ))}
     </ScrollView>
   );

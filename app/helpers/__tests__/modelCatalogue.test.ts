@@ -1,11 +1,13 @@
 import { buildModel } from 'jest/factories/model';
 
-import { filterModelsByDeviceMemory } from '../deviceMemory';
-import { fetchModelCatalogue, MODELS_URL, TIMEOUT_MS } from '../modelCatalogue';
+import { mockGetTotalMemory } from 'jest/mock/node-modules';
 
-jest.mock('../deviceMemory', () => ({
-  filterModelsByDeviceMemory: jest.fn(async (models: unknown) => models),
-}));
+import {
+  fetchDeviceCatalogue,
+  fetchModelCatalogue,
+  MODELS_URL,
+  TIMEOUT_MS,
+} from '../modelCatalogue';
 
 const catalogue = [buildModel(1)];
 
@@ -35,19 +37,14 @@ test('returns the catalogue', async () => {
   expect(fetchMock).toHaveBeenCalledWith(MODELS_URL, expect.anything());
 });
 
-test('keeps only the models the device has the memory to run', async () => {
-  const tooBig = buildModel(2);
-  mockFetch(async () => ({
-    ok: true,
-    json: async () => [...catalogue, tooBig],
-  }));
-  jest.mocked(filterModelsByDeviceMemory).mockResolvedValueOnce(catalogue);
+test('hands the whole catalogue with the device RAM to judge it by', async () => {
+  mockGetTotalMemory.mockResolvedValue(6 * 1024 ** 3);
+  mockFetch(async () => ({ ok: true, json: async () => catalogue }));
 
-  await expect(fetchModelCatalogue()).resolves.toEqual(catalogue);
-  expect(filterModelsByDeviceMemory).toHaveBeenCalledWith(
-    [...catalogue, tooBig],
-    0,
-  );
+  await expect(fetchDeviceCatalogue()).resolves.toEqual({
+    models: catalogue,
+    ramGB: 6,
+  });
 });
 
 test('rejects on an HTTP error status', async () => {

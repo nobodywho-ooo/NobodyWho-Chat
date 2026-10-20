@@ -6,6 +6,12 @@ export default StyleSheet.create({
     ...Layout.container,
     paddingTop: Spacings.lg,
   },
+  sectionContainer: {
+    paddingBottom: Spacings.lg,
+  },
+  sectionTitle: {
+    paddingBottom: Spacings.sm,
+  },
   noModelContainer: {
     flex: 1,
     alignItems: 'center',

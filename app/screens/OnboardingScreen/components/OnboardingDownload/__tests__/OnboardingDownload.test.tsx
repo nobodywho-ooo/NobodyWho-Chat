@@ -31,7 +31,7 @@ jest.mock('repositories', () => ({
 
 const recommended = buildModel(1, { tags: ['Recommended'] });
 const firstPick = buildModel(2, { tags: ['Great First Pick'] });
-const catalogue = [recommended, firstPick];
+const chatModels = [recommended, firstPick];
 
 const navigation = { goBack: jest.fn(), setOptions: jest.fn() };
 
@@ -41,7 +41,7 @@ const renderDownload = ({
   onFinish = jest.fn(),
 } = {}) =>
   render(
-    <OnboardingContext.Provider value={{ catalogue, onFinish, curatedModels }}>
+    <OnboardingContext.Provider value={{ chatModels, onFinish, curatedModels }}>
       <OnboardingDownload
         {...({
           navigation,
@@ -79,7 +79,7 @@ test('downloads only the picked text model, once', async () => {
   const { rerender } = await renderDownload();
   await rerender(
     <OnboardingContext.Provider
-      value={{ catalogue, onFinish: jest.fn(), curatedModels }}
+      value={{ chatModels, onFinish: jest.fn(), curatedModels }}
     >
       <OnboardingDownload
         {...({
@@ -110,7 +110,7 @@ test('waits for the installed models to load before downloading', async () => {
   mockDownloads.isLoaded = true;
   await rerender(
     <OnboardingContext.Provider
-      value={{ catalogue, onFinish: jest.fn(), curatedModels }}
+      value={{ chatModels, onFinish: jest.fn(), curatedModels }}
     >
       <OnboardingDownload
         {...({

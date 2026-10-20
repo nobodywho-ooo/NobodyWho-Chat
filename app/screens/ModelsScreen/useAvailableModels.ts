@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { map, prop } from 'ramda';
 import { useAppState, useModelDownloads, useModels } from 'hooks';
-import { fetchModelCatalogue } from 'helpers';
+import { fetchModelCatalogue, filterModelsByDeviceMemory } from 'helpers';
 import { MODEL_SLOTS, Model } from 'types';
 
 // Fetches the catalogue, filters it to what the device can run, and derives the
@@ -22,7 +22,9 @@ export const useAvailableModels = () => {
     setIsLoading(true);
     setHasError(false);
     try {
-      setModels(await fetchModelCatalogue());
+      const catalogue = await fetchModelCatalogue();
+      const runnableModels = await filterModelsByDeviceMemory(catalogue);
+      setModels(runnableModels);
     } catch {
       setHasError(true);
     } finally {

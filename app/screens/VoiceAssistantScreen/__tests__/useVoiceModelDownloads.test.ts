@@ -1,9 +1,6 @@
 import { act, renderHook } from '@testing-library/react-native';
 
-import {
-  CURATED_VOICE_PIPELINE_MODELS,
-  VOICE_MODELS_RESERVED_GB,
-} from 'helpers';
+import { CURATED_VOICE_PIPELINE_MODELS, CuratedAvailability } from 'helpers';
 import { buildModel } from 'jest/factories/model';
 import { ModelPipeline } from 'types';
 
@@ -25,25 +22,20 @@ const ttsDownload = {
 };
 
 const mockCurated = {
-  findCuratedToDownload: jest.fn((_curated: unknown) => [] as unknown[]),
-  findModelsToDownload: jest.fn((_curated: unknown) => [] as unknown[]),
-  findPendingDownloads: jest.fn((_curated: unknown) => [] as unknown[]),
-  isCatalogueLoaded: true,
+  availabilityOf: jest.fn((_curated: unknown): CuratedAvailability => ({
+    kind: 'ready',
+  })),
   isDownloading: false,
   progress: 0,
   downloadCurated: jest.fn(),
   cancel: jest.fn(),
 };
-const mockUseCuratedModels = jest.fn(
-  (_catalogue?: unknown, _reservedGB?: unknown) => mockCurated,
-);
 const mockPromptStopDownloads = jest.fn();
 const mockResumeDownloads = jest.fn();
 let mockActiveIds = new Set<number>();
 
 jest.mock('hooks', () => ({
-  useCuratedModels: (catalogue?: unknown, reservedGB?: unknown) =>
-    mockUseCuratedModels(catalogue, reservedGB),
+  useCuratedModels: () => mockCurated,
   useModelDownloader: () => ({
     promptStopDownloads: mockPromptStopDownloads,
     resumeDownloads: mockResumeDownloads,
@@ -53,42 +45,64 @@ jest.mock('hooks', () => ({
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockCurated.findPendingDownloads.mockReturnValue([]);
+  mockCurated.availabilityOf.mockReturnValue({ kind: 'ready' });
   mockCurated.isDownloading = false;
   mockCurated.progress = 0;
   mockActiveIds = new Set();
 });
 
-test('keeps RAM free for the voice models when fetching the catalogue', async () => {
-  await renderHook(() => useVoiceModelDownloads());
+test.each<[CuratedAvailability, string]>([
+  [{ kind: 'loading' }, 'loading'],
+  [{ kind: 'ready' }, 'ready'],
+  [{ kind: 'automatic', models: [tts], sizeGB: 2 }, 'automatic'],
+  [{ kind: 'manual' }, 'manual'],
+])('%p voice models set up as %p', async (availability, state) => {
+  mockCurated.availabilityOf.mockReturnValue(availability);
+  const { result } = await renderHook(() => useVoiceModelDownloads());
 
-  expect(mockUseCuratedModels).toHaveBeenCalledWith(
-    undefined,
-    VOICE_MODELS_RESERVED_GB,
+  expect(mockCurated.availabilityOf).toHaveBeenCalledWith(
+    CURATED_VOICE_PIPELINE_MODELS,
+  );
+  expect(result.current.state).toBe(state);
+});
+
+test('downloads the curated voice models', async () => {
+  mockCurated.availabilityOf.mockReturnValue({
+    kind: 'automatic',
+    models: [tts],
+    sizeGB: 2,
+  });
+  const { result } = await renderHook(() => useVoiceModelDownloads());
+
+  await act(async () => result.current.download());
+
+  expect(mockCurated.downloadCurated).toHaveBeenCalledWith(
+    CURATED_VOICE_PIPELINE_MODELS,
   );
 });
 
 test('offers to resume a voice model download that was interrupted', async () => {
-  mockCurated.findPendingDownloads.mockReturnValue([ttsDownload]);
+  mockCurated.availabilityOf.mockReturnValue({
+    kind: 'inProgress',
+    downloads: [ttsDownload],
+  });
   const { result } = await renderHook(() => useVoiceModelDownloads());
 
-  expect(mockCurated.findPendingDownloads).toHaveBeenCalledWith(
-    CURATED_VOICE_PIPELINE_MODELS,
-  );
-  expect(result.current.isInterrupted).toBe(true);
-  expect(result.current.isDownloading).toBe(false);
+  expect(result.current.state).toBe('interrupted');
 
   await act(async () => result.current.resume());
   expect(mockResumeDownloads).toHaveBeenCalledTimes(1);
 });
 
 test('shows the progress of a voice model download started before a remount', async () => {
-  mockCurated.findPendingDownloads.mockReturnValue([ttsDownload]);
+  mockCurated.availabilityOf.mockReturnValue({
+    kind: 'inProgress',
+    downloads: [ttsDownload],
+  });
   mockActiveIds = new Set([tts.id]);
   const { result } = await renderHook(() => useVoiceModelDownloads());
 
-  expect(result.current.isDownloading).toBe(true);
-  expect(result.current.isInterrupted).toBe(false);
+  expect(result.current.state).toBe('downloading');
   expect(result.current.progress).toBe(0.25);
 
   // No batch of its own to cancel: asks before stopping the download it found.
@@ -100,21 +114,16 @@ test('shows the progress of a voice model download started before a remount', as
 test("follows and cancels the screen's own batch while it runs", async () => {
   mockCurated.isDownloading = true;
   mockCurated.progress = 0.6;
-  mockCurated.findPendingDownloads.mockReturnValue([ttsDownload]);
+  mockCurated.availabilityOf.mockReturnValue({
+    kind: 'inProgress',
+    downloads: [ttsDownload],
+  });
   const { result } = await renderHook(() => useVoiceModelDownloads());
 
-  expect(result.current.isDownloading).toBe(true);
-  expect(result.current.isInterrupted).toBe(false);
+  expect(result.current.state).toBe('downloading');
   expect(result.current.progress).toBe(0.6);
 
   await act(async () => result.current.cancel());
   expect(mockCurated.cancel).toHaveBeenCalledTimes(1);
   expect(mockPromptStopDownloads).not.toHaveBeenCalled();
-});
-
-test('is neither downloading nor interrupted with nothing on its way', async () => {
-  const { result } = await renderHook(() => useVoiceModelDownloads());
-
-  expect(result.current.isDownloading).toBe(false);
-  expect(result.current.isInterrupted).toBe(false);
 });
