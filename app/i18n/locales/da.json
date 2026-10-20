@@ -5,7 +5,8 @@
     "retry": "Prøv igen",
     "loading": "Indlæser…",
     "error": "Fejl",
-    "somethingWentWrong": "Noget gik galt"
+    "somethingWentWrong": "Noget gik galt",
+    "cancelDownload": "Annuller download"
   },
   "navigation": {
     "models": "Modeller",
@@ -180,6 +181,22 @@
   },
   "screens": {
     "onboarding": {
+      "welcome": {
+        "title": "Velkommen til",
+        "assistant": {
+          "title": "AI-assistent",
+          "subtitle": "En klog assistent, der kører helt på din telefon. Ingen konto og intet internet nødvendigt."
+        },
+        "private": {
+          "title": "Privat og sikker",
+          "subtitle": "Dine samtaler forlader aldrig din enhed. Ingen behandling i skyen, ingen sporing."
+        },
+        "fast": {
+          "title": "Hurtig",
+          "subtitle": "Kraftfulde sprog- og billedmodeller, der kører gnidningsfrit på din telefon."
+        },
+        "continue": "Fortsæt"
+      },
       "header": "Kom i gang",
       "voiceHeader": "Lidt ekstra",
       "title": "Vælg din tekstmodel",
@@ -240,7 +257,7 @@
       "setup": {
         "title": "Konfigurer stemmechat",
         "description": "Der skal indlæses fire modeller på én gang.",
-        "downloadInProgress": "Download i gang",
+        "downloadInProgress": "Download i gang. Hold appen åben indtil da.",
         "downloadInterrupted": "Download afbrudt",
         "chat": "Chatmodel",
         "stt": "Tale-til-tekst-model",
@@ -250,8 +267,7 @@
         "resumeDownload": "Genoptag download",
         "browseModels": "Gennemse modeller",
         "loadingModels": "Indlæser modeller…",
-        "downloadProgress": "{{percent}}%",
-        "cancelDownload": "Annuller download"
+        "downloadProgress": "{{percent}}%"
       }
     },
     "settings": {

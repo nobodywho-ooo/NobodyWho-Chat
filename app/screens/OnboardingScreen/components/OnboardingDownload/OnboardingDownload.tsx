@@ -87,8 +87,10 @@ export const OnboardingDownload: React.FC<
     });
   }, [isLoaded, downloadCurated, modelId, setup, onFinish, t]);
 
-  const handleCancel = useCallback(() => {
-    cancel();
+  // Leaves only once the rows are gone: picking again right away must not find
+  // the cancelled downloads still in progress.
+  const handleCancel = useCallback(async () => {
+    await cancel();
     setIsLeaving(true);
   }, [cancel]);
 
@@ -103,28 +105,30 @@ export const OnboardingDownload: React.FC<
           },
         ]}
       >
-        <View style={styles.doneContent}>
-          <PlatformIcon
-            iosIconName="checkmark.circle.fill"
-            androidIconName="check_circle"
-            size={44}
-            color={colors.successSurface}
+        <View style={styles.doneColumn}>
+          <View style={styles.doneContent}>
+            <PlatformIcon
+              iosIconName="checkmark.circle.fill"
+              androidIconName="check_circle"
+              size={44}
+              color={colors.successSurface}
+            />
+            <Text variant="h1" style={styles.doneTitle}>
+              {t('screens.onboarding.doneTitle')}
+            </Text>
+            <Text
+              variant="body1"
+              style={[styles.doneSubtitle, { color: colors.onSurfaceVariant }]}
+            >
+              {t('screens.onboarding.doneSubtitle')}
+            </Text>
+          </View>
+          <Button
+            title={t('screens.onboarding.start')}
+            testID="onboarding-start-button"
+            onPress={onFinish}
           />
-          <Text variant="h1" style={styles.doneTitle}>
-            {t('screens.onboarding.doneTitle')}
-          </Text>
-          <Text
-            variant="body1"
-            style={[styles.doneSubtitle, { color: colors.onSurfaceVariant }]}
-          >
-            {t('screens.onboarding.doneSubtitle')}
-          </Text>
         </View>
-        <Button
-          title={t('screens.onboarding.start')}
-          testID="onboarding-start-button"
-          onPress={onFinish}
-        />
       </View>
     );
   }

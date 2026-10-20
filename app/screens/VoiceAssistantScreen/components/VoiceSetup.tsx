@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, ProgressBar, Text } from 'components';
 import { progressPercent } from 'helpers';
 import { useStyled } from 'hooks';
-import { Spacings } from 'style';
+import { Layout, Spacings } from 'style';
 
 import { useVoiceModelDownloads } from '../hooks';
 import type { VoiceAssistantStatus, VoiceSetupState } from '../hooks';
@@ -127,7 +127,7 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({
           </Text>
           <ProgressBar progress={progress} />
           <Button
-            title={t('screens.voiceAssistant.setup.cancelDownload')}
+            title={t('common.cancelDownload')}
             variant="secondary"
             onPress={cancel}
             style={styles.cancelButton}
@@ -162,6 +162,7 @@ export const VoiceSetup: React.FC<VoiceSetupProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    ...Layout.content,
     alignItems: 'center',
     gap: Spacings.md,
     paddingHorizontal: Spacings.md,

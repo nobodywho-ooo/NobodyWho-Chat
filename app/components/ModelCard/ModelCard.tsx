@@ -16,6 +16,7 @@ import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { ProgressBar } from '../ProgressBar/ProgressBar';
 import { Tag } from '../Tag/Tag';
 
+import { ModelFeatureTags } from './ModelFeatureTags';
 import styles from './ModelCard.styles';
 
 const HEAVY_PROCESSING_SIZE_GB = 2;
@@ -43,16 +44,8 @@ export const ModelCard: React.FC<ModelCardProps> = ({
 }) => {
   const { colors } = useStyled();
   const { t } = useTranslation();
-  const {
-    name,
-    parameterCountBillions,
-    sizeGB,
-    pipeline,
-    tags,
-    family,
-    thinking,
-    languages,
-  } = model;
+  const { name, parameterCountBillions, sizeGB, pipeline, tags, family } =
+    model;
   const isDownloading = downloadProgress !== undefined;
   const FamilyIcon = getFamilyIcon(family);
   const showDownloadIcon = !isDownloaded && !isSelected && !deleteMode;
@@ -178,22 +171,7 @@ export const ModelCard: React.FC<ModelCardProps> = ({
               androidIconName="hard_drive"
               label={modelSizeLabel(sizeGB)}
             />
-            {languages.length > 0 && (
-              <Tag
-                iosIconName="globe"
-                androidIconName="language"
-                label={t('components.modelCard.languageCount', {
-                  count: languages.length,
-                })}
-              />
-            )}
-            {thinking && (
-              <Tag
-                iosIconName="lightbulb"
-                androidIconName="lightbulb"
-                label={t('components.modelCard.thinking')}
-              />
-            )}
+            <ModelFeatureTags model={model} />
             {sizeGB > HEAVY_PROCESSING_SIZE_GB && (
               <Tag
                 iosIconName="cpu"

@@ -5,7 +5,8 @@
     "retry": "Retry",
     "loading": "Loading…",
     "error": "Error",
-    "somethingWentWrong": "Something went wrong"
+    "somethingWentWrong": "Something went wrong",
+    "cancelDownload": "Cancel download"
   },
   "navigation": {
     "models": "Models",
@@ -180,6 +181,22 @@
   },
   "screens": {
     "onboarding": {
+      "welcome": {
+        "title": "Welcome to",
+        "assistant": {
+          "title": "AI Assistant",
+          "subtitle": "A clever assistant that runs entirely on your phone. No account, no internet needed."
+        },
+        "private": {
+          "title": "Private and Secure",
+          "subtitle": "Your conversations never leave your device. No cloud processing, no tracking."
+        },
+        "fast": {
+          "title": "Fast",
+          "subtitle": "Powerful language and vision models running smoothly on your phone."
+        },
+        "continue": "Continue"
+      },
       "header": "Get started",
       "voiceHeader": "A little extra",
       "title": "Choose your text model",
@@ -240,7 +257,7 @@
       "setup": {
         "title": "Set up voice chat",
         "description": "You need four models loaded at once.",
-        "downloadInProgress": "Download in progress",
+        "downloadInProgress": "Download in progress. Keep the app open until then.",
         "downloadInterrupted": "Download interrupted",
         "chat": "Chat model",
         "stt": "Speech-to-text model",
@@ -250,8 +267,7 @@
         "resumeDownload": "Resume download",
         "browseModels": "Browse models",
         "loadingModels": "Loading models…",
-        "downloadProgress": "{{percent}}%",
-        "cancelDownload": "Cancel Download"
+        "downloadProgress": "{{percent}}%"
       }
     },
     "settings": {

@@ -3,12 +3,17 @@ import { Button } from './Button/Button';
 import { Chevron } from './Chevron/Chevron';
 import { ProgressBar } from './ProgressBar/ProgressBar';
 import { ErrorView } from './ErrorView/ErrorView';
+import { GradientText } from './GradientText/GradientText';
 import { IconButton, IconButtonIconProps } from './IconButton/IconButton';
 import { iconButtonSize } from './IconButton/IconButton.styles';
 import { ListItem } from './ListItem/ListItem';
 import { MarkdownDocument } from './MarkdownDocument/MarkdownDocument';
 import { MessageListItem } from './MessageListItem/MessageListItem';
 import { ModelCard } from './ModelCard/ModelCard';
+import {
+  ModelFeatureTags,
+  hasModelFeatureTags,
+} from './ModelCard/ModelFeatureTags';
 import { PlatformIcon } from './PlatformIcon/PlatformIcon';
 import { ScrollToBottomButton } from './ScrollToBottomButton/ScrollToBottomButton';
 import { SelectablePill } from './SelectablePill/SelectablePill';
@@ -27,12 +32,15 @@ export {
   ProgressBar,
   ErrorView,
   fontSizes,
+  GradientText,
   IconButton,
   iconButtonSize,
   ListItem,
   MarkdownDocument,
   MessageListItem,
   ModelCard,
+  ModelFeatureTags,
+  hasModelFeatureTags,
   PlatformIcon,
   ScrollToBottomButton,
   SelectablePill,

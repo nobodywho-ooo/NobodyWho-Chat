@@ -37,60 +37,60 @@ export const DownloadingChatModels: React.FC<DownloadingChatModelsProps> = ({
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <PlatformIcon
-        iosIconName={isAnyActive ? 'arrow.down.circle' : 'pause.circle'}
-        androidIconName={isAnyActive ? 'downloading' : 'pause_circle'}
-        size={50}
-        color={colors.primary}
-      />
-      <Text variant="h3" style={styles.title}>
-        {t(
-          isAnyActive
-            ? 'screens.noModelDownloaded.downloadingTitle'
-            : 'screens.noModelDownloaded.interruptedTitle',
-          { count },
-        )}
-      </Text>
-      <Text
-        variant="body1"
-        style={[styles.hint, { color: colors.onSurfaceVariant }]}
-      >
-        {t(
-          isAnyActive
-            ? 'screens.noModelDownloaded.downloadingHint'
-            : 'screens.noModelDownloaded.interruptedHint',
-          { count },
-        )}
-      </Text>
-      <View style={styles.progressContainer}>
-        <Text variant="body2" bold style={styles.progressLabel}>
-          {t('screens.noModelDownloaded.downloadProgress', {
-            percent: progressPercent(progress),
-          })}
+      <View style={styles.content}>
+        <PlatformIcon
+          iosIconName={isAnyActive ? 'arrow.down.circle' : 'pause.circle'}
+          androidIconName={isAnyActive ? 'downloading' : 'pause_circle'}
+          size={50}
+          color={colors.primary}
+        />
+        <Text variant="h3" style={styles.title}>
+          {t(
+            isAnyActive
+              ? 'screens.noModelDownloaded.downloadingTitle'
+              : 'screens.noModelDownloaded.interruptedTitle',
+            { count },
+          )}
         </Text>
-        <ProgressBar progress={progress} />
-      </View>
-      <View style={styles.buttonsContainer}>
-        {isAnyActive ? (
-          <Button
-            title={t('screens.models.stopDownload', { count })}
-            testID="stop-download-button"
-            variant="secondary"
-            small
-            disabled={!hasResumedAtLaunch}
-            onPress={() =>
-              promptStopDownloads(downloads.map(({ model }) => model))
-            }
-          />
-        ) : (
-          <Button
-            title={t('screens.noModelDownloaded.resume')}
-            testID="resume-download-button"
-            icon={{ iosIconName: 'play.fill', androidIconName: 'play_arrow' }}
-            onPress={resumeDownloads}
-            small
-          />
-        )}
+        <Text
+          variant="body1"
+          style={[styles.hint, { color: colors.onSurfaceVariant }]}
+        >
+          {t(
+            isAnyActive
+              ? 'screens.noModelDownloaded.downloadingHint'
+              : 'screens.noModelDownloaded.interruptedHint',
+            { count },
+          )}
+        </Text>
+        <View style={styles.progressContainer}>
+          <Text variant="body2" bold style={styles.progressLabel}>
+            {t('screens.noModelDownloaded.downloadProgress', {
+              percent: progressPercent(progress),
+            })}
+          </Text>
+          <ProgressBar progress={progress} />
+        </View>
+        <View style={styles.buttonsContainer}>
+          {isAnyActive ? (
+            <Button
+              title={t('common.cancelDownload')}
+              testID="stop-download-button"
+              variant="secondary"
+              disabled={!hasResumedAtLaunch}
+              onPress={() =>
+                promptStopDownloads(downloads.map(({ model }) => model))
+              }
+            />
+          ) : (
+            <Button
+              title={t('screens.noModelDownloaded.resume')}
+              testID="resume-download-button"
+              icon={{ iosIconName: 'play.fill', androidIconName: 'play_arrow' }}
+              onPress={resumeDownloads}
+            />
+          )}
+        </View>
       </View>
     </View>
   );

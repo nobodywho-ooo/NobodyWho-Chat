@@ -165,6 +165,11 @@ const useRunDownload = () => {
             controller.signal,
             (downloaded, total) => {
               const progress = total > 0 ? downloaded / total : 0;
+
+              if (controller.signal.aborted) {
+                return;
+              }
+
               if (
                 progress - partsProgress[i].progress >= DOWNLOAD_THROTTLE ||
                 progress >= 1
@@ -374,6 +379,10 @@ export const useModelDownloader = () => {
         return;
       }
 
+      if (activeDownloads.get(model.id)?.signal.aborted) {
+        await stoppedDownloadSettled(model.id);
+      }
+
       const created = await createModelDownload(model);
       if (!created) {
         return;
@@ -397,10 +406,10 @@ export const useModelDownloader = () => {
     [runDownload, warnNotEnoughSpace],
   );
 
-  const stopDownload = useCallback((model: Model) => {
+  const stopDownload = useCallback((model: Model): Promise<void> => {
     reportedFailures.delete(model.id);
 
-    deleteModelDownload(model.id).catch(error =>
+    const rowDeleted = deleteModelDownload(model.id).catch(error =>
       log('ModelsScreen stopDownload', error),
     );
 
@@ -411,6 +420,8 @@ export const useModelDownloader = () => {
     } else {
       deleteModelDirectory(model.id);
     }
+
+    return rowDeleted;
   }, []);
 
   // One confirmation for every download in `models`.
@@ -446,5 +457,6 @@ export const useModelDownloader = () => {
     promptStopDownloads,
     warnNotEnoughSpace,
     resumeDownloads,
+    resumeDownload: runDownload,
   };
 };

@@ -7,6 +7,9 @@ export default StyleSheet.create({
     ...Layout.container,
     paddingTop: Spacings.lg,
     justifyContent: 'center',
+  },
+  content: {
+    ...Layout.content,
     alignItems: 'center',
   },
   title: {

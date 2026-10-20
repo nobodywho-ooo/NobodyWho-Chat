@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from 'components';
 import { useStyled } from 'hooks';
@@ -31,30 +31,28 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
         styles.container,
         {
           backgroundColor: colors.surface,
-          paddingBottom: insets.bottom + Spacings.lg,
+          paddingBottom: insets.bottom + Spacings.xxxl,
         },
       ]}
     >
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.content}>
         <View style={styles.headerContainer}>
           <Text variant="h1" style={styles.header}>
             {header}
           </Text>
         </View>
-        <Text variant="h2">{title}</Text>
-        <Text
-          variant="body1"
-          style={[styles.subtitle, { color: colors.onSurfaceVariant }]}
-        >
-          {subtitle}
-        </Text>
+        <View>
+          <Text variant="h2">{title}</Text>
+          <Text
+            variant="body1"
+            style={[styles.subtitle, { color: colors.onSurfaceVariant }]}
+          >
+            {subtitle}
+          </Text>
+        </View>
         {children}
-      </ScrollView>
-      {footer}
+        {footer}
+      </View>
     </View>
   );
 };

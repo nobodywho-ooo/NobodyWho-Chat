@@ -2,18 +2,18 @@ import { StyleSheet } from 'react-native';
 
 import { Layout, Spacings } from 'style';
 
+import { ONBOARDING_PADDING_HORIZONTAL } from '../../Onboarding.styles';
+
 export default StyleSheet.create({
   container: {
     ...Layout.container,
+    paddingHorizontal: ONBOARDING_PADDING_HORIZONTAL,
   },
-  scroll: {
+  content: {
+    ...Layout.content,
     flex: 1,
   },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  // Takes the free space above the step, pushing it to the bottom edge; once
-  // the step overflows, it shrinks to the header's own padded height.
+  // Takes the free space above the step, pushing it to the bottom edge.
   headerContainer: {
     flex: 1,
     justifyContent: 'center',

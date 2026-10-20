@@ -30,7 +30,7 @@ export const useVoiceModelDownloads = (): VoiceModelDownloads => {
     progress: batchProgress,
     downloadCurated,
     cancel: cancelBatch,
-  } = useCuratedModels();
+  } = useCuratedModels(undefined, CURATED_VOICE_PIPELINE_MODELS);
   const { promptStopDownloads, resumeDownloads } = useModelDownloader();
   const activeIds = useActiveDownloadIds();
 

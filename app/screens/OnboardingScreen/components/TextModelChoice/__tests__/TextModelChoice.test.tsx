@@ -28,6 +28,7 @@ const mockAvailabilityOf = jest.fn(
     kind: 'automatic',
     models: [recommended, stt],
     sizeGB: 2,
+    pending: [],
   }),
 );
 
@@ -85,7 +86,7 @@ test('pressing a model opens the voice choice for it', async () => {
 test.each<[string, CuratedAvailability]>([
   [
     'the voice models are already there',
-    { kind: 'automatic', models: [recommended], sizeGB: 1 },
+    { kind: 'automatic', models: [recommended], sizeGB: 1, pending: [] },
   ],
   ['the voice models do not fit next to it', { kind: 'manual' }],
 ])(

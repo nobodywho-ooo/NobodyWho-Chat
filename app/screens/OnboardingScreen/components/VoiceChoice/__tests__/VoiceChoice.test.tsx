@@ -75,7 +75,7 @@ test('offers the two choices without the picked model, Skip in the header', asyn
 test('shows the size each choice would download', async () => {
   mockDownloads.availabilityOf.mockImplementation(curated =>
     (curated as unknown[]).length === 1
-      ? { kind: 'automatic', models: [recommended], sizeGB: 1 }
+      ? { kind: 'automatic', models: [recommended], sizeGB: 1, pending: [] }
       : { kind: 'manual' },
   );
   await renderChoice();

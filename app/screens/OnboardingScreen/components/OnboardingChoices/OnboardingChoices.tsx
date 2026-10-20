@@ -8,6 +8,7 @@ import { OnboardingContext } from '../../hooks/useOnboarding';
 import { OnboardingDownload } from '../OnboardingDownload/OnboardingDownload';
 import { TextModelChoice } from '../TextModelChoice/TextModelChoice';
 import { VoiceChoice } from '../VoiceChoice/VoiceChoice';
+import { Welcome } from '../Welcome/Welcome';
 
 const Stack = createNativeStackNavigator<OnboardingParamList>();
 
@@ -42,6 +43,11 @@ export const OnboardingChoices: React.FC<OnboardingChoicesProps> = ({
           headerBackButtonDisplayMode: 'minimal',
         }}
       >
+        <Stack.Screen
+          name="Welcome"
+          component={Welcome}
+          options={{ headerShown: false }}
+        />
         <Stack.Screen name="TextModelChoice" component={TextModelChoice} />
         <Stack.Screen name="VoiceChoice" component={VoiceChoice} />
         <Stack.Screen

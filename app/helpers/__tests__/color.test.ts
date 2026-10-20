@@ -1,4 +1,4 @@
-import { parseColor, withAlpha } from '../color';
+import { colorBetween, parseColor, withAlpha } from '../color';
 
 test('parses the hex forms the palette uses', () => {
   expect(parseColor('#628395')).toEqual({ r: 98, g: 131, b: 149, a: 1 });
@@ -29,4 +29,19 @@ test('applies an alpha on top of the colour’s own', () => {
 
 test('passes a colour it cannot read through untouched', () => {
   expect(withAlpha('transparent', 0.5)).toBe('transparent');
+});
+
+test('gives the colour at the given position between two colours', () => {
+  expect(colorBetween('#000000', '#ffffff', 0)).toBe('rgba(0, 0, 0, 1)');
+  expect(colorBetween('#000000', '#ffffff', 1)).toBe('rgba(255, 255, 255, 1)');
+  expect(colorBetween('#b44618', '#3D0F11', 0.5)).toBe('rgba(121, 43, 21, 1)');
+});
+
+test('keeps the mix between the two colours', () => {
+  expect(colorBetween('#000000', '#ffffff', -1)).toBe('rgba(0, 0, 0, 1)');
+  expect(colorBetween('#000000', '#ffffff', 2)).toBe('rgba(255, 255, 255, 1)');
+});
+
+test('falls back to the first colour when one cannot be read', () => {
+  expect(colorBetween('#b44618', 'transparent', 0.5)).toBe('#b44618');
 });

@@ -82,7 +82,12 @@ export type CuratedAvailability =
   | { kind: 'loading' }
   | { kind: 'ready' }
   | { kind: 'inProgress'; downloads: readonly ModelDownload[] }
-  | { kind: 'automatic'; models: readonly Model[]; sizeGB: number }
+  | {
+      kind: 'automatic';
+      models: readonly Model[];
+      sizeGB: number;
+      pending: readonly ModelDownload[];
+    }
   | { kind: 'manual' };
 
 // What the device has, and what the catalogue offers it.
@@ -149,6 +154,7 @@ export const curatedAvailability = (
     kind: 'automatic',
     models,
     sizeGB: models.reduce((sum, model) => sum + modelDownloadSizeGB(model), 0),
+    pending,
   };
 };
 

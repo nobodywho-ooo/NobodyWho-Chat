@@ -51,3 +51,22 @@ export const withAlpha = (color: string, alpha: number): string => {
     rgba.b,
   )}, ${Number(a.toFixed(4))})`;
 };
+
+export const colorBetween = (
+  from: string,
+  to: string,
+  position: number,
+): string => {
+  const start = parseColor(from);
+  const end = parseColor(to);
+  if (!start || !end) {
+    return from;
+  }
+  const t = Math.min(1, Math.max(0, position));
+  const mix = (a: number, b: number) => a + (b - a) * t;
+  return `rgba(${Math.round(mix(start.r, end.r))}, ${Math.round(
+    mix(start.g, end.g),
+  )}, ${Math.round(mix(start.b, end.b))}, ${Number(
+    mix(start.a, end.a).toFixed(4),
+  )})`;
+};

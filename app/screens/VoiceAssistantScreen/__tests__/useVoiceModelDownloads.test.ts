@@ -54,7 +54,7 @@ beforeEach(() => {
 test.each<[CuratedAvailability, string]>([
   [{ kind: 'loading' }, 'loading'],
   [{ kind: 'ready' }, 'ready'],
-  [{ kind: 'automatic', models: [tts], sizeGB: 2 }, 'automatic'],
+  [{ kind: 'automatic', models: [tts], sizeGB: 2, pending: [] }, 'automatic'],
   [{ kind: 'manual' }, 'manual'],
 ])('%p voice models set up as %p', async (availability, state) => {
   mockCurated.availabilityOf.mockReturnValue(availability);
@@ -71,6 +71,7 @@ test('downloads the curated voice models', async () => {
     kind: 'automatic',
     models: [tts],
     sizeGB: 2,
+    pending: [],
   });
   const { result } = await renderHook(() => useVoiceModelDownloads());
 

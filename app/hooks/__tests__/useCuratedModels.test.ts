@@ -18,6 +18,9 @@ const mockStartDownload = jest.fn(
   async (_model: unknown, _options?: unknown) => {},
 );
 const mockStopDownload = jest.fn();
+const mockResumeDownload = jest.fn(
+  async (_download: unknown, _options?: unknown) => {},
+);
 const mockWarnNotEnoughSpace = jest.fn();
 const mockIsDownloadActive = jest.fn((_modelId: number) => false);
 let mockStoredModels: unknown[] = [];
@@ -30,6 +33,7 @@ jest.mock('../useModelDownloader', () => ({
     startDownload: mockStartDownload,
     stopDownload: mockStopDownload,
     warnNotEnoughSpace: mockWarnNotEnoughSpace,
+    resumeDownload: mockResumeDownload,
   }),
 }));
 
@@ -137,6 +141,31 @@ test('downloads the curated models and reports done', async () => {
   ]);
   expect(alertSpy).not.toHaveBeenCalled();
   expect(result.current.isDownloading).toBe(false);
+});
+
+test('resumes an interrupted curated download along with the missing ones', async () => {
+  const sttDownload = { model: stt, partsProgress: [] };
+  mockPendingDownloads = [sttDownload];
+  const { result } = await renderLoaded();
+
+  let outcome;
+  await act(async () => {
+    outcome = await result.current.downloadCurated(CURATED_VOICE_ONLY_MODELS);
+  });
+
+  expect(outcome).toBe('done');
+  expect(mockStartDownload.mock.calls.map(([model]) => model)).toEqual([
+    tts,
+    vad,
+  ]);
+  expect(mockResumeDownload).toHaveBeenCalledWith(sttDownload, {
+    alertOnFailure: false,
+  });
+  expect(mockGetModelById.mock.calls.map(([id]) => id)).toEqual([
+    tts.id,
+    vad.id,
+    stt.id,
+  ]);
 });
 
 test('refuses the whole batch with one alert when it does not fit', async () => {

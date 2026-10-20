@@ -102,7 +102,7 @@ import {
 import { computeGenerationMetrics } from './generationMetrics';
 import { parameterCountLabel } from './parameterCount';
 import { modelSizeLabel } from './modelSize';
-import { parseColor, withAlpha } from './color';
+import { colorBetween, parseColor, withAlpha } from './color';
 
 export type { AudioBands, AudioEnvelope } from './audioLevels';
 export type { Rgba } from './color';
@@ -213,6 +213,7 @@ export {
   CURATED_TEXT_MODELS,
   CURATED_VOICE_ONLY_MODELS,
   CURATED_VOICE_PIPELINE_MODELS,
+  colorBetween,
   parseColor,
   withAlpha,
 };

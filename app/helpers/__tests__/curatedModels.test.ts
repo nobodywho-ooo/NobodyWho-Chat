@@ -56,6 +56,7 @@ describe('curatedAvailability', () => {
       kind: 'automatic',
       models: [chat, stt, tts, vad],
       sizeGB: 2.5,
+      pending: [],
     });
   });
 
