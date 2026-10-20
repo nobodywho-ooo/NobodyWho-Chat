@@ -16,7 +16,7 @@ const FEATURES = [
   {
     key: 'assistant',
     iosIconName: 'sparkles',
-    androidIconName: 'auto_awesome',
+    androidIconName: 'star_shine',
   },
   {
     key: 'private',

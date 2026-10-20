@@ -190,7 +190,8 @@ const deleteIfExists = (file: File): void => {
 // APPEND_SLICE_BYTES at a time so we never buffer the whole (up to CHUNK_BYTES)
 // window in JS memory or block the JS thread on one giant read/write. `length`
 // is the caller's already-validated chunk size, so the loop is bounded — no
-// read-until-EOF. Yields between slices to keep the UI responsive.
+// read-until-EOF. The handle's async reads/writes run off the JS thread, so the
+// UI stays responsive between slices.
 const appendFile = async (
   src: File,
   dest: File,
@@ -200,9 +201,8 @@ const appendFile = async (
   const writer = dest.open(FileMode.Append);
   try {
     for (let copied = 0; copied < length; copied += APPEND_SLICE_BYTES) {
-      // readBytes returns the remainder when fewer than a full slice are left.
-      writer.writeBytes(reader.readBytes(APPEND_SLICE_BYTES));
-      await Promise.resolve();
+      // readBytes resolves to the remainder when fewer than a full slice are left.
+      await writer.writeBytes(await reader.readBytes(APPEND_SLICE_BYTES));
     }
   } finally {
     reader.close();

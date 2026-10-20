@@ -2,7 +2,6 @@
   "extends": "@react-native/typescript-config",
   "compilerOptions": {
     "skipLibCheck": true,
-    "types": ["jest"],
     "customConditions": ["react-native", "react-native-strict-api"],
     "paths": {
       "jest/*": ["./jest/*"],
