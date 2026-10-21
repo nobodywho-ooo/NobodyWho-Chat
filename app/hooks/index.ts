@@ -2,6 +2,7 @@ export * from './useAppState';
 export * from './useConversations';
 export * from './useMessages';
 export * from './useCuratedModels';
+export * from './useDrawerFrame';
 export * from './useModelDownloader';
 export * from './useModelDownloads';
 export * from './useModels';

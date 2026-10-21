@@ -4,6 +4,9 @@ import { Spacings } from './Spacings';
 
 export const CONTAINER_PADDING_HORIZONTAL = Spacings.lg;
 export const CONTENT_MAX_WIDTH = 560;
+// Wider than any phone (440 pt) and a foldable's cover display (466 pt), where
+// drawers stay full width; caps them on wide windows like the unfolded display.
+export const DRAWER_MAX_WIDTH = 480;
 
 export default StyleSheet.create({
   container: {

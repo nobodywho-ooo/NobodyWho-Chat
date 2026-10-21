@@ -206,6 +206,7 @@
       "textOnly": "Text model only",
       "textAndVoice": "Text & Voice models",
       "skip": "Skip",
+      "back": "Back",
       "downloadingHeader": "Please wait",
       "downloadingTitle": "Downloading your models",
       "downloadingSubtitle": "This can take a few minutes. Keep the app open until it finishes.",

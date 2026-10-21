@@ -31,7 +31,7 @@ exports[`matches the snapshot when open 1`] = `
         },
         {
           "backgroundColor": "#FFFFFF",
-          "paddingTop": undefined,
+          "paddingTop": 0,
         },
         {},
       ]
@@ -132,7 +132,7 @@ exports[`matches the snapshot when open 1`] = `
             "paddingTop": 8,
           },
           {
-            "paddingBottom": NaN,
+            "paddingBottom": 20,
           },
         ]
       }

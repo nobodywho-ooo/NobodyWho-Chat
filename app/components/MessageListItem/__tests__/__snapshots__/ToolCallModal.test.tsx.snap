@@ -31,7 +31,7 @@ exports[`matches the snapshot when visible 1`] = `
         },
         {
           "backgroundColor": "#FFFFFF",
-          "paddingTop": undefined,
+          "paddingTop": 0,
         },
         {},
       ]
@@ -151,7 +151,7 @@ exports[`matches the snapshot when visible 1`] = `
             "rowGap": 4,
           },
           {
-            "paddingBottom": NaN,
+            "paddingBottom": 20,
           },
         ]
       }

@@ -31,6 +31,25 @@ class AppDelegate: ExpoAppDelegate, ExpoReactNativeFactoryProvider {
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
+
+  /// Info.plist lists landscape so foldables (iPhone Duo's inner display is landscape-native,
+  /// 951x669 pt) run full screen instead of a shrunk, pillarboxed portrait box. Every other
+  /// iPhone screen — including the Duo's cover display — stays portrait-only, as before.
+  override func application(
+    _ application: UIApplication,
+    supportedInterfaceOrientationsFor window: UIWindow?
+  ) -> UIInterfaceOrientationMask {
+    let mask = super.application(application, supportedInterfaceOrientationsFor: window)
+    guard UIDevice.current.userInterfaceIdiom == .phone,
+          let screen = window?.windowScene?.screen else {
+      return mask
+    }
+    let shortSide = min(screen.bounds.width, screen.bounds.height)
+    return shortSide >= Self.landscapeMinShortSide ? mask : mask.intersection(.portrait)
+  }
+
+  /// Same breakpoint as Android's sw600dp: no regular iPhone reaches it (the largest is 440 pt).
+  private static let landscapeMinShortSide: CGFloat = 600
 }
 
 class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {

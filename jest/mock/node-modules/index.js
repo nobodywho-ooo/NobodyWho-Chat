@@ -589,7 +589,7 @@ jest.mock('react-native-nobodywho', () => {
 
 jest.mock('react-native-safe-area-context', () => {
   return {
-    useSafeAreaInsets: () => jest.fn,
+    useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
   };
 });
 

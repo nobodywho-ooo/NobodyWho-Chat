@@ -33,7 +33,11 @@ const recommended = buildModel(1, { tags: ['Recommended'] });
 const firstPick = buildModel(2, { tags: ['Great First Pick'] });
 const chatModels = [recommended, firstPick];
 
-const navigation = { goBack: jest.fn(), setOptions: jest.fn() };
+const navigation = {
+  goBack: jest.fn(),
+  canGoBack: () => true,
+  setOptions: jest.fn(),
+};
 
 const renderDownload = ({
   modelId = recommended.id,
@@ -141,6 +145,7 @@ test('shows progress and Cancel at the bottom, locked in place', async () => {
 
   expect(headerOptions().headerBackVisible).toBe(false);
   expect(headerOptions().gestureEnabled).toBe(false);
+  expect(headerOptions().headerLeft).toBeUndefined();
   expect(headerOptions().headerRight).toBeUndefined();
   expect(headerOptions().unstable_headerRightItems).toBeUndefined();
   expect(isRemovePrevented()).toBe(true);

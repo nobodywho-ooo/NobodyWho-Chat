@@ -25,7 +25,12 @@ const curatedModels = mockDownloads as unknown as CuratedModels;
 const recommended = buildModel(1, { tags: ['Recommended'] });
 const chatModels = [recommended];
 
-const navigation = { navigate: jest.fn(), setOptions: jest.fn() };
+const navigation = {
+  navigate: jest.fn(),
+  goBack: jest.fn(),
+  canGoBack: () => true,
+  setOptions: jest.fn(),
+};
 
 const renderChoice = (modelId = recommended.id, onFinish = jest.fn()) =>
   render(
@@ -67,7 +72,10 @@ test('offers the two choices without the picked model, Skip in the header', asyn
     'screens.onboarding.textAndVoice',
   );
 
-  expect(headerOptions().headerBackVisible).toBe(true);
+  // iOS draws its own back button: the system one lands under the status
+  // bar in landscape.
+  expect(headerOptions().headerBackVisible).toBe(false);
+  expect(headerOptions().headerLeft().props.onPress).toBe(navigation.goBack);
   expect(headerOptions().headerRight().props.onPress).toBe(onFinish);
   expect(isRemovePrevented()).toBe(false);
 });

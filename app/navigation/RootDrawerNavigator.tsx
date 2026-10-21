@@ -1,13 +1,11 @@
 import * as React from 'react';
-import { Dimensions } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   createDrawerNavigator,
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import { VoiceAssistantScreen } from 'screens';
 import { isIOS } from 'helpers';
-import { useSlotModel, useStyled } from 'hooks';
+import { useDrawerFrame, useSlotModel, useStyled } from 'hooks';
 import { Spacings } from 'style';
 import { ModelSlot } from 'types';
 
@@ -74,7 +72,9 @@ const renderVoiceAssistant = ({ navigation }: DrawerContentComponentProps) => (
 
 const RootDrawer = () => {
   const { colors } = useStyled();
-  const insets = useSafeAreaInsets();
+  // The side insets are applied by VoiceAssistantScreen, so its glow still
+  // bleeds to the screen edge.
+  const { width, paddingTop, swipeEdgeWidth } = useDrawerFrame('right');
   const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
   const chatModel = useSlotModel(ModelSlot.chat);
 
@@ -86,15 +86,15 @@ const RootDrawer = () => {
         drawerPosition: 'right',
         drawerStyle: {
           backgroundColor: colors.surfaceSecondary,
-          paddingTop: insets.top,
-          width: '100%',
+          width,
+          paddingTop,
           borderTopLeftRadius: Spacings.xxxl,
           borderBottomLeftRadius: Spacings.xxxl,
         },
         drawerType: 'front',
         overlayStyle: { backgroundColor: colors.shadow },
         swipeEnabled: true,
-        swipeEdgeWidth: Dimensions.get('window').width,
+        swipeEdgeWidth,
         // Left-ward drag opens; while open, a right-ward drag closes it. The
         // left drawer owns right-ward drags, so the two never fight.
         configureGestureHandler: buildRightDrawerGesture(

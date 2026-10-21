@@ -25,7 +25,12 @@ import { AiModelState, useAiService } from 'services';
 import { isAndroid } from 'helpers';
 import { Theme } from 'types';
 
-import { CameraCaptureModal, InputBar, MessageStarters } from './components';
+import {
+  CameraCaptureModal,
+  ContentColumn,
+  InputBar,
+  MessageStarters,
+} from './components';
 import {
   useAttachments,
   useChatGeneration,
@@ -66,6 +71,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const { colors } = useStyled();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const sideInset = Math.max(insets.left, insets.right);
   const { slots, chatPipeline, chatThinkOpen, ttsState, sttState } =
     useAiService();
   const { ttsModelIdInUse, sttModelIdInUse } = useAppState();
@@ -175,19 +181,22 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       const messageId = messageKey(item, index);
 
       return (
-        <MessageListItem
-          message={item}
-          isStreaming={isStreaming && index === messages.length - 1}
-          messageId={messageId}
-          canPlayAudio={canPlayAudio}
-          isAudioLoading={audioLoadingId === messageId}
-          isAudioPlaying={audioPlayingId === messageId}
-          onPlayAudio={playAudio}
-          onStopAudio={stopAudio}
-        />
+        <ContentColumn sideInset={sideInset}>
+          <MessageListItem
+            message={item}
+            isStreaming={isStreaming && index === messages.length - 1}
+            messageId={messageId}
+            canPlayAudio={canPlayAudio}
+            isAudioLoading={audioLoadingId === messageId}
+            isAudioPlaying={audioPlayingId === messageId}
+            onPlayAudio={playAudio}
+            onStopAudio={stopAudio}
+          />
+        </ContentColumn>
       );
     },
     [
+      sideInset,
       isStreaming,
       messages.length,
       canPlayAudio,
@@ -201,6 +210,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const listExtraData = useMemo(
     () => ({
+      sideInset,
       isStreaming,
       lastIndex: messages.length - 1,
       canPlayAudio,
@@ -208,6 +218,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       audioPlayingId,
     }),
     [
+      sideInset,
       isStreaming,
       messages.length,
       canPlayAudio,
@@ -292,38 +303,40 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         style={styles.inputBarContainer}
         pointerEvents="box-none"
       >
-        <ScrollToBottomButton
-          visible={hasMessages && list.canScrollToBottom}
-          onPress={list.scrollToBottom}
-          blurTarget={blurTargetRef}
-          style={styles.scrollToBottomContainer}
-        />
-        <InputBar
-          composerRef={list.composerRef}
-          onComposerLayout={list.onComposerLayout}
-          value={inputText}
-          isStreaming={isStreaming}
-          disabled={disabled}
-          attachExpanded={attachExpanded}
-          onAttachExpandedChange={setAttachExpanded}
-          showImageAttach={ingestsImage}
-          showAudioAttach={ingestsAudio}
-          imageSource={attachments.attachedDocuments?.imageSource}
-          hasAudio={!!attachments.attachedDocuments?.audioPath}
-          onAttachImage={attachments.handleAttachImage}
-          onAttachCamera={attachments.handleAttachCamera}
-          onAttachAudio={attachments.handleAttachAudio}
-          showDictation={canDictate}
-          isRecording={isRecording}
-          isTranscribing={isTranscribing}
-          onStartDictation={startRecording}
-          onStopDictation={stopRecording}
-          onChangeText={setInputText}
-          onSend={handleSend}
-          onStop={stopStreaming}
-          style={{ paddingBottom: insets.bottom + INPUT_BAR_PADDING }}
-          messageStarters={messageStarters}
-        />
+        <ContentColumn sideInset={sideInset}>
+          <ScrollToBottomButton
+            visible={hasMessages && list.canScrollToBottom}
+            onPress={list.scrollToBottom}
+            blurTarget={blurTargetRef}
+            style={styles.scrollToBottomContainer}
+          />
+          <InputBar
+            composerRef={list.composerRef}
+            onComposerLayout={list.onComposerLayout}
+            value={inputText}
+            isStreaming={isStreaming}
+            disabled={disabled}
+            attachExpanded={attachExpanded}
+            onAttachExpandedChange={setAttachExpanded}
+            showImageAttach={ingestsImage}
+            showAudioAttach={ingestsAudio}
+            imageSource={attachments.attachedDocuments?.imageSource}
+            hasAudio={!!attachments.attachedDocuments?.audioPath}
+            onAttachImage={attachments.handleAttachImage}
+            onAttachCamera={attachments.handleAttachCamera}
+            onAttachAudio={attachments.handleAttachAudio}
+            showDictation={canDictate}
+            isRecording={isRecording}
+            isTranscribing={isTranscribing}
+            onStartDictation={startRecording}
+            onStopDictation={stopRecording}
+            onChangeText={setInputText}
+            onSend={handleSend}
+            onStop={stopStreaming}
+            style={{ paddingBottom: insets.bottom + INPUT_BAR_PADDING }}
+            messageStarters={messageStarters}
+          />
+        </ContentColumn>
       </KeyboardStickyView>
       {ingestsImage && (
         <CameraCaptureModal

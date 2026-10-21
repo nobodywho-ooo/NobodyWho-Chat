@@ -36,7 +36,11 @@ const curatedModels = {
   availabilityOf: (curated: unknown) => mockAvailabilityOf(curated),
 } as unknown as CuratedModels;
 
-const navigation = { navigate: jest.fn(), setOptions: jest.fn() };
+const navigation = {
+  navigate: jest.fn(),
+  canGoBack: () => false,
+  setOptions: jest.fn(),
+};
 
 const renderChoice = (chatModels: Model[], onFinish = jest.fn()) =>
   render(
@@ -109,7 +113,8 @@ test('puts Skip in the header and leaves going back alone', async () => {
   await renderChoice([firstPick], onFinish);
 
   const options = navigation.setOptions.mock.lastCall[0];
-  expect(options.headerBackVisible).toBe(true);
+  expect(options.headerBackVisible).toBe(false);
+  expect(options.headerLeft).toBeUndefined();
   expect(options.gestureEnabled).toBe(true);
   expect(options.headerRight().props.onPress).toBe(onFinish);
   expect(options.unstable_headerRightItems()).toEqual([

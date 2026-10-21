@@ -206,6 +206,7 @@
       "textOnly": "Kun tekstmodel",
       "textAndVoice": "Tekst- og stemmemodeller",
       "skip": "Spring over",
+      "back": "Tilbage",
       "downloadingHeader": "Vent venligst",
       "downloadingTitle": "Downloader dine modeller",
       "downloadingSubtitle": "Det kan tage et par minutter. Hold appen åben, indtil downloadet er færdigt.",

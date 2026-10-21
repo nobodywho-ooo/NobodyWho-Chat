@@ -1,12 +1,5 @@
 import * as React from 'react';
-import {
-  Dimensions,
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import {
   createDrawerNavigator,
   type DrawerContentComponentProps,
@@ -35,7 +28,7 @@ import {
   getFamilyIcon,
   parameterCountLabel,
 } from 'helpers';
-import { useAppState, useModels, useStyled } from 'hooks';
+import { useAppState, useDrawerFrame, useModels, useStyled } from 'hooks';
 import { useAiService } from 'services';
 import { Spacings } from 'style';
 import { isChatPipeline } from 'types';
@@ -236,8 +229,7 @@ export const DrawerNavigator = () => {
   const { colors } = useStyled();
   const { conversationIdInUse } = useAppState();
   const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
-
-  const insets = useSafeAreaInsets();
+  const { swipeEdgeWidth, ...drawerFrame } = useDrawerFrame('left');
 
   return (
     <Drawer.Navigator
@@ -248,15 +240,14 @@ export const DrawerNavigator = () => {
         headerTitleStyle: { color: colors.onSurface },
         drawerStyle: {
           backgroundColor: colors.surfaceSecondary,
-          paddingTop: insets.top,
-          width: '100%',
+          ...drawerFrame,
           borderTopRightRadius: Spacings.xxxl,
           borderBottomRightRadius: Spacings.xxxl,
         },
         drawerType: 'front',
         overlayStyle: { backgroundColor: colors.shadow },
         swipeEnabled: true,
-        swipeEdgeWidth: Dimensions.get('window').width,
+        swipeEdgeWidth,
         configureGestureHandler: buildLeftDrawerGesture(
           openSide === 'left',
           scrollGesture,

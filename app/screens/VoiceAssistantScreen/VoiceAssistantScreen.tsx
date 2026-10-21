@@ -22,7 +22,7 @@ import {
   getAppState,
   setAppState,
 } from 'database';
-import { useAppState, useStyled } from 'hooks';
+import { useAppState, useDrawerFrame, useStyled } from 'hooks';
 import { haptics } from 'helpers';
 
 import { VoiceGlow, VoiceSetup } from './components';
@@ -53,6 +53,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
+  const { paddingLeft, paddingRight } = useDrawerFrame('right');
 
   const isDrawerOpen = useDrawerStatus() === 'open';
 
@@ -108,7 +109,9 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    // Safe-area padding sits here rather than on the drawer: the glow is
+    // absolutely positioned, so it ignores it and still reaches the edge.
+    <View style={[styles.container, { paddingLeft, paddingRight }]}>
       {!showPreferences && (
         <VoiceGlow
           levels={voiceLevels.levels}
