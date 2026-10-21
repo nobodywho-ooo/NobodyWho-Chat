@@ -3,6 +3,7 @@ import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Button, GradientText, PlatformIcon, Text } from 'components';
+import { haptics } from 'helpers';
 import { useStyled } from 'hooks';
 import { Spacings, Layout } from 'style';
 
@@ -95,7 +96,10 @@ export const Welcome: React.FC<OnboardingScreenProps<'Welcome'>> = ({
         title={t('screens.onboarding.welcome.continue')}
         testID="onboarding-continue-button"
         variant="secondary"
-        onPress={() => navigation.replace('TextModelChoice')}
+        onPress={() => {
+          haptics.medium();
+          navigation.replace('TextModelChoice');
+        }}
         style={Layout.content}
       />
     </View>

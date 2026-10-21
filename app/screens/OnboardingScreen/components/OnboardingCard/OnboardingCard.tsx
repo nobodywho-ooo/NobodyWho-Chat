@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Pressable, View } from 'react-native';
 import { PlatformIcon, Text } from 'components';
-import { modelSizeLabel } from 'helpers';
+import { haptics, modelSizeLabel } from 'helpers';
 import { useStyled } from 'hooks';
 
 import styles from './OnboardingCard.styles';
@@ -31,9 +31,14 @@ export const OnboardingCard: React.FC<OnboardingCardProps> = ({
 }) => {
   const { colors } = useStyled();
 
+  const handlePress = useCallback(() => {
+    haptics.light();
+    onPress();
+  }, [onPress]);
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
       accessibilityRole="button"
       accessibilityLabel={title}
       testID={testID}
