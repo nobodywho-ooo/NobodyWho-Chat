@@ -34,7 +34,6 @@ export default StyleSheet.create({
   },
   floatingButton: {
     position: 'absolute',
-    bottom: FLOATING_BUTTON_BOTTOM,
     alignSelf: 'center',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 4 },

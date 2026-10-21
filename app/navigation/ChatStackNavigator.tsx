@@ -549,8 +549,6 @@ export const ChatStackNavigator = () => {
     ? t('screens.loadingScreen.loadingModel', { model: inUseModelName })
     : t('common.loading');
 
-  // Only chat-capable models make the chat root usable — a device with only a
-  // voice model downloaded still has nothing to chat with.
   const hasChatModels = useMemo(
     () => models.some(model => isChatPipeline(model.pipeline)),
     [models],

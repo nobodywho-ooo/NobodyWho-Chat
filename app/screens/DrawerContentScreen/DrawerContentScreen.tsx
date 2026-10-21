@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { LayoutChangeEvent, View } from 'react-native';
 import type { DrawerContentComponentProps } from '@react-navigation/drawer';
 import { useTranslation } from 'react-i18next';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import { setAppState } from 'database';
 import { Button, IconButton, Text } from 'components';
@@ -33,6 +34,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
   const { slots } = useAiService();
   const chat = slots.chat.ref;
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
 
   const closeDrawer = onCloseDrawer;
 
@@ -54,10 +56,13 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
     setNewChatHeight(current => (current === height ? current : height));
   }, []);
 
-  // A voice model alone has nothing to chat with.
   const showNewChat = models.some(({ pipeline }) => isChatPipeline(pipeline));
+  const newChatBottom = Math.max(
+    FLOATING_BUTTON_BOTTOM,
+    insets.bottom + Spacings.md,
+  );
   const listBottomInset = showNewChat
-    ? FLOATING_BUTTON_BOTTOM + newChatHeight + Spacings.lg
+    ? newChatBottom + newChatHeight + Spacings.lg
     : 0;
 
   return (
@@ -101,7 +106,7 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
           icon={{ iosIconName: 'plus.bubble', androidIconName: 'add_comment' }}
           onPress={handleNewChatPress}
           onLayout={handleNewChatLayout}
-          style={styles.floatingButton}
+          style={[styles.floatingButton, { bottom: newChatBottom }]}
         />
       )}
     </View>

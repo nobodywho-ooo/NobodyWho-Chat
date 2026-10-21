@@ -261,7 +261,7 @@ exports[`renders ChatScreen with existing messages 1`] = `
       showImageAttach={false}
       style={
         {
-          "paddingBottom": NaN,
+          "paddingBottom": 14,
         }
       }
       value=""
@@ -434,7 +434,7 @@ exports[`renders correctly empty ChatScreen 1`] = `
       showImageAttach={false}
       style={
         {
-          "paddingBottom": NaN,
+          "paddingBottom": 14,
         }
       }
       value=""
