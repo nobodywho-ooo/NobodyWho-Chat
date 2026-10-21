@@ -109,8 +109,6 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   };
 
   return (
-    // Safe-area padding sits here rather than on the drawer: the glow is
-    // absolutely positioned, so it ignores it and still reaches the edge.
     <View style={[styles.container, { paddingLeft, paddingRight }]}>
       {!showPreferences && (
         <VoiceGlow
