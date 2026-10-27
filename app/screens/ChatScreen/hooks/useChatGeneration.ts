@@ -3,10 +3,25 @@ import { useTranslation } from 'react-i18next';
 import { Chat, Prompt } from 'react-native-nobodywho';
 import { KeyboardController } from 'react-native-keyboard-controller';
 
-import { ChatMessage, DisplayMessage, ToolInvocation } from 'types';
+import {
+  ChatMessage,
+  DisplayMessage,
+  Model,
+  ToolInvocation,
+  WebSource,
+} from 'types';
 import { getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
-import { subscribeToolInvocations } from 'services';
+import {
+  EmbeddingSlotAccess,
+  NEW_CHAT_KEY,
+  WebSearchTurn,
+  prepareWebSearchTurn,
+  restoreChatForTurn,
+  restoreWebSearchTurn,
+  subscribeToolInvocations,
+  useWebSearchStore,
+} from 'services';
 import {
   computeGenerationMetrics,
   createThinkOpenWriter,
@@ -35,6 +50,14 @@ let optimisticMessages = Date.now();
 
 const nextUid = (): string => `new:${++optimisticMessages}`;
 
+export interface ChatWebSearchOptions {
+  // The toggle for this conversation (see useWebSearchToggle).
+  enabled: boolean;
+  chatModel: Model | undefined;
+  embeddingModel: Model | undefined;
+  embeddingSlot: EmbeddingSlotAccess;
+}
+
 interface UseChatGenerationOptions {
   chat: React.RefObject<Chat | undefined>;
   thinkOpen: ImplicitThinkOpen | undefined;
@@ -49,6 +72,7 @@ interface UseChatGenerationOptions {
   attachments: Attachments;
   messages: DisplayMessage[];
   onTurnStart: (anchorIndex: number) => void;
+  webSearch: ChatWebSearchOptions;
 }
 
 export function useChatGeneration({
@@ -65,15 +89,19 @@ export function useChatGeneration({
   setMessages,
   messages,
   onTurnStart,
+  webSearch,
 }: UseChatGenerationOptions) {
   const { t } = useTranslation();
   const [isStreaming, setIsStreaming] = useState(false);
   const stopRequestedRef = useRef(false);
+  // Aborts the web search of the turn in flight, if it is still searching.
+  const searchAbortRef = useRef<AbortController | null>(null);
 
   // Halt native generation. Reads chat.current at call time (not capture time)
   // so it stops whichever chat instance is current — it may have been recreated
   // since this hook mounted.
   const haltGeneration = useCallback(() => {
+    searchAbortRef.current?.abort();
     try {
       chat.current?.stopGeneration();
     } catch (error) {
@@ -130,6 +158,7 @@ export function useChatGeneration({
 
     KeyboardController.dismiss();
     stopRequestedRef.current = false;
+    useWebSearchStore.getState().resetTrace();
     setIsStreaming(true);
 
     const isNewConversation = conversationId === undefined;
@@ -149,6 +178,7 @@ export function useChatGeneration({
     }
 
     if (isNewConversation) {
+      useWebSearchStore.getState().transfer(NEW_CHAT_KEY, id);
       setConversationId(id);
       onConversationCreated(id);
     }
@@ -193,6 +223,7 @@ export function useChatGeneration({
     let firstTokenAt: number | undefined;
     let tokenCount = 0;
     const turnToolCalls: ToolInvocation[] = [];
+    let turnWebSources: WebSource[] = [];
 
     const thinkOpenWriter = createThinkOpenWriter(thinkOpen);
     let accumulated = thinkOpenWriter.write('turn', '');
@@ -210,6 +241,7 @@ export function useChatGeneration({
           ...(turnToolCalls.length > 0
             ? { toolInvocations: [...turnToolCalls] }
             : {}),
+          ...(turnWebSources.length > 0 ? { webSources: turnWebSources } : {}),
           ...extra,
         };
         return next;
@@ -235,6 +267,7 @@ export function useChatGeneration({
         content: accumulated,
         documentsPath: [],
         toolInvocations: turnToolCalls,
+        webSources: turnWebSources,
         ...metrics,
       });
     };
@@ -256,7 +289,51 @@ export function useChatGeneration({
       ]);
     };
 
+    let webTurn: WebSearchTurn | undefined;
+
     try {
+      // Attachments take the turn: the question is about the picture or the
+      // recording, and the multimodal context has no room for pages besides.
+      const hasMedia = !!imagePath || !!audioPath;
+
+      if (webSearch.enabled && hasMedia) {
+        useWebSearchStore.getState().showNotice('attachment');
+      }
+
+      if (webSearch.enabled && !hasMedia && webSearch.chatModel) {
+        const searchAbort = new AbortController();
+        searchAbortRef.current = searchAbort;
+        try {
+          webTurn = await prepareWebSearchTurn({
+            chat: activeChat,
+            question: userInput,
+            chatModel: webSearch.chatModel,
+            embeddingModel: webSearch.embeddingModel,
+            embeddingSlot: webSearch.embeddingSlot,
+            signal: searchAbort.signal,
+          });
+        } finally {
+          searchAbortRef.current = null;
+        }
+
+        if (chat.current !== activeChat) {
+          return;
+        }
+
+        if (stopRequestedRef.current) {
+          if (webTurn?.chatWasBorrowed) {
+            await restoreChatForTurn(activeChat, webTurn.snapshot);
+            await activeChat.setChatHistory(webTurn.snapshot.history);
+          }
+          setMessages(prev => prev.slice(0, -1));
+          await persistSystemMessage(t('screens.chat.generationStopped'));
+          return;
+        }
+
+        turnWebSources = webTurn?.sources ?? [];
+        renderAssistant();
+      }
+
       const askInput =
         imagePath || audioPath
           ? new Prompt([
@@ -270,7 +347,21 @@ export function useChatGeneration({
             ])
           : userInput;
 
-      const streamResult = activeChat.ask(askInput);
+      // A planner that borrowed the chat left its own exchange as the history,
+      // so the turn is replayed over the snapshot; otherwise `ask` continues
+      // from the cached prefix as any turn does.
+      const streamResult = webTurn?.chatWasBorrowed
+        ? await (async () => {
+            await restoreChatForTurn(activeChat, webTurn!.snapshot);
+            return activeChat.complete(
+              [
+                ...webTurn!.snapshot.history,
+                { role: 'user', content: webTurn!.prompt },
+              ],
+              { templateVariables: webTurn!.snapshot.templateVariables },
+            );
+          })()
+        : activeChat.ask(webTurn ? webTurn.prompt : askInput);
 
       for await (const token of streamResult) {
         if (chat.current !== activeChat) {
@@ -310,6 +401,17 @@ export function useChatGeneration({
       await persistSystemMessage(t('screens.chat.generationFailed'));
     } finally {
       unsubscribe();
+
+      if (webTurn && chat.current === activeChat) {
+        try {
+          await restoreWebSearchTurn(activeChat, webTurn.prompt, userInput);
+        } catch (error) {
+          log('ChatScreen restoring the plain question failed', error, {
+            capture: true,
+          });
+        }
+      }
+
       setIsStreaming(false);
     }
   };

@@ -73,4 +73,7 @@ export const styles = StyleSheet.create({
   attachLabel: {
     marginLeft: Spacings.xs,
   },
+  webSearchContainer: {
+    marginHorizontal: Spacings.xs
+  }
 });

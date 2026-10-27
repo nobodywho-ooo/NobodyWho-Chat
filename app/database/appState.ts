@@ -30,6 +30,7 @@ export type AppState = {
   ttsModelIdInUse?: number;
   sttModelIdInUse?: number;
   vadModelIdInUse?: number;
+  embeddingModelIdInUse?: number;
   conversationIdInUse?: number;
   assistantConfig?: AssistantConfig;
 };

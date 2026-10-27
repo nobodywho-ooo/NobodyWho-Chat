@@ -418,3 +418,90 @@ test('brings the footer back once the answer is finished', async () => {
 
   expect(screen.getByLabelText('components.messageListItem.copy')).toBeTruthy();
 });
+
+// --- Web search --------------------------------------------------------------
+
+describe('web search block', () => {
+  const { useWebSearchStore } = jest.requireActual('services/webSearch');
+
+  beforeEach(() => {
+    useWebSearchStore.setState({
+      isSearchingWeb: false,
+      webSearchTrace: [],
+      traceExpanded: false,
+      challengeActive: false,
+    });
+  });
+
+  test('a finished answer lists the pages it was grounded in', async () => {
+    const screen = await renderAssistant({
+      role: 'assistant',
+      content: 'Rain tomorrow.',
+      webSources: [
+        {
+          name: 'Paris forecast',
+          url: 'https://weather.example/paris',
+          used: true,
+          read: true,
+        },
+      ],
+    });
+
+    expect(screen.getByTestId('web-search-title').props.children).toBe(
+      'components.webSearch.searched',
+    );
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('web-search-block'));
+    });
+    const page = screen.getByTestId('web-search-result');
+
+    const openURL = jest
+      .spyOn(Linking, 'openURL')
+      .mockResolvedValue(undefined as never);
+    await act(async () => {
+      fireEvent.press(page);
+    });
+    expect(openURL).toHaveBeenCalledWith('https://weather.example/paris');
+  });
+
+  test('an answer without sources shows no block', async () => {
+    const screen = await renderAssistant({
+      role: 'assistant',
+      content: 'Hello.',
+    });
+
+    expect(screen.queryByTestId('web-search-block')).toBeNull();
+  });
+
+  test('the streaming turn shows the live search in place of the placeholder', async () => {
+    useWebSearchStore.setState({ isSearchingWeb: true });
+    useWebSearchStore
+      .getState()
+      .pushWebSearchEvent({ type: 'searching', query: 'Paris weather' });
+
+    const screen = await renderAssistant(
+      { role: 'assistant', content: '' },
+      { isStreaming: true },
+    );
+
+    expect(screen.getByTestId('web-search-title').props.children).toBe(
+      'components.webSearch.searching',
+    );
+    expect(
+      screen.queryByText('components.messageListItem.thinking'),
+    ).toBeNull();
+  });
+
+  test('a finished turn does not pick up the live trace', async () => {
+    useWebSearchStore
+      .getState()
+      .pushWebSearchEvent({ type: 'searching', query: 'Paris weather' });
+
+    const screen = await renderAssistant({
+      role: 'assistant',
+      content: 'Older answer.',
+    });
+
+    expect(screen.queryByTestId('web-search-block')).toBeNull();
+  });
+});

@@ -6,6 +6,18 @@ export interface ToolInvocation {
   result: string;
 }
 
+// A web page an answer was grounded in (see services/webSearch).
+export interface WebSource {
+  name: string;
+  url?: string;
+  passage?: string;
+  query?: string;
+  // Whether its text reached the model, and whether the page itself could be
+  // read (false: only the search snippet was used).
+  used?: boolean;
+  read?: boolean;
+}
+
 export interface ChatMessage {
   id: number;
   timestamp: string;
@@ -16,6 +28,7 @@ export interface ChatMessage {
   timeToFirstToken?: number;
   documentsPath: string[];
   toolInvocations?: ToolInvocation[];
+  webSources?: WebSource[];
 }
 
 type WithTextContent<T> = T extends { content: unknown }
@@ -27,5 +40,6 @@ export type DisplayMessage = WithTextContent<Message> & {
   timeToFirstToken?: number;
   documentsPath?: string[];
   toolInvocations?: ToolInvocation[];
+  webSources?: WebSource[];
   uid?: string;
 };

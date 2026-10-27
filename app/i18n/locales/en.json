@@ -139,7 +139,8 @@
       "dictate": "Dictate",
       "stopDictation": "Stop dictation",
       "microphoneDeniedTitle": "Microphone access needed",
-      "microphoneDeniedMessage": "Allow microphone access in Settings to dictate your messages."
+      "microphoneDeniedMessage": "Allow microphone access in Settings to dictate your messages.",
+      "webSearch": "Search the web"
     },
     "cameraCapture": {
       "permission": "Camera access is needed to take a photo.",
@@ -177,6 +178,21 @@
       "languageCount_other": "{{count}} languages",
       "thinking": "Thinking",
       "heavyProcessing": "Heavy processing"
+    },
+    "webScrapeHost": {
+      "title": "Searching the web for you",
+      "hint": "Confirm you’re human to continue",
+      "skip": "Skip search",
+      "done": "Done"
+    },
+    "webSearch": {
+      "searching": "Searching the web…",
+      "planning": "Checking whether to search…",
+      "offline": "No internet connection",
+      "skipped": "Answered without searching",
+      "searched": "Searched the web",
+      "challengeRow": "Tap to confirm you’re not a robot",
+      "challengeRowLabel": "The site wants to check you are not a robot — tap to continue"
     }
   },
   "screens": {
@@ -345,7 +361,15 @@
     "chat": {
       "generationFailed": "Something went wrong while generating a response.",
       "generationStopped": "Generation stopped.",
-      "attachmentFailedMessage": "The attachment couldn’t be added. {{error}}"
+      "attachmentFailedMessage": "The attachment couldn’t be added. {{error}}",
+      "webSearchNotice": {
+        "nothingFound": "Couldn’t find anything useful online — answering without the web.",
+        "noRoom": "This chat is too long to add web results — start a new chat to search.",
+        "unavailable": "Web search isn’t ready yet — answering without the web.",
+        "modelTooSmall": "This model can’t use web results reliably — pick a larger one.",
+        "notEnoughMemory": "This model already fills the phone’s memory — searching alongside it could close the app. Pick a smaller model.",
+        "attachment": "Web search is skipped when a photo or recording is attached."
+      }
     },
     "loadingScreen": {
       "loadingModel": "Loading {{model}}",

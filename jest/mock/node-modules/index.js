@@ -248,6 +248,13 @@ jest.mock('react-native-gesture-handler', () => {
 // pass through) and stub the hooks/helpers FullScreenImageModal calls.
 jest.mock('react-native-reanimated', () => {
   const ReactNative = require('react-native');
+  const chainableAnimation = () => {
+    const builder = {
+      duration: () => builder,
+      delay: () => builder,
+    };
+    return builder;
+  };
   return {
     __esModule: true,
     default: {
@@ -259,7 +266,17 @@ jest.mock('react-native-reanimated', () => {
     withTiming: value => value,
     withRepeat: animation => animation,
     cancelAnimation: () => {},
-    Easing: { linear: t => t },
+    Easing: {
+      linear: t => t,
+      ease: t => t,
+      inOut: easing => easing,
+      bezier: () => t => t,
+    },
+    // Layout animation builders: chainable no-ops (web search trace).
+    FadeIn: chainableAnimation(),
+    FadeOut: chainableAnimation(),
+    FadeInDown: chainableAnimation(),
+    LinearTransition: chainableAnimation(),
     interpolate: value => value,
     interpolateColor: (_value, _input, output) =>
       Array.isArray(output) ? output[0] : output,
@@ -278,6 +295,21 @@ jest.mock('react-native-reanimated', () => {
 jest.mock('react-native-worklets', () => ({
   scheduleOnRN: (fn, ...args) => fn(...args),
 }));
+
+// The scrape host's WebView: a plain View under Jest, with the ref methods
+// useScrapeHost calls.
+jest.mock('react-native-webview', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const WebView = React.forwardRef((props, ref) => {
+    React.useImperativeHandle(ref, () => ({
+      injectJavaScript: jest.fn(),
+      reload: jest.fn(),
+    }));
+    return React.createElement(View, { testID: props.testID ?? 'webview' });
+  });
+  return { __esModule: true, WebView, default: WebView };
+});
 
 jest.mock('react-native-enriched-markdown', () => {
   return {
@@ -616,6 +648,8 @@ jest.mock('@op-engineering/op-sqlite', () => {
     Storage: jest.fn().mockReturnValue({
       getItem: jest.fn().mockReturnValue(jest.fn()),
       setItem: jest.fn().mockReturnValue(jest.fn()),
+      getItemSync: jest.fn().mockReturnValue(undefined),
+      setItemSync: jest.fn(),
     }),
   };
 });

@@ -43,6 +43,7 @@ import {
 } from './modelDownload';
 import { toFileUri, toPlainPath } from './fileUri';
 import {
+  deviceRamGB,
   filterModelsByDeviceMemory,
   fitsInDeviceMemory,
   modelRequiredMemoryGB,
@@ -137,6 +138,7 @@ export {
   NetworkError,
   toFileUri,
   toPlainPath,
+  deviceRamGB,
   filterModelsByDeviceMemory,
   fitsInDeviceMemory,
   modelRequiredMemoryGB,

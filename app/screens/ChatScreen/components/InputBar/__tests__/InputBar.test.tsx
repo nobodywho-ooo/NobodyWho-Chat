@@ -363,3 +363,37 @@ test('measures the field for the list inset, not the starters above it', async (
   // The starters are on screen, just not inside what gets measured.
   expect(screen.getByTestId('starters')).toBeTruthy();
 });
+
+// --- Web search toggle -----------------------------------------------------
+
+const webSearchButton = (screen: Awaited<ReturnType<typeof render>>) =>
+  screen.container
+    .queryAll(isIconButton)
+    .find(
+      node => node.props.accessibilityLabel === 'components.inputBar.webSearch',
+    );
+
+test('the globe toggle only appears when web search is available', async () => {
+  const without = await render(<StatefulInputBar />);
+  expect(webSearchButton(without)).toBeUndefined();
+
+  const withToggle = await render(<StatefulInputBar showWebSearch />);
+  expect(webSearchButton(withToggle)).toBeDefined();
+});
+
+test('the globe toggle shows its state and reports presses', async () => {
+  const onToggleWebSearch = jest.fn();
+  const screen = await render(
+    <StatefulInputBar
+      showWebSearch
+      webSearchEnabled
+      onToggleWebSearch={onToggleWebSearch}
+    />,
+  );
+
+  const button = webSearchButton(screen)!;
+  expect(button.props.accessibilityState).toEqual({ selected: true });
+
+  await act(() => button.props.onPress());
+  expect(onToggleWebSearch).toHaveBeenCalledTimes(1);
+});

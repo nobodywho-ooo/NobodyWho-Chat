@@ -256,15 +256,18 @@ exports[`renders ChatScreen with existing messages 1`] = `
       onStartDictation={[Function]}
       onStop={[Function]}
       onStopDictation={[Function]}
+      onToggleWebSearch={[Function]}
       showAudioAttach={false}
       showDictation={false}
       showImageAttach={false}
+      showWebSearch={true}
       style={
         {
           "paddingBottom": NaN,
         }
       }
       value=""
+      webSearchEnabled={false}
     />
   </View>
 </View>
@@ -429,15 +432,18 @@ exports[`renders correctly empty ChatScreen 1`] = `
       onStartDictation={[Function]}
       onStop={[Function]}
       onStopDictation={[Function]}
+      onToggleWebSearch={[Function]}
       showAudioAttach={false}
       showDictation={false}
       showImageAttach={false}
+      showWebSearch={true}
       style={
         {
           "paddingBottom": NaN,
         }
       }
       value=""
+      webSearchEnabled={false}
     >
       <RCTScrollView
         contentContainerStyle={

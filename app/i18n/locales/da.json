@@ -139,7 +139,8 @@
       "dictate": "Dikter",
       "stopDictation": "Stop diktering",
       "microphoneDeniedTitle": "Mikrofonadgang kræves",
-      "microphoneDeniedMessage": "Tillad mikrofonadgang i Indstillinger for at diktere dine beskeder."
+      "microphoneDeniedMessage": "Tillad mikrofonadgang i Indstillinger for at diktere dine beskeder.",
+      "webSearch": "Søg på nettet"
     },
     "cameraCapture": {
       "permission": "Kameraadgang er nødvendig for at tage et billede.",
@@ -177,6 +178,21 @@
       "languageCount_other": "{{count}} sprog",
       "thinking": "Ræsonnement",
       "heavyProcessing": "Krævende"
+    },
+    "webScrapeHost": {
+      "title": "Søger på nettet for dig",
+      "hint": "Bekræft, at du er et menneske, for at fortsætte",
+      "skip": "Spring søgning over",
+      "done": "Færdig"
+    },
+    "webSearch": {
+      "searching": "Søger på nettet…",
+      "planning": "Vurderer, om der skal søges…",
+      "offline": "Ingen internetforbindelse",
+      "skipped": "Besvaret uden søgning",
+      "searched": "Søgte på nettet",
+      "challengeRow": "Tryk for at bekræfte, at du ikke er en robot",
+      "challengeRowLabel": "Siden vil tjekke, at du ikke er en robot — tryk for at fortsætte"
     }
   },
   "screens": {
@@ -345,7 +361,15 @@
     "chat": {
       "generationFailed": "Noget gik galt under genereringen af et svar.",
       "generationStopped": "Generering stoppet.",
-      "attachmentFailedMessage": "Vedhæftningen kunne ikke tilføjes. {{error}}"
+      "attachmentFailedMessage": "Vedhæftningen kunne ikke tilføjes. {{error}}",
+      "webSearchNotice": {
+        "nothingFound": "Fandt ikke noget brugbart på nettet — svarer uden nettet.",
+        "noRoom": "Denne chat er for lang til at tilføje søgeresultater — start en ny chat for at søge.",
+        "unavailable": "Websøgning er ikke klar endnu — svarer uden nettet.",
+        "modelTooSmall": "Denne model kan ikke bruge søgeresultater pålideligt — vælg en større.",
+        "notEnoughMemory": "Denne model fylder allerede telefonens hukommelse — en søgning ved siden af kan lukke appen. Vælg en mindre model.",
+        "attachment": "Websøgning springes over, når et billede eller en optagelse er vedhæftet."
+      }
     },
     "loadingScreen": {
       "loadingModel": "Indlæser {{model}}",

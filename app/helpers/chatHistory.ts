@@ -24,6 +24,9 @@ export const toChatHistory = (messages: ChatMessage[]): DisplayMessage[] =>
           tokensPerSecond: message.tokensPerSecond,
           timeToFirstToken: message.timeToFirstToken,
           toolInvocations: message.toolInvocations,
+          ...(message.webSources?.length
+            ? { webSources: message.webSources }
+            : {}),
         };
       case 'system':
         return {

@@ -1,6 +1,6 @@
 import { getDatabase } from 'database';
 import { safeJsonParse } from 'helpers';
-import { ChatMessage, ToolInvocation } from 'types';
+import { ChatMessage, ToolInvocation, WebSource } from 'types';
 
 export function rowToMessage(row: Record<string, any>): ChatMessage {
   return {
@@ -13,6 +13,7 @@ export function rowToMessage(row: Record<string, any>): ChatMessage {
     timeToFirstToken: row.time_to_first_token as number | undefined,
     documentsPath: safeJsonParse<string[]>(row.documents_path, []),
     toolInvocations: safeJsonParse<ToolInvocation[]>(row.tool_invocations, []),
+    webSources: safeJsonParse<WebSource[]>(row.web_sources, []),
   };
 }
 
@@ -70,8 +71,8 @@ export async function insertMessage(
   let insertId: number | undefined;
   await db.transaction(async tx => {
     const result = await tx.execute(
-      `INSERT INTO messages (conversation_id, role, content, tokens_per_second, time_to_first_token, documents_path, tool_invocations)
-      SELECT ?, ?, ?, ?, ?, ?, ?
+      `INSERT INTO messages (conversation_id, role, content, tokens_per_second, time_to_first_token, documents_path, tool_invocations, web_sources)
+      SELECT ?, ?, ?, ?, ?, ?, ?, ?
       WHERE EXISTS (SELECT 1 FROM conversations WHERE id = ?)`,
       [
         message.conversationId,
@@ -81,6 +82,7 @@ export async function insertMessage(
         message.timeToFirstToken ?? null,
         JSON.stringify(message.documentsPath),
         JSON.stringify(message.toolInvocations ?? []),
+        JSON.stringify(message.webSources ?? []),
         message.conversationId,
       ],
     );

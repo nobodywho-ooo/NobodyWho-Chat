@@ -12,6 +12,7 @@ import {
   stripThinkingBlocks,
 } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
+import { useWebSearchStore } from 'services';
 import { DisplayMessage } from 'types';
 
 import { AudioSpeakerButton } from './AudioSpeakerButton';
@@ -19,6 +20,7 @@ import { ThinkingBlock } from './ThinkingBlock';
 import { ThinkingModal } from './ThinkingModal';
 import { ToolCallBlock } from './ToolCallBlock';
 import { ToolCallModal } from './ToolCallModal';
+import { WebSearchBlock } from './WebSearch/WebSearchBlock';
 
 import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
 import { ShimmerText } from '../../ShimmerText/ShimmerText';
@@ -28,6 +30,8 @@ import styles from './AssistantMessage.styles';
 
 const COPIED_RESET_MS = 1000;
 const THINKING_FONT_SIZE = 14;
+
+const EMPTY_WEB_SOURCES: NonNullable<DisplayMessage['webSources']> = [];
 
 const formatTimeToFirstToken = (ms: number): string =>
   ms >= 1000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.round(ms)} ms`;
@@ -58,6 +62,12 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
   const { isDarkMode } = useThemeMode();
   const { content, tokensPerSecond, timeToFirstToken } = message;
   const toolInvocations = message.toolInvocations ?? [];
+  const webSources = message.webSources ?? EMPTY_WEB_SOURCES;
+  // The search runs before the first token, so while it does the trace stands
+  // in for the "Thinking…" placeholder.
+  const isSearchingWeb = useWebSearchStore(
+    state => isStreaming && state.isSearchingWeb,
+  );
 
   const [copied, setCopied] = useState(false);
   const [thinkingOpen, setThinkingOpen] = useState(false);
@@ -111,7 +121,10 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
 
   const accentColor = copied ? colors.primary : colors.onSurfaceVariant;
   const isAwaitingResponse =
-    isStreaming && content.length === 0 && toolInvocations.length === 0;
+    isStreaming &&
+    !isSearchingWeb &&
+    content.length === 0 &&
+    toolInvocations.length === 0;
   const isThinkingActive = isStreaming && !isThinkingComplete;
   const canCopyAssistantText =
     stripThinkingBlocks(content) !== '' && !isStreaming;
@@ -123,6 +136,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
 
   return (
     <View style={styles.assistantContainer}>
+      <WebSearchBlock live={isStreaming} sources={webSources} />
       {isAwaitingResponse ? (
         <View style={styles.thinkingContainer}>
           <PlatformIcon

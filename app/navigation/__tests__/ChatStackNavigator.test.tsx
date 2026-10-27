@@ -99,6 +99,7 @@ const mockSlots = {
 };
 
 jest.mock('services', () => ({
+  ...jest.requireActual('services/webSearch'),
   useAiService: () => ({
     slots: mockSlots,
     chatPipeline: mockChatPipeline,

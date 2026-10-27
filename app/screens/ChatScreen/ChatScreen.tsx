@@ -13,7 +13,7 @@ import { KeyboardAwareLegendList } from '@legendapp/list/keyboard';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { BlurTargetView, BlurView } from 'expo-blur';
 import LinearGradient from 'react-native-linear-gradient';
-import { MessageListItem, ScrollToBottomButton } from 'components';
+import { MessageListItem, ScrollToBottomButton, Toast } from 'components';
 import { useTheme } from 'context';
 import { useAppState, useStyled } from 'hooks';
 import {
@@ -21,7 +21,7 @@ import {
   pipelineIngestsAudio,
   pipelineIngestsImage,
 } from 'types';
-import { AiModelState, useAiService } from 'services';
+import { AiModelState, useAiService, useWebSearchStore } from 'services';
 import { isAndroid } from 'helpers';
 import { Theme } from 'types';
 
@@ -32,10 +32,13 @@ import {
   useMessageListScroll,
   useSttTranscription,
   useTtsPlayback,
+  useWebSearchToggle,
 } from './hooks';
 import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
+
+const WEB_NOTICE_VISIBLE_MS = 3500;
 
 const BLUR_INTENSITY = isAndroid ? 40 : 16;
 const BLUR_REDUCTION_FACTOR = 5;
@@ -107,6 +110,25 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const list = useMessageListScroll(messages);
 
+  const {
+    webSearch,
+    toggle: toggleWebSearch,
+    available: webSearchAvailable,
+  } = useWebSearchToggle(conversationId);
+  const webNotice = useWebSearchStore(state => state.notice);
+  const clearWebNotice = useWebSearchStore(state => state.clearNotice);
+
+  useEffect(() => {
+    if (!webNotice) {
+      return;
+    }
+    const timeout = setTimeout(
+      () => clearWebNotice(webNotice.id),
+      WEB_NOTICE_VISIBLE_MS,
+    );
+    return () => clearTimeout(timeout);
+  }, [webNotice, clearWebNotice]);
+
   const ingestsImage = pipelineIngestsImage(chatPipeline);
   const ingestsAudio = pipelineIngestsAudio(chatPipeline);
 
@@ -127,6 +149,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     attachments,
     messages,
     onTurnStart: list.anchorSentMessage,
+    webSearch,
   });
 
   useEffect(() => {
@@ -318,6 +341,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           isTranscribing={isTranscribing}
           onStartDictation={startRecording}
           onStopDictation={stopRecording}
+          showWebSearch={webSearchAvailable}
+          webSearchEnabled={webSearch.enabled}
+          onToggleWebSearch={toggleWebSearch}
           onChangeText={setInputText}
           onSend={handleSend}
           onStop={stopStreaming}
@@ -325,6 +351,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           messageStarters={messageStarters}
         />
       </KeyboardStickyView>
+      <Toast
+        visible={webNotice !== null}
+        message={
+          webNotice ? t(`screens.chat.webSearchNotice.${webNotice.kind}`) : ''
+        }
+        blurTarget={blurTargetRef}
+        style={{ top: insets.top + 8 }}
+      />
       {ingestsImage && (
         <CameraCaptureModal
           visible={attachments.cameraVisible}

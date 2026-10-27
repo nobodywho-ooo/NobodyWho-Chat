@@ -87,6 +87,9 @@ export const isSttPipeline = (pipeline: ModelPipeline): boolean =>
 export const isVadPipeline = (pipeline: ModelPipeline): boolean =>
   pipeline === ModelPipeline.voiceActivityDetection;
 
+export const isEmbeddingPipeline = (pipeline: ModelPipeline): boolean =>
+  pipeline === ModelPipeline.featureExtraction;
+
 // Only chat-capable pipelines may reach the chat backend; anything else (a
 // text-to-speech, speech-to-text or embedding model) would be silently loaded
 // as a GGUF chat model and fail deep in the native layer — throw at the
@@ -109,10 +112,17 @@ export enum ModelSlot {
   tts = 'tts',
   stt = 'stt',
   vad = 'vad',
+  // Web-search re-ranking. Unlike the others it is never loaded on launch:
+  // it is created for the length of one search and disposed right after.
+  embedding = 'embedding',
 }
 
 export type ModelSlotIdKey =
-  'modelIdInUse' | 'ttsModelIdInUse' | 'sttModelIdInUse' | 'vadModelIdInUse';
+  | 'modelIdInUse'
+  | 'ttsModelIdInUse'
+  | 'sttModelIdInUse'
+  | 'vadModelIdInUse'
+  | 'embeddingModelIdInUse';
 
 export interface ModelSlotSpec {
   slot: ModelSlot;
@@ -141,10 +151,15 @@ export const MODEL_SLOTS: readonly ModelSlotSpec[] = [
     appStateKey: 'vadModelIdInUse',
     accepts: isVadPipeline,
   },
+  {
+    slot: ModelSlot.embedding,
+    appStateKey: 'embeddingModelIdInUse',
+    accepts: isEmbeddingPipeline,
+  },
 ];
 
 // The slot a model can occupy, or undefined for a pipeline nothing can load
-// yet (featureExtraction, textRanking, imageToImage).
+// yet (textRanking, imageToImage).
 export const slotForPipeline = (
   pipeline: ModelPipeline,
 ): ModelSlot | undefined =>

@@ -6,6 +6,11 @@ import { Prompt } from 'react-native-nobodywho';
 import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
 
 import { insertConversation, insertMessage } from 'repositories';
+import {
+  prepareWebSearchTurn,
+  restoreChatForTurn,
+  restoreWebSearchTurn,
+} from 'services';
 import { implicitThinkOpen } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
 import { Model, ModelPipeline } from 'types';
@@ -39,6 +44,7 @@ jest.mock('database', () => {
 
 const mockChat = {
   ask: jest.fn(),
+  complete: jest.fn(),
   stopGeneration: jest.fn(),
   setChatHistory: jest.fn(),
   getChatHistory: jest.fn().mockResolvedValue([]),
@@ -80,6 +86,7 @@ const mockSlots = {
   },
 };
 jest.mock('services', () => ({
+  ...jest.requireActual('services/webSearch'),
   useAiService: () => ({
     slots: mockSlots,
     chatPipeline: mockChatPipeline,
@@ -93,6 +100,25 @@ jest.mock('services', () => ({
     Error: 'error',
   },
   subscribeToolInvocations: jest.fn(() => jest.fn()),
+  prepareWebSearchTurn: jest.fn(),
+  restoreChatForTurn: jest.fn(),
+  restoreWebSearchTurn: jest.fn(),
+}));
+
+// Web search is off unless a test turns it on; the search itself is stubbed
+// (its pipeline has its own suite under services/webSearch).
+let mockWebSearchEnabled = false;
+jest.mock('../hooks/useWebSearchToggle', () => ({
+  useWebSearchToggle: () => ({
+    webSearch: {
+      enabled: mockWebSearchEnabled,
+      chatModel: { id: 0, name: 'Chat model', family: 'qwen', parts: [] },
+      embeddingModel: undefined,
+      embeddingSlot: {},
+    },
+    toggle: jest.fn(),
+    available: true,
+  }),
 }));
 
 jest.mock('repositories', () => ({
@@ -106,6 +132,9 @@ jest.mock('../components/CameraCaptureModal/CameraCaptureModal', () => ({
   CameraCaptureModal: 'CameraCaptureModal',
 }));
 
+const mockPrepareWebSearchTurn = prepareWebSearchTurn as jest.Mock;
+const mockRestoreChatForTurn = restoreChatForTurn as jest.Mock;
+const mockRestoreWebSearchTurn = restoreWebSearchTurn as jest.Mock;
 const mockInsertConversation = insertConversation as jest.Mock;
 const mockInsertMessage = insertMessage as jest.Mock;
 
@@ -116,6 +145,11 @@ const stream = async function* () {
 };
 
 beforeEach(() => {
+  mockWebSearchEnabled = false;
+  mockPrepareWebSearchTurn.mockReset();
+  mockRestoreChatForTurn.mockReset().mockResolvedValue(undefined);
+  mockRestoreWebSearchTurn.mockReset().mockResolvedValue(undefined);
+  mockChat.complete.mockReset().mockImplementation(() => stream());
   mockChatThinkOpen = undefined;
   mockChatRef.current = mockChat;
   mockChat.ask.mockReset().mockImplementation(() => stream());
@@ -1250,5 +1284,178 @@ test('stopping mid-thinking keeps the block open for a template-opened model', a
       .find(message => message.role === 'assistant');
 
     expect(assistant.content).toBe('<think>I was working out that');
+  });
+});
+
+describe('web search', () => {
+  const sources = [
+    {
+      name: 'Paris weather',
+      url: 'https://weather.example/paris',
+      used: true,
+      read: true,
+    },
+  ];
+  const snapshot = {
+    history: [
+      { role: 'user', content: 'Hi' },
+      { role: 'assistant', content: 'Hello' },
+    ],
+    systemPrompt: 'You are helpful.',
+    templateVariables: { enable_thinking: true },
+  };
+
+  beforeEach(() => {
+    mockWebSearchEnabled = true;
+  });
+
+  test('sends the grounded prompt, persists the sources and restores the plain question', async () => {
+    mockPrepareWebSearchTurn.mockResolvedValue({
+      prompt: 'SOURCES… weather in Paris?',
+      sources,
+      snapshot,
+      chatWasBorrowed: false,
+    });
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    expect(mockPrepareWebSearchTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chat: mockChat,
+        question: 'weather in Paris?',
+        signal: expect.any(Object),
+      }),
+    );
+    expect(mockChat.ask).toHaveBeenCalledWith('SOURCES… weather in Paris?');
+    expect(mockChat.complete).not.toHaveBeenCalled();
+    expect(mockInsertMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        role: 'assistant',
+        content: 'Hello world',
+        webSources: sources,
+      }),
+    );
+    expect(mockRestoreWebSearchTurn).toHaveBeenCalledWith(
+      mockChat,
+      'SOURCES… weather in Paris?',
+      'weather in Paris?',
+    );
+  });
+
+  test('replays the turn over the snapshot when the planner borrowed the chat', async () => {
+    mockPrepareWebSearchTurn.mockResolvedValue({
+      prompt: 'SOURCES… weather in Paris?',
+      sources,
+      snapshot,
+      chatWasBorrowed: true,
+    });
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    expect(mockRestoreChatForTurn).toHaveBeenCalledWith(mockChat, snapshot);
+    expect(mockChat.ask).not.toHaveBeenCalled();
+    expect(mockChat.complete).toHaveBeenCalledWith(
+      [
+        ...snapshot.history,
+        { role: 'user', content: 'SOURCES… weather in Paris?' },
+      ],
+      { templateVariables: snapshot.templateVariables },
+    );
+  });
+
+  test('a search that found nothing still answers, with the bare question', async () => {
+    mockPrepareWebSearchTurn.mockResolvedValue(undefined);
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    expect(mockChat.ask).toHaveBeenCalledWith('weather in Paris?');
+    expect(mockRestoreWebSearchTurn).not.toHaveBeenCalled();
+  });
+
+  test('stopping during the search answers nothing and records the stop', async () => {
+    let finishSearch: (turn: unknown) => void = () => {};
+    mockPrepareWebSearchTurn.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finishSearch = resolve;
+        }),
+    );
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await act(() => inputBar(screen).props.onChangeText('weather in Paris?'));
+    let sending: Promise<void> = Promise.resolve();
+    await act(async () => {
+      sending = inputBar(screen).props.onSend();
+    });
+    await act(async () => {
+      inputBar(screen).props.onStop();
+    });
+    const signal = mockPrepareWebSearchTurn.mock.calls[0][0].signal;
+    expect(signal.aborted).toBe(true);
+
+    await act(async () => {
+      finishSearch({
+        prompt: 'weather in Paris?',
+        sources: [],
+        snapshot,
+        chatWasBorrowed: false,
+      });
+      await sending;
+    });
+
+    expect(mockChat.ask).not.toHaveBeenCalled();
+    expect(mockInsertMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        role: 'system',
+        content: 'screens.chat.generationStopped',
+      }),
+    );
+  });
+
+  test('a photo turn skips the search', async () => {
+    mockWebSearchEnabled = true;
+    mockChatPipeline = ModelPipeline.imageTextToText;
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await act(async () => {
+      await inputBar(screen).props.onAttachImage();
+    });
+    await send(screen, 'what is this?');
+
+    expect(mockPrepareWebSearchTurn).not.toHaveBeenCalled();
+    expect(mockChat.ask).toHaveBeenCalled();
   });
 });

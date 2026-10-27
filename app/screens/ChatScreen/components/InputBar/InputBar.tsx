@@ -56,6 +56,9 @@ interface InputBarProps {
   isTranscribing?: boolean;
   onStartDictation?: () => void;
   onStopDictation?: () => void;
+  showWebSearch?: boolean;
+  webSearchEnabled?: boolean;
+  onToggleWebSearch?: () => void;
 }
 
 export const InputBar: React.FC<InputBarProps> = ({
@@ -85,6 +88,9 @@ export const InputBar: React.FC<InputBarProps> = ({
   isTranscribing = false,
   onStartDictation,
   onStopDictation,
+  showWebSearch = false,
+  webSearchEnabled = false,
+  onToggleWebSearch,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
@@ -404,6 +410,32 @@ export const InputBar: React.FC<InputBarProps> = ({
                     )}
                   </View>
                 )}
+              {showWebSearch && (
+                <View style={styles.webSearchContainer}>
+                  <IconButton
+                    icon={{ iosIconName: 'globe', androidIconName: 'language' }}
+                    onPress={() => {
+                      haptics.light();
+                      onToggleWebSearch?.();
+                    }}
+                    disabled={disabled}
+                    size={20}
+                    color={
+                      webSearchEnabled
+                        ? colors.ctaContentPrimary
+                        : colors.onSurface
+                    }
+                    backgroundColor={
+                      webSearchEnabled
+                        ? colors.ctaSurfacePrimary
+                        : colors.surfaceContainer
+                    }
+                    accessibilityLabel={t('components.inputBar.webSearch')}
+                    accessibilityState={{ selected: webSearchEnabled }}
+                    testID="web-search-toggle"
+                  />
+                </View>
+              )}
               <IconButton
                 icon={voiceAssistantIconButton}
                 onPress={openVoiceAssistant}

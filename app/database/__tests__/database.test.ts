@@ -64,8 +64,9 @@ describe('initDatabase', () => {
 
     await initDatabase();
 
-    // One transaction per migration (v0 -> v1 schema, v1 -> v2 pipeline rename).
-    expect(db.transaction).toHaveBeenCalledTimes(2);
+    // One transaction per migration (v0 -> v1 schema, v1 -> v2 pipeline
+    // rename, v2 -> v3 web sources).
+    expect(db.transaction).toHaveBeenCalledTimes(3);
 
     const sql = db.execute.mock.calls
       .map((call: any[]) => call[0] as string)
@@ -95,21 +96,27 @@ describe('initDatabase', () => {
     expect(sql).toContain('UPDATE model_downloads');
     expect(sql).toContain('PRAGMA user_version = 2');
 
+    // v2 -> v3: the web sources an answer was grounded in.
+    expect(sql).toContain(
+      "ALTER TABLE messages ADD COLUMN web_sources TEXT NOT NULL DEFAULT '[]'",
+    );
+    expect(sql).toContain('PRAGMA user_version = 3');
+
     // Migrations run with foreign keys disabled so rebuilding a referenced table
     // does not cascade-delete dependent rows.
     expect(sql).toContain('PRAGMA foreign_keys = OFF');
     expect(sql).toContain('PRAGMA foreign_keys = ON');
   });
 
-  test('migrates an existing v1 database to v2', async () => {
+  test('migrates an existing v1 database to the current version', async () => {
     const db = getDatabase() as any;
     db.execute.mockClear().mockResolvedValue({ rows: [{ user_version: 1 }] });
     db.transaction.mockClear();
 
     await initDatabase();
 
-    // Only the v1 -> v2 migration should run.
-    expect(db.transaction).toHaveBeenCalledTimes(1);
+    // Only the v1 -> v2 and v2 -> v3 migrations should run.
+    expect(db.transaction).toHaveBeenCalledTimes(2);
 
     const sql = db.execute.mock.calls
       .map((call: any[]) => call[0] as string)
@@ -131,13 +138,33 @@ describe('initDatabase', () => {
     expect(sql).toContain('\'"pipeline":"speechToText"\'');
 
     expect(sql).toContain('PRAGMA user_version = 2');
+    expect(sql).toContain('PRAGMA user_version = 3');
+    expect(sql).not.toContain('CREATE TABLE conversations');
     expect(sql).toContain('PRAGMA foreign_keys = OFF');
     expect(sql).toContain('PRAGMA foreign_keys = ON');
   });
 
-  test('does nothing when the schema is already up to date', async () => {
+  test('adds the web sources column to a v2 database', async () => {
     const db = getDatabase() as any;
     db.execute.mockClear().mockResolvedValue({ rows: [{ user_version: 2 }] });
+    db.transaction.mockClear();
+
+    await initDatabase();
+
+    expect(db.transaction).toHaveBeenCalledTimes(1);
+
+    const sql = db.execute.mock.calls
+      .map((call: any[]) => call[0] as string)
+      .join('\n');
+
+    expect(sql).toContain('ADD COLUMN web_sources');
+    expect(sql).not.toContain('CREATE TABLE models_new');
+    expect(sql).toContain('PRAGMA user_version = 3');
+  });
+
+  test('does nothing when the schema is already up to date', async () => {
+    const db = getDatabase() as any;
+    db.execute.mockClear().mockResolvedValue({ rows: [{ user_version: 3 }] });
     db.transaction.mockClear();
 
     await initDatabase();

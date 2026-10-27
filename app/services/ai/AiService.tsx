@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import {
   Chat,
+  Encoder,
   SpeechToText,
   TextToSpeech,
   VoiceActivityDetection,
@@ -17,6 +18,8 @@ import { ModelSlot } from 'types';
 import {
   CHAT_ENGINE,
   ChatOptions,
+  EMBEDDING_ENGINE,
+  EmbeddingOptions,
   STT_ENGINE,
   SttOptions,
   TTS_ENGINE,
@@ -33,6 +36,7 @@ export type AiSlots = {
   [ModelSlot.tts]: NativeSlot<TextToSpeech, TtsOptions>;
   [ModelSlot.stt]: NativeSlot<SpeechToText, SttOptions>;
   [ModelSlot.vad]: NativeSlot<VoiceActivityDetection, VadOptions>;
+  [ModelSlot.embedding]: NativeSlot<Encoder, EmbeddingOptions>;
 };
 
 export interface AiServiceContextValue extends AiServiceState {
@@ -54,10 +58,11 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
   const tts = useNativeSlot(TTS_ENGINE, setState, backend);
   const stt = useNativeSlot(STT_ENGINE, setState, backend);
   const vad = useNativeSlot(VAD_ENGINE, setState, backend);
+  const embedding = useNativeSlot(EMBEDDING_ENGINE, setState, backend);
 
   const slots = useMemo<AiSlots>(
-    () => ({ chat, tts, stt, vad }),
-    [chat, tts, stt, vad],
+    () => ({ chat, tts, stt, vad, embedding }),
+    [chat, tts, stt, vad, embedding],
   );
 
   const disposeAll = useCallback(() => {

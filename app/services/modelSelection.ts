@@ -22,7 +22,7 @@ import {
 // the startup sweep — is how they drift apart, so they live here instead.
 
 // Which model currently occupies the slot a model of `pipeline` would take.
-// Undefined for a pipeline no slot accepts (featureExtraction, textRanking, …).
+// Undefined for a pipeline no slot accepts (textRanking, imageToImage, …).
 export const inUseModelIdForPipeline = (
   pipeline: ModelPipeline,
   state: AppState,
