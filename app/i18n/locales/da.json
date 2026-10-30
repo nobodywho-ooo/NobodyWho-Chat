@@ -181,6 +181,11 @@
   },
   "screens": {
     "onboarding": {
+      "intro": {
+        "title": "Din egen AI, på din telefon.",
+        "subtitle": "Åbne modeller, der forbliver private og virker offline.",
+        "continue": "Kom i gang"
+      },
       "welcome": {
         "title": "Velkommen til",
         "assistant": {

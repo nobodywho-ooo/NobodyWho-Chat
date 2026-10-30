@@ -2,6 +2,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ModelSetup } from 'helpers';
 
 export type OnboardingParamList = {
+  Intro: undefined;
   Welcome: undefined;
   TextModelChoice: undefined;
   VoiceChoice: { modelId: number };

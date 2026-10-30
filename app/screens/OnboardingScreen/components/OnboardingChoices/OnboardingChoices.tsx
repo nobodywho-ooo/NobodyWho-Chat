@@ -5,6 +5,7 @@ import { useCuratedModels, useStyled } from 'hooks';
 
 import { OnboardingParamList } from '../../Onboarding.types';
 import { OnboardingContext } from '../../hooks/useOnboarding';
+import { Intro } from '../Intro/Intro';
 import { OnboardingDownload } from '../OnboardingDownload/OnboardingDownload';
 import { TextModelChoice } from '../TextModelChoice/TextModelChoice';
 import { VoiceChoice } from '../VoiceChoice/VoiceChoice';
@@ -43,6 +44,11 @@ export const OnboardingChoices: React.FC<OnboardingChoicesProps> = ({
           headerBackButtonDisplayMode: 'minimal',
         }}
       >
+        <Stack.Screen
+          name="Intro"
+          component={Intro}
+          options={{ headerShown: false }}
+        />
         <Stack.Screen
           name="Welcome"
           component={Welcome}
