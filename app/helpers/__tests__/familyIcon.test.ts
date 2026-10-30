@@ -4,6 +4,7 @@ describe('getFamilyIcon', () => {
   test('matches mapped families, including uppercase/spaced keys', () => {
     expect(getFamilyIcon('Qwen3')).toBeDefined();
     expect(getFamilyIcon('LFM2')).toBeDefined();
+    expect(getFamilyIcon('LFM3')).toBe(getFamilyIcon('LFM2.5'));
     expect(getFamilyIcon('Gemma 4')).toBeDefined();
   });
 

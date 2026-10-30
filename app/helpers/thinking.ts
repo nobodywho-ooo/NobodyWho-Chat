@@ -41,6 +41,11 @@ const IMPLICIT_THINK_OPEN: ImplicitThinkOpen[] = [
     sites: ['turn', 'toolResult'],
   },
   {
+    family: 'LFM3',
+    delimiters: THINK_TAGS,
+    sites: ['turn', 'toolResult'],
+  },
+  {
     family: 'MiniCPM5',
     delimiters: THINK_TAGS,
     sites: ['turn', 'toolResult'],

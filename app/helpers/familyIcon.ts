@@ -20,6 +20,7 @@ const familyIcons: Record<string, FC<SvgProps>> = {
   qwen: qwen,
   bonsai: bonsai,
   LFM2: liquid,
+  LFM3: liquid,
   'Gemma 4': gemma4,
   supertonic: supertonic,
   ministral: mistral,
