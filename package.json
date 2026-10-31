@@ -87,7 +87,7 @@
   },
   "codegenConfig": {
     "name": "ReffenSpecs",
-    "type": "modules",
+    "type": "all",
     "jsSrcsDir": "specs",
     "android": {
       "javaPackageName": "ai.nobodywho.mobile.specs"
@@ -95,6 +95,9 @@
     "ios": {
       "modulesProvider": {
         "NativeClipboard": "RTNClipboard"
+      },
+      "componentProvider": {
+        "EdgeRefractionView": "RCTEdgeRefractionView"
       }
     }
   },

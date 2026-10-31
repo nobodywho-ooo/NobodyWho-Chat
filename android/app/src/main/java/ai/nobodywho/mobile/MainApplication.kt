@@ -4,6 +4,7 @@ import expo.modules.ApplicationLifecycleDispatcher
 import expo.modules.ExpoReactHostFactory
 
 import ai.nobodywho.mobile.clipboard.ClipboardPackage
+import ai.nobodywho.mobile.edgerefraction.EdgeRefractionPackage
 import android.app.Application
 import com.facebook.react.PackageList
 import com.facebook.react.ReactApplication
@@ -21,6 +22,7 @@ class MainApplication : Application(), ReactApplication {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // add(MyReactNativePackage())
           add(ClipboardPackage())
+          add(EdgeRefractionPackage())
         },
       // This is a bare React Native app (community CLI + Metro), not an Expo
       // app, so the dev server has no `.expo/.virtual-metro-entry`. Use the

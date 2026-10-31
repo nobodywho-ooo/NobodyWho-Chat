@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
@@ -8,7 +8,8 @@ import { useStyled } from 'hooks';
 import { Spacings, Layout } from 'style';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
-import { ModelOrbit } from '../ModelOrbit/ModelOrbit';
+import { FIRST_CENTERED_NAME, ModelOrbit } from '../ModelOrbit/ModelOrbit';
+import { ModelName } from './ModelName';
 
 import styles from './Intro.styles';
 
@@ -19,11 +20,15 @@ export const Intro: React.FC<OnboardingScreenProps<'Intro'>> = ({
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
 
+  const [modelName, setModelName] = useState(FIRST_CENTERED_NAME);
+
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
-      <ModelOrbit />
+      <ModelOrbit onCenterChange={setModelName} />
 
+      {/* Touches pass through to the wheel everywhere but the button. */}
       <View
+        pointerEvents="box-none"
         style={[
           styles.contentContainer,
           {
@@ -32,15 +37,16 @@ export const Intro: React.FC<OnboardingScreenProps<'Intro'>> = ({
           },
         ]}
       >
-        <View style={styles.heroContainer}>
-          <Text variant="h2" accessibilityRole="header" style={styles.title}>
-            <Text variant="h2" bold>
-              {t('screens.onboarding.intro.title')}
-            </Text>{' '}
-            <Text variant="h2" style={{ color: colors.onSurfaceVariant }}>
-              {t('screens.onboarding.intro.subtitle')}
-            </Text>
+        <View pointerEvents="none" style={styles.heroContainer}>
+          <Text
+            variant="h2"
+            bold
+            accessibilityRole="header"
+            style={styles.title}
+          >
+            {t('screens.onboarding.intro.title')}
           </Text>
+          <ModelName name={modelName} />
         </View>
 
         <Button
