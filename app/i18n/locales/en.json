@@ -182,8 +182,7 @@
   "screens": {
     "onboarding": {
       "intro": {
-        "title": "Your own AI, on your phone.",
-        "subtitle": "Open models that stay private and work offline.",
+        "title": "Run the best AI models",
         "continue": "Get started"
       },
       "welcome": {
