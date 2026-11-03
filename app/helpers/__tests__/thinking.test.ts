@@ -285,6 +285,11 @@ describe('implicitThinkOpen', () => {
     ).toBeDefined();
   });
 
+  test('matches LFM3, whose template prefills "<think>" when thinking', () => {
+    expect(implicitThinkOpen(model({ family: 'LFM3' }), true)).toBeDefined();
+    expect(implicitThinkOpen(model({ family: 'LFM3' }), false)).toBeUndefined();
+  });
+
   test('holds back the LFM2.5 siblings that prefill nothing', () => {
     // 1.2B Instruct and Audio share the family but end their prompts at
     // "assistant", so an opener written into their answers would never close.

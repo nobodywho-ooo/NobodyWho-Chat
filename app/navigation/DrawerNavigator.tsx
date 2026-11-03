@@ -158,10 +158,10 @@ const ChatHeaderTitle = () => {
   const { models } = useModels();
   const { slots } = useAiService();
 
+  const chevronIconSize = fontSizes.h4 + (isIOS ? -4 : 4);
   const model = models.find(({ id }) => id === modelIdInUse);
   const parameterLabel = parameterCountLabel(model?.parameterCountBillions);
   const FamilyIcon = model ? getFamilyIcon(model.family) : undefined;
-  // Only chat models can take the chat's place; voice models don't count.
   const canChangeModel =
     models.filter(({ pipeline }) => isChatPipeline(pipeline)).length >= 2;
 
@@ -212,7 +212,7 @@ const ChatHeaderTitle = () => {
         <PlatformIcon
           iosIconName="chevron.right"
           androidIconName="chevron_right"
-          size={fontSizes.h4 - 4}
+          size={chevronIconSize}
           color={colors.onSurfaceVariant}
         />
       )}

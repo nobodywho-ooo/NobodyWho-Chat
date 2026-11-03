@@ -110,7 +110,7 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
     <View
       style={
         {
-          "height": NaN,
+          "height": 16,
         }
       }
     />
@@ -278,7 +278,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
     <View
       style={
         {
-          "height": NaN,
+          "height": 16,
         }
       }
     />
@@ -456,7 +456,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
     <View
       style={
         {
-          "height": NaN,
+          "height": 16,
         }
       }
     />

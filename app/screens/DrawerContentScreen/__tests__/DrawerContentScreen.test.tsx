@@ -1,8 +1,9 @@
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 
 import { mockSetAppState } from 'jest/mock/database';
-import { mockNavigate } from 'jest/mock/node-modules';
+import { mockNavigate, mockUseSafeAreaInsets } from 'jest/mock/node-modules';
 import { mockUseModels } from 'jest/mock/hooks';
 import { buildModel } from 'jest/factories/model';
 import { AiServiceProvider } from 'services';
@@ -107,6 +108,34 @@ test('the conversations list leaves room to scroll clear of the new chat button'
   expect(list().props.bottomInset).toBeGreaterThan(
     FLOATING_BUTTON_BOTTOM + buttonHeight,
   );
+});
+
+// An opaque 3-button navigation bar (e.g. Samsung) reports a bottom inset taller
+// than the button's default offset, and would cover the button.
+test('the new chat button floats above the system navigation bar', async () => {
+  const navigationBarHeight = 48;
+  mockUseSafeAreaInsets.mockReturnValue({
+    top: 0,
+    right: 0,
+    bottom: navigationBarHeight,
+    left: 0,
+  });
+  mockUseModels.mockReturnValue({ models: [buildModel(1)] });
+  const screen = await render(
+    <AiServiceProvider>
+      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
+    </AiServiceProvider>,
+  );
+
+  const { bottom } = StyleSheet.flatten(getNewChatButton(screen).props.style);
+  expect(bottom).toBeGreaterThan(navigationBarHeight);
+
+  mockUseSafeAreaInsets.mockReturnValue({
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+  });
 });
 
 test('the conversations list reclaims the room when there is no new chat button', async () => {

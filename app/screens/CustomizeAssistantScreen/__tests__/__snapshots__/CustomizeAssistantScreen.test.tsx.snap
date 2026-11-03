@@ -9,7 +9,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
         "paddingTop": 16,
       },
       {
-        "paddingBottom": NaN,
+        "paddingBottom": 20,
       },
     ]
   }

@@ -34,6 +34,13 @@ class AppDelegate: ExpoAppDelegate, ExpoReactNativeFactoryProvider {
 }
 
 class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
+  /// The iOS 27 SDK turns the app-level status bar setters into no-ops, so `StatusBar` only works
+  /// with `UIViewControllerBasedStatusBarAppearance` = YES and a root view controller that returns
+  /// the style set from JS. Expo's delegate returns a plain `UIViewController`, which doesn't.
+  override func createRootViewController() -> UIViewController {
+    StatusBarRootViewController()
+  }
+
   override func sourceURL(for bridge: RCTBridge) -> URL? {
     // needed to return the correct URL for expo-dev-client.
     bridge.bundleURL ?? bundleURL()
@@ -45,5 +52,14 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
 #else
     Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
+  }
+}
+
+/// Mirrors React Native's default `RCTRootViewController`: reports the `StatusBar` state set from JS.
+class StatusBarRootViewController: UIViewController {
+  override var preferredStatusBarStyle: UIStatusBarStyle { RCTStatusBarAppearance.style }
+  override var prefersStatusBarHidden: Bool { RCTStatusBarAppearance.hidden }
+  override var preferredStatusBarUpdateAnimation: UIStatusBarAnimation {
+    RCTStatusBarAppearance.updateAnimation
   }
 }

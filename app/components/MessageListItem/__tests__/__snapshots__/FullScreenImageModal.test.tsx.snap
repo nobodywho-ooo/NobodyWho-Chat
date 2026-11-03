@@ -89,7 +89,7 @@ exports[`matches the snapshot when showing an image 1`] = `
           "position": "absolute",
         },
         {
-          "top": NaN,
+          "top": 12,
         },
       ]
     }
