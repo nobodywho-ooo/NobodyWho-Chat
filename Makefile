@@ -20,7 +20,7 @@ ios-clean:
 	cd ios && rm Podfile.lock && rm -rf Pods && pod install && cd ..
 
 # Every clean above, in dependency order
-clean-all:
+clean:
 	$(MAKE) clean-watchman
 	$(MAKE) clean-metro
 	$(MAKE) ios-clean
@@ -28,15 +28,15 @@ clean-all:
 
 # --- Android release builds -------------------------------------------------
 
-android-apk:
+apk:
 	export JAVA_HOME=$$(/usr/libexec/java_home -v 21) && \
 	cd android && ./gradlew assembleRelease
 	open android/app/build/outputs/apk/release/
 
-android-aab:
+aab:
 	export JAVA_HOME=$$(/usr/libexec/java_home -v 21) && \
 	cd android && ./gradlew bundleRelease
 	open android/app/build/outputs/bundle/release/
 
 .PHONY: clean-cache clean-metro clean-watchman ios-clean clean-all \
-	android-apk android-aab
+	apk aab
