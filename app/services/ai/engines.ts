@@ -147,14 +147,21 @@ export const CHAT_ENGINE: EngineSpec<Chat, ChatOptions> = {
       (opts.toolCalling ?? true) &&
       model.pipeline === ModelPipeline.textGeneration;
 
-    const instance = new Chat({
-      model: loaded,
-      tools: useTools ? buildChatTools() : undefined,
-      systemPrompt: opts.systemPrompt,
-      sampler: opts.sampler,
-      contextSize,
-      templateVariables: { enable_thinking: enableThinking },
-    });
+    let instance: Chat;
+
+    try {
+      instance = new Chat({
+        model: loaded,
+        tools: useTools ? buildChatTools() : undefined,
+        systemPrompt: opts.systemPrompt,
+        sampler: opts.sampler,
+        contextSize,
+        templateVariables: { enable_thinking: enableThinking },
+      });
+    } catch (error) {
+      loaded.destroy();
+      throw error;
+    }
 
     return {
       instance,
