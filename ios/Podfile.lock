@@ -2109,7 +2109,7 @@ PODS:
     - Yoga
   - RNDeviceInfo (15.0.2):
     - React-Core
-  - RNGestureHandler (3.3.0):
+  - RNGestureHandler (3.5.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2992,7 +2992,7 @@ SPEC CHECKSUMS:
   ReactNativeEnrichedMarkdown: ecb3524f19682795857fe0906ac26a95f50b3a6a
   ReactNavigation: 1cf3b6680f489f3dcddddab84a855717421796f7
   RNDeviceInfo: 4c852998208b60dc192ae3529e5867817719ad1e
-  RNGestureHandler: e19fcf39b0212e0eb8bc7ca1e645500eb492f6be
+  RNGestureHandler: 3eb406a87932ac20e2909d36728129821fafbcdb
   RNLocalize: 6b1ada941cb6116aace7d9f508a9fdd24d792ff8
   RNReactNativeHapticFeedback: f9106d4d7ede0ac5feb10f23b564ffb57d1c2361
   RNReanimated: 3018727dbf272754d0f31ef73f619e49ade7baf0

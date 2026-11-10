@@ -14,6 +14,7 @@ import {
   openbmb,
   ai9stars,
   tokenrhythm,
+  dfm,
 } from 'svg';
 
 const familyIcons: Record<string, FC<SvgProps>> = {
@@ -31,6 +32,7 @@ const familyIcons: Record<string, FC<SvgProps>> = {
   MiniCPM5: openbmb,
   G9v3: ai9stars,
   'NeoHorse 1': tokenrhythm,
+  dfm: dfm,
 };
 
 export const getFamilyIcon = (family: string): FC<SvgProps> | undefined => {
