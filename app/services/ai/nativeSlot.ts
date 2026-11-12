@@ -29,6 +29,7 @@ export interface EngineSpec<TInstance extends NativeInstance, TOptions> {
 
 export interface NativeSlot<TInstance extends NativeInstance, TOptions> {
   ref: React.RefObject<TInstance | undefined>;
+  loadedState: React.RefObject<Partial<AiServiceState> | undefined>;
   create: (opts: TOptions & { model: Model }) => Promise<boolean>;
   dispose: () => void;
   borrow: <R>(
@@ -47,6 +48,7 @@ export const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
 
   const ref = useRef<TInstance | undefined>(undefined);
   const loadedModelId = useRef<number | undefined>(undefined);
+  const loadedState = useRef<Partial<AiServiceState> | undefined>(undefined);
   // Bumped on every dispose — see the generation note above.
   const generation = useRef(0);
   // Work borrowed against the live instance. A teardown waits for it: none of
@@ -67,6 +69,7 @@ export const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
   const clearSlot = useCallback(() => {
     ref.current = undefined;
     loadedModelId.current = undefined;
+    loadedState.current = undefined;
   }, []);
 
   const release = useCallback(
@@ -148,6 +151,7 @@ export const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
 
           ref.current = instance;
           loadedModelId.current = model.id;
+          loadedState.current = state;
           publish(AiModelState.Ready, state);
           return true;
         });
@@ -215,7 +219,7 @@ export const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
   );
 
   return useMemo(
-    () => ({ ref, create, dispose, borrow }),
+    () => ({ ref, loadedState, create, dispose, borrow }),
     [borrow, create, dispose],
   );
 };

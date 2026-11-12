@@ -35,6 +35,8 @@ let optimisticMessages = Date.now();
 
 const nextUid = (): string => `new:${++optimisticMessages}`;
 
+const STREAM_RENDER_INTERVAL_MS = 50;
+
 interface UseChatGenerationOptions {
   chat: React.RefObject<Chat | undefined>;
   thinkOpen: ImplicitThinkOpen | undefined;
@@ -132,10 +134,32 @@ export function useChatGeneration({
     stopRequestedRef.current = false;
     setIsStreaming(true);
 
+    const dropOptimisticTurn = () =>
+      setMessages(prev =>
+        prev.filter(
+          message =>
+            message.uid !== userMessage.uid && message.uid !== assistantUid,
+        ),
+      );
+
     const isNewConversation = conversationId === undefined;
-    const id = isNewConversation
-      ? await insertConversation({ title: userInput, modelId: modelIdInUse })
-      : conversationId;
+    let id: number | undefined;
+
+    try {
+      id = isNewConversation
+        ? await insertConversation({ title: userInput, modelId: modelIdInUse })
+        : conversationId;
+    } catch (error) {
+      // Outside the turn's try/finally below, so it has to settle the screen
+      // itself — otherwise isStreaming stays true and blocks every later send.
+      log('ChatScreen send: creating the conversation failed', error, {
+        capture: true,
+      });
+      dropOptimisticTurn();
+      setInputText(userInput);
+      setIsStreaming(false);
+      return;
+    }
 
     // The model was deleted between this chat mounting and the send landing:
     // there is nothing to file the conversation under, and the chat root is
@@ -143,7 +167,7 @@ export function useChatGeneration({
     // leaving them on screen above a chat that can never answer them.
     if (id === undefined) {
       log('ChatScreen send: model', modelIdInUse, 'no longer exists');
-      setMessages(prev => prev.slice(0, -2));
+      dropOptimisticTurn();
       setIsStreaming(false);
       return;
     }
@@ -197,23 +221,69 @@ export function useChatGeneration({
     const thinkOpenWriter = createThinkOpenWriter(thinkOpen);
     let accumulated = thinkOpenWriter.write('turn', '');
 
+    // Written by uid, never by position: the screen may have switched to
+    // another conversation under a running turn, and its last row is then
+    // someone else's message. A missing row means the turn is no longer on
+    // screen, so there is nothing to update.
+    let flushTimer: ReturnType<typeof setTimeout> | undefined;
+    let lastRenderAt = 0;
+
+    const cancelScheduledRender = () => {
+      if (flushTimer !== undefined) {
+        clearTimeout(flushTimer);
+        flushTimer = undefined;
+      }
+    };
+
     const renderAssistant = (extra?: {
       tokensPerSecond?: number;
       timeToFirstToken?: number;
     }) => {
+      cancelScheduledRender();
+      lastRenderAt = Date.now();
+      const content = accumulated;
+      const toolInvocations =
+        turnToolCalls.length > 0 ? [...turnToolCalls] : undefined;
+
       setMessages(prev => {
+        const at = prev.findIndex(message => message.uid === assistantUid);
+
+        if (at === -1) {
+          return prev;
+        }
+
         const next = [...prev];
-        next[next.length - 1] = {
+        next[at] = {
           uid: assistantUid,
           role: 'assistant',
-          content: accumulated,
-          ...(turnToolCalls.length > 0
-            ? { toolInvocations: [...turnToolCalls] }
-            : {}),
+          content,
+          ...(toolInvocations ? { toolInvocations } : {}),
           ...extra,
         };
         return next;
       });
+    };
+
+    // Tokens arrive far faster than anyone reads them, and each render walks
+    // the whole screen. The first token after a quiet spell shows at once
+    // (time to first token stays honest); the rest are batched into one render
+    // per STREAM_RENDER_INTERVAL_MS.
+    const scheduleRender = () => {
+      if (flushTimer !== undefined) {
+        return;
+      }
+
+      const wait = lastRenderAt + STREAM_RENDER_INTERVAL_MS - Date.now();
+
+      if (wait <= 0) {
+        renderAssistant();
+        return;
+      }
+
+      flushTimer = setTimeout(() => {
+        flushTimer = undefined;
+        renderAssistant();
+      }, wait);
     };
 
     const unsubscribe = subscribeToolInvocations(invocation => {
@@ -227,7 +297,9 @@ export function useChatGeneration({
       timeToFirstToken?: number;
     }) => {
       if (!hasMessageContent(accumulated)) {
-        setMessages(prev => prev.slice(0, -1));
+        setMessages(prev =>
+          prev.filter(message => message.uid !== assistantUid),
+        );
         return;
       }
       await persist({
@@ -282,7 +354,7 @@ export function useChatGeneration({
         }
         tokenCount += 1;
         accumulated += token;
-        renderAssistant();
+        scheduleRender();
       }
 
       if (chat.current !== activeChat) {
@@ -306,9 +378,11 @@ export function useChatGeneration({
     } catch (error) {
       log('ChatScreen generation failed', error);
 
+      renderAssistant();
       await persistAssistant();
       await persistSystemMessage(t('screens.chat.generationFailed'));
     } finally {
+      cancelScheduledRender();
       unsubscribe();
       setIsStreaming(false);
     }

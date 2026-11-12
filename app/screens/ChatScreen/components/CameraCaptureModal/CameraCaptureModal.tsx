@@ -1,10 +1,10 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { Linking, Modal, Pressable, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, Text } from 'components';
-import { log } from 'helpers';
+import { holdForeground, log } from 'helpers';
 import { Spacings } from 'style';
 
 import { styles } from './CameraCaptureModal.styles';
@@ -34,11 +34,33 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
   const granted = permission?.granted ?? false;
   const canAskAgain = permission?.canAskAgain ?? true;
 
+  const askForPermission = useCallback(
+    () =>
+      holdForeground(requestPermission).catch(error =>
+        log('CameraCaptureModal requestPermission', error),
+      ),
+    [requestPermission],
+  );
+
+  const askedThisOpenRef = useRef(false);
+  const hasPermissionAnswer = permission !== null;
+
   useEffect(() => {
-    if (visible && permission && !granted && canAskAgain) {
-      requestPermission();
+    if (!visible) {
+      askedThisOpenRef.current = false;
+      return;
     }
-  }, [visible, permission, granted, canAskAgain, requestPermission]);
+
+    if (
+      hasPermissionAnswer &&
+      !granted &&
+      canAskAgain &&
+      !askedThisOpenRef.current
+    ) {
+      askedThisOpenRef.current = true;
+      askForPermission();
+    }
+  }, [visible, hasPermissionAnswer, granted, canAskAgain, askForPermission]);
 
   const handleCapture = async () => {
     try {
@@ -72,7 +94,7 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
                   ? 'components.cameraCapture.grant'
                   : 'components.cameraCapture.openSettings',
               )}
-              onPress={canAskAgain ? requestPermission : Linking.openSettings}
+              onPress={canAskAgain ? askForPermission : Linking.openSettings}
             />
           </View>
         )}

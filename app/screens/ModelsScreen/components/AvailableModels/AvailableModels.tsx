@@ -29,7 +29,7 @@ interface AvailableModelsProps {
   onInfoPress: () => void;
 }
 
-export const AvailableModels: React.FC<AvailableModelsProps> = ({
+const AvailableModelsView: React.FC<AvailableModelsProps> = ({
   models,
   isLoading,
   hasError,
@@ -134,3 +134,5 @@ export const AvailableModels: React.FC<AvailableModelsProps> = ({
     </>
   );
 };
+
+export const AvailableModels = React.memo(AvailableModelsView);

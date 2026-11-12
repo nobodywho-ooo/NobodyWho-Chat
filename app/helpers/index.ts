@@ -65,6 +65,7 @@ import {
   pickImageToMessageDocuments,
 } from './mediaPicker';
 import {
+  holdForeground,
   isForegroundHeld,
   resetForegroundHoldForTests,
 } from './foregroundHold';
@@ -152,6 +153,7 @@ export {
   captureImageToMessageDocuments,
   pickAudioToMessageDocuments,
   pickImageToMessageDocuments,
+  holdForeground,
   isForegroundHeld,
   resetForegroundHoldForTests,
   deleteMessageDocuments,

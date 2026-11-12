@@ -42,9 +42,10 @@ export const useAvailableModels = () => {
     [storedModels],
   );
 
+  const downloadingKey = downloads.map(download => download.model.id).join(',');
   const downloadingModelIds = useMemo(
-    () => downloads.map(download => download.model.id),
-    [downloads],
+    () => (downloadingKey === '' ? [] : downloadingKey.split(',').map(Number)),
+    [downloadingKey],
   );
 
   const availableModels = useMemo(
@@ -69,6 +70,7 @@ export const useAvailableModels = () => {
   );
 
   return {
+    downloads,
     availableModels,
     inUseModels,
     downloadedCount: downloadedModelIds.length,

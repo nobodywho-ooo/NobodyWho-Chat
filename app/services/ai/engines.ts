@@ -163,6 +163,12 @@ export const CHAT_ENGINE: EngineSpec<Chat, ChatOptions> = {
       throw error;
     }
 
+    try {
+      loaded.destroy();
+    } catch (error) {
+      log('AiService chat: releasing the model handle failed', error);
+    }
+
     return {
       instance,
       state: {

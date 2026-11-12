@@ -33,7 +33,7 @@ interface ModelCardProps {
   onPress?: (model: Model) => void;
 }
 
-export const ModelCard: React.FC<ModelCardProps> = ({
+const ModelCardView: React.FC<ModelCardProps> = ({
   style,
   isSelected,
   isDownloaded,
@@ -189,3 +189,5 @@ export const ModelCard: React.FC<ModelCardProps> = ({
     </Pressable>
   );
 };
+
+export const ModelCard = React.memo(ModelCardView);

@@ -21,7 +21,7 @@ import {
   wavToEnvelope,
 } from 'helpers';
 import { useSpeechService } from 'hooks';
-import { ToolInvocation } from 'types';
+import { ModelSlot, ToolInvocation } from 'types';
 import { getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
 import {
@@ -101,6 +101,7 @@ export const useVoiceConversation = ({
     ttsState,
     vadState,
     ttsArchitecture,
+    ensureVoiceEngine,
   } = useAiService();
   const chat = slots.chat.ref;
   const { borrow: borrowStt } = slots.stt;
@@ -132,6 +133,23 @@ export const useVoiceConversation = ({
     }),
     [chatState, sttState, ttsState, vadState, speechService.enabled],
   );
+
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+
+    if (ttsState === AiModelState.NotLoaded) {
+      ensureVoiceEngine(ModelSlot.tts);
+    }
+    if (sttState === AiModelState.NotLoaded) {
+      ensureVoiceEngine(ModelSlot.stt);
+    }
+    if (vadState === AiModelState.NotLoaded) {
+      ensureVoiceEngine(ModelSlot.vad);
+    }
+  }, [active, ttsState, sttState, vadState, ensureVoiceEngine]);
+
   const isReady =
     voiceAssistantStatus.isChatReady &&
     voiceAssistantStatus.isSttReady &&

@@ -1,10 +1,10 @@
 import * as React from 'react';
 import {
-  Dimensions,
   Platform,
   Pressable,
   StyleSheet,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -238,6 +238,7 @@ export const DrawerNavigator = () => {
   const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
 
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
 
   return (
     <Drawer.Navigator
@@ -256,7 +257,7 @@ export const DrawerNavigator = () => {
         drawerType: 'front',
         overlayStyle: { backgroundColor: colors.shadow },
         swipeEnabled: true,
-        swipeEdgeWidth: Dimensions.get('window').width,
+        swipeEdgeWidth: windowWidth,
         configureGestureHandler: buildLeftDrawerGesture(
           openSide === 'left',
           scrollGesture,

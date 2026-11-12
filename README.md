@@ -80,17 +80,19 @@ make clean-cache
 
 ### 4. Build the App
 
-Build Android
+Build apk
 
 ```sh
-make android-apk
+make apk
 ```
 
-Install apk on android
+Install apk
 
 ```sh
-adb install android/app/build/outputs/apk/release/app-release.apk
+make apk-install
 ```
+
+Build aab
 
 ```sh
 make android-aab

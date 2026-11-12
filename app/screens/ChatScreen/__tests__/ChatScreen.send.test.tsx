@@ -1252,3 +1252,54 @@ test('stopping mid-thinking keeps the block open for a template-opened model', a
     expect(assistant.content).toBe('<think>I was working out that');
   });
 });
+
+test('a conversation restored while the model loaded is adopted for the next send', async () => {
+  // The chat root mounts the screen with no conversation while the model
+  // loads, then hands it the one restored from the last launch.
+  const screen = await render(
+    <ChatScreen
+      conversationId={undefined}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+      disabled
+    />,
+  );
+
+  await screen.rerender(
+    <ChatScreen
+      conversationId={5}
+      messages={[{ role: 'user', content: 'earlier' }]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  expect(mockInsertConversation).not.toHaveBeenCalled();
+  expect(mockInsertMessage).toHaveBeenCalledWith(
+    expect.objectContaining({ conversationId: 5, role: 'user' }),
+  );
+});
+
+test('a failure creating the conversation settles the screen', async () => {
+  mockInsertConversation.mockRejectedValue(new Error('disk I/O error'));
+  const screen = await render(
+    <ChatScreen
+      conversationId={undefined}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  // Not left streaming with nothing behind it: the optimistic turn is gone,
+  // the text is back in the composer, and the next send goes through.
+  expect(inputBar(screen).props.isStreaming).toBe(false);
+  expect(inputBar(screen).props.value).toBe('hi');
+  expect(screen.queryByText('hi')).toBeNull();
+
+  mockInsertConversation.mockResolvedValue(42);
+  await send(screen, 'again');
+  expect(mockInsertConversation).toHaveBeenCalledTimes(2);
+});

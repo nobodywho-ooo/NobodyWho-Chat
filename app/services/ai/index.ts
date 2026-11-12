@@ -2,6 +2,8 @@ export { AiServiceProvider, useAiService } from './AiService';
 export type { AiServiceContextValue, AiSlots } from './AiService';
 export type { NativeSlot } from './nativeSlot';
 export { AiModelState } from './state';
+export { VOICE_SLOTS } from './voiceEngines';
+export type { VoiceSlot } from './voiceEngines';
 export type {
   ChatOptions,
   SttOptions,

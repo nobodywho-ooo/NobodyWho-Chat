@@ -9,7 +9,6 @@ import {
   getMarkdownStyle,
   haptics,
   parseThinking,
-  stripThinkingBlocks,
 } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
 import { DisplayMessage } from 'types';
@@ -83,17 +82,16 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
 
   const handleCopy = useCallback(() => {
     try {
-      const text = stripThinkingBlocks(content);
-      if (text === '') {
+      if (rest === '') {
         return;
       }
-      copyToClipboard(text);
+      copyToClipboard(rest);
       haptics.medium();
       setCopied(true);
     } catch (error) {
       log('handleCopy copy error ', error);
     }
-  }, [content]);
+  }, [rest]);
 
   const handleLinkPress = useCallback(({ url }: { url: string }) => {
     Linking.openURL(url).catch(error =>
@@ -113,8 +111,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
   const isAwaitingResponse =
     isStreaming && content.length === 0 && toolInvocations.length === 0;
   const isThinkingActive = isStreaming && !isThinkingComplete;
-  const canCopyAssistantText =
-    stripThinkingBlocks(content) !== '' && !isStreaming;
+  const canCopyAssistantText = !isStreaming && rest !== '';
 
   const showAudioSpeaker = canPlayAudio && !isStreaming && rest.length > 0;
 

@@ -3,7 +3,7 @@ import { Alert, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { useModelDownloader, useModelDownloads, useStyled } from 'hooks';
+import { useModelDownloader, useStyled } from 'hooks';
 import { Spacings } from 'style';
 
 import styles from './ModelsScreen.styles';
@@ -21,8 +21,8 @@ export const ModelsScreen: React.FC = () => {
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
-  const { downloads } = useModelDownloads();
   const {
+    downloads,
     availableModels,
     inUseModels,
     downloadedCount,

@@ -2,7 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
 import { log, synthesizeSpeech } from 'helpers';
-import { AiModelState, useAiService } from 'services';
+import { ModelSlot } from 'types';
+import { useAiService } from 'services';
 
 interface TtsPlayback {
   loadingId: string | null;
@@ -21,8 +22,8 @@ const PLAYBACK_FILE = 'tts-playback.wav';
 export const useTtsPlayback = (): TtsPlayback => {
   const busyRef = useRef(false);
   const generationRef = useRef(0);
-  const { slots, ttsState, ttsArchitecture } = useAiService();
-  const { borrow: borrowTts } = slots.tts;
+  const { slots, ensureVoiceEngine } = useAiService();
+  const { borrow: borrowTts, loadedState: ttsLoadedState } = slots.tts;
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
 
@@ -56,18 +57,23 @@ export const useTtsPlayback = (): TtsPlayback => {
       if (busyRef.current) {
         return;
       }
-      if (ttsState !== AiModelState.Ready) {
-        return;
-      }
 
       busyRef.current = true;
       const generation = ++generationRef.current;
       setLoadingId(messageId);
       try {
+        if (!(await ensureVoiceEngine(ModelSlot.tts))) {
+          return;
+        }
+
+        if (generation !== generationRef.current) {
+          return;
+        }
+
         const wav = await borrowTts(engine =>
           synthesizeSpeech(
             engine,
-            ttsArchitecture,
+            ttsLoadedState.current?.ttsArchitecture,
             text,
             () => generation === generationRef.current,
           ),
@@ -93,7 +99,7 @@ export const useTtsPlayback = (): TtsPlayback => {
         busyRef.current = false;
       }
     },
-    [borrowTts, ttsState, ttsArchitecture, player],
+    [borrowTts, ensureVoiceEngine, ttsLoadedState, player],
   );
 
   return { loadingId, playingId, play, stop };

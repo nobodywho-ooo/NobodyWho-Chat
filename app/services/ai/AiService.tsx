@@ -27,6 +27,7 @@ import {
 import { useNativeBackend } from './nativeBackend';
 import { NativeSlot, useNativeSlot } from './nativeSlot';
 import { AiServiceState, INITIAL_STATE } from './state';
+import { VoiceSlot, useEnsureVoiceEngine } from './voiceEngines';
 
 export type AiSlots = {
   [ModelSlot.chat]: NativeSlot<Chat, ChatOptions>;
@@ -38,6 +39,7 @@ export type AiSlots = {
 export interface AiServiceContextValue extends AiServiceState {
   slots: AiSlots;
   disposeAll: () => void;
+  ensureVoiceEngine: (slot: VoiceSlot) => Promise<boolean>;
 }
 
 const AiServiceContext = createContext<AiServiceContextValue | undefined>(
@@ -64,9 +66,11 @@ export const AiServiceProvider: React.FC<{ children: React.ReactNode }> = ({
     Object.values(slots).forEach(slot => slot.dispose());
   }, [slots]);
 
+  const ensureVoiceEngine = useEnsureVoiceEngine(slots);
+
   const value = useMemo<AiServiceContextValue>(
-    () => ({ ...state, slots, disposeAll }),
-    [state, slots, disposeAll],
+    () => ({ ...state, slots, disposeAll, ensureVoiceEngine }),
+    [state, slots, disposeAll, ensureVoiceEngine],
   );
 
   return (

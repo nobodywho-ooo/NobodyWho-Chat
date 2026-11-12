@@ -9,6 +9,7 @@ import {
   requestMicrophonePermission,
 } from 'helpers';
 import { useSpeechService } from 'hooks';
+import { ModelSlot } from 'types';
 import { AiModelState, useAiService, VAD_SAMPLE_RATE } from 'services';
 
 interface SttTranscription {
@@ -38,8 +39,9 @@ export const useSttTranscription = ({
   onPermissionDenied,
 }: SttTranscriptionOptions): SttTranscription => {
   const busyRef = useRef(false);
-  const { slots, sttState } = useAiService();
+  const { slots, sttState, ensureVoiceEngine } = useAiService();
   const { borrow: borrowStt } = slots.stt;
+  const sttLoadRef = useRef<Promise<boolean> | undefined>(undefined);
 
   // cancelRecording is defined below but has to be reachable from the preempt callback
   const cancelRecordingRef = useRef<() => void>(() => undefined);
@@ -152,9 +154,6 @@ export const useSttTranscription = ({
     if (busyRef.current || isRecordingRef.current) {
       return;
     }
-    if (sttState !== AiModelState.Ready) {
-      return;
-    }
 
     const generation = captureGeneration.current;
     const abandoned = () => generation !== captureGeneration.current;
@@ -166,6 +165,13 @@ export const useSttTranscription = ({
         onPermissionDenied?.();
         return;
       }
+
+      if (abandoned()) {
+        return;
+      }
+
+      sttLoadRef.current = ensureVoiceEngine(ModelSlot.stt);
+      await ensureVoiceEngine(ModelSlot.vad);
 
       if (abandoned()) {
         return;
@@ -199,7 +205,7 @@ export const useSttTranscription = ({
       busyRef.current = false;
     }
   }, [
-    sttState,
+    ensureVoiceEngine,
     stream,
     onPermissionDenied,
     releaseRecordingMode,
@@ -239,11 +245,18 @@ export const useSttTranscription = ({
       const sampleRate = speech ? VAD_SAMPLE_RATE : sampleRateRef.current;
       speechService.release();
 
-      if (samples.length === 0 || sttState !== AiModelState.Ready) {
+      if (samples.length === 0) {
         return;
       }
 
       setIsTranscribing(true);
+
+      const sttLoad = sttLoadRef.current ?? ensureVoiceEngine(ModelSlot.stt);
+      sttLoadRef.current = undefined;
+
+      if (!(await sttLoad)) {
+        return;
+      }
 
       const text = cleanTranscript(
         await borrowStt(instance =>
@@ -261,7 +274,7 @@ export const useSttTranscription = ({
       busyRef.current = false;
     }
   }, [
-    sttState,
+    ensureVoiceEngine,
     borrowStt,
     stream,
     onTranscribed,
@@ -308,9 +321,20 @@ export const useSttTranscription = ({
 
   // If the engine is torn down while recording (model switch, backgrounding),
   // stop the capture so the microphone is released instead of staying open with
-  // no engine left to transcribe into.
+  // no engine left to transcribe into. A teardown, not merely "not ready": the
+  // engine now loads during the first recording, so NotLoaded → Loading →
+  // Ready under a live capture is expected.
+  const previousSttStateRef = useRef(sttState);
+
   useEffect(() => {
-    if (isRecording && sttState !== AiModelState.Ready) {
+    const previous = previousSttStateRef.current;
+    previousSttStateRef.current = sttState;
+
+    const tornDown =
+      sttState === AiModelState.NotLoaded &&
+      (previous === AiModelState.Ready || previous === AiModelState.Loading);
+
+    if (isRecording && tornDown) {
       cancelRecording();
     }
   }, [isRecording, sttState, cancelRecording]);

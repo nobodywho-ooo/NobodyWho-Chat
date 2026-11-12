@@ -19,7 +19,6 @@ import { useTranslation } from 'react-i18next';
 import { SamplerPresets } from 'react-native-nobodywho';
 import {
   DisplayMessage,
-  Model,
   ModelSlot,
   isChatPipeline,
   modelSlotSpec,
@@ -39,7 +38,12 @@ import {
 import { log, isForegroundHeld, toChatHistory, toModelHistory } from 'helpers';
 import { Toast } from 'components';
 import { useAppState, useModels, useStyled } from 'hooks';
-import { subscribeConversationSync, useAiService } from 'services';
+import {
+  VOICE_SLOTS,
+  VoiceSlot,
+  subscribeConversationSync,
+  useAiService,
+} from 'services';
 import {
   ChatScreen,
   CustomizeAssistantScreen,
@@ -148,7 +152,7 @@ export const ChatStackNavigator = () => {
   const { colors } = useStyled();
   const { models, loading: modelsLoading } = useModels();
   const { modelIdInUse } = useAppState();
-  const { slots } = useAiService();
+  const { slots, ensureVoiceEngine } = useAiService();
   const chat = slots.chat.ref;
 
   const [status, setStatus] = useState<SessionStatus>(SessionStatus.Loading);
@@ -198,7 +202,13 @@ export const ChatStackNavigator = () => {
     return created && chat.current !== undefined;
   }, [slots, chat]);
 
+  // Bumped by every history load. Loads can overlap: two quick drawer picks for e.g
+  const historyLoadRef = useRef(0);
+
   const resetAndLoadChatHistory = useCallback(async () => {
+    const load = ++historyLoadRef.current;
+    const isCurrent = () => load === historyLoadRef.current;
+
     if (chat.current === undefined) {
       throw new Error('ChatStackNavigator: current chat is undefined');
     }
@@ -206,6 +216,9 @@ export const ChatStackNavigator = () => {
     const { modelIdInUse: modelId, conversationIdInUse } = getAppState();
     if (conversationIdInUse === undefined) {
       await chat.current.setChatHistory([]);
+      if (!isCurrent()) {
+        return;
+      }
       setChatHistory(emptyHistory());
       setLoadedConversationId(undefined);
       return;
@@ -226,7 +239,19 @@ export const ChatStackNavigator = () => {
 
     const messages = await getMessagesByConversationId(conversationIdInUse);
 
+    if (!isCurrent()) {
+      return;
+    }
+
+    if (chat.current === undefined) {
+      throw new Error('ChatStackNavigator: current chat is undefined');
+    }
+
     await chat.current.setChatHistory(toModelHistory(messages));
+
+    if (!isCurrent()) {
+      return;
+    }
 
     setChatHistory(toChatHistory(messages));
     setLoadedConversationId(conversationIdInUse);
@@ -285,13 +310,20 @@ export const ChatStackNavigator = () => {
 
   // History-only refresh: used when the in-use chat changes (same model/chat).
   const refreshChatHistory = useCallback(async () => {
+    const sessionId = sessionIdRef.current;
+
     try {
       await resetAndLoadChatHistory();
-      setStatus(SessionStatus.Ready);
+
+      if (sessionId === sessionIdRef.current) {
+        setStatus(SessionStatus.Ready);
+      }
     } catch (error) {
       // A model switch can dispose our chat mid-load; since that takes seconds,
       // let its startSession own the status rather than flashing an error screen.
-      if (chat.current === undefined) return;
+      if (chat.current === undefined || sessionId !== sessionIdRef.current) {
+        return;
+      }
       log('ChatStackNavigator history refresh error', error, { capture: true });
       setStatus(SessionStatus.Error);
     }
@@ -318,8 +350,13 @@ export const ChatStackNavigator = () => {
   // chat, so its context is already current — only the on-screen messages need
   // to catch up.
   const reloadDisplayHistory = useCallback(async (id: number) => {
+    const load = ++historyLoadRef.current;
+
     try {
       const messages = await getMessagesByConversationId(id);
+      if (load !== historyLoadRef.current) {
+        return;
+      }
       setChatHistory(toChatHistory(messages));
       setLoadedConversationId(id);
     } catch (error) {
@@ -347,86 +384,25 @@ export const ChatStackNavigator = () => {
     [handleConversationSynced],
   );
 
-  // The engines that load straight from their own app-state slot, as opposed to
-  // the chat model, whose load goes through startSession (history, system
-  // prompt, sampler). Driving them from one table keeps the three lifecycle
-  // sites — first load, app-state change, and background/foreground — from
-  // drifting apart, which is how a slot ends up loading on launch but never
-  // coming back after a resume.
-  const auxSlots = useMemo(
-    () => [
-      {
-        slot: ModelSlot.tts,
-        create: (model: Model) => {
-          // Voice/language were resolved and stored when this model was
-          // selected (see resolveTtsPrefs at the selection sites), each in the
-          // vocabulary its engine accepts. Read them straight from the config —
-          // undefined lets the engine keep its own default for that option.
-          const { assistantConfig = DEFAULT_ASSISTANT_CONFIG } = getAppState();
-          return slots.tts.create({
-            model,
-            voice: assistantConfig.ttsVoice,
-            language: assistantConfig.ttsLanguage,
-          });
-        },
-        // Voice and language live in assistantConfig but are load-time options,
-        // so an edit to either has to reload the engine even though the
-        // selected model is unchanged.
-        configChanged: (next: AssistantConfig, prev: AssistantConfig) =>
-          next.ttsVoice !== prev.ttsVoice ||
-          next.ttsLanguage !== prev.ttsLanguage,
-      },
-      {
-        slot: ModelSlot.stt,
-        create: (model: Model) => {
-          // Undefined is the automatic setting: the engine then detects the
-          // spoken language on every transcription, which a fixed code skips.
-          const { assistantConfig = DEFAULT_ASSISTANT_CONFIG } = getAppState();
-          return slots.stt.create({
-            model,
-            language: assistantConfig.sttLanguage,
-          });
-        },
-        // Like the TTS options above, the language is fixed at load time, so
-        // changing it has to reload the engine on an unchanged model.
-        configChanged: (next: AssistantConfig, prev: AssistantConfig) =>
-          next.sttLanguage !== prev.sttLanguage,
-      },
-      {
-        slot: ModelSlot.vad,
-        create: (model: Model) => slots.vad.create({ model }),
-      },
-    ],
-    [slots],
+  // Voice and language live in assistantConfig but are load-time options, so
+  // an edit to one has to reload its engine even though the selected model is
+  // unchanged. VAD has no options.
+  const voiceConfigChanged = useCallback(
+    (slot: VoiceSlot, next: AssistantConfig, prev: AssistantConfig) => {
+      switch (slot) {
+        case ModelSlot.tts:
+          return (
+            next.ttsVoice !== prev.ttsVoice ||
+            next.ttsLanguage !== prev.ttsLanguage
+          );
+        case ModelSlot.stt:
+          return next.sttLanguage !== prev.sttLanguage;
+        case ModelSlot.vad:
+          return false;
+      }
+    },
+    [],
   );
-
-  type AuxSlot = (typeof auxSlots)[number];
-
-  // Called fire-and-forget from all three lifecycle sites, so every await inside
-  // has to be guarded: the model lookup opens the database lazily and can reject
-  // when the handle is closed or the tables are being rebuilt, which is exactly
-  // what a foreground transition racing a reset looks like.
-  const loadAuxSlot = useCallback(async (entry: AuxSlot) => {
-    const { appStateKey, accepts } = modelSlotSpec(entry.slot);
-
-    try {
-      const modelId = getAppState()[appStateKey];
-
-      if (modelId === undefined) {
-        return;
-      }
-
-      const model = await getModelById(modelId);
-
-      if (model === undefined || !accepts(model.pipeline)) {
-        return;
-      }
-
-      await entry.create(model);
-    } catch (error) {
-      log(`ChatStackNavigator ${entry.slot} load`, error, { capture: true });
-    }
-  }, []);
 
   // --- Lifecycle triggers ----------------------------------------------------
 
@@ -436,8 +412,7 @@ export const ChatStackNavigator = () => {
     if (getAppState().modelIdInUse !== undefined) {
       startSession();
     }
-    auxSlots.forEach(loadAuxSlot);
-  }, [startSession, auxSlots, loadAuxSlot]);
+  }, [startSession]);
 
   // React to app-state changes: a model or assistant-config change tears down
   // the chat and rebuilds from scratch; a conversation-only change reloads just the history.
@@ -450,22 +425,24 @@ export const ChatStackNavigator = () => {
       const nextConfig = next.assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
       const prevConfig = prev.assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
 
-      auxSlots.forEach(entry => {
-        const { appStateKey } = modelSlotSpec(entry.slot);
+      VOICE_SLOTS.forEach(slot => {
+        const { appStateKey } = modelSlotSpec(slot);
         const selected = next[appStateKey];
         const modelChanged = selected !== prev[appStateKey];
         const optionsChanged =
           selected !== undefined &&
-          (entry.configChanged?.(nextConfig, prevConfig) ?? false);
+          voiceConfigChanged(slot, nextConfig, prevConfig);
 
         if (!modelChanged && !optionsChanged) {
           return;
         }
 
-        slots[entry.slot].dispose();
+        const wasLoaded = slots[slot].ref.current !== undefined;
 
-        if (selected !== undefined) {
-          loadAuxSlot(entry);
+        slots[slot].dispose();
+
+        if (selected !== undefined && wasLoaded) {
+          ensureVoiceEngine(slot);
         }
       });
 
@@ -491,16 +468,28 @@ export const ChatStackNavigator = () => {
           selfCreatedConversationIdRef.current = undefined;
           return;
         }
+        // Switch to another conversation (New chat, delete...)
+        try {
+          chat.current?.stopGeneration();
+        } catch (error) {
+          log('ChatStackNavigator stopGeneration', error);
+        }
         refreshChatHistory();
       }
     });
-  }, [slots, startSession, refreshChatHistory, auxSlots, loadAuxSlot]);
+  }, [
+    slots,
+    chat,
+    startSession,
+    refreshChatHistory,
+    voiceConfigChanged,
+    ensureVoiceEngine,
+  ]);
 
-  // Which slots this component released on the way to the background, so the
-  // resume reloads exactly those. A set keyed by slot rather than one boolean
-  // ref per engine: a new slot then needs no matching ref, and a forgotten one
-  // can't leave an engine unloaded after a resume with nothing to notice it.
-  const unloadedForBackground = useRef(new Set<ModelSlot>());
+  // Whether the chat was released on the way to the background, so the resume
+  // reloads it. The speech engines are released too but not reloaded: they
+  // come back on their next use, so a resume only waits for the chat model.
+  const chatUnloadedForBackground = useRef(false);
 
   useEffect(() => {
     const subscription = AppState.addEventListener(
@@ -513,36 +502,23 @@ export const ChatStackNavigator = () => {
 
           if (getAppState().modelIdInUse !== undefined) {
             slots.chat.dispose();
-            unloadedForBackground.current.add(ModelSlot.chat);
+            chatUnloadedForBackground.current = true;
           }
 
-          auxSlots.forEach(entry => {
-            const { appStateKey } = modelSlotSpec(entry.slot);
-
-            if (getAppState()[appStateKey] !== undefined) {
-              slots[entry.slot].dispose();
-              unloadedForBackground.current.add(entry.slot);
-            }
-          });
+          VOICE_SLOTS.forEach(slot => slots[slot].dispose());
         } else if (nextState === 'active') {
-          const unloaded = unloadedForBackground.current;
+          if (chatUnloadedForBackground.current) {
+            chatUnloadedForBackground.current = false;
 
-          if (unloaded.delete(ModelSlot.chat)) {
             if (getAppState().modelIdInUse !== undefined) {
               startSession();
             }
           }
-
-          auxSlots.forEach(entry => {
-            if (unloaded.delete(entry.slot)) {
-              loadAuxSlot(entry);
-            }
-          });
         }
       },
     );
     return () => subscription.remove();
-  }, [slots, startSession, auxSlots, loadAuxSlot]);
+  }, [slots, startSession]);
 
   const inUseModelName = models.find(m => m.id === modelIdInUse)?.name;
   const loadingMessage = inUseModelName

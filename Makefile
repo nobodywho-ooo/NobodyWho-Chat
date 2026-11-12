@@ -33,6 +33,9 @@ apk:
 	cd android && ./gradlew assembleRelease
 	open android/app/build/outputs/apk/release/
 
+apk-install:
+	adb install android/app/build/outputs/apk/release/app-release.apk
+
 aab:
 	export JAVA_HOME=$$(/usr/libexec/java_home -v 21) && \
 	cd android && ./gradlew bundleRelease

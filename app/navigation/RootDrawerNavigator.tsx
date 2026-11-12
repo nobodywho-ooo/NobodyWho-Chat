@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Dimensions } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   createDrawerNavigator,
@@ -75,6 +75,7 @@ const renderVoiceAssistant = ({ navigation }: DrawerContentComponentProps) => (
 const RootDrawer = () => {
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
+  const { width: windowWidth } = useWindowDimensions();
   const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
   const chatModel = useSlotModel(ModelSlot.chat);
 
@@ -94,7 +95,7 @@ const RootDrawer = () => {
         drawerType: 'front',
         overlayStyle: { backgroundColor: colors.shadow },
         swipeEnabled: true,
-        swipeEdgeWidth: Dimensions.get('window').width,
+        swipeEdgeWidth: windowWidth,
         // Left-ward drag opens; while open, a right-ward drag closes it. The
         // left drawer owns right-ward drags, so the two never fight.
         configureGestureHandler: buildRightDrawerGesture(

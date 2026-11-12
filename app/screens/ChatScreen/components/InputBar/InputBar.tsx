@@ -58,7 +58,7 @@ interface InputBarProps {
   onStopDictation?: () => void;
 }
 
-export const InputBar: React.FC<InputBarProps> = ({
+const InputBarView: React.FC<InputBarProps> = ({
   value,
   isStreaming,
   disabled = false,
@@ -427,6 +427,10 @@ export const InputBar: React.FC<InputBarProps> = ({
     </View>
   );
 };
+
+// Memoized: ChatScreen re-renders on every streamed token, and none of that
+// reaches the bar — its props keep their identity for the length of a turn.
+export const InputBar = React.memo(InputBarView);
 
 interface InputBarActionProps {
   isStreaming: boolean;

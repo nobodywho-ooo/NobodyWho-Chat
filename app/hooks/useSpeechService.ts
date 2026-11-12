@@ -69,13 +69,6 @@ interface Holder {
 // to it.
 let owner: Holder | undefined;
 
-const DISABLED_SERVICE: Omit<SpeechService, 'enabled'> = {
-  reset: () => undefined,
-  release: () => undefined,
-  push: () => false,
-  takeSpeechToTranscribe: () => undefined,
-};
-
 export const useSpeechService = (
   options: SpeechServiceOptions = {},
 ): SpeechService => {
@@ -183,11 +176,12 @@ export const useSpeechService = (
     }
   }, [vad]);
 
-  return useMemo(() => {
-    if (ready) {
-      return { enabled: true, reset, release, push, takeSpeechToTranscribe };
-    }
-
-    return { enabled: false, ...DISABLED_SERVICE };
-  }, [ready, reset, release, push, takeSpeechToTranscribe]);
+  // The functions are live even while no detector is loaded: they read the
+  // instance at call time and are inert without one. A dictation that starts
+  // while the detector is still loading on first use claims it up front, and
+  // its later buffers reach the detector as soon as it is there.
+  return useMemo(
+    () => ({ enabled: ready, reset, release, push, takeSpeechToTranscribe }),
+    [ready, reset, release, push, takeSpeechToTranscribe],
+  );
 };

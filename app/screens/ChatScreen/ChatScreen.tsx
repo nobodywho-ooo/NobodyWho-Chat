@@ -15,13 +15,13 @@ import { BlurTargetView, BlurView } from 'expo-blur';
 import LinearGradient from 'react-native-linear-gradient';
 import { MessageListItem, ScrollToBottomButton } from 'components';
 import { useTheme } from 'context';
-import { useAppState, useStyled } from 'hooks';
+import { useAppState, useStableCallback, useStyled } from 'hooks';
 import {
   DisplayMessage,
   pipelineIngestsAudio,
   pipelineIngestsImage,
 } from 'types';
-import { AiModelState, useAiService } from 'services';
+import { useAiService } from 'services';
 import { isAndroid } from 'helpers';
 import { Theme } from 'types';
 
@@ -66,14 +66,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const { colors } = useStyled();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { slots, chatPipeline, chatThinkOpen, ttsState, sttState } =
-    useAiService();
+  const { slots, chatPipeline, chatThinkOpen } = useAiService();
   const { ttsModelIdInUse, sttModelIdInUse } = useAppState();
 
-  const canPlayAudio =
-    ttsModelIdInUse !== undefined && ttsState === AiModelState.Ready;
-  const canDictate =
-    sttModelIdInUse !== undefined && sttState === AiModelState.Ready;
+  const canPlayAudio = ttsModelIdInUse !== undefined;
+  const canDictate = sttModelIdInUse !== undefined;
   const {
     playingId: audioPlayingId,
     loadingId: audioLoadingId,
@@ -81,6 +78,21 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     stop: stopAudio,
   } = useTtsPlayback();
   const [inputText, setInputText] = useState('');
+
+  const handleTranscribed = useCallback(
+    (text: string) =>
+      setInputText(prev => (prev.trim() ? `${prev.trimEnd()} ${text}` : text)),
+    [],
+  );
+  const handleMicrophoneDenied = useCallback(
+    () =>
+      Alert.alert(
+        t('components.inputBar.microphoneDeniedTitle'),
+        t('components.inputBar.microphoneDeniedMessage'),
+      ),
+    [t],
+  );
+
   const {
     isRecording,
     isTranscribing,
@@ -88,17 +100,15 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     stopRecording,
     cancelRecording,
   } = useSttTranscription({
-    onTranscribed: text =>
-      setInputText(prev => (prev.trim() ? `${prev.trimEnd()} ${text}` : text)),
-    onPermissionDenied: () =>
-      Alert.alert(
-        t('components.inputBar.microphoneDeniedTitle'),
-        t('components.inputBar.microphoneDeniedMessage'),
-      ),
+    onTranscribed: handleTranscribed,
+    onPermissionDenied: handleMicrophoneDenied,
   });
   const [messages, setMessages] = useState<DisplayMessage[]>(initialMessages);
   const [conversationId, setConversationId] = useState(initialConversationId);
   const [attachExpanded, setAttachExpanded] = useState(false);
+
+  const conversationIdRef = useRef(conversationId);
+  conversationIdRef.current = conversationId;
 
   const blurTargetRef = useRef<ComponentRef<typeof View>>(null);
   const previousConversationIdRef = useRef<number | undefined | 'mount'>(
@@ -106,6 +116,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   );
 
   const list = useMessageListScroll(messages);
+  const { showConversation } = list;
 
   const ingestsImage = pipelineIngestsImage(chatPipeline);
   const ingestsAudio = pipelineIngestsAudio(chatPipeline);
@@ -139,7 +150,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
     const isSameConversation =
       previous === initialConversationId ||
-      (previous === undefined && initialConversationId !== undefined);
+      (previous === undefined &&
+        initialConversationId !== undefined &&
+        initialConversationId === conversationIdRef.current);
 
     if (isSameConversation) {
       return;
@@ -150,13 +163,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     clearAllAttachments();
     stopAudio();
     cancelRecording();
-    list.showConversation();
+    showConversation();
   }, [
     initialConversationId,
     clearAllAttachments,
     stopAudio,
     cancelRecording,
-    list,
+    showConversation,
   ]);
 
   // Switching models => Drop the attachments whenever the pipeline's capabilities change,
@@ -218,13 +231,29 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const hasMessages = messages.length > 0;
 
-  const messageStarters = messages.length === 0 && !attachExpanded && (
-    <MessageStarters
-      pipeline={chatPipeline}
-      onSelect={setInputText}
-      disabled={disabled}
-    />
+  const showStarters = !hasMessages && !attachExpanded;
+  const messageStarters = useMemo(
+    () =>
+      showStarters && (
+        <MessageStarters
+          pipeline={chatPipeline}
+          onSelect={setInputText}
+          disabled={disabled}
+        />
+      ),
+    [showStarters, chatPipeline, disabled],
   );
+
+  const inputBarStyle = useMemo(
+    () => ({ paddingBottom: insets.bottom + INPUT_BAR_PADDING }),
+    [insets.bottom],
+  );
+
+  const onSend = useStableCallback(handleSend);
+  const onStop = useStableCallback(stopStreaming);
+  const onAttachImage = useStableCallback(attachments.handleAttachImage);
+  const onAttachCamera = useStableCallback(attachments.handleAttachCamera);
+  const onAttachAudio = useStableCallback(attachments.handleAttachAudio);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
@@ -310,18 +339,18 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           showAudioAttach={ingestsAudio}
           imageSource={attachments.attachedDocuments?.imageSource}
           hasAudio={!!attachments.attachedDocuments?.audioPath}
-          onAttachImage={attachments.handleAttachImage}
-          onAttachCamera={attachments.handleAttachCamera}
-          onAttachAudio={attachments.handleAttachAudio}
+          onAttachImage={onAttachImage}
+          onAttachCamera={onAttachCamera}
+          onAttachAudio={onAttachAudio}
           showDictation={canDictate}
           isRecording={isRecording}
           isTranscribing={isTranscribing}
           onStartDictation={startRecording}
           onStopDictation={stopRecording}
           onChangeText={setInputText}
-          onSend={handleSend}
-          onStop={stopStreaming}
-          style={{ paddingBottom: insets.bottom + INPUT_BAR_PADDING }}
+          onSend={onSend}
+          onStop={onStop}
+          style={inputBarStyle}
           messageStarters={messageStarters}
         />
       </KeyboardStickyView>
