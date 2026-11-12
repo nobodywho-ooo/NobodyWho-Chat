@@ -8,3 +8,9 @@
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
 # Add any project specific keep options here:
+
+# op-sqlite: OPSQLiteBridge is driven from C++ over JNI and ships no consumer rules.
+-keep class com.op.sqlite.** { *; }
+
+# react-native-device-info looks up the Play Install Referrer API by reflection.
+-keep class com.android.installreferrer.api.** { *; }
