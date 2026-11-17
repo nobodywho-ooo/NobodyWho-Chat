@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo, useRef } from 'react';
+import * as Sentry from '@sentry/react-native';
 import { log } from 'helpers';
-import { Model, ModelSlot, modelSlotSpec } from 'types';
+import { Model, ModelPipeline, ModelSlot, modelSlotSpec } from 'types';
 
 import { NativeBackend } from './nativeBackend';
 import { AiModelState, AiServiceState, SlotStateKey } from './state';
@@ -16,6 +17,32 @@ const attempt = (what: string, run: () => void) => {
     log(`AiService ${what} failed`, error, { capture: true });
   }
 };
+
+const loadsProjection = (model: Model) =>
+  model.pipeline !== ModelPipeline.textGeneration &&
+  model.parts.some(part => part.type === 'projection-model');
+
+const modelTelemetry = (slot: ModelSlot, model: Model) => ({
+  tags: {
+    'model.slot': slot,
+    'model.id': String(model.id),
+    'model.name': model.name,
+    'model.pipeline': model.pipeline,
+    'model.projection': loadsProjection(model) ? 'yes' : 'no',
+  },
+  contexts: {
+    model: {
+      id: model.id,
+      name: model.name,
+      family: model.family,
+      author: model.author,
+      pipeline: model.pipeline,
+      parameterCountBillions: model.parameterCountBillions,
+      sizeGB: model.sizeGB,
+      parts: model.parts.map(part => `${part.type}: ${part.fileName}`),
+    },
+  },
+});
 
 export interface EngineSpec<TInstance extends NativeInstance, TOptions> {
   slot: ModelSlot;
@@ -153,10 +180,15 @@ export const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
           loadedModelId.current = model.id;
           loadedState.current = state;
           publish(AiModelState.Ready, state);
+          Sentry.setTag(`${slot}.model`, model.name);
+
           return true;
         });
       } catch (error) {
-        log(`AiService create ${slot}`, error, { capture: true });
+        log(`AiService create ${slot}`, error, {
+          capture: true,
+          ...modelTelemetry(slot, model),
+        });
         // Only the generation that still owns the slot may surface the error; a
         // superseded load must not flip a newer load's state to Error.
         if (!outdated()) {
@@ -191,7 +223,8 @@ export const useNativeSlot = <TInstance extends NativeInstance, TOptions>(
     }
 
     publish(AiModelState.NotLoaded, cleared);
-  }, [backend, cleared, clearSlot, publish, release]);
+    Sentry.setTag(`${slot}.model`, 'none');
+  }, [backend, cleared, clearSlot, publish, release, slot]);
 
   const borrow = useCallback(
     async <R>(

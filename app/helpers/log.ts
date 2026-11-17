@@ -2,6 +2,8 @@ import * as Sentry from '@sentry/react-native';
 
 interface LogOptions {
   capture?: boolean;
+  tags?: Record<string, string>;
+  contexts?: Record<string, Record<string, unknown>>;
 }
 
 const expandErrors = (value: unknown): unknown =>
@@ -27,6 +29,9 @@ export const log = (...args: unknown[]): void => {
 
   if (options.capture) {
     const error = args.find(arg => arg instanceof Error);
-    Sentry.captureException(error ?? new Error(args.map(String).join(' ')));
+    Sentry.captureException(error ?? new Error(args.map(String).join(' ')), {
+      tags: options.tags,
+      contexts: options.contexts,
+    });
   }
 };

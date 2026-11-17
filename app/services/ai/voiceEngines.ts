@@ -52,28 +52,36 @@ export const useEnsureVoiceEngine = (slots: AiSlots) =>
   useCallback(
     async (slot: VoiceSlot): Promise<boolean> => {
       const { appStateKey, accepts } = modelSlotSpec(slot);
+      const modelId = getAppState()[appStateKey];
+
+      if (modelId === undefined) {
+        return false;
+      }
+
+      let model: Model | undefined;
 
       try {
-        const modelId = getAppState()[appStateKey];
+        model = await getModelById(modelId);
+      } catch (error) {
+        log(`AiService ensure ${slot}: reading model ${modelId}`, error, {
+          capture: true,
+        });
+        return false;
+      }
 
-        if (modelId === undefined) {
-          return false;
-        }
+      if (model === undefined || !accepts(model.pipeline)) {
+        return false;
+      }
 
-        const model = await getModelById(modelId);
+      // The selection may have moved on while the row was read.
+      if (getAppState()[appStateKey] !== modelId) {
+        return false;
+      }
 
-        if (model === undefined || !accepts(model.pipeline)) {
-          return false;
-        }
-
-        // The selection may have moved on while the row was read.
-        if (getAppState()[appStateKey] !== modelId) {
-          return false;
-        }
-
+      try {
         return await createVoiceEngine(slots, slot, model);
       } catch (error) {
-        log(`AiService ensure ${slot}`, error, { capture: true });
+        log(`AiService ensure ${slot}`, error);
         return false;
       }
     },
