@@ -56,6 +56,9 @@ interface InputBarProps {
   isTranscribing?: boolean;
   onStartDictation?: () => void;
   onStopDictation?: () => void;
+  showWebSearch?: boolean;
+  webSearchEnabled?: boolean;
+  onToggleWebSearch?: () => void;
 }
 
 const InputBarView: React.FC<InputBarProps> = ({
@@ -85,6 +88,9 @@ const InputBarView: React.FC<InputBarProps> = ({
   isTranscribing = false,
   onStartDictation,
   onStopDictation,
+  showWebSearch = false,
+  webSearchEnabled = false,
+  onToggleWebSearch,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
@@ -94,8 +100,8 @@ const InputBarView: React.FC<InputBarProps> = ({
   const [focused, setFocused] = useState(false);
 
   const canAttach = showImageAttach || showAudioAttach;
-  const showToggle = canAttach && !isStreaming;
-  const expanded = showToggle && attachExpanded;
+  const showAttachButton = canAttach;
+  const expanded = showAttachButton && attachExpanded;
   const hasImage = imageSource !== undefined;
   const hasAttachment = hasImage || hasAudio;
 
@@ -117,10 +123,10 @@ const InputBarView: React.FC<InputBarProps> = ({
   }, [hasImage, hasAudio, onAttachExpandedChange]);
 
   useEffect(() => {
-    if (attachExpanded && !showToggle) {
+    if (attachExpanded && !showAttachButton) {
       onAttachExpandedChange(false);
     }
-  }, [attachExpanded, showToggle, onAttachExpandedChange]);
+  }, [attachExpanded, showAttachButton, onAttachExpandedChange]);
 
   const toggleAttach = () => {
     haptics.medium();
@@ -243,19 +249,18 @@ const InputBarView: React.FC<InputBarProps> = ({
     onPress: (() => void) | undefined;
     accessibilityLabel: string;
   }) => (
-    <View style={styles.attachContainer}>
-      <IconButton
-        icon={icon}
-        onPress={onPress}
-        disabled={disabled}
-        size={20}
-        color={active ? colors.ctaContentPrimary : colors.onSurface}
-        backgroundColor={
-          active ? colors.ctaSurfacePrimary : colors.surfaceContainer
-        }
-        accessibilityLabel={accessibilityLabel}
-      />
-    </View>
+    <IconButton
+      icon={icon}
+      onPress={onPress}
+      disabled={disabled || isStreaming}
+      size={20}
+      color={active ? colors.ctaContentPrimary : colors.onSurface}
+      backgroundColor={
+        active ? colors.ctaSurfacePrimary : colors.surfaceContainer
+      }
+      accessibilityLabel={accessibilityLabel}
+      style={styles.iconButtonSpacing}
+    />
   );
 
   const renderAttachOption = ({
@@ -370,7 +375,7 @@ const InputBarView: React.FC<InputBarProps> = ({
           <View style={styles.inputBarContainerBottomPart}>
             <View style={styles.inputBarContainerBottomPartLeft}>
               <View style={styles.attachMainContainer}>
-                {showToggle &&
+                {showAttachButton &&
                   renderAttachButton({
                     icon: attachButtonIcon,
                     active: !expanded && hasAttachment,
@@ -380,30 +385,48 @@ const InputBarView: React.FC<InputBarProps> = ({
               </View>
 
               {showDictation &&
-                (!isStreaming || isRecording || isTranscribing) && (
-                  <View style={styles.transcriptionContainer}>
-                    {isTranscribing ? (
-                      <View style={styles.transcriptionLoaderContainer}>
-                        <ActivityIndicator
-                          size="small"
-                          color={colors.onSurface}
-                        />
-                      </View>
-                    ) : (
-                      <IconButton
-                        icon={transcribingIconButton}
-                        onPress={
-                          isRecording ? onStopDictation : onStartDictation
-                        }
-                        disabled={disabled}
-                        size={20}
-                        color={transcribingIconColor}
-                        backgroundColor={transcribingIconBackgroundColor}
-                        accessibilityLabel={transcribingIconAccessibilityLabel}
-                      />
-                    )}
+                (!isStreaming || isRecording || isTranscribing) &&
+                (isTranscribing ? (
+                  <View style={styles.transcriptionLoaderContainer}>
+                    <ActivityIndicator size="small" color={colors.onSurface} />
                   </View>
-                )}
+                ) : (
+                  <IconButton
+                    icon={transcribingIconButton}
+                    onPress={isRecording ? onStopDictation : onStartDictation}
+                    disabled={disabled}
+                    size={20}
+                    color={transcribingIconColor}
+                    backgroundColor={transcribingIconBackgroundColor}
+                    accessibilityLabel={transcribingIconAccessibilityLabel}
+                    style={styles.iconButtonSpacing}
+                  />
+                ))}
+              {showWebSearch && (
+                <IconButton
+                  icon={{ iosIconName: 'globe', androidIconName: 'language' }}
+                  onPress={() => {
+                    haptics.light();
+                    onToggleWebSearch?.();
+                  }}
+                  disabled={disabled}
+                  size={20}
+                  color={
+                    webSearchEnabled
+                      ? colors.ctaContentPrimary
+                      : colors.onSurface
+                  }
+                  backgroundColor={
+                    webSearchEnabled
+                      ? colors.ctaSurfacePrimary
+                      : colors.surfaceContainer
+                  }
+                  accessibilityLabel={t('components.inputBar.webSearch')}
+                  accessibilityState={{ selected: webSearchEnabled }}
+                  testID="web-search-toggle"
+                  style={styles.iconButtonSpacing}
+                />
+              )}
               <IconButton
                 icon={voiceAssistantIconButton}
                 onPress={openVoiceAssistant}

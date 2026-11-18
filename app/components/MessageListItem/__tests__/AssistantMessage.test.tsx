@@ -418,3 +418,161 @@ test('brings the footer back once the answer is finished', async () => {
 
   expect(screen.getByLabelText('components.messageListItem.copy')).toBeTruthy();
 });
+
+// --- Web search --------------------------------------------------------------
+
+describe('web search block', () => {
+  const { useWebSearchStore } = jest.requireActual('services/webSearch');
+
+  beforeEach(() => {
+    useWebSearchStore.setState({
+      isSearchingWeb: false,
+      webSearchTrace: [],
+      traceExpanded: false,
+      challengeActive: false,
+    });
+  });
+
+  test('a finished answer lists the pages it was grounded in', async () => {
+    const screen = await renderAssistant({
+      role: 'assistant',
+      content: 'Rain tomorrow.',
+      webSources: [
+        {
+          name: 'Paris forecast',
+          url: 'https://weather.example/paris',
+          used: true,
+          read: true,
+        },
+      ],
+    });
+
+    expect(screen.getByTestId('web-search-title').props.children).toBe(
+      'components.messageListItem.searched',
+    );
+    await act(async () => {
+      fireEvent.press(screen.getByTestId('web-search-block'));
+    });
+    const page = screen.getByTestId('web-search-result');
+
+    const openURL = jest
+      .spyOn(Linking, 'openURL')
+      .mockResolvedValue(undefined as never);
+    await act(async () => {
+      fireEvent.press(page);
+    });
+    expect(openURL).toHaveBeenCalledWith('https://weather.example/paris');
+  });
+
+  test('an answer without sources shows no block', async () => {
+    const screen = await renderAssistant({
+      role: 'assistant',
+      content: 'Hello.',
+    });
+
+    expect(screen.queryByTestId('web-search-block')).toBeNull();
+  });
+
+  test('the streaming turn shows the live search in place of the placeholder', async () => {
+    useWebSearchStore.setState({ isSearchingWeb: true });
+    useWebSearchStore
+      .getState()
+      .pushWebSearchEvent({ type: 'searching', query: 'Paris weather' });
+
+    const screen = await renderAssistant(
+      { role: 'assistant', content: '' },
+      { isStreaming: true },
+    );
+
+    expect(screen.getByTestId('web-search-title').props.children).toBe(
+      'components.messageListItem.searching',
+    );
+    expect(
+      screen.queryByText('components.messageListItem.thinking'),
+    ).toBeNull();
+  });
+
+  const forecast = {
+    name: 'Paris forecast',
+    url: 'https://weather.example/paris',
+    used: true,
+    read: true,
+  };
+
+  test('a finished answer with sources offers a book button next to copy', async () => {
+    const screen = await renderAssistant({
+      role: 'assistant',
+      content: 'Rain tomorrow.',
+      webSources: [forecast],
+    });
+
+    const labels = screen.container
+      .queryAll(
+        node =>
+          node.props.accessibilityLabel === 'components.messageListItem.copy' ||
+          node.props.testID === 'web-sources-button',
+      )
+      .map(node => node.props.testID ?? 'copy')
+      .filter((id, index, all) => all.indexOf(id) === index);
+    expect(labels).toEqual(['copy', 'web-sources-button']);
+  });
+
+  test('the book button opens a sheet listing every source', async () => {
+    const screen = await renderAssistant({
+      role: 'assistant',
+      content: 'Rain tomorrow.',
+      webSources: [
+        forecast,
+        { name: 'Snippet page', url: 'https://other.example/a', read: false },
+      ],
+    });
+
+    expect(screen.queryByTestId('web-sources-sheet')).toBeNull();
+    await fireEvent.press(screen.getByTestId('web-sources-button'));
+
+    expect(screen.getByTestId('web-sources-sheet')).toBeTruthy();
+    expect(screen.getAllByTestId('web-sources-row')).toHaveLength(2);
+    expect(screen.getByText('Snippet page')).toBeTruthy();
+    expect(
+      screen.getByText(
+        'other.example · components.messageListItem.snippetOnly',
+      ),
+    ).toBeTruthy();
+
+    const openURL = jest
+      .spyOn(Linking, 'openURL')
+      .mockResolvedValue(undefined as never);
+    await fireEvent.press(screen.getAllByTestId('web-sources-row')[0]);
+    expect(openURL).toHaveBeenCalledWith('https://weather.example/paris');
+
+    await fireEvent.press(screen.getByTestId('web-sources-close'));
+    expect(screen.queryByTestId('web-sources-sheet')).toBeNull();
+  });
+
+  test('no book button while streaming or without sources', async () => {
+    const streaming = await renderAssistant(
+      { role: 'assistant', content: 'Rain', webSources: [forecast] },
+      { isStreaming: true },
+    );
+    expect(streaming.queryByTestId('web-sources-button')).toBeNull();
+
+    const plain = await renderAssistant({
+      role: 'assistant',
+      content: 'Hello.',
+    });
+    expect(plain.queryByTestId('web-sources-button')).toBeNull();
+  });
+
+  test('a finished turn does not pick up the live trace', async () => {
+    useWebSearchStore
+      .getState()
+      .pushWebSearchEvent({ type: 'searching', query: 'Paris weather' });
+
+    const screen = await renderAssistant({
+      role: 'assistant',
+      content: 'Older answer.',
+    });
+
+    expect(screen.queryByTestId('web-search-block')).toBeNull();
+  });
+});

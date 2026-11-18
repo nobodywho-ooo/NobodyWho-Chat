@@ -140,6 +140,13 @@ const MIGRATIONS: string[][] = [
      WHERE model LIKE '%"pipeline":"speech-to-text"%'
         OR model LIKE '%"pipeline":"automatic-speech-recognition"%'`,
   ],
+  // v2 -> v3: the web pages an assistant answer was grounded in, as a JSON
+  // array of WebSource, so a reloaded answer still lists and links its sources,
+  // and how long that search took, in ms, shown in front of the metrics.
+  [
+    `ALTER TABLE messages ADD COLUMN web_sources TEXT NOT NULL DEFAULT '[]'`,
+    `ALTER TABLE messages ADD COLUMN web_search_ms REAL`,
+  ],
 ];
 
 export async function initDatabase(): Promise<void> {

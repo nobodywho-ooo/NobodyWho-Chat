@@ -125,6 +125,7 @@ let mockEnsureVoiceEngine: (slot: string) => Promise<boolean> = async () =>
   false;
 
 jest.mock('services', () => ({
+  ...jest.requireActual('services/webSearch'),
   useAiService: () => {
     const { useEnsureVoiceEngine } = jest.requireActual(
       '../../services/ai/voiceEngines',

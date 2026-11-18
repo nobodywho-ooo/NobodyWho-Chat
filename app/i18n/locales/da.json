@@ -139,7 +139,8 @@
       "dictate": "Dikter",
       "stopDictation": "Stop diktering",
       "microphoneDeniedTitle": "Mikrofonadgang kræves",
-      "microphoneDeniedMessage": "Tillad mikrofonadgang i Indstillinger for at diktere dine beskeder."
+      "microphoneDeniedMessage": "Tillad mikrofonadgang i Indstillinger for at diktere dine beskeder.",
+      "webSearch": "Søg på nettet"
     },
     "cameraCapture": {
       "permission": "Kameraadgang er nødvendig for at tage et billede.",
@@ -166,7 +167,23 @@
       "closeToolCalls": "Luk",
       "toolArguments": "Argumenter",
       "toolResult": "Resultat",
-      "system": "System"
+      "system": "System",
+      "showSources": "Vis kilder",
+      "closeSources": "Luk kilder",
+      "sourcesTitle_one": "{{count}} kilde",
+      "sourcesTitle_other": "{{count}} kilder",
+      "snippetOnly": "Kun søgeresultat",
+      "sourceBadge": "Kilde: {{name}}",
+      "searchTime": "Søgning {{time}}",
+      "elapsed": "{{seconds}} s",
+      "searching": "Søger på nettet…",
+      "planning": "Vurderer, om der skal søges…",
+      "offline": "Ingen internetforbindelse",
+      "skipped": "Besvaret uden søgning",
+      "searched": "Søgte på nettet",
+      "challengeRow": "Tryk for at bekræfte, at du ikke er en robot",
+      "challengeRowLabel": "Siden vil tjekke, at du ikke er en robot — tryk for at fortsætte",
+      "refining": "Tjekker svaret mod kilderne…"
     },
     "conversationsList": {
       "recent": "Seneste",
@@ -177,6 +194,19 @@
       "languageCount_other": "{{count}} sprog",
       "thinking": "Ræsonnement",
       "heavyProcessing": "Krævende"
+    },
+    "webScrapeHost": {
+      "title": "Søger på nettet for dig",
+      "hint": "Bekræft, at du er et menneske, for at fortsætte",
+      "skip": "Spring søgning over",
+      "done": "Færdig"
+    },
+    "webChallenge": {
+      "title": "En hurtig kontrol før søgningen",
+      "why": "Denne app søger på nettet direkte fra din telefon, uden en server imellem. Derfor beder en søgemaskine nogle gange om at bekræfte, at det er et rigtigt menneske, der søger.",
+      "privacy": "Gennemfør søgemaskinens kontrol på næste skærm. Derefter fortsætter din søgning automatisk.",
+      "continue": "Fortsæt",
+      "skip": "Spring denne søgemaskine over"
     }
   },
   "screens": {
@@ -203,8 +233,12 @@
       "subtitle": "Vælg en tekstmodel at chatte med. Du kan altid downloade flere senere.",
       "modalityTitle": "Tilføj stemme?",
       "modalitySubtitle": "Med stemmemodeller kan du tale med assistenten og høre dens svar læst højt.",
+      "modalityWithSearchTitle": "Tilføj stemme og websøgning?",
+      "modalityWithSearchSubtitle": "Med stemmemodeller kan du tale med assistenten og høre dens svar læst højt. Søgemodellen hjælper assistenten med at finde de mest relevante dele af websider, når du søger på nettet.",
       "textOnly": "Kun tekstmodel",
       "textAndVoice": "Tekst- og stemmemodeller",
+      "textAndSearch": "Tekst- og søgemodeller",
+      "allModels": "Alle modeller",
       "skip": "Spring over",
       "downloadingHeader": "Vent venligst",
       "downloadingTitle": "Downloader dine modeller",
@@ -345,7 +379,15 @@
     "chat": {
       "generationFailed": "Noget gik galt under genereringen af et svar.",
       "generationStopped": "Generering stoppet.",
-      "attachmentFailedMessage": "Vedhæftningen kunne ikke tilføjes. {{error}}"
+      "attachmentFailedMessage": "Vedhæftningen kunne ikke tilføjes. {{error}}",
+      "webSearchNotice": {
+        "nothingFound": "Fandt ikke noget brugbart på nettet — svarer uden nettet.",
+        "noRoom": "Denne chat er for lang til at tilføje søgeresultater — start en ny chat for at søge.",
+        "unavailable": "Websøgning er ikke klar endnu — svarer uden nettet.",
+        "modelTooSmall": "Denne model kan ikke bruge søgeresultater pålideligt — vælg en større.",
+        "notEnoughMemory": "Denne model fylder allerede telefonens hukommelse — en søgning ved siden af kan lukke appen. Vælg en mindre model.",
+        "attachment": "Websøgning springes over, når et billede eller en optagelse er vedhæftet."
+      }
     },
     "loadingScreen": {
       "loadingModel": "Indlæser {{model}}",

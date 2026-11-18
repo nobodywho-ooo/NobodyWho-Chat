@@ -9,6 +9,7 @@ exports[`matches the snapshot 1`] = `
     }
   }
 >
+  <View />
   <View
     style={
       {

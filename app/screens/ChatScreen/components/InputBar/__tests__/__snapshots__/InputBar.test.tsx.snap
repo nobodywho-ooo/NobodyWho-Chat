@@ -582,28 +582,25 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
               }
             }
           >
-            <View
+            <IconButton
+              accessibilityLabel="components.inputBar.attach"
+              backgroundColor="#ebebeb"
+              color="#000000"
+              disabled={false}
+              icon={
+                {
+                  "androidIconName": "add",
+                  "iosIconName": "plus",
+                }
+              }
+              onPress={[Function]}
+              size={20}
               style={
                 {
                   "marginRight": 8,
                 }
               }
-            >
-              <IconButton
-                accessibilityLabel="components.inputBar.attach"
-                backgroundColor="#ebebeb"
-                color="#000000"
-                disabled={false}
-                icon={
-                  {
-                    "androidIconName": "add",
-                    "iosIconName": "plus",
-                  }
-                }
-                onPress={[Function]}
-                size={20}
-              />
-            </View>
+            />
           </View>
           <IconButton
             accessibilityLabel="components.inputBar.voiceAssistant"

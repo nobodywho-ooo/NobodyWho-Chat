@@ -28,6 +28,7 @@ interface DownloadCuratedOptions {
 
 export interface CuratedModels {
   availabilityOf: (curated: readonly CuratedModel[]) => CuratedAvailability;
+  ramGB: number | undefined;
   isLoaded: boolean;
   isDownloading: boolean;
   progress: number;
@@ -282,9 +283,15 @@ export const useCuratedModels = (
     await Promise.all(stopped);
   }, [stopDownload]);
 
+  const ramGB =
+    catalogue === 'loading' || catalogue === 'failed'
+      ? undefined
+      : catalogue.ramGB;
+
   return useMemo(
     () => ({
       availabilityOf,
+      ramGB,
       isLoaded,
       isDownloading,
       progress,
@@ -293,6 +300,7 @@ export const useCuratedModels = (
     }),
     [
       availabilityOf,
+      ramGB,
       isLoaded,
       isDownloading,
       progress,

@@ -26,6 +26,7 @@ import { log } from 'helpers';
 import { isChatPipeline, MODEL_SLOTS } from 'types';
 import { useResumeModelDownloads, useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen, OnboardingScreen } from 'screens';
+import { WebScrapeHost } from 'components';
 import { AiServiceProvider } from 'services';
 import { RootDrawerNavigator } from 'navigation';
 import { useTranslation } from 'react-i18next';
@@ -106,6 +107,7 @@ function AppContent({ showOnboarding, onOnboardingFinish }: AppContentProps) {
           <RootDrawerNavigator />
         )}
       </Sentry.NavigationContainer>
+      {!showOnboarding && <WebScrapeHost />}
     </>
   );
 }

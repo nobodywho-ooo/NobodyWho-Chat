@@ -1,5 +1,6 @@
 import { isIOS, isAndroid, getIOSVersion, isIOS26OrLater } from './platform';
 import { log } from './log';
+import { isHttpUrl, openExternalUrl } from './openExternalUrl';
 import { capitalize } from './string';
 import { safeJsonParse } from './json';
 import { getMarkdownStyle } from './markdown';
@@ -43,6 +44,7 @@ import {
 } from './modelDownload';
 import { toFileUri, toPlainPath } from './fileUri';
 import {
+  deviceRamGB,
   filterModelsByDeviceMemory,
   fitsInDeviceMemory,
   modelRequiredMemoryGB,
@@ -138,6 +140,7 @@ export {
   NetworkError,
   toFileUri,
   toPlainPath,
+  deviceRamGB,
   filterModelsByDeviceMemory,
   fitsInDeviceMemory,
   modelRequiredMemoryGB,
@@ -218,4 +221,6 @@ export {
   colorBetween,
   parseColor,
   withAlpha,
+  isHttpUrl,
+  openExternalUrl,
 };

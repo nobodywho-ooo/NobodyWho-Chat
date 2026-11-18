@@ -2,7 +2,7 @@ import { Model } from 'types';
 import { deviceRamGB } from './deviceMemory';
 
 export const MODELS_URL =
-  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.3.0.json';
+  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.4.0.json';
 
 export const TIMEOUT_MS = 10000;
 

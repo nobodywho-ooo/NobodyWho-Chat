@@ -2,6 +2,7 @@ import { StyleSheet } from 'react-native';
 import { Spacings } from 'style';
 
 const TOP_GRADIENT_HEIGHT = 10;
+const MARGIN_RIGHT_ICON_BUTTON = Spacings.sm;
 
 export const styles = StyleSheet.create({
   mainContainer: {
@@ -41,15 +42,13 @@ export const styles = StyleSheet.create({
     maxHeight: 100,
     paddingRight: 6,
   },
-  attachContainer: {
-    marginRight: Spacings.sm,
-  },
-  transcriptionContainer: {
-    marginRight: Spacings.sm,
+  iconButtonSpacing: {
+    marginRight: MARGIN_RIGHT_ICON_BUTTON,
   },
   transcriptionLoaderContainer: {
     width: 36,
     height: 36,
+    marginRight: MARGIN_RIGHT_ICON_BUTTON,
     alignItems: 'center',
     justifyContent: 'center',
   },

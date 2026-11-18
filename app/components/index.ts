@@ -24,6 +24,7 @@ import { Text, fontSizes } from './Text/Text';
 import { Toast } from './Toast/Toast';
 import { SpeechToTextPreferences } from './SpeechToTextPreferences/SpeechToTextPreferences';
 import { TextToSpeechPreferences } from './TextToSpeechPreferences/TextToSpeechPreferences';
+import { WebScrapeHost } from './WebScrapeHost/WebScrapeHost';
 
 export {
   Accordion,
@@ -51,6 +52,7 @@ export {
   Text,
   TextToSpeechPreferences,
   Toast,
+  WebScrapeHost,
 };
 
 export type { IconButtonIconProps };

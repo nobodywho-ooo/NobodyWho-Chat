@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, PressableProps } from 'react-native';
+import { Pressable, PressableProps, StyleProp, ViewStyle } from 'react-native';
 import {
   type SFSymbolProps,
   type MaterialSymbolProps,
@@ -24,6 +24,7 @@ interface IconButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   color?: string;
   backgroundColor?: string;
   glass?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const IconButton: React.FC<IconButtonProps> = ({
@@ -32,6 +33,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
   color,
   backgroundColor,
   glass = false,
+  style,
   ...props
 }) => {
   const { colors } = useStyled();
@@ -46,6 +48,7 @@ export const IconButton: React.FC<IconButtonProps> = ({
           ? styles.glassButton
           : { backgroundColor: backgroundColor ?? colors.surfaceContainer },
         pressed && !isGlass && { opacity: 0.6 },
+        style,
       ]}
       {...props}
     >

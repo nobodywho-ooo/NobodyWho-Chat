@@ -6,6 +6,11 @@ import { Prompt } from 'react-native-nobodywho';
 import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
 
 import { insertConversation, insertMessage } from 'repositories';
+import {
+  prepareWebSearchTurn,
+  restoreChatForTurn,
+  restoreWebSearchTurn,
+} from 'services';
 import { implicitThinkOpen } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
 import { Model, ModelPipeline } from 'types';
@@ -39,9 +44,12 @@ jest.mock('database', () => {
 
 const mockChat = {
   ask: jest.fn(),
+  complete: jest.fn(),
   stopGeneration: jest.fn(),
   setChatHistory: jest.fn(),
   getChatHistory: jest.fn().mockResolvedValue([]),
+  getTemplateVariables: jest.fn().mockResolvedValue({ enable_thinking: true }),
+  setTemplateVariable: jest.fn(),
 };
 // Stable ref (like the real AiService) so a test can swap chat.current mid-stream.
 const mockChatRef: { current: typeof mockChat | undefined } = {
@@ -80,6 +88,7 @@ const mockSlots = {
   },
 };
 jest.mock('services', () => ({
+  ...jest.requireActual('services/webSearch'),
   useAiService: () => ({
     slots: mockSlots,
     chatPipeline: mockChatPipeline,
@@ -93,6 +102,24 @@ jest.mock('services', () => ({
     Error: 'error',
   },
   subscribeToolInvocations: jest.fn(() => jest.fn()),
+  prepareWebSearchTurn: jest.fn(),
+  restoreChatForTurn: jest.fn(),
+  restoreWebSearchTurn: jest.fn(),
+}));
+
+// Web search is off unless a test turns it on; the search itself is stubbed
+// (its pipeline has its own suite under services/webSearch).
+let mockWebSearchEnabled = false;
+jest.mock('../hooks/useWebSearchToggle', () => ({
+  useWebSearchToggle: () => ({
+    webSearch: {
+      enabled: mockWebSearchEnabled,
+      chatModel: { id: 0, name: 'Chat model', family: 'qwen', parts: [] },
+      embeddingModel: undefined,
+      embeddingSlot: {},
+    },
+    toggle: jest.fn(),
+  }),
 }));
 
 jest.mock('repositories', () => ({
@@ -106,6 +133,9 @@ jest.mock('../components/CameraCaptureModal/CameraCaptureModal', () => ({
   CameraCaptureModal: 'CameraCaptureModal',
 }));
 
+const mockPrepareWebSearchTurn = prepareWebSearchTurn as jest.Mock;
+const mockRestoreChatForTurn = restoreChatForTurn as jest.Mock;
+const mockRestoreWebSearchTurn = restoreWebSearchTurn as jest.Mock;
 const mockInsertConversation = insertConversation as jest.Mock;
 const mockInsertMessage = insertMessage as jest.Mock;
 
@@ -116,6 +146,11 @@ const stream = async function* () {
 };
 
 beforeEach(() => {
+  mockWebSearchEnabled = false;
+  mockPrepareWebSearchTurn.mockReset();
+  mockRestoreChatForTurn.mockReset().mockResolvedValue(undefined);
+  mockRestoreWebSearchTurn.mockReset().mockResolvedValue(undefined);
+  mockChat.complete.mockReset().mockImplementation(() => stream());
   mockChatThinkOpen = undefined;
   mockChatRef.current = mockChat;
   mockChat.ask.mockReset().mockImplementation(() => stream());
@@ -1302,4 +1337,370 @@ test('a failure creating the conversation settles the screen', async () => {
   mockInsertConversation.mockResolvedValue(42);
   await send(screen, 'again');
   expect(mockInsertConversation).toHaveBeenCalledTimes(2);
+});
+
+describe('web search', () => {
+  const sources = [
+    {
+      name: 'Paris weather',
+      url: 'https://weather.example/paris',
+      used: true,
+      read: true,
+    },
+  ];
+  const snapshot = {
+    history: [
+      { role: 'user', content: 'Hi' },
+      { role: 'assistant', content: 'Hello' },
+    ],
+    systemPrompt: 'You are helpful.',
+    templateVariables: { enable_thinking: true },
+  };
+
+  beforeEach(() => {
+    mockWebSearchEnabled = true;
+  });
+
+  test('sends the grounded prompt, persists the sources and restores the plain question', async () => {
+    mockPrepareWebSearchTurn.mockResolvedValue({
+      prompt: 'SOURCES… weather in Paris?',
+      sources,
+      snapshot,
+      chatWasBorrowed: false,
+    });
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    expect(mockPrepareWebSearchTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chat: mockChat,
+        question: 'weather in Paris?',
+        signal: expect.any(Object),
+      }),
+    );
+    expect(mockChat.ask).toHaveBeenCalledWith('SOURCES… weather in Paris?');
+    expect(mockChat.complete).not.toHaveBeenCalled();
+    expect(mockInsertMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        role: 'assistant',
+        content: 'Hello world',
+        webSources: sources,
+      }),
+    );
+    expect(mockRestoreWebSearchTurn).toHaveBeenCalledWith(
+      mockChat,
+      'SOURCES… weather in Paris?',
+      'weather in Paris?',
+      undefined,
+    );
+  });
+
+  test('persists how long the search took and times the answer from after it', async () => {
+    const realNow = Date.now.bind(Date);
+    let searchClock = 0;
+    const now = jest
+      .spyOn(Date, 'now')
+      .mockImplementation(() => realNow() + searchClock);
+    mockPrepareWebSearchTurn.mockImplementation(async () => {
+      searchClock += 4200;
+      return {
+        prompt: 'SOURCES… weather in Paris?',
+        sources,
+        snapshot,
+        chatWasBorrowed: false,
+        searchMs: 4200,
+      };
+    });
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    const assistant = mockInsertMessage.mock.calls.at(-1)![0];
+    expect(assistant).toEqual(
+      expect.objectContaining({ role: 'assistant', webSearchMs: 4200 }),
+    );
+    expect(assistant.timeToFirstToken).toBeLessThan(4200);
+    now.mockRestore();
+  });
+
+  test('replays the turn over the snapshot when the planner borrowed the chat', async () => {
+    mockPrepareWebSearchTurn.mockResolvedValue({
+      prompt: 'SOURCES… weather in Paris?',
+      sources,
+      snapshot,
+      chatWasBorrowed: true,
+    });
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    expect(mockRestoreChatForTurn).toHaveBeenCalledWith(mockChat, snapshot);
+    expect(mockChat.ask).not.toHaveBeenCalled();
+    expect(mockChat.complete).toHaveBeenCalledWith(
+      [
+        ...snapshot.history,
+        { role: 'user', content: 'SOURCES… weather in Paris?' },
+      ],
+      { templateVariables: snapshot.templateVariables },
+    );
+  });
+
+  test('a search that found nothing still answers, with the bare question', async () => {
+    mockPrepareWebSearchTurn.mockResolvedValue(undefined);
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    expect(mockChat.ask).toHaveBeenCalledWith('weather in Paris?');
+    expect(mockRestoreWebSearchTurn).not.toHaveBeenCalled();
+  });
+
+  test('stopping during the search answers nothing and records the stop', async () => {
+    let finishSearch: (turn: unknown) => void = () => {};
+    mockPrepareWebSearchTurn.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finishSearch = resolve;
+        }),
+    );
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await act(() => inputBar(screen).props.onChangeText('weather in Paris?'));
+    let sending: Promise<void> = Promise.resolve();
+    await act(async () => {
+      sending = inputBar(screen).props.onSend();
+    });
+    await act(async () => {
+      inputBar(screen).props.onStop();
+    });
+    const signal = mockPrepareWebSearchTurn.mock.calls[0][0].signal;
+    expect(signal.aborted).toBe(true);
+
+    await act(async () => {
+      finishSearch({
+        prompt: 'weather in Paris?',
+        sources: [],
+        snapshot,
+        chatWasBorrowed: false,
+      });
+      await sending;
+    });
+
+    expect(mockChat.ask).not.toHaveBeenCalled();
+    expect(mockInsertMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        role: 'system',
+        content: 'screens.chat.generationStopped',
+      }),
+    );
+  });
+
+  describe('answer re-check', () => {
+    const question = 'How much does a day pass in Zermatt cost?';
+    const prompt = `SOURCES… ${question}`;
+    const grounding = {
+      context:
+        '\n --- Source 1: Zermatt ski passes 2026 --- \n ' +
+        'Adult day pass 150.00 EUR, two-day pass 285.00 EUR. \n' +
+        ' --- End of Source 1 ---',
+      intentKind: 'price',
+    };
+    const draft = 'The sources contain no information about the price.';
+    const tokens = (...parts: string[]) =>
+      async function* () {
+        yield* parts;
+      };
+
+    beforeEach(() => {
+      mockPrepareWebSearchTurn.mockResolvedValue({
+        prompt,
+        sources,
+        snapshot,
+        chatWasBorrowed: false,
+        grounding,
+      });
+      mockChat.ask.mockImplementation(tokens(draft));
+      mockChat.setChatHistory.mockClear();
+      mockChat.setTemplateVariable.mockClear();
+    });
+
+    const isRefining = (screen: Screen) =>
+      screen.container.queryAll(
+        node =>
+          node.type === 'ShimmerText' &&
+          node.props.text === 'components.messageListItem.refining',
+      ).length > 0;
+
+    const renderChat = () =>
+      render(
+        <ChatScreen
+          conversationId={7}
+          messages={[]}
+          onConversationCreated={jest.fn()}
+        />,
+      );
+
+    test('keeps the draft on screen while refining, then persists the accepted retry', async () => {
+      let releaseRetry: () => void = () => {};
+      const retryGate = new Promise<void>(resolve => {
+        releaseRetry = resolve;
+      });
+      mockChat.complete.mockImplementation(async function* () {
+        await retryGate;
+        yield 'An adult day pass costs ';
+        yield '150.00 EUR.';
+      });
+      const screen = await renderChat();
+
+      await act(() => inputBar(screen).props.onChangeText(question));
+      let sending: Promise<void> = Promise.resolve();
+      await act(async () => {
+        sending = inputBar(screen).props.onSend();
+      });
+
+      expect(isRefining(screen)).toBe(true);
+      expect(mockChat.complete).toHaveBeenCalledWith(
+        [{ role: 'user', content: expect.stringContaining('"Adult day pass') }],
+        { templateVariables: { enable_thinking: false } },
+      );
+
+      await act(async () => {
+        releaseRetry();
+        await sending;
+      });
+
+      expect(isRefining(screen)).toBe(false);
+      expect(mockInsertMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          role: 'assistant',
+          content: 'An adult day pass costs 150.00 EUR.',
+          webSources: sources,
+        }),
+      );
+      expect(mockChat.setChatHistory).toHaveBeenCalledWith([]);
+      expect(mockChat.setTemplateVariable).toHaveBeenCalledWith(
+        'enable_thinking',
+        true,
+      );
+      expect(mockRestoreWebSearchTurn).toHaveBeenCalledWith(
+        mockChat,
+        prompt,
+        question,
+        'An adult day pass costs 150.00 EUR.',
+      );
+    });
+
+    test('keeps the first answer when the retry is still broken', async () => {
+      mockChat.complete.mockImplementation(
+        tokens('The sources do not state a price.'),
+      );
+      const screen = await renderChat();
+
+      await send(screen, question);
+
+      expect(mockChat.complete).toHaveBeenCalledTimes(1);
+      expect(mockInsertMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({ role: 'assistant', content: draft }),
+      );
+      expect(mockRestoreWebSearchTurn).toHaveBeenCalledWith(
+        mockChat,
+        prompt,
+        question,
+        undefined,
+      );
+    });
+
+    test('stopping during the re-check keeps the first answer and records no stop', async () => {
+      let releaseRetry: () => void = () => {};
+      const retryGate = new Promise<void>(resolve => {
+        releaseRetry = resolve;
+      });
+      mockChat.complete.mockImplementation(async function* () {
+        await retryGate;
+        yield 'An adult day pass costs 150.00 EUR.';
+      });
+      const screen = await renderChat();
+
+      await act(() => inputBar(screen).props.onChangeText(question));
+      let sending: Promise<void> = Promise.resolve();
+      await act(async () => {
+        sending = inputBar(screen).props.onSend();
+      });
+      await act(async () => {
+        inputBar(screen).props.onStop();
+        releaseRetry();
+        await sending;
+      });
+
+      expect(mockInsertMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({ role: 'assistant', content: draft }),
+      );
+    });
+
+    test('a grounded answer is not re-checked', async () => {
+      mockChat.ask.mockImplementation(tokens('A day pass costs 150.00 EUR.'));
+      const screen = await renderChat();
+
+      await send(screen, question);
+
+      expect(mockChat.complete).not.toHaveBeenCalled();
+      expect(mockInsertMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          role: 'assistant',
+          content: 'A day pass costs 150.00 EUR.',
+        }),
+      );
+    });
+  });
+
+  test('a photo turn skips the search', async () => {
+    mockWebSearchEnabled = true;
+    mockChatPipeline = ModelPipeline.imageTextToText;
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await act(async () => {
+      await inputBar(screen).props.onAttachImage();
+    });
+    await send(screen, 'what is this?');
+
+    expect(mockPrepareWebSearchTurn).not.toHaveBeenCalled();
+    expect(mockChat.ask).toHaveBeenCalled();
+  });
 });

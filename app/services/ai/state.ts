@@ -19,6 +19,7 @@ export interface AiServiceState {
   ttsState: AiModelState;
   sttState: AiModelState;
   vadState: AiModelState;
+  embeddingState: AiModelState;
 
   /** What the loaded chat model can ingest — text, images, audio. */
   chatPipeline: ChatPipeline;
@@ -33,6 +34,7 @@ export const INITIAL_STATE: AiServiceState = {
   ttsState: AiModelState.NotLoaded,
   sttState: AiModelState.NotLoaded,
   vadState: AiModelState.NotLoaded,
+  embeddingState: AiModelState.NotLoaded,
   chatPipeline: ModelPipeline.textGeneration,
   chatThinkOpen: undefined,
   ttsArchitecture: undefined,

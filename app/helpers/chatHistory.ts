@@ -23,7 +23,13 @@ export const toChatHistory = (messages: ChatMessage[]): DisplayMessage[] =>
           content: message.content,
           tokensPerSecond: message.tokensPerSecond,
           timeToFirstToken: message.timeToFirstToken,
+          ...(message.webSearchMs !== undefined
+            ? { webSearchMs: message.webSearchMs }
+            : {}),
           toolInvocations: message.toolInvocations,
+          ...(message.webSources?.length
+            ? { webSources: message.webSources }
+            : {}),
         };
       case 'system':
         return {

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, ScrollView, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
-import { log } from 'helpers';
+import { openExternalUrl } from 'helpers';
 import { useStyled } from 'hooks';
 import { Button, ListItem, Text } from 'components';
 
@@ -21,11 +21,6 @@ export const SettingsScreen: React.FC = () => {
 
     setAppInfo(`version ${version} - build ${buildNumber}`);
   }, []);
-
-  const openURL = (url: string) =>
-    Linking.openURL(url).catch(error =>
-      log(`Failed to open URL ${url}`, error),
-    );
 
   return (
     <ScrollView
@@ -76,7 +71,7 @@ export const SettingsScreen: React.FC = () => {
           variant="outline"
           small
           icon={{ iosIconName: 'globe', androidIconName: 'public' }}
-          onPress={() => openURL('https://www.nobodywho.ai/')}
+          onPress={() => openExternalUrl('https://www.nobodywho.ai/')}
         />
         <Button
           title={t('screens.settings.github')}
@@ -86,7 +81,7 @@ export const SettingsScreen: React.FC = () => {
             iosIconName: 'chevron.left.forwardslash.chevron.right',
             androidIconName: 'code',
           }}
-          onPress={() => openURL('https://github.com/nobodywho-ooo/nobodywho')}
+          onPress={() => openExternalUrl('https://github.com/nobodywho-ooo/nobodywho')}
         />
       </View>
       <Text variant="h3" bold style={styles.appName}>
