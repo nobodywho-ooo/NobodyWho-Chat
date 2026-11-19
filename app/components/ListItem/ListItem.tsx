@@ -15,7 +15,7 @@ interface ListItemProps extends Omit<PressableProps, 'children'> {
   subtitle: string;
   iosIconName: SFSymbolProps['name'];
   androidIconName: MaterialSymbolProps['name'];
-  iconBackgroundColor: string;
+  iconColor: string;
 }
 
 export const ListItem: React.FC<ListItemProps> = ({
@@ -23,7 +23,7 @@ export const ListItem: React.FC<ListItemProps> = ({
   subtitle,
   iosIconName,
   androidIconName,
-  iconBackgroundColor,
+  iconColor,
   disabled,
   ...props
 }) => {
@@ -35,15 +35,11 @@ export const ListItem: React.FC<ListItemProps> = ({
       disabled={disabled}
       {...props}
     >
-      <View
-        style={[styles.iconContainer, { backgroundColor: iconBackgroundColor }]}
-      >
-        <PlatformIcon
-          iosIconName={iosIconName}
-          androidIconName={androidIconName}
-          color="#FFFFFF"
-        />
-      </View>
+      <PlatformIcon
+        iosIconName={iosIconName}
+        androidIconName={androidIconName}
+        color={iconColor}
+      />
       <View style={styles.content}>
         <Text style={styles.title}>{title}</Text>
         <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>

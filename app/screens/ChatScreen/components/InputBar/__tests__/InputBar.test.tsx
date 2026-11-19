@@ -397,3 +397,70 @@ test('the globe toggle shows its state and reports presses', async () => {
   await act(() => button.props.onPress());
   expect(onToggleWebSearch).toHaveBeenCalledTimes(1);
 });
+
+// --- Text set from outside -------------------------------------------------
+
+const ControlledInputBar: React.FC<{
+  setValueRef: { current: ((text: string) => void) | undefined };
+}> = ({ setValueRef }) => {
+  const [value, setValue] = React.useState('');
+  setValueRef.current = setValue;
+  return <StatefulInputBar value={value} onChangeText={setValue} />;
+};
+
+const PLACEHOLDER = 'components.inputBar.placeholder';
+
+test('remounts the field when a starter sets its text, so iOS sizes it to fit', async () => {
+  const setValueRef: { current: ((text: string) => void) | undefined } = {
+    current: undefined,
+  };
+  const screen = await render(<ControlledInputBar setValueRef={setValueRef} />);
+  const before = screen.getByPlaceholderText(PLACEHOLDER);
+
+  await act(() => setValueRef.current?.('A long message starter body'));
+
+  const after = screen.getByPlaceholderText(PLACEHOLDER);
+  expect(after).not.toBe(before);
+  expect(after.props.value).toBe('A long message starter body');
+});
+
+test('keeps the same field while the user types', async () => {
+  const setValueRef: { current: ((text: string) => void) | undefined } = {
+    current: undefined,
+  };
+  const screen = await render(<ControlledInputBar setValueRef={setValueRef} />);
+  const before = screen.getByPlaceholderText(PLACEHOLDER);
+
+  await act(() => before.props.onChangeText('Hello'));
+
+  const after = screen.getByPlaceholderText(PLACEHOLDER);
+  expect(after).toBe(before);
+  expect(after.props.value).toBe('Hello');
+});
+
+test('keeps the keyboard up across the remount when the field was focused', async () => {
+  const setValueRef: { current: ((text: string) => void) | undefined } = {
+    current: undefined,
+  };
+  const screen = await render(<ControlledInputBar setValueRef={setValueRef} />);
+
+  await act(() => screen.getByPlaceholderText(PLACEHOLDER).props.onFocus());
+  await act(() => setValueRef.current?.('Starter'));
+
+  expect(screen.getByPlaceholderText(PLACEHOLDER).props.autoFocus).toBe(true);
+});
+
+test('does not remount when the text is cleared after sending', async () => {
+  const setValueRef: { current: ((text: string) => void) | undefined } = {
+    current: undefined,
+  };
+  const screen = await render(<ControlledInputBar setValueRef={setValueRef} />);
+  await act(() =>
+    screen.getByPlaceholderText(PLACEHOLDER).props.onChangeText('Hello'),
+  );
+  const before = screen.getByPlaceholderText(PLACEHOLDER);
+
+  await act(() => setValueRef.current?.(''));
+
+  expect(screen.getByPlaceholderText(PLACEHOLDER)).toBe(before);
+});

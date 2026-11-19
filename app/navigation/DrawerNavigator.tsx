@@ -17,7 +17,6 @@ import {
   type MenuAction,
   type NativeActionEvent,
 } from '@react-native-menu/menu';
-import { isLiquidGlassSupported } from '@callstack/liquid-glass';
 import { useTranslation } from 'react-i18next';
 import { setAppState } from 'database';
 import {
@@ -258,8 +257,7 @@ export const DrawerNavigator = () => {
     <Drawer.Navigator
       drawerContent={renderDrawerContent}
       screenOptions={{
-        headerStyle: { backgroundColor: colors.surface },
-        headerShadowVisible: !isLiquidGlassSupported,
+        headerTransparent: true,
         headerTintColor: colors.onSurface,
         headerTitleStyle: { color: colors.onSurface },
         drawerStyle: {

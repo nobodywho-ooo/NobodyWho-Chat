@@ -72,9 +72,14 @@ exports[`renders ChatScreen with existing messages 1`] = `
     >
       <RCTScrollView
         contentContainerStyle={
-          {
-            "paddingBottom": 12,
-          }
+          [
+            {
+              "paddingBottom": 12,
+            },
+            {
+              "paddingTop": 0,
+            },
+          ]
         }
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
@@ -346,9 +351,14 @@ exports[`renders correctly empty ChatScreen 1`] = `
     >
       <RCTScrollView
         contentContainerStyle={
-          {
-            "paddingBottom": 12,
-          }
+          [
+            {
+              "paddingBottom": 12,
+            },
+            {
+              "paddingTop": 0,
+            },
+          ]
         }
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"

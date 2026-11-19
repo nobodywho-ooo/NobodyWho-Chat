@@ -1,8 +1,9 @@
 import React, { useCallback, useMemo } from 'react';
-import { ScrollView } from 'react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { getMarkdownStyle, openExternalUrl } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
+
+import { HeaderScrollView } from '../HeaderScrollView/HeaderScrollView';
 
 import styles from './MarkdownDocument.styles';
 
@@ -26,8 +27,7 @@ export const MarkdownDocument: React.FC<MarkdownDocumentProps> = ({
   }, []);
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
+    <HeaderScrollView
       style={[styles.container, { backgroundColor: colors.surface }]}
       contentContainerStyle={styles.content}
     >
@@ -36,6 +36,6 @@ export const MarkdownDocument: React.FC<MarkdownDocumentProps> = ({
         markdownStyle={markdownStyle}
         onLinkPress={handleLinkPress}
       />
-    </ScrollView>
+    </HeaderScrollView>
   );
 };

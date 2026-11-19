@@ -4,11 +4,16 @@ import React, {
   useLayoutEffect,
   useState,
 } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useModels, useStyled } from 'hooks';
-import { DownloadedModels, PlatformIcon, Text } from 'components';
+import {
+  DownloadedModels,
+  HeaderScrollView,
+  PlatformIcon,
+  Text,
+} from 'components';
 
 import styles from './DownloadedModelsScreen.styles';
 
@@ -73,11 +78,10 @@ export const DownloadedModelsScreen: React.FC = () => {
   }
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
+    <HeaderScrollView
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
       <DownloadedModels deleteMode={deleteMode} />
-    </ScrollView>
+    </HeaderScrollView>
   );
 };

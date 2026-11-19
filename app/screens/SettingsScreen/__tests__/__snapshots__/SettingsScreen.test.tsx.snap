@@ -1,226 +1,253 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`renders correctly SettingsScreen 1`] = `
-<RCTScrollView
-  contentInsetAdjustmentBehavior="automatic"
+<View
   style={
-    [
-      {
-        "flex": 1,
-        "paddingHorizontal": 16,
-        "paddingTop": 16,
-      },
-      {
-        "backgroundColor": "#FFFFFF",
-      },
-    ]
+    {
+      "flex": 1,
+    }
   }
 >
-  <View>
-    <Text>
-      screens.settings.app
-    </Text>
-    <ListItem
-      androidIconName="tune"
-      iconBackgroundColor="#b44618"
-      iosIconName="slider.horizontal.3"
-      onPress={[Function]}
-      subtitle="screens.settings.customizeSubtitle"
-      title="screens.settings.customize"
-    />
-    <ListItem
-      androidIconName="translate"
-      iconBackgroundColor="#b44618"
-      iosIconName="character.bubble"
-      onPress={[Function]}
-      subtitle="screens.settings.languageSubtitle"
-      title="screens.settings.language"
-    />
-    <Text
-      style={
+  <RCTScrollView
+    contentContainerStyle={
+      [
+        undefined,
         {
-          "paddingTop": 20,
-        }
+          "paddingTop": 0,
+        },
+      ]
+    }
+    contentInset={
+      {
+        "bottom": 0,
       }
-    >
-      screens.settings.about
-    </Text>
-    <ListItem
-      androidIconName="description"
-      iconBackgroundColor="#f2a02e"
-      iosIconName="doc.text.fill"
-      onPress={[Function]}
-      subtitle="screens.settings.termsSubtitle"
-      title="screens.settings.terms"
-    />
-    <ListItem
-      androidIconName="privacy_tip"
-      iconBackgroundColor="#f2a02e"
-      iosIconName="lock.shield.fill"
-      onPress={[Function]}
-      subtitle="screens.settings.privacyPolicySubtitle"
-      title="screens.settings.privacyPolicy"
-    />
-    <View
-      style={
+    }
+    contentInsetAdjustmentBehavior="never"
+    scrollIndicatorInsets={
+      {
+        "bottom": 0,
+        "top": 0,
+      }
+    }
+    style={
+      [
         {
-          "flexDirection": "row",
-          "flexWrap": "wrap",
-          "gap": 8,
-          "marginTop": 64,
-        }
-      }
-    >
-      <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
+          "flex": 1,
+          "paddingHorizontal": 16,
+          "paddingTop": 16,
+        },
+        {
+          "backgroundColor": "#FFFFFF",
+        },
+      ]
+    }
+  >
+    <View>
+      <Text>
+        screens.settings.app
+      </Text>
+      <ListItem
+        androidIconName="tune"
+        iconColor="#b44618"
+        iosIconName="slider.horizontal.3"
+        onPress={[Function]}
+        subtitle="screens.settings.customizeSubtitle"
+        title="screens.settings.customize"
+      />
+      <ListItem
+        androidIconName="translate"
+        iconColor="#b44618"
+        iosIconName="character.bubble"
+        onPress={[Function]}
+        subtitle="screens.settings.languageSubtitle"
+        title="screens.settings.language"
+      />
+      <Text
         style={
-          [
-            {
-              "alignItems": "center",
-              "alignSelf": "flex-start",
-              "borderRadius": 12,
-              "flexDirection": "row",
-              "gap": 12,
-              "paddingHorizontal": 16,
-              "paddingVertical": 12,
-            },
-            {
-              "backgroundColor": "#ebebeb",
-            },
-            false,
-          ]
+          {
+            "paddingTop": 20,
+          }
         }
       >
-        <PlatformIcon
-          androidIconName="public"
-          color="#000000"
-          iosIconName="globe"
-        />
-        <Text
-          style={
-            {
-              "fontWeight": "500",
-            }
-          }
-          variant="body1"
-        >
-          screens.settings.website
-        </Text>
-      </View>
+        screens.settings.about
+      </Text>
+      <ListItem
+        androidIconName="description"
+        iconColor="#e27426"
+        iosIconName="doc.text.fill"
+        onPress={[Function]}
+        subtitle="screens.settings.termsSubtitle"
+        title="screens.settings.terms"
+      />
+      <ListItem
+        androidIconName="privacy_tip"
+        iconColor="#e27426"
+        iosIconName="lock.shield.fill"
+        onPress={[Function]}
+        subtitle="screens.settings.privacyPolicySubtitle"
+        title="screens.settings.privacyPolicy"
+      />
       <View
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
-          }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
-          }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
         style={
-          [
-            {
-              "alignItems": "center",
-              "alignSelf": "flex-start",
-              "borderRadius": 12,
-              "flexDirection": "row",
-              "gap": 12,
-              "paddingHorizontal": 16,
-              "paddingVertical": 12,
-            },
-            {
-              "backgroundColor": "#ebebeb",
-            },
-            false,
-          ]
+          {
+            "flexDirection": "row",
+            "flexWrap": "wrap",
+            "gap": 8,
+            "marginTop": 64,
+          }
         }
       >
-        <PlatformIcon
-          androidIconName="code"
-          color="#000000"
-          iosIconName="chevron.left.forwardslash.chevron.right"
-        />
-        <Text
-          style={
+        <View
+          accessibilityState={
             {
-              "fontWeight": "500",
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
             }
           }
-          variant="body1"
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "alignItems": "center",
+                "alignSelf": "flex-start",
+                "borderRadius": 12,
+                "flexDirection": "row",
+                "gap": 12,
+                "paddingHorizontal": 16,
+                "paddingVertical": 12,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+              false,
+            ]
+          }
         >
-          screens.settings.github
-        </Text>
+          <PlatformIcon
+            androidIconName="public"
+            color="#000000"
+            iosIconName="globe"
+          />
+          <Text
+            style={
+              {
+                "fontWeight": "500",
+              }
+            }
+            variant="body1"
+          >
+            screens.settings.website
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "alignItems": "center",
+                "alignSelf": "flex-start",
+                "borderRadius": 12,
+                "flexDirection": "row",
+                "gap": 12,
+                "paddingHorizontal": 16,
+                "paddingVertical": 12,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+              false,
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="code"
+            color="#000000"
+            iosIconName="chevron.left.forwardslash.chevron.right"
+          />
+          <Text
+            style={
+              {
+                "fontWeight": "500",
+              }
+            }
+            variant="body1"
+          >
+            screens.settings.github
+          </Text>
+        </View>
       </View>
+      <Text
+        bold={true}
+        style={
+          {
+            "paddingTop": 20,
+          }
+        }
+        variant="h3"
+      >
+        NobodyWho Chat
+      </Text>
+      <Text
+        style={
+          {
+            "paddingTop": 8,
+          }
+        }
+        variant="body2"
+      >
+        version 1.0.0 - build 1
+      </Text>
     </View>
-    <Text
-      bold={true}
-      style={
-        {
-          "paddingTop": 20,
-        }
-      }
-      variant="h3"
-    >
-      NobodyWho Chat
-    </Text>
-    <Text
-      style={
-        {
-          "paddingTop": 8,
-        }
-      }
-      variant="body2"
-    >
-      version 1.0.0 - build 1
-    </Text>
-  </View>
-</RCTScrollView>
+  </RCTScrollView>
+</View>
 `;

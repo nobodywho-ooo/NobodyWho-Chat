@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, Switch, TextInput, View } from 'react-native';
+import { Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,6 +10,7 @@ import {
 } from 'database';
 import { useStyled } from 'hooks';
 import {
+  HeaderScrollView,
   IconButton,
   Slider,
   SpeechToTextPreferences,
@@ -65,8 +66,7 @@ export const CustomizeAssistantScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
+    <HeaderScrollView
       style={[styles.container, { backgroundColor: colors.surface }]}
       contentContainerStyle={[
         styles.content,
@@ -209,6 +209,6 @@ export const CustomizeAssistantScreen: React.FC = () => {
         language={config.sttLanguage}
         onChange={savePreference}
       />
-    </ScrollView>
+    </HeaderScrollView>
   );
 };

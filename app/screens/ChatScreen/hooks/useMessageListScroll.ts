@@ -24,7 +24,13 @@ const ANCHOR_MAX_SIZE =
 
 const BOTTOM_OFFSET = 10_000_000; // Further than any conversation is tall; the list clamps it to however far it can actually go
 
-export const useMessageListScroll = (messages: DisplayMessage[]) => {
+// topInset: how much of the list sits under a transparent header, so the parked message lands below it rather than behind it.
+export const useMessageListScroll = (
+  messages: DisplayMessage[],
+  topInset = 0,
+) => {
+  const anchorOffset = ANCHOR_OFFSET + topInset;
+
   const listRef = useRef<LegendListRef>(null);
   const composerRef = useRef<React.ComponentRef<typeof View>>(null);
 
@@ -49,11 +55,11 @@ export const useMessageListScroll = (messages: DisplayMessage[]) => {
       .scrollToIndex({
         index: anchorIndex,
         viewPosition: 0,
-        viewOffset: ANCHOR_OFFSET,
+        viewOffset: anchorOffset,
         animated: anchorIndex > 0,
       })
       .then(release, release);
-  }, [anchorIndex, freeze]);
+  }, [anchorIndex, anchorOffset, freeze]);
 
   useEffect(() => listRef.current?.getState().listen('isAtEnd', setAtEnd), []);
 
@@ -144,7 +150,7 @@ export const useMessageListScroll = (messages: DisplayMessage[]) => {
       : {
           anchorIndex,
           anchorMaxSize: anchorHasAttachment ? undefined : ANCHOR_MAX_SIZE,
-          anchorOffset: ANCHOR_OFFSET,
+          anchorOffset,
         };
 
   return {

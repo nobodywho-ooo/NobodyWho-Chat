@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
 import { openExternalUrl } from 'helpers';
 import { useStyled } from 'hooks';
-import { ActionButton, ListItem, Text } from 'components';
+import { ActionButton, HeaderScrollView, ListItem, Text } from 'components';
 
 import styles from './SettingsScreen.styles';
 
@@ -23,8 +23,7 @@ export const SettingsScreen: React.FC = () => {
   }, []);
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
+    <HeaderScrollView
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
       <Text>{t('screens.settings.app')}</Text>
@@ -33,7 +32,7 @@ export const SettingsScreen: React.FC = () => {
         subtitle={t('screens.settings.customizeSubtitle')}
         iosIconName="slider.horizontal.3"
         androidIconName="tune"
-        iconBackgroundColor={colors.primary}
+        iconColor={colors.primary}
         // @ts-ignore
         onPress={() => navigation.navigate('CustomizeAssistantScreen')}
       />
@@ -42,7 +41,7 @@ export const SettingsScreen: React.FC = () => {
         subtitle={t('screens.settings.languageSubtitle')}
         iosIconName="character.bubble"
         androidIconName="translate"
-        iconBackgroundColor={colors.primary}
+        iconColor={colors.primary}
         // @ts-ignore
         onPress={() => navigation.navigate('LanguageScreen')}
       />
@@ -52,7 +51,7 @@ export const SettingsScreen: React.FC = () => {
         subtitle={t('screens.settings.termsSubtitle')}
         iosIconName="doc.text.fill"
         androidIconName="description"
-        iconBackgroundColor={colors.secondary}
+        iconColor={colors.secondary}
         // @ts-ignore
         onPress={() => navigation.navigate('TermsScreen')}
       />
@@ -61,7 +60,7 @@ export const SettingsScreen: React.FC = () => {
         subtitle={t('screens.settings.privacyPolicySubtitle')}
         iosIconName="lock.shield.fill"
         androidIconName="privacy_tip"
-        iconBackgroundColor={colors.secondary}
+        iconColor={colors.secondary}
         // @ts-ignore
         onPress={() => navigation.navigate('PrivacyPolicyScreen')}
       />
@@ -88,6 +87,6 @@ export const SettingsScreen: React.FC = () => {
       <Text variant="body2" style={styles.appInfo}>
         {appInfo}
       </Text>
-    </ScrollView>
+    </HeaderScrollView>
   );
 };

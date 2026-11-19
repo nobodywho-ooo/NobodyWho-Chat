@@ -13,7 +13,7 @@ test('renders correctly ListItem', async () => {
         subtitle={'Some subtitle'}
         iosIconName="bubble.fill"
         androidIconName="chat_bubble"
-        iconBackgroundColor="red"
+        iconColor="red"
       />,
     )
   ).toJSON();
@@ -28,7 +28,7 @@ test('renders correctly ListItem when disabled', async () => {
         subtitle={'Some subtitle'}
         iosIconName="bubble.fill"
         androidIconName="chat_bubble"
-        iconBackgroundColor="red"
+        iconColor="red"
         disabled={true}
       />,
     )

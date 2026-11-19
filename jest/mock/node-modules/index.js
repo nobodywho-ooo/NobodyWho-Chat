@@ -168,6 +168,15 @@ jest.mock('expo-blur', () => {
   };
 });
 
+jest.mock('@react-native-masked-view/masked-view', () => {
+  const mockReact = require('react');
+  return {
+    __esModule: true,
+    default: ({ children }) =>
+      mockReact.createElement(mockReact.Fragment, null, children),
+  };
+});
+
 jest.mock('expo-camera', () => {
   const React = require('react');
   return {
@@ -698,6 +707,10 @@ jest.mock('@react-navigation/core', () => {
     useRoute: () => jest.fn(),
   };
 });
+
+jest.mock('@react-navigation/elements', () => ({
+  useHeaderHeight: () => 0,
+}));
 
 jest.mock('@react-navigation/drawer', () => {
   const mockReact = require('react');

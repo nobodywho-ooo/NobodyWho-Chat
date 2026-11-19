@@ -26,12 +26,14 @@ const RootStack = () => {
 
   const screenOptions = useMemo(
     () => ({
-      headerStyle: { backgroundColor: colors.surface },
+      headerTransparent: true,
+      headerShadowVisible: false,
+      scrollEdgeEffects: { top: 'hidden' as const },
       headerTintColor: colors.onSurface,
       headerTitleStyle: { color: colors.onSurface },
       headerBackButtonDisplayMode: 'minimal' as const,
     }),
-    [colors.surface, colors.onSurface],
+    [colors.onSurface],
   );
 
   return (

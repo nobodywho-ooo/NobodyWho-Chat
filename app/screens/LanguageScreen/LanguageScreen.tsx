@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
@@ -11,7 +11,7 @@ import {
   setLanguagePreference,
 } from 'i18n';
 import { useStyled } from 'hooks';
-import { PlatformIcon, Text } from 'components';
+import { HeaderScrollView, PlatformIcon, Text } from 'components';
 import { Spacings } from 'style';
 
 import styles from './LanguageScreen.styles';
@@ -76,8 +76,7 @@ export const LanguageScreen: React.FC = () => {
   }, []);
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
+    <HeaderScrollView
       style={[styles.container, { backgroundColor: colors.surface }]}
       contentContainerStyle={[
         styles.content,
@@ -100,6 +99,6 @@ export const LanguageScreen: React.FC = () => {
           onPress={() => select(language)}
         />
       ))}
-    </ScrollView>
+    </HeaderScrollView>
   );
 };

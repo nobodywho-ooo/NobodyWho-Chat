@@ -10,6 +10,7 @@ import React, {
   useState,
 } from 'react';
 import { BlurTargetView } from 'expo-blur';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { AppState, AppStateStatus, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SamplerPresets } from 'react-native-nobodywho';
@@ -88,6 +89,16 @@ const ChatRootContext =
 
 type ViewRef = ComponentRef<typeof View>;
 
+const BelowHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const headerHeight = useHeaderHeight();
+
+  return (
+    <View style={[styles.chatRoot, { paddingTop: headerHeight }]}>
+      {children}
+    </View>
+  );
+};
+
 const ChatRootScreen = () => {
   const ctx = useContext(ChatRootContext);
   const [blurTargetNode, setBlurTargetNode] = useState<ViewRef | null>(null);
@@ -97,18 +108,34 @@ const ChatRootScreen = () => {
   );
 
   if (ctx.modelsLoading) {
-    return <LoadingScreen />;
+    return (
+      <BelowHeader>
+        <LoadingScreen />
+      </BelowHeader>
+    );
   }
 
   if (!ctx.hasModels) {
-    return <NoModelDownloadedScreen />;
+    return (
+      <BelowHeader>
+        <NoModelDownloadedScreen />
+      </BelowHeader>
+    );
   }
   if (ctx.modelIdInUse === undefined) {
-    return <NoModelSelectedScreen />;
+    return (
+      <BelowHeader>
+        <NoModelSelectedScreen />
+      </BelowHeader>
+    );
   }
 
   if (ctx.status === SessionStatus.Error) {
-    return <ErrorScreen onRetry={ctx.onRetry} />;
+    return (
+      <BelowHeader>
+        <ErrorScreen onRetry={ctx.onRetry} />
+      </BelowHeader>
+    );
   }
 
   const loading = ctx.status === SessionStatus.Loading;

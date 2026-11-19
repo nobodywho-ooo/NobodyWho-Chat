@@ -5,7 +5,9 @@ import { Chevron } from './Chevron/Chevron';
 import { DownloadedModels } from './DownloadedModels/DownloadedModels';
 import { ProgressBar } from './ProgressBar/ProgressBar';
 import { ErrorView } from './ErrorView/ErrorView';
+import { GlassScrollEdge } from './GlassScrollEdge/GlassScrollEdge';
 import { GradientText } from './GradientText/GradientText';
+import { HeaderScrollView } from './HeaderScrollView/HeaderScrollView';
 import { IconButton, IconButtonIconProps } from './IconButton/IconButton';
 import { iconButtonSize } from './IconButton/IconButton.styles';
 import { ListItem } from './ListItem/ListItem';
@@ -37,7 +39,9 @@ export {
   ProgressBar,
   ErrorView,
   fontSizes,
+  GlassScrollEdge,
   GradientText,
+  HeaderScrollView,
   IconButton,
   iconButtonSize,
   ListItem,

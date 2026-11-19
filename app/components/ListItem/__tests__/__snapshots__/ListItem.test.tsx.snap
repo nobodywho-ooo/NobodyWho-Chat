@@ -42,28 +42,11 @@ exports[`renders correctly ListItem 1`] = `
     ]
   }
 >
-  <View
-    style={
-      [
-        {
-          "alignItems": "center",
-          "borderRadius": 20,
-          "height": 40,
-          "justifyContent": "center",
-          "width": 40,
-        },
-        {
-          "backgroundColor": "red",
-        },
-      ]
-    }
-  >
-    <PlatformIcon
-      androidIconName="chat_bubble"
-      color="#FFFFFF"
-      iosIconName="bubble.fill"
-    />
-  </View>
+  <PlatformIcon
+    androidIconName="chat_bubble"
+    color="red"
+    iosIconName="bubble.fill"
+  />
   <View
     style={
       {
@@ -159,28 +142,11 @@ exports[`renders correctly ListItem when disabled 1`] = `
     ]
   }
 >
-  <View
-    style={
-      [
-        {
-          "alignItems": "center",
-          "borderRadius": 20,
-          "height": 40,
-          "justifyContent": "center",
-          "width": 40,
-        },
-        {
-          "backgroundColor": "red",
-        },
-      ]
-    }
-  >
-    <PlatformIcon
-      androidIconName="chat_bubble"
-      color="#FFFFFF"
-      iosIconName="bubble.fill"
-    />
-  </View>
+  <PlatformIcon
+    androidIconName="chat_bubble"
+    color="red"
+    iosIconName="bubble.fill"
+  />
   <View
     style={
       {

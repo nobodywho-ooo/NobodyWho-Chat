@@ -72,6 +72,7 @@ exports[`renders correctly InputBar 1`] = `
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -82,7 +83,6 @@ exports[`renders correctly InputBar 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
@@ -226,6 +226,7 @@ exports[`renders correctly InputBar when streaming 1`] = `
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -236,7 +237,6 @@ exports[`renders correctly InputBar when streaming 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
@@ -380,6 +380,7 @@ exports[`renders correctly InputBar with value 1`] = `
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -390,7 +391,6 @@ exports[`renders correctly InputBar with value 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
@@ -534,6 +534,7 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -544,7 +545,6 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,

@@ -6,13 +6,6 @@ export default StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   content: {
     flex: 1,
     marginLeft: 12,

@@ -12,8 +12,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareLegendList } from '@legendapp/list/keyboard';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { BlurTargetView, BlurView } from 'expo-blur';
+import { useHeaderHeight } from '@react-navigation/elements';
 import LinearGradient from 'react-native-linear-gradient';
-import { MessageListItem, ScrollToBottomButton, Toast } from 'components';
+import {
+  GlassScrollEdge,
+  MessageListItem,
+  ScrollToBottomButton,
+  Toast,
+} from 'components';
 import { useTheme } from 'context';
 import { useAppState, useStableCallback, useStyled } from 'hooks';
 import {
@@ -74,6 +80,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const { colors } = useStyled();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  const headerInset = useHeaderHeight();
   const { slots, chatPipeline, chatThinkOpen } = useAiService();
   const { ttsModelIdInUse, sttModelIdInUse } = useAppState();
 
@@ -123,7 +130,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     'mount',
   );
 
-  const list = useMessageListScroll(messages);
+  const list = useMessageListScroll(messages, headerInset);
   const { showConversation } = list;
 
   const {
@@ -277,6 +284,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     [showStarters, chatPipeline, disabled],
   );
 
+  const listContentStyle = useMemo(
+    () => [styles.listContent, { paddingTop: headerInset }],
+    [headerInset],
+  );
+
   const inputBarStyle = useMemo(
     () => ({ paddingBottom: insets.bottom + INPUT_BAR_PADDING }),
     [insets.bottom],
@@ -307,7 +319,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             ref={list.listRef}
             data={messages}
             style={styles.listContainer}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={listContentStyle}
             keyExtractor={messageKey}
             showsVerticalScrollIndicator={false}
             renderItem={renderMessage}
@@ -327,6 +339,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           />
         </View>
       </BlurTargetView>
+      {hasMessages && (
+        <GlassScrollEdge anchor={headerInset} blurTarget={blurTargetRef} />
+      )}
       {attachExpanded && (
         <Pressable
           style={styles.blurOverlay}

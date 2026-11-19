@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
+import { HeaderScrollView } from 'components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useModelDownloader, useStyled } from 'hooks';
@@ -70,9 +71,8 @@ export const ModelsScreen: React.FC = () => {
   );
 
   return (
-    <ScrollView
+    <HeaderScrollView
       ref={scrollRef}
-      contentInsetAdjustmentBehavior="automatic"
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
       <ModelsTabs selected={tab} onSelect={setTab} />
@@ -103,6 +103,6 @@ export const ModelsScreen: React.FC = () => {
       {tab === 'downloaded' && <DownloadedModelsSection />}
 
       <View style={{ height: insets.bottom + Spacings.lg }} />
-    </ScrollView>
+    </HeaderScrollView>
   );
 };

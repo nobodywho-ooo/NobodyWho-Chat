@@ -11,11 +11,15 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
+import {
+  LiquidGlassView,
+  isLiquidGlassSupported,
+} from '@callstack/liquid-glass';
 import { useStyled } from 'hooks';
 import { useTheme } from 'context';
 import { IconButton, IconButtonIconProps, Text } from 'components';
 import { useDrawerCoordination } from 'navigation';
-import { haptics } from 'helpers';
+import { haptics, isIOS } from 'helpers';
 import { Theme } from 'types';
 
 import { styles } from './InputBar.styles';
@@ -25,6 +29,13 @@ const KEYBOARD_HIDE_TIMEOUT = 400;
 const gradientColors: Record<Theme, string[]> = {
   light: ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.9)'],
   dark: ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 0.9)'],
+};
+
+const BOTTOM_FADE_LOCATIONS = [0, 0.25, 0.5, 0.75, 1];
+const BOTTOM_FADE_ALPHAS = [0, 0.156, 0.5, 0.844, 1];
+const bottomFadeColors: Record<Theme, string[]> = {
+  light: BOTTOM_FADE_ALPHAS.map(alpha => `rgba(255, 255, 255, ${alpha})`),
+  dark: BOTTOM_FADE_ALPHAS.map(alpha => `rgba(18, 18, 18, ${alpha})`),
 };
 
 export type ImageAttachSource = 'photo' | 'camera';
@@ -98,6 +109,24 @@ const InputBarView: React.FC<InputBarProps> = ({
   const { open: openDrawer, reportSwipeExclusion } = useDrawerCoordination();
 
   const [focused, setFocused] = useState(false);
+
+  // iOS doesn't grow a multiline TextInput to fit a value set from outside
+  const [syncedValue, setSyncedValue] = useState(value);
+  const [inputKey, setInputKey] = useState(0);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    if (isIOS && value !== '') {
+      setInputKey(key => key + 1);
+    }
+  }
+
+  const handleChangeText = useCallback(
+    (text: string) => {
+      setSyncedValue(text);
+      onChangeText(text);
+    },
+    [onChangeText],
+  );
 
   const canAttach = showImageAttach || showAudioAttach;
   const showAttachButton = canAttach;
@@ -204,6 +233,8 @@ const InputBarView: React.FC<InputBarProps> = ({
     borderColor: focused ? colors.borderFocused : colors.border,
   };
 
+  const Card = isLiquidGlassSupported ? GlassCard : View;
+
   const attachButtonIcon: IconButtonIconProps = expanded
     ? { iosIconName: 'xmark', androidIconName: 'close' }
     : hasAttachment
@@ -303,7 +334,12 @@ const InputBarView: React.FC<InputBarProps> = ({
     <View style={styles.mainContainer} onLayout={handleLayout}>
       {messageStarters}
       {expanded && (
-        <View style={[styles.attachOptionsList, extraStyle]}>
+        <Card
+          style={[
+            styles.attachOptionsList,
+            isLiquidGlassSupported ? styles.glassCard : extraStyle,
+          ]}
+        >
           {showPhoto &&
             renderAttachOption({
               icon: { iosIconName: 'photo', androidIconName: 'image' },
@@ -342,7 +378,7 @@ const InputBarView: React.FC<InputBarProps> = ({
               onPress: onAttachAudio,
               accessibilityLabel: t('components.inputBar.attachAudio'),
             })}
-        </View>
+        </Card>
       )}
       <View
         ref={composerRef}
@@ -350,24 +386,42 @@ const InputBarView: React.FC<InputBarProps> = ({
         style={[
           styles.inputFieldContainer,
           style,
-          { backgroundColor: colors.surface },
+          !isLiquidGlassSupported && { backgroundColor: colors.surface },
         ]}
       >
-        <LinearGradient
-          pointerEvents="none"
-          colors={gradientColors[theme]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.topGradient}
-        />
-        <View style={[styles.inputBarContainer, inputBarStyle]}>
+        {isLiquidGlassSupported ? (
+          <LinearGradient
+            pointerEvents="none"
+            colors={bottomFadeColors[theme]}
+            locations={BOTTOM_FADE_LOCATIONS}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.bottomFade}
+          />
+        ) : (
+          <LinearGradient
+            pointerEvents="none"
+            colors={gradientColors[theme]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.topGradient}
+          />
+        )}
+        <Card
+          style={[
+            styles.inputBarContainer,
+            isLiquidGlassSupported ? styles.glassCard : inputBarStyle,
+          ]}
+        >
           <TextInput
+            key={inputKey}
+            autoFocus={focused}
             style={[styles.textInput, { color: colors.onSurface }]}
             placeholder={t('components.inputBar.placeholder')}
             placeholderTextColor="#999"
             value={value}
             editable={!disabled}
-            onChangeText={onChangeText}
+            onChangeText={handleChangeText}
             onFocus={handleFocus}
             onBlur={handleBlur}
             multiline
@@ -445,10 +499,16 @@ const InputBarView: React.FC<InputBarProps> = ({
               onStop={onStop}
             />
           </View>
-        </View>
+        </Card>
       </View>
     </View>
   );
+};
+
+const GlassCard: React.FC<React.ComponentProps<typeof View>> = props => {
+  const theme = useTheme();
+
+  return <LiquidGlassView colorScheme={theme} {...props} />;
 };
 
 // Memoized: ChatScreen re-renders on every streamed token, and none of that
