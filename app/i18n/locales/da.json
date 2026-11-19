@@ -297,6 +297,7 @@
     "drawerContent": {
       "newChat": "Ny chat",
       "settings": "Indstillinger",
+      "models": "Modeller",
       "changeModel": "Skift model"
     },
     "voiceAssistant": {
@@ -332,8 +333,6 @@
     },
     "settings": {
       "app": "App",
-      "models": "Modeller",
-      "manageYourModels": "Administrer dine modeller",
       "customize": "Tilpas",
       "customizeSubtitle": "Konfigurer din assistent",
       "about": "Om",

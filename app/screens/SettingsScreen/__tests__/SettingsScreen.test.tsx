@@ -23,12 +23,11 @@ test('renders correctly SettingsScreen', async () => {
   expect((await render(<SettingsScreen />)).toJSON()).toMatchSnapshot();
 });
 
-test('pressing models navigates to the ModelsScreen', async () => {
+// Models moved to the drawer, next to the conversations.
+test('does not list models', async () => {
   const screen = await render(<SettingsScreen />);
 
-  await fireEvent.press(getRow(screen, 'screens.settings.models'));
-
-  expect(mockNavigate).toHaveBeenCalledWith('ModelsScreen');
+  expect(screen.queryByText('screens.settings.models')).toBeNull();
 });
 
 test('pressing customize navigates to the CustomizeAssistantScreen', async () => {

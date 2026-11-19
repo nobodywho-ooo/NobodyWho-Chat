@@ -9,10 +9,6 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  createNativeStackNavigator,
-  type NativeStackHeaderItem,
-} from '@react-navigation/native-stack';
 import { BlurTargetView } from 'expo-blur';
 import { AppState, AppStateStatus, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
@@ -37,7 +33,7 @@ import {
 } from 'repositories';
 import { log, isForegroundHeld, toChatHistory, toModelHistory } from 'helpers';
 import { Toast } from 'components';
-import { useAppState, useModels, useStyled } from 'hooks';
+import { useAppState, useModels } from 'hooks';
 import {
   VOICE_SLOTS,
   VoiceSlot,
@@ -47,19 +43,11 @@ import {
 } from 'services';
 import {
   ChatScreen,
-  CustomizeAssistantScreen,
-  DownloadedModelsScreen,
   ErrorScreen,
   LoadingScreen,
-  ModelsScreen,
   NoModelDownloadedScreen,
   NoModelSelectedScreen,
-  PrivacyPolicyScreen,
-  SettingsScreen,
-  TermsScreen,
 } from 'screens';
-
-const Stack = createNativeStackNavigator();
 
 enum SessionStatus {
   Loading = 'loading',
@@ -150,7 +138,6 @@ const ChatRootScreen = () => {
 
 export const ChatStackNavigator = () => {
   const { t } = useTranslation();
-  const { colors } = useStyled();
   const { models, loading: modelsLoading } = useModels();
   const { modelIdInUse } = useAppState();
   const { slots, ensureVoiceEngine } = useAiService();
@@ -564,88 +551,9 @@ export const ChatStackNavigator = () => {
     ],
   );
 
-  const closeHeaderItems = useCallback(
-    (navigation: { goBack: () => void }) => (): NativeStackHeaderItem[] => [
-      {
-        type: 'button',
-        label: t('navigation.close'),
-        icon: { type: 'sfSymbol', name: 'xmark' },
-        tintColor: colors.onSurface,
-        onPress: navigation.goBack,
-      },
-    ],
-    [colors.onSurface, t],
-  );
-
   return (
     <ChatRootContext.Provider value={chatRootValue}>
-      <Stack.Navigator
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.onSurface,
-          headerTitleStyle: { color: colors.onSurface },
-        }}
-      >
-        <Stack.Screen
-          name="ChatScreen"
-          component={ChatRootScreen}
-          // inactiveBehavior prevents expo-audio from crashing
-          options={{ headerShown: false, inactiveBehavior: 'none' }}
-        />
-        <Stack.Screen
-          name="SettingsScreen"
-          component={SettingsScreen}
-          options={({ navigation }) => ({
-            title: t('navigation.settings'),
-            presentation: 'modal',
-            unstable_headerRightItems: closeHeaderItems(navigation),
-          })}
-        />
-        <Stack.Screen
-          name="ModelsScreen"
-          component={ModelsScreen}
-          options={({ navigation }) => ({
-            title: t('navigation.models'),
-            presentation: 'modal',
-            unstable_headerRightItems: closeHeaderItems(navigation),
-          })}
-        />
-        <Stack.Screen
-          name="CustomizeAssistantScreen"
-          component={CustomizeAssistantScreen}
-          options={({ navigation }) => ({
-            title: t('navigation.customizeAssistant'),
-            presentation: 'modal',
-            unstable_headerRightItems: closeHeaderItems(navigation),
-          })}
-        />
-        <Stack.Screen
-          name="DownloadedModelsScreen"
-          component={DownloadedModelsScreen}
-          options={{
-            title: '',
-            presentation: 'modal',
-          }}
-        />
-        <Stack.Screen
-          name="TermsScreen"
-          component={TermsScreen}
-          options={({ navigation }) => ({
-            title: t('navigation.terms'),
-            presentation: 'modal',
-            unstable_headerRightItems: closeHeaderItems(navigation),
-          })}
-        />
-        <Stack.Screen
-          name="PrivacyPolicyScreen"
-          component={PrivacyPolicyScreen}
-          options={({ navigation }) => ({
-            title: t('navigation.privacyPolicy'),
-            presentation: 'modal',
-            unstable_headerRightItems: closeHeaderItems(navigation),
-          })}
-        />
-      </Stack.Navigator>
+      <ChatRootScreen />
     </ChatRootContext.Provider>
   );
 };

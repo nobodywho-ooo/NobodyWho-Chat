@@ -27,20 +27,6 @@ jest.mock('../../screens/ChatScreen/ChatScreen', () => {
 const renderedConversationId = () =>
   jest.mocked(ChatScreen).mock.lastCall?.[0].conversationId;
 
-jest.mock('@react-navigation/native-stack', () => {
-  const mockReact = require('react');
-  return {
-    createNativeStackNavigator: () => ({
-      Navigator: ({ children }: any) =>
-        mockReact.createElement(mockReact.Fragment, null, children),
-      Screen: ({ name, component }: any) =>
-        name === 'ChatScreen' && component
-          ? mockReact.createElement(component)
-          : null,
-    }),
-  };
-});
-
 const mockChatInstance = {
   setChatHistory: jest.fn(async (_history: unknown[] = []) => {}),
   getChatHistory: jest.fn(async () => []),

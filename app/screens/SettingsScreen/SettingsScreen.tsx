@@ -29,15 +29,6 @@ export const SettingsScreen: React.FC = () => {
     >
       <Text>{t('screens.settings.app')}</Text>
       <ListItem
-        title={t('screens.settings.models')}
-        subtitle={t('screens.settings.manageYourModels')}
-        iosIconName="square.stack.3d.up.fill"
-        androidIconName="layers"
-        iconBackgroundColor="#5856D6"
-        // @ts-ignore
-        onPress={() => navigation.navigate('ModelsScreen')}
-      />
-      <ListItem
         title={t('screens.settings.customize')}
         subtitle={t('screens.settings.customizeSubtitle')}
         iosIconName="slider.horizontal.3"

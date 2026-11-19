@@ -11,10 +11,7 @@ import {
   createDrawerNavigator,
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
-import {
-  getFocusedRouteNameFromRoute,
-  useNavigation,
-} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import {
   MenuView,
   type MenuAction,
@@ -26,7 +23,7 @@ import {
   deleteConversation,
   getDocumentPathsByConversationId,
 } from 'repositories';
-import { DrawerContentScreen } from 'screens';
+import { DrawerContentScreen, ModelsScreen, SettingsScreen } from 'screens';
 import { PlatformIcon, Text, fontSizes } from 'components';
 import {
   log,
@@ -168,10 +165,7 @@ const ChatHeaderTitle = () => {
   const handlePress = React.useCallback(() => {
     slots.chat.ref.current?.stopGeneration();
     // @ts-ignore
-    navigation.navigate('Chat', {
-      screen: 'DownloadedModelsScreen',
-      params: { canDelete: false },
-    });
+    navigation.navigate('DownloadedModelsScreen', { canDelete: false });
   }, [navigation, slots]);
 
   if (!model?.name) {
@@ -233,6 +227,7 @@ const renderDrawerContent = ({ navigation }: DrawerContentComponentProps) => (
 );
 
 export const DrawerNavigator = () => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
   const { conversationIdInUse } = useAppState();
   const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
@@ -268,21 +263,32 @@ export const DrawerNavigator = () => {
       <Drawer.Screen
         name="Chat"
         component={ChatStackNavigator}
-        options={({ route }) => {
-          const routeName = getFocusedRouteNameFromRoute(route) ?? 'ChatScreen';
-          const isAtRoot = routeName === 'ChatScreen';
-
-          return {
-            headerShown: isIOS || isAtRoot,
-            // Disabled while the right drawer is open so its close gesture wins.
-            swipeEnabled: (isIOS || isAtRoot) && openSide !== 'right',
-            headerTitle: renderChatHeaderTitle,
-            headerTitleContainerStyle: { marginHorizontal: 8 },
-            headerRight:
-              conversationIdInUse !== undefined
-                ? renderChatHeaderRight
-                : undefined,
-          };
+        options={{
+          // Disabled while the right drawer is open so its close gesture wins.
+          swipeEnabled: openSide !== 'right',
+          headerTitle: renderChatHeaderTitle,
+          headerTitleContainerStyle: { marginHorizontal: 8 },
+          headerRight:
+            conversationIdInUse !== undefined
+              ? renderChatHeaderRight
+              : undefined,
+          inactiveBehavior: 'none',
+        }}
+      />
+      <Drawer.Screen
+        name="Models"
+        component={ModelsScreen}
+        options={{
+          title: t('navigation.models'),
+          swipeEnabled: openSide !== 'right',
+        }}
+      />
+      <Drawer.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          title: t('navigation.settings'),
+          swipeEnabled: openSide !== 'right',
         }}
       />
     </Drawer.Navigator>

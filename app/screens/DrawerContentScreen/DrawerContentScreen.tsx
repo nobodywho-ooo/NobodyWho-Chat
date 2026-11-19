@@ -38,16 +38,27 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
 
   const closeDrawer = onCloseDrawer;
 
-  const handleSettingsPress = useCallback(() => {
+  const handleModelsPress = useCallback(() => {
     chat.current?.stopGeneration();
-    navigation.navigate('Chat', { screen: 'SettingsScreen' });
+    navigation.navigate('Models');
     closeDrawer();
   }, [navigation, chat, closeDrawer]);
 
+  const handleSettingsPress = useCallback(() => {
+    chat.current?.stopGeneration();
+    navigation.navigate('Settings');
+    closeDrawer();
+  }, [navigation, chat, closeDrawer]);
+
+  const showChat = useCallback(() => {
+    navigation.navigate('Chat');
+    closeDrawer();
+  }, [navigation, closeDrawer]);
+
   const handleNewChatPress = useCallback(() => {
     setAppState({ conversationIdInUse: undefined });
-    closeDrawer();
-  }, [closeDrawer]);
+    showChat();
+  }, [showChat]);
 
   const [newChatHeight, setNewChatHeight] = useState(0);
 
@@ -71,25 +82,35 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         <Text variant="h3" bold>
           nobodywho
         </Text>
-        <IconButton
-          icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
-          glass
-          onPress={closeDrawer}
-        />
+        <View style={styles.headerButtons}>
+          <IconButton
+            icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
+            glass
+            accessibilityRole="button"
+            accessibilityLabel={t('screens.drawerContent.settings')}
+            onPress={handleSettingsPress}
+          />
+          <IconButton
+            icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
+            glass
+            accessibilityRole="button"
+            onPress={closeDrawer}
+          />
+        </View>
       </View>
 
       <View style={styles.actionsContainer}>
         <ActionButton
-          icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
-          label={t('screens.drawerContent.settings')}
-          onPress={handleSettingsPress}
+          icon={{
+            iosIconName: 'square.stack.3d.up',
+            androidIconName: 'layers',
+          }}
+          label={t('screens.drawerContent.models')}
+          onPress={handleModelsPress}
         />
       </View>
 
-      <ConversationsList
-        onCloseDrawer={closeDrawer}
-        bottomInset={listBottomInset}
-      />
+      <ConversationsList onSelect={showChat} bottomInset={listBottomInset} />
 
       <LinearGradient
         pointerEvents="none"

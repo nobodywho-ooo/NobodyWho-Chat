@@ -9,7 +9,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { useAppState, useModels, useStyled } from 'hooks';
 import { deleteModel, getDocumentPathsByModelId } from 'repositories';
-import { deleteMessageDocuments, deleteModelFiles, isIOS, log } from 'helpers';
+import { deleteMessageDocuments, deleteModelFiles, log } from 'helpers';
 import { ModelCard, PlatformIcon, Text } from 'components';
 import {
   inUseModelIdForPipeline,
@@ -189,19 +189,9 @@ export const DownloadedModelsScreen: React.FC = () => {
             )}
           </Pressable>
         )}
-        {isIOS && (
-          <Pressable onPress={navigation.goBack} accessibilityRole="button">
-            <PlatformIcon
-              iosIconName="xmark"
-              androidIconName="close"
-              color={colors.onSurface}
-              size={22}
-            />
-          </Pressable>
-        )}
       </View>
     );
-  }, [navigation, deleteMode, hasModels, canDelete, colors, t]);
+  }, [deleteMode, hasModels, canDelete, colors, t]);
 
   useLayoutEffect(() => {
     navigation.setOptions({ headerRight: () => renderHeaderRight() });

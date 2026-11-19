@@ -6,52 +6,17 @@ import {
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
 import { VoiceAssistantScreen } from 'screens';
-import { isIOS } from 'helpers';
 import { useSlotModel, useStyled } from 'hooks';
 import { Spacings } from 'style';
 import { ModelSlot } from 'types';
 
 import { DrawerNavigator } from './DrawerNavigator';
 import {
-  DrawerCoordinationProvider,
   DrawerOpenerReporter,
   DrawerStatusReporter,
   buildRightDrawerGesture,
   useDrawerCoordination,
 } from './DrawerCoordination';
-
-// The inner ChatStackNavigator presents these as Android modals. A full-width
-// drawer swipe would fight the modal, so — exactly like the left drawer — the
-// right-drawer swipe is disabled off the chat root on Android.
-const MODAL_ROUTE_NAMES = new Set([
-  'SettingsScreen',
-  'ModelsScreen',
-  'CustomizeAssistantScreen',
-  'DownloadedModelsScreen',
-  'TermsScreen',
-  'PrivacyPolicyScreen',
-]);
-
-type NestedRoute = {
-  name: string;
-  state?: { index?: number; routes: NestedRoute[] };
-};
-
-// Walks the nested navigation state down to the currently focused leaf route.
-// The outer drawer sits two navigators above the chat stack, so the built-in
-// getFocusedRouteNameFromRoute (one level) can't see it.
-const getLeafRouteName = (route: NestedRoute): string => {
-  let current = route;
-  while (current.state && current.state.routes.length > 0) {
-    const { index, routes } = current.state;
-    const next = routes[index ?? routes.length - 1];
-    if (!next) {
-      break;
-    }
-    current = next;
-  }
-  return current.name;
-};
 
 const Drawer = createDrawerNavigator();
 
@@ -62,17 +27,14 @@ const renderVoiceAssistant = ({ navigation }: DrawerContentComponentProps) => (
     <VoiceAssistantScreen
       onCloseDrawer={() => navigation.closeDrawer()}
       onOpenModels={() => {
-        navigation.navigate('Main', {
-          screen: 'Chat',
-          params: { screen: 'ModelsScreen' },
-        });
+        navigation.navigate('Main', { screen: 'Models' });
         navigation.closeDrawer();
       }}
     />
   </>
 );
 
-const RootDrawer = () => {
+export const RootDrawerNavigator = () => {
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
@@ -108,20 +70,13 @@ const RootDrawer = () => {
       <Drawer.Screen
         name="Main"
         component={DrawerNavigator}
-        options={({ route }) => ({
+        options={{
           swipeEnabled:
             chatModel !== undefined &&
-            (isIOS || !MODAL_ROUTE_NAMES.has(getLeafRouteName(route))) &&
             // Disabled while the left drawer is open so its close gesture wins.
             openSide !== 'left',
-        })}
+        }}
       />
     </Drawer.Navigator>
   );
 };
-
-export const RootDrawerNavigator = () => (
-  <DrawerCoordinationProvider>
-    <RootDrawer />
-  </DrawerCoordinationProvider>
-);

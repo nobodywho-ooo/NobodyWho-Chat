@@ -297,6 +297,7 @@
     "drawerContent": {
       "newChat": "New Chat",
       "settings": "Settings",
+      "models": "Models",
       "changeModel": "Change model"
     },
     "voiceAssistant": {
@@ -332,8 +333,6 @@
     },
     "settings": {
       "app": "App",
-      "models": "Models",
-      "manageYourModels": "Manage your models",
       "customize": "Customize",
       "customizeSubtitle": "Configure your assistant",
       "about": "About",

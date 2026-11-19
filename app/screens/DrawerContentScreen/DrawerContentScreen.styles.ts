@@ -15,6 +15,11 @@ export default StyleSheet.create({
     paddingTop: Spacings.lg,
     paddingBottom: Spacings.md,
   },
+  headerButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.sm,
+  },
   actionsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',

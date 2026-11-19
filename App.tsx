@@ -28,7 +28,7 @@ import { useResumeModelDownloads, useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen, OnboardingScreen } from 'screens';
 import { WebScrapeHost } from 'components';
 import { AiServiceProvider, prefetchModelCatalogue } from 'services';
-import { RootDrawerNavigator } from 'navigation';
+import { RootNavigator } from 'navigation';
 import { useTranslation } from 'react-i18next';
 
 const unWantedError =
@@ -104,7 +104,7 @@ function AppContent({ showOnboarding, onOnboardingFinish }: AppContentProps) {
         {showOnboarding ? (
           <OnboardingScreen onFinish={onOnboardingFinish} />
         ) : (
-          <RootDrawerNavigator />
+          <RootNavigator />
         )}
       </Sentry.NavigationContainer>
       {!showOnboarding && <WebScrapeHost />}
