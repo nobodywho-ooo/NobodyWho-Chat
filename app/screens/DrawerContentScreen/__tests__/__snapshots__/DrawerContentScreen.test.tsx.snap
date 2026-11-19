@@ -48,6 +48,7 @@ exports[`renders correctly DrawerContentScreen 1`] = `
         onPress={[Function]}
       />
       <IconButton
+        accessibilityRole="button"
         glass={true}
         icon={
           {

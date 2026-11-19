@@ -16,6 +16,7 @@ import {
   log,
 } from 'helpers';
 import { ModelPipeline } from 'types';
+import { subscribeChatModelArrival } from 'services';
 import { buildModel } from 'jest/factories/model';
 
 import {
@@ -635,6 +636,57 @@ test('a first chat model fills the empty chat slot on completion', async () => {
       conversationIdInUse: undefined,
     }),
   );
+});
+
+// The drawer listens to this to open the chat on a new conversation.
+test('a first chat model announces its arrival once installed', async () => {
+  (getAppState as jest.Mock).mockReturnValue({});
+  const onArrival = jest.fn();
+  const unsubscribe = subscribeChatModelArrival(onArrival);
+  const download = pendingDownload(110);
+  mockGetModelDownloads.mockResolvedValue([download]);
+  mockDownloadModelPart.mockResolvedValue('/docs/models/110/model-110.gguf');
+
+  await renderHook(() => useResumeModelDownloads());
+
+  await waitFor(() => expect(onArrival).toHaveBeenCalledTimes(1));
+  unsubscribe();
+});
+
+test('a chat model downloaded beside the one in use does not announce itself', async () => {
+  (getAppState as jest.Mock).mockReturnValue({ modelIdInUse: 1 });
+  const onArrival = jest.fn();
+  const unsubscribe = subscribeChatModelArrival(onArrival);
+  const download = pendingDownload(111);
+  mockGetModelDownloads.mockResolvedValue([download]);
+  mockDownloadModelPart.mockResolvedValue('/docs/models/111/model-111.gguf');
+
+  await renderHook(() => useResumeModelDownloads());
+
+  await waitFor(() =>
+    expect(mockDeleteModelDownload).toHaveBeenCalledWith(111),
+  );
+  expect(onArrival).not.toHaveBeenCalled();
+  unsubscribe();
+});
+
+test('a voice model filling its empty slot does not announce a chat model', async () => {
+  (getAppState as jest.Mock).mockReturnValue({});
+  const onArrival = jest.fn();
+  const unsubscribe = subscribeChatModelArrival(onArrival);
+  const download = pendingDownload(112, ModelPipeline.textToSpeech);
+  mockGetModelDownloads.mockResolvedValue([download]);
+  mockDownloadModelPart.mockResolvedValue('/docs/models/112/model-112.gguf');
+
+  await renderHook(() => useResumeModelDownloads());
+
+  await waitFor(() =>
+    expect(mockSetAppState).toHaveBeenCalledWith(
+      expect.objectContaining({ ttsModelIdInUse: 112 }),
+    ),
+  );
+  expect(onArrival).not.toHaveBeenCalled();
+  unsubscribe();
 });
 
 test('a TTS model fills the voice slot — never the chat slot', async () => {

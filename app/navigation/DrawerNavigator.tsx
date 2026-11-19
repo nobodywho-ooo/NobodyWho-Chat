@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import {
   Platform,
   Pressable,
@@ -33,7 +33,7 @@ import {
   parameterCountLabel,
 } from 'helpers';
 import { useAppState, useModels, useStyled } from 'hooks';
-import { useAiService } from 'services';
+import { subscribeChatModelArrival, useAiService } from 'services';
 import { Spacings } from 'style';
 import { isChatPipeline } from 'types';
 
@@ -57,7 +57,7 @@ const ChatHeaderRight = () => {
   const { conversationIdInUse } = useAppState();
   const { slots } = useAiService();
 
-  const handleMenuAction = React.useCallback(
+  const handleMenuAction = useCallback(
     async ({ nativeEvent }: NativeActionEvent) => {
       slots.chat.ref.current?.stopGeneration();
 
@@ -162,7 +162,7 @@ const ChatHeaderTitle = () => {
   const canChangeModel =
     models.filter(({ pipeline }) => isChatPipeline(pipeline)).length >= 2;
 
-  const handlePress = React.useCallback(() => {
+  const handlePress = useCallback(() => {
     slots.chat.ref.current?.stopGeneration();
     // @ts-ignore
     navigation.navigate('DownloadedModelsScreen', { canDelete: false });
@@ -216,9 +216,27 @@ const ChatHeaderTitle = () => {
 
 const renderChatHeaderTitle = () => <ChatHeaderTitle />;
 
+const OpenChatOnModelArrival = ({
+  navigation,
+}: Pick<DrawerContentComponentProps, 'navigation'>) => {
+  const navigationRef = useRef(navigation);
+  navigationRef.current = navigation;
+
+  useEffect(
+    () =>
+      subscribeChatModelArrival(() => {
+        navigationRef.current.navigate('Chat');
+      }),
+    [],
+  );
+
+  return null;
+};
+
 const renderDrawerContent = ({ navigation }: DrawerContentComponentProps) => (
   <>
     <DrawerStatusReporter side="left" />
+    <OpenChatOnModelArrival navigation={navigation} />
     <DrawerContentScreen
       navigation={navigation}
       onCloseDrawer={() => navigation.closeDrawer()}

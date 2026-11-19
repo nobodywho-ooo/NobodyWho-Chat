@@ -8,7 +8,13 @@ import {
   updateModelDownloadParts,
   insertModel,
 } from 'repositories';
-import { Model, ModelDownload, ModelPart } from 'types';
+import {
+  Model,
+  ModelDownload,
+  ModelPart,
+  ModelSlot,
+  slotForPipeline,
+} from 'types';
 import type { DiskSpaceCheck } from 'helpers';
 import {
   checkDiskSpaceForModel,
@@ -17,7 +23,7 @@ import {
   log,
   modelSizeLabel,
 } from 'helpers';
-import { selectModelIfSlotFree } from 'services';
+import { notifyChatModelArrival, selectModelIfSlotFree } from 'services';
 
 const DOWNLOAD_THROTTLE = 0.01; // 1% step
 
@@ -217,7 +223,16 @@ const useRunDownload = () => {
         // installed model looking like a pending download to resume.
         await deleteModelDownload(model.id);
 
-        await selectModelIfSlotFree(model);
+        const tookFreeSlot = await selectModelIfSlotFree(model);
+
+        // The user had no chat model in use and now has one: show them the
+        // chat, on a new conversation.
+        if (
+          tookFreeSlot &&
+          slotForPipeline(model.pipeline) === ModelSlot.chat
+        ) {
+          notifyChatModelArrival();
+        }
       } catch (error) {
         // Cut by a trip to the background: not reported, but restarted by this
         // loop once the app is back. Only once: the restart reports a failure
