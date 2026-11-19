@@ -1,6 +1,7 @@
 import { Accordion } from './Accordion/Accordion';
 import { Button } from './Button/Button';
 import { Chevron } from './Chevron/Chevron';
+import { DownloadedModels } from './DownloadedModels/DownloadedModels';
 import { ProgressBar } from './ProgressBar/ProgressBar';
 import { ErrorView } from './ErrorView/ErrorView';
 import { GradientText } from './GradientText/GradientText';
@@ -30,6 +31,7 @@ export {
   Accordion,
   Button,
   Chevron,
+  DownloadedModels,
   ProgressBar,
   ErrorView,
   fontSizes,

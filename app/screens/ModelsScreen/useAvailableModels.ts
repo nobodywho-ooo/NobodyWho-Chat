@@ -10,9 +10,8 @@ import {
 import { MODEL_SLOTS } from 'types';
 
 // Reads the shared catalogue cache, filters it to what the device can run, and
-// derives the three lists the screen renders: the models in use (one per
-// occupied slot), how many are downloaded, and which remain available (not
-// already downloaded or downloading).
+// derives the lists the screen renders: the models in use (one per occupied
+// slot) and which remain available (not already downloaded or downloading).
 export const useAvailableModels = () => {
   const { models: storedModels } = useModels();
   const { downloads } = useModelDownloads();
@@ -85,7 +84,6 @@ export const useAvailableModels = () => {
     downloads,
     availableModels,
     inUseModels,
-    downloadedCount: downloadedModelIds.length,
     isLoading,
     hasError,
     hasFetched,

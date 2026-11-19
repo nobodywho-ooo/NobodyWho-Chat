@@ -8,56 +8,82 @@ exports[`renders correctly AvailableModels on error 1`] = `
         "alignItems": "center",
         "flexDirection": "row",
         "gap": 8,
-        "marginVertical": 12,
+        "justifyContent": "space-between",
+        "marginBottom": 20,
+        "marginTop": 12,
         "paddingTop": 16,
       }
     }
   >
-    <Text
-      variant="h4"
-    >
-      screens.models.availableToDownload
-    </Text>
-    <View
-      accessibilityLabel="screens.models.chooseModelTitle"
-      accessibilityRole="button"
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
+    <View>
+      <Text
+        variant="h4"
+      >
+        screens.models.availableToDownload
+      </Text>
+      <View
+        accessibilityLabel="screens.models.modelInfo"
+        accessibilityRole="button"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
         }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
         }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      hitSlop={8}
-      onBlur={[Function]}
-      onClick={[Function]}
-      onFocus={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-    >
-      <PlatformIcon
-        androidIconName="info"
-        color="#b44618"
-        iosIconName="info.circle"
-        size={20}
-      />
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={8}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          [
+            {
+              "alignItems": "center",
+              "alignSelf": "flex-start",
+              "flexDirection": "row",
+              "gap": 4,
+              "marginTop": 4,
+            },
+            false,
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="info"
+          color="#b44618"
+          iosIconName="info.circle"
+          size={14}
+        />
+        <Text
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body2"
+        >
+          screens.models.modelInfo
+        </Text>
+      </View>
     </View>
   </View>
   <View
@@ -103,56 +129,82 @@ exports[`renders correctly AvailableModels when everything is downloaded 1`] = `
         "alignItems": "center",
         "flexDirection": "row",
         "gap": 8,
-        "marginVertical": 12,
+        "justifyContent": "space-between",
+        "marginBottom": 20,
+        "marginTop": 12,
         "paddingTop": 16,
       }
     }
   >
-    <Text
-      variant="h4"
-    >
-      screens.models.availableToDownload
-    </Text>
-    <View
-      accessibilityLabel="screens.models.chooseModelTitle"
-      accessibilityRole="button"
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
+    <View>
+      <Text
+        variant="h4"
+      >
+        screens.models.availableToDownload
+      </Text>
+      <View
+        accessibilityLabel="screens.models.modelInfo"
+        accessibilityRole="button"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
         }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
         }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      hitSlop={8}
-      onBlur={[Function]}
-      onClick={[Function]}
-      onFocus={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-    >
-      <PlatformIcon
-        androidIconName="info"
-        color="#b44618"
-        iosIconName="info.circle"
-        size={20}
-      />
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={8}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          [
+            {
+              "alignItems": "center",
+              "alignSelf": "flex-start",
+              "flexDirection": "row",
+              "gap": 4,
+              "marginTop": 4,
+            },
+            false,
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="info"
+          color="#b44618"
+          iosIconName="info.circle"
+          size={14}
+        />
+        <Text
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body2"
+        >
+          screens.models.modelInfo
+        </Text>
+      </View>
     </View>
   </View>
   <Text>
@@ -169,56 +221,82 @@ exports[`renders correctly AvailableModels while loading 1`] = `
         "alignItems": "center",
         "flexDirection": "row",
         "gap": 8,
-        "marginVertical": 12,
+        "justifyContent": "space-between",
+        "marginBottom": 20,
+        "marginTop": 12,
         "paddingTop": 16,
       }
     }
   >
-    <Text
-      variant="h4"
-    >
-      screens.models.availableToDownload
-    </Text>
-    <View
-      accessibilityLabel="screens.models.chooseModelTitle"
-      accessibilityRole="button"
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
+    <View>
+      <Text
+        variant="h4"
+      >
+        screens.models.availableToDownload
+      </Text>
+      <View
+        accessibilityLabel="screens.models.modelInfo"
+        accessibilityRole="button"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
         }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
         }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      hitSlop={8}
-      onBlur={[Function]}
-      onClick={[Function]}
-      onFocus={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-    >
-      <PlatformIcon
-        androidIconName="info"
-        color="#b44618"
-        iosIconName="info.circle"
-        size={20}
-      />
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={8}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          [
+            {
+              "alignItems": "center",
+              "alignSelf": "flex-start",
+              "flexDirection": "row",
+              "gap": 4,
+              "marginTop": 4,
+            },
+            false,
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="info"
+          color="#b44618"
+          iosIconName="info.circle"
+          size={14}
+        />
+        <Text
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body2"
+        >
+          screens.models.modelInfo
+        </Text>
+      </View>
     </View>
   </View>
   <ActivityIndicator
@@ -240,56 +318,82 @@ exports[`renders correctly AvailableModels with a list of models 1`] = `
         "alignItems": "center",
         "flexDirection": "row",
         "gap": 8,
-        "marginVertical": 12,
+        "justifyContent": "space-between",
+        "marginBottom": 20,
+        "marginTop": 12,
         "paddingTop": 16,
       }
     }
   >
-    <Text
-      variant="h4"
-    >
-      screens.models.availableToDownload
-    </Text>
-    <View
-      accessibilityLabel="screens.models.chooseModelTitle"
-      accessibilityRole="button"
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
+    <View>
+      <Text
+        variant="h4"
+      >
+        screens.models.availableToDownload
+      </Text>
+      <View
+        accessibilityLabel="screens.models.modelInfo"
+        accessibilityRole="button"
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
         }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
         }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      hitSlop={8}
-      onBlur={[Function]}
-      onClick={[Function]}
-      onFocus={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-    >
-      <PlatformIcon
-        androidIconName="info"
-        color="#b44618"
-        iosIconName="info.circle"
-        size={20}
-      />
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        hitSlop={8}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          [
+            {
+              "alignItems": "center",
+              "alignSelf": "flex-start",
+              "flexDirection": "row",
+              "gap": 4,
+              "marginTop": 4,
+            },
+            false,
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="info"
+          color="#b44618"
+          iosIconName="info.circle"
+          size={14}
+        />
+        <Text
+          style={
+            {
+              "color": "#7c7c7c",
+            }
+          }
+          variant="body2"
+        >
+          screens.models.modelInfo
+        </Text>
+      </View>
     </View>
   </View>
   <ModelCard

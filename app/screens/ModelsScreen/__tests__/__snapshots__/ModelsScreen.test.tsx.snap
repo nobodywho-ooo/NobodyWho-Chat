@@ -8,7 +8,6 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
       {
         "flex": 1,
         "paddingHorizontal": 16,
-        "paddingTop": 16,
       },
       {
         "backgroundColor": "#FFFFFF",
@@ -17,62 +16,276 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
   }
 >
   <View>
+    <RCTScrollView
+      contentContainerStyle={
+        {
+          "columnGap": 8,
+          "paddingHorizontal": 16,
+          "paddingTop": 16,
+        }
+      }
+      horizontal={true}
+      onGestureUpdate_CAN_CAUSE_INFINITE_RERENDER={[Function]}
+      showsHorizontalScrollIndicator={false}
+      style={
+        {
+          "flexGrow": 0,
+          "marginHorizontal": -16,
+        }
+      }
+    >
+      <View>
+        <View
+          accessibilityLabel="screens.models.discover"
+          accessibilityRole="tab"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": true,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={4}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "borderRadius": 999,
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+              false,
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#000000",
+              }
+            }
+          >
+            screens.models.discover
+          </Text>
+        </View>
+        <View
+          accessibilityLabel="screens.models.inUse"
+          accessibilityRole="tab"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": false,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={4}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "borderRadius": 999,
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+              },
+              false,
+              false,
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+          >
+            screens.models.inUse
+          </Text>
+        </View>
+        <View
+          accessibilityLabel="screens.models.downloaded"
+          accessibilityRole="tab"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": false,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={4}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "borderRadius": 999,
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+              },
+              false,
+              false,
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+          >
+            screens.models.downloaded
+          </Text>
+        </View>
+      </View>
+    </RCTScrollView>
     <View
       style={
         {
           "alignItems": "center",
           "flexDirection": "row",
           "gap": 8,
-          "marginVertical": 12,
+          "justifyContent": "space-between",
+          "marginBottom": 20,
+          "marginTop": 12,
           "paddingTop": 16,
         }
       }
     >
-      <Text
-        variant="h4"
-      >
-        screens.models.availableToDownload
-      </Text>
-      <View
-        accessibilityLabel="screens.models.chooseModelTitle"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
+      <View>
+        <Text
+          variant="h4"
+        >
+          screens.models.availableToDownload
+        </Text>
+        <View
+          accessibilityLabel="screens.models.modelInfo"
+          accessibilityRole="button"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
           }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
           }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        hitSlop={8}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-      >
-        <PlatformIcon
-          androidIconName="info"
-          color="#b44618"
-          iosIconName="info.circle"
-          size={20}
-        />
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={8}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "alignItems": "center",
+                "alignSelf": "flex-start",
+                "flexDirection": "row",
+                "gap": 4,
+                "marginTop": 4,
+              },
+              false,
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="info"
+            color="#b44618"
+            iosIconName="info.circle"
+            size={14}
+          />
+          <Text
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+            variant="body2"
+          >
+            screens.models.modelInfo
+          </Text>
+        </View>
       </View>
     </View>
     <View
@@ -126,7 +339,6 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
       {
         "flex": 1,
         "paddingHorizontal": 16,
-        "paddingTop": 16,
       },
       {
         "backgroundColor": "#FFFFFF",
@@ -135,112 +347,276 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
   }
 >
   <View>
-    <Text
-      style={
+    <RCTScrollView
+      contentContainerStyle={
         {
-          "marginBottom": 16,
-        }
-      }
-      variant="h4"
-    >
-      screens.models.inUse
-    </Text>
-    <ModelCard
-      isSelected={true}
-      model={
-        {
-          "author": "Author",
-          "family": "Family",
-          "huggingfaceUrl": "https://huggingface.co/test/model-10",
-          "id": 10,
-          "languages": [],
-          "name": "Model 10",
-          "parameterCountBillions": 1,
-          "parts": [],
-          "pipeline": "textGeneration",
-          "sizeGB": 1,
-          "supportedFileFormat": [],
-          "tags": [],
-          "thinking": false,
-          "toolCalling": false,
-        }
-      }
-    />
-    <Text
-      style={
-        {
-          "marginVertical": 12,
+          "columnGap": 8,
+          "paddingHorizontal": 16,
           "paddingTop": 16,
         }
       }
-      variant="h4"
+      horizontal={true}
+      onGestureUpdate_CAN_CAUSE_INFINITE_RERENDER={[Function]}
+      showsHorizontalScrollIndicator={false}
+      style={
+        {
+          "flexGrow": 0,
+          "marginHorizontal": -16,
+        }
+      }
     >
-      screens.models.readyToUse
-    </Text>
-    <ListItem
-      androidIconName="deployed_code_update"
-      iconBackgroundColor="#b44618"
-      iosIconName="arrow.down.circle.fill"
-      onPress={[Function]}
-      subtitle="screens.models.modelCount"
-      title="screens.models.downloaded"
-    />
+      <View>
+        <View
+          accessibilityLabel="screens.models.discover"
+          accessibilityRole="tab"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": true,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={4}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "borderRadius": 999,
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+              false,
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#000000",
+              }
+            }
+          >
+            screens.models.discover
+          </Text>
+        </View>
+        <View
+          accessibilityLabel="screens.models.inUse"
+          accessibilityRole="tab"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": false,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={4}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "borderRadius": 999,
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+              },
+              false,
+              false,
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+          >
+            screens.models.inUse
+          </Text>
+        </View>
+        <View
+          accessibilityLabel="screens.models.downloaded"
+          accessibilityRole="tab"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": false,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={4}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "borderRadius": 999,
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+              },
+              false,
+              false,
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+          >
+            screens.models.downloaded
+          </Text>
+        </View>
+      </View>
+    </RCTScrollView>
     <View
       style={
         {
           "alignItems": "center",
           "flexDirection": "row",
           "gap": 8,
-          "marginVertical": 12,
+          "justifyContent": "space-between",
+          "marginBottom": 20,
+          "marginTop": 12,
           "paddingTop": 16,
         }
       }
     >
-      <Text
-        variant="h4"
-      >
-        screens.models.availableToDownload
-      </Text>
-      <View
-        accessibilityLabel="screens.models.chooseModelTitle"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
+      <View>
+        <Text
+          variant="h4"
+        >
+          screens.models.availableToDownload
+        </Text>
+        <View
+          accessibilityLabel="screens.models.modelInfo"
+          accessibilityRole="button"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
           }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
           }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        hitSlop={8}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-      >
-        <PlatformIcon
-          androidIconName="info"
-          color="#b44618"
-          iosIconName="info.circle"
-          size={20}
-        />
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={8}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "alignItems": "center",
+                "alignSelf": "flex-start",
+                "flexDirection": "row",
+                "gap": 4,
+                "marginTop": 4,
+              },
+              false,
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="info"
+            color="#b44618"
+            iosIconName="info.circle"
+            size={14}
+          />
+          <Text
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+            variant="body2"
+          >
+            screens.models.modelInfo
+          </Text>
+        </View>
       </View>
     </View>
     <View
@@ -294,7 +670,6 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
       {
         "flex": 1,
         "paddingHorizontal": 16,
-        "paddingTop": 16,
       },
       {
         "backgroundColor": "#FFFFFF",
@@ -303,112 +678,276 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
   }
 >
   <View>
-    <Text
-      style={
+    <RCTScrollView
+      contentContainerStyle={
         {
-          "marginBottom": 16,
-        }
-      }
-      variant="h4"
-    >
-      screens.models.inUse
-    </Text>
-    <ModelCard
-      isSelected={true}
-      model={
-        {
-          "author": "Author",
-          "family": "Family",
-          "huggingfaceUrl": "https://huggingface.co/test/model-10",
-          "id": 10,
-          "languages": [],
-          "name": "Model 10",
-          "parameterCountBillions": 1,
-          "parts": [],
-          "pipeline": "textGeneration",
-          "sizeGB": 1,
-          "supportedFileFormat": [],
-          "tags": [],
-          "thinking": false,
-          "toolCalling": false,
-        }
-      }
-    />
-    <Text
-      style={
-        {
-          "marginVertical": 12,
+          "columnGap": 8,
+          "paddingHorizontal": 16,
           "paddingTop": 16,
         }
       }
-      variant="h4"
+      horizontal={true}
+      onGestureUpdate_CAN_CAUSE_INFINITE_RERENDER={[Function]}
+      showsHorizontalScrollIndicator={false}
+      style={
+        {
+          "flexGrow": 0,
+          "marginHorizontal": -16,
+        }
+      }
     >
-      screens.models.readyToUse
-    </Text>
-    <ListItem
-      androidIconName="deployed_code_update"
-      iconBackgroundColor="#b44618"
-      iosIconName="arrow.down.circle.fill"
-      onPress={[Function]}
-      subtitle="screens.models.modelCount"
-      title="screens.models.downloaded"
-    />
+      <View>
+        <View
+          accessibilityLabel="screens.models.discover"
+          accessibilityRole="tab"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": true,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={4}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "borderRadius": 999,
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+              false,
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#000000",
+              }
+            }
+          >
+            screens.models.discover
+          </Text>
+        </View>
+        <View
+          accessibilityLabel="screens.models.inUse"
+          accessibilityRole="tab"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": false,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={4}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "borderRadius": 999,
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+              },
+              false,
+              false,
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+          >
+            screens.models.inUse
+          </Text>
+        </View>
+        <View
+          accessibilityLabel="screens.models.downloaded"
+          accessibilityRole="tab"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": false,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={4}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "borderRadius": 999,
+                "paddingHorizontal": 16,
+                "paddingVertical": 10,
+              },
+              false,
+              false,
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+          >
+            screens.models.downloaded
+          </Text>
+        </View>
+      </View>
+    </RCTScrollView>
     <View
       style={
         {
           "alignItems": "center",
           "flexDirection": "row",
           "gap": 8,
-          "marginVertical": 12,
+          "justifyContent": "space-between",
+          "marginBottom": 20,
+          "marginTop": 12,
           "paddingTop": 16,
         }
       }
     >
-      <Text
-        variant="h4"
-      >
-        screens.models.availableToDownload
-      </Text>
-      <View
-        accessibilityLabel="screens.models.chooseModelTitle"
-        accessibilityRole="button"
-        accessibilityState={
-          {
-            "busy": undefined,
-            "checked": undefined,
-            "disabled": undefined,
-            "expanded": undefined,
-            "selected": undefined,
+      <View>
+        <Text
+          variant="h4"
+        >
+          screens.models.availableToDownload
+        </Text>
+        <View
+          accessibilityLabel="screens.models.modelInfo"
+          accessibilityRole="button"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
           }
-        }
-        accessibilityValue={
-          {
-            "max": undefined,
-            "min": undefined,
-            "now": undefined,
-            "text": undefined,
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
           }
-        }
-        accessible={true}
-        collapsable={false}
-        focusable={true}
-        hitSlop={8}
-        onBlur={[Function]}
-        onClick={[Function]}
-        onFocus={[Function]}
-        onResponderGrant={[Function]}
-        onResponderMove={[Function]}
-        onResponderRelease={[Function]}
-        onResponderTerminate={[Function]}
-        onResponderTerminationRequest={[Function]}
-        onStartShouldSetResponder={[Function]}
-      >
-        <PlatformIcon
-          androidIconName="info"
-          color="#b44618"
-          iosIconName="info.circle"
-          size={20}
-        />
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          hitSlop={8}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "alignItems": "center",
+                "alignSelf": "flex-start",
+                "flexDirection": "row",
+                "gap": 4,
+                "marginTop": 4,
+              },
+              false,
+            ]
+          }
+        >
+          <PlatformIcon
+            androidIconName="info"
+            color="#b44618"
+            iosIconName="info.circle"
+            size={14}
+          />
+          <Text
+            style={
+              {
+                "color": "#7c7c7c",
+              }
+            }
+            variant="body2"
+          >
+            screens.models.modelInfo
+          </Text>
+        </View>
       </View>
     </View>
     <ModelCard

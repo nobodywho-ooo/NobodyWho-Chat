@@ -58,6 +58,13 @@ const pipelineIcons: Record<ModelPipeline, PipelineIcon> = {
   },
 };
 
+// Stands for every pipeline at once, e.g. the "All models" filter: a stack of
+// layers, distinct from each single pipeline's icon.
+export const ALL_PIPELINES_ICON: PipelineIcon = {
+  iosIconName: 'square.stack.3d.up',
+  androidIconName: 'stacks',
+};
+
 // The platform icon pair standing for a pipeline, so everything that shows a
 // pipeline (the model cards, the catalogue's filter pills) labels it the same
 // way. Mirrors pipelineLabel, which names the same pipelines in words.

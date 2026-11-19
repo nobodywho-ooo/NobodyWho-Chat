@@ -17,6 +17,7 @@ import {
   type MenuAction,
   type NativeActionEvent,
 } from '@react-native-menu/menu';
+import { isLiquidGlassSupported } from '@callstack/liquid-glass';
 import { useTranslation } from 'react-i18next';
 import { setAppState } from 'database';
 import {
@@ -248,7 +249,7 @@ export const DrawerNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { conversationIdInUse } = useAppState();
-  const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
+  const { openSide, scrollGestures, swipeExclusion } = useDrawerCoordination();
 
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
@@ -258,6 +259,7 @@ export const DrawerNavigator = () => {
       drawerContent={renderDrawerContent}
       screenOptions={{
         headerStyle: { backgroundColor: colors.surface },
+        headerShadowVisible: !isLiquidGlassSupported,
         headerTintColor: colors.onSurface,
         headerTitleStyle: { color: colors.onSurface },
         drawerStyle: {
@@ -273,7 +275,7 @@ export const DrawerNavigator = () => {
         swipeEdgeWidth: windowWidth,
         configureGestureHandler: buildLeftDrawerGesture(
           openSide === 'left',
-          scrollGesture,
+          scrollGestures,
           swipeExclusion,
         ),
       }}

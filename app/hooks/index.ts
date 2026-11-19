@@ -1,5 +1,6 @@
 export * from './useAppState';
 export * from './useConversations';
+export * from './useDrawerScrollGesture';
 export * from './useMessages';
 export * from './useCuratedModels';
 export * from './useModelDownloader';

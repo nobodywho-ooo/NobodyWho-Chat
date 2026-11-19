@@ -8,7 +8,7 @@ import {
 import type { TestInstance } from 'test-renderer';
 
 import { buildModel } from 'jest/factories/model';
-import { getPipelineIcon } from 'helpers';
+import { ALL_PIPELINES_ICON, getPipelineIcon } from 'helpers';
 import { ModelPipeline, pipelineLabel } from 'types';
 
 import { AvailableModels } from '../AvailableModels';
@@ -16,6 +16,9 @@ import { AvailableModels } from '../AvailableModels';
 const queryCards = (screen: RenderResult) =>
   screen.container.queryAll(node => node.type === 'ModelCard');
 const isPlatformIcon = (node: TestInstance) => node.type === 'PlatformIcon';
+const FILTER_BUTTON = 'screens.models.filterModels';
+const openFilters = async (screen: RenderResult) =>
+  await fireEvent.press(screen.getByLabelText(FILTER_BUTTON));
 
 const defaultProps = {
   models: [],
@@ -84,9 +87,7 @@ test('pressing the info button invokes onInfoPress', async () => {
     <AvailableModels {...defaultProps} onInfoPress={onInfoPress} />,
   );
 
-  await fireEvent.press(
-    screen.getByLabelText('screens.models.chooseModelTitle'),
-  );
+  await fireEvent.press(screen.getByLabelText('screens.models.modelInfo'));
   expect(onInfoPress).toHaveBeenCalledTimes(1);
 });
 
@@ -148,6 +149,7 @@ test('the order holds within a pipeline filter', async () => {
     <AvailableModels {...defaultProps} hasFetched models={models} />,
   );
 
+  await openFilters(screen);
   await fireEvent.press(
     screen.getByLabelText(pipelineLabel[ModelPipeline.textToSpeech]),
   );
@@ -168,8 +170,17 @@ const renderMixed = async (models = mixedModels) =>
     <AvailableModels {...defaultProps} hasFetched models={models} />,
   );
 
-test('offers a pill per pipeline on offer, plus "All", and starts unfiltered', async () => {
+test('the filter sheet stays closed until the filter button is pressed', async () => {
   const screen = await renderMixed();
+
+  expect(screen.queryByLabelText('screens.models.allPipelines')).toBeNull();
+  await openFilters(screen);
+  expect(screen.getByLabelText('screens.models.allPipelines')).toBeTruthy();
+});
+
+test('the sheet offers a pill per pipeline on offer, plus "All", and starts unfiltered', async () => {
+  const screen = await renderMixed();
+  await openFilters(screen);
 
   expect(
     screen.getByLabelText('screens.models.allPipelines').props
@@ -188,9 +199,10 @@ test('offers a pill per pipeline on offer, plus "All", and starts unfiltered', a
   expect(queryCards(screen)).toHaveLength(3);
 });
 
-test("selecting a pipeline shows only that pipeline's models", async () => {
+test("selecting a pipeline shows only that pipeline's models and closes the sheet", async () => {
   const screen = await renderMixed();
 
+  await openFilters(screen);
   await fireEvent.press(
     screen.getByLabelText(pipelineLabel[ModelPipeline.textToSpeech]),
   );
@@ -198,18 +210,34 @@ test("selecting a pipeline shows only that pipeline's models", async () => {
   const cards = queryCards(screen);
   expect(cards).toHaveLength(1);
   expect(cards[0].props.model.pipeline).toBe(ModelPipeline.textToSpeech);
+  expect(screen.queryByLabelText('screens.models.allPipelines')).toBeNull();
+
+  // Reopened, the sheet shows the active filter.
+  await openFilters(screen);
   expect(
     screen.getByLabelText(pipelineLabel[ModelPipeline.textToSpeech]).props
       .accessibilityState.selected,
   ).toBe(true);
 });
 
+test('the backdrop closes the sheet without changing the filter', async () => {
+  const screen = await renderMixed();
+
+  await openFilters(screen);
+  await fireEvent.press(screen.getByTestId('model-filter-backdrop'));
+
+  expect(screen.queryByLabelText('screens.models.allPipelines')).toBeNull();
+  expect(queryCards(screen)).toHaveLength(3);
+});
+
 test('"All" clears the filter', async () => {
   const screen = await renderMixed();
 
+  await openFilters(screen);
   await fireEvent.press(
     screen.getByLabelText(pipelineLabel[ModelPipeline.textToSpeech]),
   );
+  await openFilters(screen);
   await fireEvent.press(screen.getByLabelText('screens.models.allPipelines'));
 
   expect(queryCards(screen)).toHaveLength(3);
@@ -218,6 +246,7 @@ test('"All" clears the filter', async () => {
 test('the filter resets when the selected pipeline leaves the catalogue', async () => {
   const screen = await renderMixed();
 
+  await openFilters(screen);
   await fireEvent.press(
     screen.getByLabelText(pipelineLabel[ModelPipeline.textToSpeech]),
   );
@@ -231,6 +260,7 @@ test('the filter resets when the selected pipeline leaves the catalogue', async 
     />,
   );
 
+  await openFilters(screen);
   expect(
     screen.getByLabelText('screens.models.allPipelines').props
       .accessibilityState.selected,
@@ -238,7 +268,7 @@ test('the filter resets when the selected pipeline leaves the catalogue', async 
   expect(queryCards(screen)).toHaveLength(2);
 });
 
-test('no filter row when every available model shares one pipeline', async () => {
+test('no filter button when every available model shares one pipeline', async () => {
   const screen = await render(
     <AvailableModels
       {...defaultProps}
@@ -247,17 +277,14 @@ test('no filter row when every available model shares one pipeline', async () =>
     />,
   );
 
-  expect(screen.queryByLabelText('screens.models.allPipelines')).toBeNull();
-  expect(
-    screen.queryByLabelText(pipelineLabel[ModelPipeline.textGeneration]),
-  ).toBeNull();
+  expect(screen.queryByLabelText(FILTER_BUTTON)).toBeNull();
 });
 
-test('no filter row while loading or on error', async () => {
+test('no filter button while loading or on error', async () => {
   const loading = await render(
     <AvailableModels {...defaultProps} isLoading models={mixedModels} />,
   );
-  expect(loading.queryByLabelText('screens.models.allPipelines')).toBeNull();
+  expect(loading.queryByLabelText(FILTER_BUTTON)).toBeNull();
 
   const errored = await render(
     <AvailableModels
@@ -267,11 +294,12 @@ test('no filter row while loading or on error', async () => {
       models={mixedModels}
     />,
   );
-  expect(errored.queryByLabelText('screens.models.allPipelines')).toBeNull();
+  expect(errored.queryByLabelText(FILTER_BUTTON)).toBeNull();
 });
 
-test('each pipeline pill carries its own icon, and "All" carries none', async () => {
+test('each pipeline option carries its own icon, and "All" the all-pipelines one', async () => {
   const screen = await renderMixed();
+  await openFilters(screen);
 
   const ttsPill = screen.getByLabelText(
     pipelineLabel[ModelPipeline.textToSpeech],
@@ -285,5 +313,9 @@ test('each pipeline pill carries its own icon, and "All" carries none', async ()
   );
 
   const allPill = screen.getByLabelText('screens.models.allPipelines');
-  expect(allPill.queryAll(isPlatformIcon)).toHaveLength(0);
+  const [allIcon] = allPill.queryAll(isPlatformIcon);
+  expect(allIcon.props.iosIconName).toBe(ALL_PIPELINES_ICON.iosIconName);
+  expect(allIcon.props.androidIconName).toBe(
+    ALL_PIPELINES_ICON.androidIconName,
+  );
 });

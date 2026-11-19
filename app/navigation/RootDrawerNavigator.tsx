@@ -38,7 +38,7 @@ export const RootDrawerNavigator = () => {
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
-  const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
+  const { openSide, scrollGestures, swipeExclusion } = useDrawerCoordination();
   const chatModel = useSlotModel(ModelSlot.chat);
 
   return (
@@ -62,7 +62,7 @@ export const RootDrawerNavigator = () => {
         // left drawer owns right-ward drags, so the two never fight.
         configureGestureHandler: buildRightDrawerGesture(
           openSide === 'right',
-          scrollGesture,
+          scrollGestures,
           swipeExclusion,
         ),
       }}

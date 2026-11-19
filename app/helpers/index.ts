@@ -13,7 +13,7 @@ import {
 } from './thinking';
 import { haptics } from './haptics';
 import { getFamilyIcon } from './familyIcon';
-import { getPipelineIcon } from './pipelineIcon';
+import { ALL_PIPELINES_ICON, getPipelineIcon } from './pipelineIcon';
 import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
 import {
@@ -130,6 +130,7 @@ export type {
 
 export {
   getFamilyIcon,
+  ALL_PIPELINES_ICON,
   getPipelineIcon,
   deleteModelFiles,
   downloadModelPart,
