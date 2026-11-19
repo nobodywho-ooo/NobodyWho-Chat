@@ -22,7 +22,7 @@ exports[`renders correctly AvailableModels on error 1`] = `
         screens.models.availableToDownload
       </Text>
       <View
-        accessibilityLabel="screens.models.modelInfo"
+        accessibilityLabel="screens.models.chooseModelTitle"
         accessibilityRole="button"
         accessibilityState={
           {
@@ -81,7 +81,7 @@ exports[`renders correctly AvailableModels on error 1`] = `
           }
           variant="body2"
         >
-          screens.models.modelInfo
+          screens.models.chooseModelTitle
         </Text>
       </View>
     </View>
@@ -143,7 +143,7 @@ exports[`renders correctly AvailableModels when everything is downloaded 1`] = `
         screens.models.availableToDownload
       </Text>
       <View
-        accessibilityLabel="screens.models.modelInfo"
+        accessibilityLabel="screens.models.chooseModelTitle"
         accessibilityRole="button"
         accessibilityState={
           {
@@ -202,7 +202,7 @@ exports[`renders correctly AvailableModels when everything is downloaded 1`] = `
           }
           variant="body2"
         >
-          screens.models.modelInfo
+          screens.models.chooseModelTitle
         </Text>
       </View>
     </View>
@@ -235,7 +235,7 @@ exports[`renders correctly AvailableModels while loading 1`] = `
         screens.models.availableToDownload
       </Text>
       <View
-        accessibilityLabel="screens.models.modelInfo"
+        accessibilityLabel="screens.models.chooseModelTitle"
         accessibilityRole="button"
         accessibilityState={
           {
@@ -294,7 +294,7 @@ exports[`renders correctly AvailableModels while loading 1`] = `
           }
           variant="body2"
         >
-          screens.models.modelInfo
+          screens.models.chooseModelTitle
         </Text>
       </View>
     </View>
@@ -332,7 +332,7 @@ exports[`renders correctly AvailableModels with a list of models 1`] = `
         screens.models.availableToDownload
       </Text>
       <View
-        accessibilityLabel="screens.models.modelInfo"
+        accessibilityLabel="screens.models.chooseModelTitle"
         accessibilityRole="button"
         accessibilityState={
           {
@@ -391,7 +391,7 @@ exports[`renders correctly AvailableModels with a list of models 1`] = `
           }
           variant="body2"
         >
-          screens.models.modelInfo
+          screens.models.chooseModelTitle
         </Text>
       </View>
     </View>

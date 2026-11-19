@@ -56,9 +56,9 @@ describe('answerStatesFigure', () => {
   });
 
   it('credits a figure stated beside the code', () => {
-    expect(answerStatesFigure('The Samsung QE65QN90D has 144 Hz.', question)).toBe(
-      true,
-    );
+    expect(
+      answerStatesFigure('The Samsung QE65QN90D has 144 Hz.', question),
+    ).toBe(true);
     expect(answerStatesFigure('Panel 144Hz, 65 inches.')).toBe(true);
   });
 
@@ -67,9 +67,9 @@ describe('answerStatesFigure', () => {
     expect(
       answerStatesFigure('There is no price for the iPhone 17 Pro.', asked),
     ).toBe(false);
-    expect(answerStatesFigure('The iPhone 17 Pro costs 5021.9 PLN.', asked)).toBe(
-      true,
-    );
+    expect(
+      answerStatesFigure('The iPhone 17 Pro costs 5021.9 PLN.', asked),
+    ).toBe(true);
   });
 
   it('keeps a number glued to its unit while dropping hex and mixed codes', () => {

@@ -22,11 +22,19 @@ exports[`renders correctly SettingsScreen 1`] = `
     </Text>
     <ListItem
       androidIconName="tune"
-      iconBackgroundColor="#007AFF"
+      iconBackgroundColor="#b44618"
       iosIconName="slider.horizontal.3"
       onPress={[Function]}
       subtitle="screens.settings.customizeSubtitle"
       title="screens.settings.customize"
+    />
+    <ListItem
+      androidIconName="translate"
+      iconBackgroundColor="#b44618"
+      iosIconName="character.bubble"
+      onPress={[Function]}
+      subtitle="screens.settings.languageSubtitle"
+      title="screens.settings.language"
     />
     <Text
       style={
@@ -39,7 +47,7 @@ exports[`renders correctly SettingsScreen 1`] = `
     </Text>
     <ListItem
       androidIconName="description"
-      iconBackgroundColor="#FF9500"
+      iconBackgroundColor="#f2a02e"
       iosIconName="doc.text.fill"
       onPress={[Function]}
       subtitle="screens.settings.termsSubtitle"
@@ -47,7 +55,7 @@ exports[`renders correctly SettingsScreen 1`] = `
     />
     <ListItem
       androidIconName="privacy_tip"
-      iconBackgroundColor="#34C759"
+      iconBackgroundColor="#f2a02e"
       iosIconName="lock.shield.fill"
       onPress={[Function]}
       subtitle="screens.settings.privacyPolicySubtitle"
@@ -63,30 +71,134 @@ exports[`renders correctly SettingsScreen 1`] = `
         }
       }
     >
-      <Button
-        icon={
+      <View
+        accessibilityState={
           {
-            "androidIconName": "public",
-            "iosIconName": "globe",
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
           }
         }
-        onPress={[Function]}
-        small={true}
-        title="screens.settings.website"
-        variant="outline"
-      />
-      <Button
-        icon={
+        accessibilityValue={
           {
-            "androidIconName": "code",
-            "iosIconName": "chevron.left.forwardslash.chevron.right",
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
           }
         }
-        onPress={[Function]}
-        small={true}
-        title="screens.settings.github"
-        variant="outline"
-      />
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          [
+            {
+              "alignItems": "center",
+              "alignSelf": "flex-start",
+              "borderRadius": 12,
+              "flexDirection": "row",
+              "gap": 12,
+              "paddingHorizontal": 16,
+              "paddingVertical": 12,
+            },
+            {
+              "backgroundColor": "#ebebeb",
+            },
+            false,
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="public"
+          color="#000000"
+          iosIconName="globe"
+        />
+        <Text
+          style={
+            {
+              "fontWeight": "500",
+            }
+          }
+          variant="body1"
+        >
+          screens.settings.website
+        </Text>
+      </View>
+      <View
+        accessibilityState={
+          {
+            "busy": undefined,
+            "checked": undefined,
+            "disabled": undefined,
+            "expanded": undefined,
+            "selected": undefined,
+          }
+        }
+        accessibilityValue={
+          {
+            "max": undefined,
+            "min": undefined,
+            "now": undefined,
+            "text": undefined,
+          }
+        }
+        accessible={true}
+        collapsable={false}
+        focusable={true}
+        onBlur={[Function]}
+        onClick={[Function]}
+        onFocus={[Function]}
+        onResponderGrant={[Function]}
+        onResponderMove={[Function]}
+        onResponderRelease={[Function]}
+        onResponderTerminate={[Function]}
+        onResponderTerminationRequest={[Function]}
+        onStartShouldSetResponder={[Function]}
+        style={
+          [
+            {
+              "alignItems": "center",
+              "alignSelf": "flex-start",
+              "borderRadius": 12,
+              "flexDirection": "row",
+              "gap": 12,
+              "paddingHorizontal": 16,
+              "paddingVertical": 12,
+            },
+            {
+              "backgroundColor": "#ebebeb",
+            },
+            false,
+          ]
+        }
+      >
+        <PlatformIcon
+          androidIconName="code"
+          color="#000000"
+          iosIconName="chevron.left.forwardslash.chevron.right"
+        />
+        <Text
+          style={
+            {
+              "fontWeight": "500",
+            }
+          }
+          variant="body1"
+        >
+          screens.settings.github
+        </Text>
+      </View>
     </View>
     <Text
       bold={true}

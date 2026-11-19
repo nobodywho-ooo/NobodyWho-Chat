@@ -12,3 +12,4 @@ export * from './DrawerContentScreen/DrawerContentScreen';
 export * from './VoiceAssistantScreen/VoiceAssistantScreen';
 export * from './TermsScreen/TermsScreen';
 export * from './PrivacyPolicyScreen/PrivacyPolicyScreen';
+export * from './LanguageScreen/LanguageScreen';

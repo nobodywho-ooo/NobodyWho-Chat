@@ -1,4 +1,5 @@
 import { Accordion } from './Accordion/Accordion';
+import { ActionButton } from './ActionButton/ActionButton';
 import { Button } from './Button/Button';
 import { Chevron } from './Chevron/Chevron';
 import { DownloadedModels } from './DownloadedModels/DownloadedModels';
@@ -29,6 +30,7 @@ import { WebScrapeHost } from './WebScrapeHost/WebScrapeHost';
 
 export {
   Accordion,
+  ActionButton,
   Button,
   Chevron,
   DownloadedModels,

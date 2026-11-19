@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
 import { openExternalUrl } from 'helpers';
 import { useStyled } from 'hooks';
-import { Button, ListItem, Text } from 'components';
+import { ActionButton, ListItem, Text } from 'components';
 
 import styles from './SettingsScreen.styles';
 
@@ -33,9 +33,18 @@ export const SettingsScreen: React.FC = () => {
         subtitle={t('screens.settings.customizeSubtitle')}
         iosIconName="slider.horizontal.3"
         androidIconName="tune"
-        iconBackgroundColor="#007AFF"
+        iconBackgroundColor={colors.primary}
         // @ts-ignore
         onPress={() => navigation.navigate('CustomizeAssistantScreen')}
+      />
+      <ListItem
+        title={t('screens.settings.language')}
+        subtitle={t('screens.settings.languageSubtitle')}
+        iosIconName="character.bubble"
+        androidIconName="translate"
+        iconBackgroundColor={colors.primary}
+        // @ts-ignore
+        onPress={() => navigation.navigate('LanguageScreen')}
       />
       <Text style={styles.sectionHeader}>{t('screens.settings.about')}</Text>
       <ListItem
@@ -43,7 +52,7 @@ export const SettingsScreen: React.FC = () => {
         subtitle={t('screens.settings.termsSubtitle')}
         iosIconName="doc.text.fill"
         androidIconName="description"
-        iconBackgroundColor="#FF9500"
+        iconBackgroundColor={colors.secondary}
         // @ts-ignore
         onPress={() => navigation.navigate('TermsScreen')}
       />
@@ -52,27 +61,25 @@ export const SettingsScreen: React.FC = () => {
         subtitle={t('screens.settings.privacyPolicySubtitle')}
         iosIconName="lock.shield.fill"
         androidIconName="privacy_tip"
-        iconBackgroundColor="#34C759"
+        iconBackgroundColor={colors.secondary}
         // @ts-ignore
         onPress={() => navigation.navigate('PrivacyPolicyScreen')}
       />
       <View style={styles.buttonsContainer}>
-        <Button
-          title={t('screens.settings.website')}
-          variant="outline"
-          small
+        <ActionButton
           icon={{ iosIconName: 'globe', androidIconName: 'public' }}
+          label={t('screens.settings.website')}
           onPress={() => openExternalUrl('https://www.nobodywho.ai/')}
         />
-        <Button
-          title={t('screens.settings.github')}
-          variant="outline"
-          small
+        <ActionButton
           icon={{
             iosIconName: 'chevron.left.forwardslash.chevron.right',
             androidIconName: 'code',
           }}
-          onPress={() => openExternalUrl('https://github.com/nobodywho-ooo/nobodywho')}
+          label={t('screens.settings.github')}
+          onPress={() =>
+            openExternalUrl('https://github.com/nobodywho-ooo/nobodywho')
+          }
         />
       </View>
       <Text variant="h3" bold style={styles.appName}>

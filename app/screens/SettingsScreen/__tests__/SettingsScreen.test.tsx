@@ -38,6 +38,14 @@ test('pressing customize navigates to the CustomizeAssistantScreen', async () =>
   expect(mockNavigate).toHaveBeenCalledWith('CustomizeAssistantScreen');
 });
 
+test('pressing language navigates to the LanguageScreen', async () => {
+  const screen = await render(<SettingsScreen />);
+
+  await fireEvent.press(getRow(screen, 'screens.settings.language'));
+
+  expect(mockNavigate).toHaveBeenCalledWith('LanguageScreen');
+});
+
 test('pressing terms & conditions navigates to the TermsScreen', async () => {
   const screen = await render(<SettingsScreen />);
 
@@ -58,7 +66,7 @@ test('pressing website opens the NobodyWho site', async () => {
   const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   const screen = await render(<SettingsScreen />);
 
-  await fireEvent.press(getRow(screen, 'screens.settings.website'));
+  await fireEvent.press(screen.getByText('screens.settings.website'));
 
   expect(openURL).toHaveBeenCalledWith('https://www.nobodywho.ai/');
 

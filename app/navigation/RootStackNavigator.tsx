@@ -5,6 +5,7 @@ import { useStyled } from 'hooks';
 import {
   CustomizeAssistantScreen,
   DownloadedModelsScreen,
+  LanguageScreen,
   PrivacyPolicyScreen,
   TermsScreen,
 } from 'screens';
@@ -46,6 +47,11 @@ const RootStack = () => {
         name="CustomizeAssistantScreen"
         component={CustomizeAssistantScreen}
         options={{ title: t('navigation.customizeAssistant') }}
+      />
+      <Stack.Screen
+        name="LanguageScreen"
+        component={LanguageScreen}
+        options={{ title: t('navigation.language') }}
       />
       <Stack.Screen
         name="DownloadedModelsScreen"

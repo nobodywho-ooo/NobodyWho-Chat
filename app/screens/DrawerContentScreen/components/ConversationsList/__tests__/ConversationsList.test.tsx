@@ -54,9 +54,7 @@ test('pressing a conversation opens it and closes the drawer', async () => {
     conversations: [buildConversation(1), conversation],
   });
 
-  const screen = await render(
-    <ConversationsList onSelect={onSelect} />,
-  );
+  const screen = await render(<ConversationsList onSelect={onSelect} />);
   await fireEvent.press(screen.getByText('Conversation 2'));
 
   expect(mockSetAppState).toHaveBeenCalledWith({

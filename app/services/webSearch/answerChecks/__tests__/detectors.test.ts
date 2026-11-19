@@ -18,7 +18,7 @@ describe('isWrongLanguageAnswer', () => {
 
   it('flags a German question answered in Turkish', () => {
     const answer =
-      "Karl der Große, Frankların kralıydı ve 800 yılında imparator oldu. " +
+      'Karl der Große, Frankların kralıydı ve 800 yılında imparator oldu. ' +
       'Hukukun düzenlenmesi, okulların kurulması ve büyük inşaat projeleri ' +
       'onun döneminde gerçekleşti.';
     expect(isWrongLanguageAnswer(answer, question)).toBe(true);
@@ -88,7 +88,8 @@ describe('claimsMissingEvidenceItHas', () => {
 
   it('trusts the planner that the question asks for a date', () => {
     const question = 'Which day was that first successful Starship flight?';
-    const refusal = 'The sources say nothing about the first successful flight.';
+    const refusal =
+      'The sources say nothing about the first successful flight.';
     expect(
       claimsMissingEvidenceItHas(refusal, question, STARSHIP_CONTEXT),
     ).toBe(false);

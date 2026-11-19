@@ -1,0 +1,446 @@
+{
+  "common": {
+    "ok": "Ok",
+    "cancel": "Annuler",
+    "retry": "Réessayer",
+    "loading": "Chargement…",
+    "error": "Erreur",
+    "somethingWentWrong": "Une erreur est survenue",
+    "cancelDownload": "Annuler le téléchargement"
+  },
+  "navigation": {
+    "models": "Modèles",
+    "settings": "Réglages",
+    "customizeAssistant": "Personnaliser",
+    "language": "Langue",
+    "downloadModels": "Modèles téléchargés",
+    "terms": "Conditions générales",
+    "privacyPolicy": "Politique de confidentialité",
+    "close": "Fermer",
+    "chatMenu": {
+      "newChat": "Nouvelle discussion",
+      "deleteChat": "Supprimer la discussion"
+    }
+  },
+  "components": {
+    "messageStarters": {
+      "planParisTrip": {
+        "title": "Planifier",
+        "subtitle": "un voyage à Paris",
+        "body": "Je veux planifier un voyage de 5 jours à Paris. Suggère les monuments et musées incontournables, recommande de bons quartiers où loger et crée un itinéraire jour par jour."
+      },
+      "beginMeditating": {
+        "title": "Commencer",
+        "subtitle": "à méditer",
+        "body": "J'aimerais commencer la méditation. Guide-moi à travers les techniques de base et suggère une routine quotidienne."
+      },
+      "designWorkoutRoutine": {
+        "title": "Concevoir",
+        "subtitle": "un programme d'entraînement",
+        "body": "Conçois pour moi un programme d'entraînement à la maison sans matériel. Crée un plan équilibré qui cible tous les grands groupes musculaires, en commençant par un échauffement et en terminant par des étirements."
+      },
+      "packLight": {
+        "title": "Voyager",
+        "subtitle": "léger pour un week-end",
+        "body": "Prépare une liste d'essentiels pour un voyage de 3 jours, avec des tenues polyvalentes, des affaires de toilette et les gadgets nécessaires, tout en gardant un bagage minimal."
+      },
+      "organizeFinances": {
+        "title": "Organiser",
+        "subtitle": "mes finances",
+        "body": "Aide-moi à organiser mes finances personnelles. Crée un budget mensuel, suis mes dépenses et propose des idées pour économiser."
+      },
+      "tellMeSomethingFascinating": {
+        "title": "Raconte-moi",
+        "subtitle": "quelque chose de fascinant",
+        "body": "Raconte-moi une découverte scientifique ou un fait historique intéressant que la plupart des gens ne connaissent pas. Explique pourquoi c'est important et son impact sur notre compréhension."
+      },
+      "prepareJobInterview": {
+        "title": "Préparer",
+        "subtitle": "un entretien d'embauche",
+        "body": "Un entretien est prévu pour un poste de designer. Recherche les questions courantes, prépare des réponses et donne des conseils pour faire bonne impression."
+      },
+      "writeProfessionally": {
+        "title": "Écrire",
+        "subtitle": "de façon professionnelle",
+        "body": "Je dois écrire un e-mail formel pour décliner une proposition commerciale tout en préservant de bonnes relations. Rédige pour moi un message poli et professionnel."
+      },
+      "startLearningFrench": {
+        "title": "Commencer",
+        "subtitle": "à apprendre l'anglais",
+        "body": "Aide-moi à commencer à apprendre l'anglais. Crée un plan d'étude adapté aux débutants avec des exercices quotidiens, des ressources recommandées, et donne-moi quelques phrases du quotidien avec leur traduction."
+      },
+      "planVacationTrip": {
+        "title": "Planifier",
+        "subtitle": "des vacances",
+        "body": "Planifie un séjour de 4 jours à Copenhague. J'aimerais visiter, faire un peu de sport et découvrir la cuisine locale."
+      },
+      "explainComplexTopic": {
+        "title": "Expliquer",
+        "subtitle": "simplement un sujet complexe",
+        "body": "Explique en termes simples comment fonctionne l'informatique quantique."
+      },
+      "summarizeText": {
+        "title": "Résumer",
+        "subtitle": "ce texte",
+        "body": "Peux-tu faire un résumé concis de ce texte et m'en donner les points clés ?"
+      },
+      "decideDinner": {
+        "title": "Choisir",
+        "subtitle": "quoi cuisiner ce midi",
+        "body": "Le frigo contient du bœuf haché, des tomates, des pâtes et des épices courantes. Propose un plat rapide et délicieux avec ces ingrédients."
+      },
+      "discoverNextBook": {
+        "title": "Découvrir",
+        "subtitle": "mon prochain livre",
+        "body": "J'aime lire des romans de fantasy et de science-fiction de l'auteur Brandon Sanderson. Recommande-moi des livres et des auteurs."
+      },
+      "boostProductivity": {
+        "title": "Booster",
+        "subtitle": "ma productivité",
+        "body": "Crée une routine quotidienne qui maximise ma productivité tout en préservant l'équilibre vie pro / vie perso. Ajoute des conseils de gestion du temps et des pauses suggérées."
+      },
+      "describeImage": {
+        "title": "Décrire",
+        "subtitle": "cette image",
+        "body": "Décris cette image, s'il te plaît"
+      },
+      "identifyPlant": {
+        "title": "Identifier",
+        "subtitle": "cette plante",
+        "body": "Quelle est cette plante ?"
+      },
+      "analyzeArtwork": {
+        "title": "Analyser",
+        "subtitle": "cette œuvre d'art",
+        "body": "Peux-tu analyser cette œuvre d'art ?"
+      },
+      "identifyAnimal": {
+        "title": "Identifier",
+        "subtitle": "cet animal",
+        "body": "Quel est cet animal ?"
+      },
+      "describeAudio": {
+        "title": "Décrire",
+        "subtitle": "ce fichier audio",
+        "body": "Dis-moi ce que tu entends dans ce fichier audio"
+      }
+    },
+    "inputBar": {
+      "placeholder": "Posez une question…",
+      "attach": "Joindre des fichiers",
+      "closeAttach": "Fermer les pièces jointes",
+      "attachImage": "Joindre une image",
+      "attachAudio": "Joindre un audio",
+      "attachCamera": "Prendre une photo",
+      "photo": "Photo",
+      "camera": "Appareil photo",
+      "audio": "Audio",
+      "voiceAssistant": "Assistant vocal",
+      "unselect": "Désélectionner",
+      "dictate": "Dicter",
+      "stopDictation": "Arrêter la dictée",
+      "microphoneDeniedTitle": "Accès au micro requis",
+      "microphoneDeniedMessage": "Autorisez l'accès au micro dans les Réglages pour dicter vos messages.",
+      "webSearch": "Rechercher sur le web"
+    },
+    "cameraCapture": {
+      "permission": "L'accès à l'appareil photo est nécessaire pour prendre une photo.",
+      "grant": "Autoriser l'appareil photo",
+      "openSettings": "Ouvrir les réglages",
+      "close": "Fermer"
+    },
+    "scrollToBottomButton": {
+      "label": "Aller au plus récent"
+    },
+    "messageListItem": {
+      "copy": "Copier",
+      "playAudio": "Lire l'audio",
+      "pauseAudio": "Mettre l'audio en pause",
+      "stopAudio": "Arrêter l'audio",
+      "viewImage": "Voir l'image",
+      "closeImage": "Fermer l'image",
+      "thinking": "Réflexion…",
+      "thought": "Réflexions",
+      "viewThinking": "Voir le raisonnement",
+      "closeThinking": "Fermer",
+      "thinkingTitle": "Raisonnement",
+      "viewToolCalls": "Voir l'appel d'outil",
+      "closeToolCalls": "Fermer",
+      "toolArguments": "Arguments",
+      "toolResult": "Résultat",
+      "system": "Système",
+      "showSources": "Afficher les sources",
+      "closeSources": "Fermer les sources",
+      "sourcesTitle_one": "{{count}} source",
+      "sourcesTitle_other": "{{count}} sources",
+      "snippetOnly": "Résultat de recherche uniquement",
+      "sourceBadge": "Source : {{name}}",
+      "searchTime": "Recherche {{time}}",
+      "elapsed": "{{seconds}} s",
+      "searching": "Recherche sur le web…",
+      "planning": "Faut-il chercher sur le web ?…",
+      "offline": "Pas de connexion Internet",
+      "skipped": "Réponse sans recherche",
+      "searched": "Recherche web effectuée",
+      "challengeRow": "Touchez pour confirmer que vous n’êtes pas un robot",
+      "challengeRowLabel": "Le site veut vérifier que vous n’êtes pas un robot — touchez pour continuer",
+      "refining": "Vérification de la réponse avec les sources…",
+      "searchTrace": {
+        "objectives": "Choix de quoi rechercher",
+        "recovering": "Lecture impossible — recherche d’une autre source",
+        "query": "Recherche « {{query}} »",
+        "web": "Recherche sur le web",
+        "reading": "Lecture des pages",
+        "done": "Terminé",
+        "nothingFound": "Aucun résultat",
+        "offline": "Pas d’Internet — réponse sans le web",
+        "timeout": "Recherche trop longue — arrêtée plus tôt",
+        "skipped": "Pas besoin de chercher — réponse immédiate",
+        "weak": "Peu de résultats — la réponse peut être incomplète",
+        "failures_one": "Impossible de lire {{count}} page — {{reason}}",
+        "failures_other": "Impossible de lire {{count}} pages — {{reason}}",
+        "fetchFailure": {
+          "blocked": "lecture bloquée",
+          "notFound": "page introuvable",
+          "serverError": "site indisponible",
+          "timeout": "trop long",
+          "unsupported": "texte illisible",
+          "tooLarge": "page trop lourde",
+          "empty": "aucun texte lisible",
+          "network": "site injoignable",
+          "aborted": "arrêté"
+        }
+      }
+    },
+    "conversationsList": {
+      "recent": "Récentes",
+      "noConversations": "Aucune discussion pour l’instant."
+    },
+    "modelCard": {
+      "languageCount_one": "{{count}} langue",
+      "languageCount_other": "{{count}} langues",
+      "thinking": "Réflexion",
+      "heavyProcessing": "Traitement intensif"
+    },
+    "webScrapeHost": {
+      "title": "Recherche sur le web pour vous",
+      "hint": "Confirmez que vous êtes humain pour continuer",
+      "skip": "Passer la recherche",
+      "done": "Terminé"
+    },
+    "webChallenge": {
+      "title": "Une petite vérification avant de chercher",
+      "why": "Cette app cherche sur le web directement depuis votre téléphone, sans serveur intermédiaire. C’est pourquoi un moteur de recherche demande parfois de vérifier qu’une vraie personne effectue la recherche.",
+      "privacy": "Sur l’écran suivant, effectuez la vérification du moteur de recherche. Votre recherche reprendra ensuite automatiquement.",
+      "continue": "Continuer",
+      "skip": "Ignorer ce moteur de recherche"
+    }
+  },
+  "screens": {
+    "onboarding": {
+      "welcome": {
+        "title": "Bienvenue sur",
+        "assistant": {
+          "title": "Assistant IA",
+          "subtitle": "Un assistant intelligent qui fonctionne entièrement sur votre téléphone. Sans compte, sans Internet."
+        },
+        "private": {
+          "title": "Privé et sécurisé",
+          "subtitle": "Vos discussions ne quittent jamais votre appareil. Aucun traitement dans le cloud, aucun pistage."
+        },
+        "fast": {
+          "title": "Rapide",
+          "subtitle": "De puissants modèles de langage, d’audio et de vision qui tournent sans accroc sur votre appareil."
+        },
+        "continue": "Continuer"
+      },
+      "header": "Démarrer",
+      "voiceHeader": "Un petit plus",
+      "title": "Choisissez votre modèle de texte",
+      "subtitle": "Choisissez un modèle de texte avec lequel discuter. Vous pourrez en télécharger d’autres à tout moment.",
+      "modalityTitle": "Ajouter la voix ?",
+      "modalitySubtitle": "Les modèles vocaux vous permettent de parler à l’assistant et d’entendre ses réponses à voix haute.",
+      "modalityWithSearchTitle": "Ajouter la voix et la recherche web ?",
+      "modalityWithSearchSubtitle": "Les modèles vocaux vous permettent de parler à l’assistant et d’entendre ses réponses à voix haute. Le modèle de recherche aide l’assistant à choisir les passages les plus pertinents des pages web lorsque vous cherchez sur le web.",
+      "textOnly": "Modèle de texte uniquement",
+      "textAndVoice": "Modèles texte et voix",
+      "textAndSearch": "Modèles texte et recherche",
+      "allModels": "Tous les modèles",
+      "skip": "Passer",
+      "downloadingHeader": "Veuillez patienter",
+      "downloadingTitle": "Téléchargement de vos modèles",
+      "downloadingSubtitle": "Cela peut prendre quelques minutes. Gardez l’app ouverte jusqu’à la fin.",
+      "downloadProgress": "{{percent}} %",
+      "downloadUnavailable": "Téléchargement impossible pour le moment, réessayez plus tard.",
+      "voiceUnavailable": "Les modèles vocaux n’ont pas pu être téléchargés. Vous pourrez reprendre depuis la discussion vocale.",
+      "doneTitle": "Tout est prêt !",
+      "doneSubtitle": "Votre IA fonctionne entièrement sur votre appareil, vos discussions restent donc privées.",
+      "start": "Commencer à discuter"
+    },
+    "noModelDownloaded": {
+      "noModelAvailable": "Aucun modèle disponible",
+      "downloadModel": "Télécharger un modèle",
+      "downloadingTitle_one": "Votre modèle de discussion est en cours de téléchargement",
+      "downloadingTitle_other": "Vos modèles de discussion sont en cours de téléchargement",
+      "interruptedTitle_one": "Téléchargement interrompu",
+      "interruptedTitle_other": "Téléchargements interrompus",
+      "downloadProgress": "{{percent}} %",
+      "downloadingHint_one": "Vous pourrez discuter dès qu’il sera terminé. Gardez l’app ouverte d’ici là.",
+      "downloadingHint_other": "Vous pourrez discuter dès que l’un d’eux sera terminé. Gardez l’app ouverte d’ici là.",
+      "interruptedHint_one": "Touchez Reprendre pour continuer là où il s’est arrêté.",
+      "interruptedHint_other": "Touchez Reprendre pour continuer là où ils se sont arrêtés.",
+      "resume": "Reprendre"
+    },
+    "noModelSelected": {
+      "pleaseSelectAModel": "Veuillez choisir un modèle",
+      "selectModel": "Choisir un modèle"
+    },
+    "drawerContent": {
+      "newChat": "Nouvelle discussion",
+      "settings": "Réglages",
+      "models": "Modèles",
+      "changeModel": "Changer de modèle"
+    },
+    "voiceAssistant": {
+      "title": "Assistant vocal",
+      "start": "Commencer l’écoute",
+      "close": "Fermer",
+      "preferences": "Préférences vocales",
+      "stop": "Arrêter",
+      "status": {
+        "idle": "Touchez pour parler",
+        "listening": "Écoute…",
+        "transcribing": "Transcription",
+        "thinking": "Réflexion",
+        "synthesizing": "Génération de la voix…",
+        "speaking": "Parle…",
+        "error": "Une erreur est survenue — touchez pour réessayer"
+      },
+      "setup": {
+        "title": "Configurer la discussion vocale",
+        "description": "Quatre modèles doivent être chargés en même temps.",
+        "downloadInProgress": "Téléchargement en cours. Gardez l’app ouverte d’ici là.",
+        "downloadInterrupted": "Téléchargement interrompu",
+        "chat": "Modèle de discussion",
+        "stt": "Modèle de reconnaissance vocale",
+        "tts": "Modèle de synthèse vocale",
+        "vad": "Modèle de détection de la voix",
+        "downloadMissing": "Télécharger les modèles manquants",
+        "resumeDownload": "Reprendre le téléchargement",
+        "browseModels": "Parcourir les modèles",
+        "loadingModels": "Chargement des modèles…",
+        "downloadProgress": "{{percent}} %"
+      }
+    },
+    "settings": {
+      "app": "App",
+      "customize": "Personnaliser",
+      "customizeSubtitle": "Configurez votre assistant",
+      "language": "Langue",
+      "languageSubtitle": "La langue de l’app",
+      "about": "À propos",
+      "terms": "Conditions générales",
+      "termsSubtitle": "Lisez nos conditions d’utilisation",
+      "privacyPolicy": "Politique de confidentialité",
+      "privacyPolicySubtitle": "Comment nous traitons vos données",
+      "website": "Site web",
+      "github": "Github"
+    },
+    "language": {
+      "system": "Langue de l’appareil",
+      "systemSubtitle": "Actuellement : {{language}}"
+    },
+    "models": {
+      "discover": "Découvrir",
+      "inUse": "En cours d’utilisation",
+      "noModelInUse": "Aucun modèle utilisé",
+      "downloaded": "Téléchargés",
+      "downloading": "Téléchargement…",
+      "availableToDownload": "Disponibles au téléchargement",
+      "filterModels": "Filtrer les modèles",
+      "allPipelines": "Tous les modèles",
+      "errorCannotGetModelsAtTheMoment": "Impossible de récupérer les modèles pour le moment",
+      "youHaveDownloadedAllTheModels": "Vous avez téléchargé tous les modèles.",
+      "modelInfo": "Infos sur le modèle",
+      "chooseModelTitle": "Bien choisir son modèle",
+      "chooseModelMessage": "La taille d’un modèle est définie par son nombre de paramètres (ex. 0,6B, 1,2B…). Les plus gros modèles sont souvent plus intelligents, mais demandent plus de ressources et ralentissent les performances. Si votre téléphone n’est pas récent, commencez donc par un modèle plus petit pour garantir de bonnes performances.",
+      "stopDownloadTitle_one": "Arrêter ce téléchargement ?",
+      "stopDownloadTitle_other": "Arrêter ces téléchargements ?",
+      "stopDownloadMessage_one": "Le téléchargement sera annulé et sa progression perdue. Vous pourrez le relancer à tout moment.",
+      "stopDownloadMessage_other": "Les téléchargements seront annulés et leur progression perdue. Vous pourrez les relancer à tout moment.",
+      "stopDownload_one": "Arrêter le téléchargement",
+      "stopDownload_other": "Arrêter les téléchargements",
+      "downloadFailedTitle": "Échec du téléchargement",
+      "downloadFailedMessage": "Vérifiez votre connexion et réessayez.",
+      "downloadFailedModelMessage": "{{name}} n’a pas pu être téléchargé. Vérifiez votre connexion et réessayez.",
+      "notEnoughSpaceTitle": "Espace insuffisant",
+      "notEnoughSpaceMessage_one": "{{name}} nécessite {{required}} d’espace libre, mais seulement {{available}} est disponible sur cet appareil. Libérez de l’espace et réessayez.",
+      "notEnoughSpaceMessage_other": "Les modèles que vous essayez de télécharger nécessitent {{required}} d’espace libre, mais seulement {{available}} est disponible sur cet appareil. Libérez de l’espace et réessayez."
+    },
+    "downloadedModels": {
+      "noModelDownloaded": "Aucun modèle téléchargé",
+      "deleteConfirmTitle": "Supprimer le modèle ?",
+      "deleteConfirmMessage": "« {{model}} » et toutes ses discussions seront définitivement supprimés. Cette action est irréversible.",
+      "delete": "Supprimer"
+    },
+    "customizeAssistant": {
+      "temperature": "Température",
+      "temperatureSubtitle": "Des valeurs élevées rendent les réponses plus créatives",
+      "systemPrompt": "Prompt système",
+      "systemPromptSubtitle": "Instructions que l’assistant suit toujours",
+      "systemPromptPlaceholder": "ex. Tu es un assistant serviable.",
+      "thinking": "Réflexion",
+      "thinkingSubtitle": "Laisser le modèle réfléchir avant de répondre",
+      "toolCalling": "Appel d’outils",
+      "toolCallingSubtitle": "Laisser le modèle utiliser des outils comme la météo et la recherche",
+      "maxTokens": "Tokens max",
+      "maxTokensSubtitle": "Taille du contexte de la discussion",
+      "decreaseMaxTokens": "Diminuer les tokens max",
+      "increaseMaxTokens": "Augmenter les tokens max",
+      "textToSpeech": "Synthèse vocale",
+      "voice": "Voix",
+      "voiceSubtitle": "La voix utilisée pour lire les messages à voix haute",
+      "voiceMale": "Homme {{index}}",
+      "voiceFemale": "Femme {{index}}",
+      "language": "Langue",
+      "languageSubtitle": "La langue parlée par la voix",
+      "speechToText": "Reconnaissance vocale",
+      "sttLanguage": "Langue",
+      "sttLanguageSubtitle": "La langue que vous parlez. En choisir une évite la détection et accélère la transcription.",
+      "sttLanguageAutomatic": "Automatique"
+    },
+    "chat": {
+      "generationFailed": "Une erreur est survenue lors de la génération de la réponse.",
+      "generationStopped": "Génération arrêtée.",
+      "attachmentFailedMessage": "La pièce jointe n’a pas pu être ajoutée. {{error}}",
+      "embeddingDownload": {
+        "title": "Télécharger le modèle de recherche",
+        "optional": "La recherche web donne de meilleures réponses avec le modèle de recherche local (~{{size}}) : il classe les pages selon leur sens plutôt que par simples mots-clés. Il n’est téléchargé qu’une fois.",
+        "required": "Votre téléphone peut faire tourner sans peine le modèle de recherche local (~{{size}}) : la recherche web l’utilise donc pour choisir les pages qui répondent vraiment à votre question. Il n’est téléchargé qu’une fois.",
+        "downloading": "Vous pouvez fermer ceci, le téléchargement continue en arrière-plan.",
+        "failed": "Le modèle de recherche n’a pas pu être téléchargé. Vérifiez votre connexion et réessayez.",
+        "download": "Télécharger",
+        "retry": "Réessayer",
+        "cancel": "Plus tard"
+      },
+      "webSearchNotice": {
+        "nothingFound": "Rien d’utile trouvé en ligne — réponse sans le web.",
+        "noRoom": "Cette discussion est trop longue pour ajouter des résultats web — démarrez une nouvelle discussion pour chercher.",
+        "unavailable": "La recherche web n’est pas encore prête — réponse sans le web.",
+        "modelTooSmall": "Ce modèle ne peut pas utiliser les résultats web de façon fiable — choisissez-en un plus grand.",
+        "notEnoughMemory": "Ce modèle occupe déjà toute la mémoire du téléphone — chercher en parallèle pourrait fermer l’app. Choisissez un modèle plus petit.",
+        "attachment": "La recherche web est ignorée quand une photo ou un enregistrement est joint."
+      }
+    },
+    "loadingScreen": {
+      "loadingModel": "Chargement de {{model}}",
+      "loadingApp": "Chargement de l’app…"
+    },
+    "errorScreen": {
+      "resetData": "Réinitialiser les données",
+      "resetConfirmTitle": "Réinitialiser les données ?",
+      "resetConfirmMessage": "Cela efface définitivement votre historique de discussions et la liste des modèles téléchargés, puis redémarre l’app. Cette action est irréversible.",
+      "resetConfirm": "Réinitialiser"
+    }
+  }
+}

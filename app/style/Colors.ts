@@ -16,6 +16,7 @@ export type NWColors = {
   onSurfaceDisabled: string;
   surfaceContainer: string;
   primary: string;
+  secondary: string;
   dangerSurface: string;
   dangerContent: string;
   successSurface: string;
@@ -51,6 +52,7 @@ export const lightColors: NWColors = {
   onSurfaceDisabled: '#c1c1c1',
   surfaceContainer: '#ebebeb',
   primary: '#b44618',
+  secondary: '#e27426',
   dangerSurface: '#f9342a',
   dangerContent: '#FFFFFF',
   successSurface: '#2ec728',
@@ -86,6 +88,7 @@ export const darkColors: NWColors = {
   onSurfaceDisabled: '#8d8d8d',
   surfaceContainer: '#3c3c3c',
   primary: '#b44618',
+  secondary: '#e27426',
   dangerSurface: '#f9342a',
   dangerContent: '#FFFFFF',
   successSurface: '#2ec728',

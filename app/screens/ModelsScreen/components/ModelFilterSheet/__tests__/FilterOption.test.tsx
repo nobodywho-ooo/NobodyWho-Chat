@@ -21,7 +21,12 @@ const dotColor = (screen: Awaited<ReturnType<typeof render>>) => {
 
 test('the selected option gets a primary dot and a bold label', async () => {
   const screen = await render(
-    <FilterOption label="Text to Speech" selected onPress={jest.fn()} />,
+    <FilterOption
+      label="Text to Speech"
+      icon={ICON}
+      selected
+      onPress={jest.fn()}
+    />,
   );
 
   expect(dotColor(screen)).toBe(lightColors.primary);
@@ -35,6 +40,7 @@ test('an unselected option has no visible dot and a regular label', async () => 
   const screen = await render(
     <FilterOption
       label="Text to Speech"
+      icon={ICON}
       selected={false}
       onPress={jest.fn()}
     />,
@@ -65,7 +71,12 @@ test('the icon uses the label colour', async () => {
 test('pressing the option calls onPress', async () => {
   const onPress = jest.fn();
   const screen = await render(
-    <FilterOption label="All models" selected={false} onPress={onPress} />,
+    <FilterOption
+      label="All models"
+      icon={ICON}
+      selected={false}
+      onPress={onPress}
+    />,
   );
 
   await fireEvent.press(screen.getByLabelText('All models'));

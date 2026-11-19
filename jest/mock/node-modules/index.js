@@ -634,6 +634,19 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
+jest.mock('react-native-localize', () => ({
+  getLocales: () => [
+    {
+      countryCode: 'US',
+      languageTag: 'en-US',
+      languageCode: 'en',
+      isRTL: false,
+    },
+  ],
+  findBestLanguageTag: tags =>
+    tags.includes('en') ? { languageTag: 'en', isRTL: false } : undefined,
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: key => key,
@@ -659,6 +672,7 @@ jest.mock('@op-engineering/op-sqlite', () => {
       setItem: jest.fn().mockReturnValue(jest.fn()),
       getItemSync: jest.fn().mockReturnValue(undefined),
       setItemSync: jest.fn(),
+      removeItemSync: jest.fn(),
     }),
   };
 });

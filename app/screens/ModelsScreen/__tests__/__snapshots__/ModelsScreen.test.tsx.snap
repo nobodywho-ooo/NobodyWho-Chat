@@ -224,7 +224,7 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
           screens.models.availableToDownload
         </Text>
         <View
-          accessibilityLabel="screens.models.modelInfo"
+          accessibilityLabel="screens.models.chooseModelTitle"
           accessibilityRole="button"
           accessibilityState={
             {
@@ -283,7 +283,7 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
             }
             variant="body2"
           >
-            screens.models.modelInfo
+            screens.models.chooseModelTitle
           </Text>
         </View>
       </View>
@@ -555,7 +555,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
           screens.models.availableToDownload
         </Text>
         <View
-          accessibilityLabel="screens.models.modelInfo"
+          accessibilityLabel="screens.models.chooseModelTitle"
           accessibilityRole="button"
           accessibilityState={
             {
@@ -614,7 +614,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
             }
             variant="body2"
           >
-            screens.models.modelInfo
+            screens.models.chooseModelTitle
           </Text>
         </View>
       </View>
@@ -886,7 +886,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
           screens.models.availableToDownload
         </Text>
         <View
-          accessibilityLabel="screens.models.modelInfo"
+          accessibilityLabel="screens.models.chooseModelTitle"
           accessibilityRole="button"
           accessibilityState={
             {
@@ -945,7 +945,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
             }
             variant="body2"
           >
-            screens.models.modelInfo
+            screens.models.chooseModelTitle
           </Text>
         </View>
       </View>

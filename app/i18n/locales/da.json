@@ -12,6 +12,7 @@
     "models": "Modeller",
     "settings": "Indstillinger",
     "customizeAssistant": "Tilpas",
+    "language": "Sprog",
     "downloadModels": "Downloadede modeller",
     "terms": "Vilkår og betingelser",
     "privacyPolicy": "Privatlivspolitik",
@@ -335,6 +336,8 @@
       "app": "App",
       "customize": "Tilpas",
       "customizeSubtitle": "Konfigurer din assistent",
+      "language": "Sprog",
+      "languageSubtitle": "Appens sprog",
       "about": "Om",
       "terms": "Vilkår og betingelser",
       "termsSubtitle": "Læs vores brugervilkår",
@@ -342,6 +345,10 @@
       "privacyPolicySubtitle": "Sådan håndterer vi dine data",
       "website": "Hjemmeside",
       "github": "Github"
+    },
+    "language": {
+      "system": "Enhedens sprog",
+      "systemSubtitle": "Lige nu: {{language}}"
     },
     "models": {
       "discover": "Opdag",

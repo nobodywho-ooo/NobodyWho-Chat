@@ -12,6 +12,7 @@
     "models": "Models",
     "settings": "Settings",
     "customizeAssistant": "Customize",
+    "language": "Language",
     "downloadModels": "Downloaded Models",
     "terms": "Terms & Conditions",
     "privacyPolicy": "Privacy Policy",
@@ -335,6 +336,8 @@
       "app": "App",
       "customize": "Customize",
       "customizeSubtitle": "Configure your assistant",
+      "language": "Language",
+      "languageSubtitle": "The language of the app",
       "about": "About",
       "terms": "Terms & Conditions",
       "termsSubtitle": "Read our terms of use",
@@ -342,6 +345,10 @@
       "privacyPolicySubtitle": "How we handle your data",
       "website": "Website",
       "github": "Github"
+    },
+    "language": {
+      "system": "Device language",
+      "systemSubtitle": "Currently: {{language}}"
     },
     "models": {
       "discover": "Discover",

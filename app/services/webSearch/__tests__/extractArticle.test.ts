@@ -530,7 +530,7 @@ describe('extractArticle — structured product data', () => {
   });
 
   it('ignores a lone Product node when the page declares itself a non-product page (F20)', async () => {
-    const html = `<html><head>
+    const page = `<html><head>
       <title>Mieszkania do wynajęcia - Warszawa</title>
       <meta property="og:type" content="website" />
       <script type="application/ld+json">${JSON.stringify({
@@ -539,7 +539,7 @@ describe('extractArticle — structured product data', () => {
         offers: { price: '2800', priceCurrency: 'PLN' },
       })}</script>
       </head><body><article><p>${'Wiele ogłoszeń wynajmu mieszkań w Warszawie. '.repeat(6)}</p></article></body></html>`;
-    mockFetch(html);
+    mockFetch(page);
 
     const article = await extractArticle(
       'https://olx.pl/nieruchomosci/wynajem',
@@ -560,7 +560,7 @@ describe('extractArticle — structured product data', () => {
   });
 
   it('still trusts a lone Product node when og:type explicitly says product', async () => {
-    const html = `<html><head>
+    const page = `<html><head>
       <title>RTX 4070 - Allegro</title>
       <meta property="og:type" content="product" />
       <script type="application/ld+json">${JSON.stringify({
@@ -569,7 +569,7 @@ describe('extractArticle — structured product data', () => {
         offers: { price: '2199', priceCurrency: 'PLN' },
       })}</script>
       </head><body><article><p>${'Karta graficzna do gier. '.repeat(6)}</p></article></body></html>`;
-    mockFetch(html);
+    mockFetch(page);
     const article = await extractArticle('https://allegro.pl/oferta/rtx-4070');
     expect(article.product?.price).toBe('2199');
   });

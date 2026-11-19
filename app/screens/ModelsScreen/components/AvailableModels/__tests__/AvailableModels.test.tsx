@@ -87,7 +87,9 @@ test('pressing the info button invokes onInfoPress', async () => {
     <AvailableModels {...defaultProps} onInfoPress={onInfoPress} />,
   );
 
-  await fireEvent.press(screen.getByLabelText('screens.models.modelInfo'));
+  await fireEvent.press(
+    screen.getByLabelText('screens.models.chooseModelTitle'),
+  );
   expect(onInfoPress).toHaveBeenCalledTimes(1);
 });
 
