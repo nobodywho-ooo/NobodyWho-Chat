@@ -115,8 +115,6 @@ state = {
   webSearchTrace: [],
   traceExpanded: false,
   challengeActive: false,
-  // Read lazily on first access below, so importing this module never touches
-  // the database (tests and the module graph load it before storage is set up).
   challengePolicy: DEFAULT_CHALLENGE_POLICY,
   challengeHandlers: null,
   notice: null,

@@ -1,10 +1,8 @@
 import { buildModel } from 'jest/factories/model';
 
-import { mockGetTotalMemory } from 'jest/mock/node-modules';
-
 import {
-  fetchDeviceCatalogue,
   fetchModelCatalogue,
+  isModelCatalogue,
   MODELS_URL,
   TIMEOUT_MS,
 } from '../modelCatalogue';
@@ -37,14 +35,18 @@ test('returns the catalogue', async () => {
   expect(fetchMock).toHaveBeenCalledWith(MODELS_URL, expect.anything());
 });
 
-test('hands the whole catalogue with the device RAM to judge it by', async () => {
-  mockGetTotalMemory.mockResolvedValue(6 * 1024 ** 3);
-  mockFetch(async () => ({ ok: true, json: async () => catalogue }));
+test('rejects a response that is not a list of models', async () => {
+  mockFetch(async () => ({ ok: true, json: async () => ({ error: 'oops' }) }));
 
-  await expect(fetchDeviceCatalogue()).resolves.toEqual({
-    models: catalogue,
-    ramGB: 6,
-  });
+  await expect(fetchModelCatalogue()).rejects.toThrow('not a list of models');
+});
+
+test('recognises a catalogue by its entries ids and parts', () => {
+  expect(isModelCatalogue(catalogue)).toBe(true);
+  expect(isModelCatalogue([])).toBe(true);
+  expect(isModelCatalogue([{ id: 1 }])).toBe(false);
+  expect(isModelCatalogue([null])).toBe(false);
+  expect(isModelCatalogue('[]')).toBe(false);
 });
 
 test('rejects on an HTTP error status', async () => {

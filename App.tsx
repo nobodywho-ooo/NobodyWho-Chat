@@ -27,7 +27,7 @@ import { isChatPipeline, MODEL_SLOTS } from 'types';
 import { useResumeModelDownloads, useStyled } from 'hooks';
 import { ErrorScreen, LoadingScreen, OnboardingScreen } from 'screens';
 import { WebScrapeHost } from 'components';
-import { AiServiceProvider } from 'services';
+import { AiServiceProvider, prefetchModelCatalogue } from 'services';
 import { RootDrawerNavigator } from 'navigation';
 import { useTranslation } from 'react-i18next';
 
@@ -197,6 +197,8 @@ function AppLoader() {
     setAudioModeAsync({ playsInSilentMode: true }).catch(error =>
       log('AppLoader setAudioModeAsync failed', error),
     );
+
+    prefetchModelCatalogue();
 
     try {
       await initDatabase();

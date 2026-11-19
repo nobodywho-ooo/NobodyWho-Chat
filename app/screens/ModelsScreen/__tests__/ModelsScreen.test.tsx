@@ -10,6 +10,7 @@ import {
 import { mockFetchResolve, mockFetchReject } from 'jest/mock/network';
 import { mockGetTotalMemory } from 'jest/mock/node-modules';
 import { buildModel } from 'jest/factories/model';
+import { resetModelCatalogueForTests } from 'services';
 
 import { ModelsScreen } from '../ModelsScreen';
 
@@ -24,6 +25,7 @@ const part = (type: string, sizeGB: number) => ({
 });
 
 beforeEach(() => {
+  resetModelCatalogueForTests();
   mockUseModels.mockReturnValue({ models: [] });
   mockUseAppState.mockReturnValue({});
   // Reset between tests so a download set in one test doesn't leak into the next.

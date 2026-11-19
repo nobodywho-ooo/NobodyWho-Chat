@@ -1,10 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  DeviceCatalogue,
-  fetchDeviceCatalogue,
-  log,
-  onboardingChatModels,
-} from 'helpers';
+import { DeviceCatalogue, log, onboardingChatModels } from 'helpers';
+import { getDeviceCatalogue } from 'services';
 
 import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
 import { OnboardingChoices } from './components';
@@ -26,7 +22,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
 
     const loadCatalogue = async () => {
       try {
-        const loaded = await fetchDeviceCatalogue();
+        const loaded = await getDeviceCatalogue();
 
         if (!isMounted) {
           return;
@@ -40,7 +36,7 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
 
         setCatalogue(loaded);
       } catch (error) {
-        log('OnboardingScreen fetchDeviceCatalogue', error);
+        log('OnboardingScreen getDeviceCatalogue', error);
         if (isMounted) {
           onFinishRef.current();
         }

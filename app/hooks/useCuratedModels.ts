@@ -6,13 +6,13 @@ import {
   CuratedModel,
   CuratedAvailability,
   DeviceCatalogue,
-  fetchDeviceCatalogue,
   log,
   modelDownloadProgress,
   curatedAvailability,
   sizeWeightedProgress,
 } from 'helpers';
 import { getModelById } from 'repositories';
+import { getModelCatalogue, useModelCatalogue } from 'services';
 import { MODEL_SLOTS, Model } from 'types';
 import { useAppState } from './useAppState';
 import { isDownloadActive, useModelDownloader } from './useModelDownloader';
@@ -50,9 +50,15 @@ export const useCuratedModels = (
   const { startDownload, stopDownload, warnNotEnoughSpace, resumeDownload } =
     useModelDownloader();
 
-  const [catalogue, setCatalogue] = useState<
-    DeviceCatalogue | 'loading' | 'failed'
-  >(initialCatalogue ?? 'loading');
+  const store = useModelCatalogue();
+  const [hasRequested, setHasRequested] = useState(false);
+
+  const catalogue: DeviceCatalogue | 'loading' | 'failed' =
+    initialCatalogue ??
+    store.catalogue ??
+    (hasRequested && store.hasFailed && !store.isFetching
+      ? 'failed'
+      : 'loading');
 
   // The models the user asked for in this session, kept so progress can still
   // count a model whose download row has already gone (it finished).
@@ -96,6 +102,7 @@ export const useCuratedModels = (
   // missing: installed or on their way, it is never read.
   const needsCatalogue =
     catalogue === 'loading' &&
+    !hasRequested &&
     (fetchFor === undefined ||
       (isLoaded && availabilityOf(fetchFor).kind === 'loading'));
 
@@ -104,25 +111,10 @@ export const useCuratedModels = (
       return;
     }
 
-    let isMounted = true;
-
-    fetchDeviceCatalogue().then(
-      loaded => {
-        if (isMounted) {
-          setCatalogue(loaded);
-        }
-      },
-      error => {
-        log('useCuratedModels fetchDeviceCatalogue', error);
-        if (isMounted) {
-          setCatalogue('failed');
-        }
-      },
+    setHasRequested(true);
+    getModelCatalogue().catch(error =>
+      log('useCuratedModels getModelCatalogue', error),
     );
-
-    return () => {
-      isMounted = false;
-    };
   }, [needsCatalogue]);
 
   const progress = useMemo(

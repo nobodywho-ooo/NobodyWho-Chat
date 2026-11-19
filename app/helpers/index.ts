@@ -18,8 +18,8 @@ import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
 import {
   byCatalogueOrder,
-  fetchDeviceCatalogue,
   fetchModelCatalogue,
+  isModelCatalogue,
   MODELS_URL,
 } from './modelCatalogue';
 import {
@@ -207,8 +207,8 @@ export {
   parameterCountLabel,
   modelSizeLabel,
   MODELS_URL,
-  fetchDeviceCatalogue,
   fetchModelCatalogue,
+  isModelCatalogue,
   byCatalogueOrder,
   curatedChatModel,
   curatedOnboardingModels,
