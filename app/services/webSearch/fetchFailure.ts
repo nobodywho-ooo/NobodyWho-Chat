@@ -1,3 +1,5 @@
+import { type TFunction } from 'i18next';
+
 import { FetchStatusError } from './security/outboundFetch';
 
 export type FetchFailureReason =
@@ -92,22 +94,30 @@ const RETRYABLE_REASONS = new Set<FetchFailureReason>([
 export const isRecoverableFailure = (reason: FetchFailureReason): boolean =>
   RETRYABLE_REASONS.has(reason);
 
-const REASON_LABELS: Record<FetchFailureReason, string> = {
-  blocked: 'blocked the reader',
-  'not-found': 'page is gone',
-  'server-error': 'site is down',
-  timeout: 'took too long',
-  unsupported: 'not readable text',
-  'too-large': 'page too big',
-  empty: 'no readable text',
-  network: 'could not be reached',
-  aborted: 'stopped',
+const REASON_KEYS: Record<FetchFailureReason, string> = {
+  blocked: 'blocked',
+  'not-found': 'notFound',
+  'server-error': 'serverError',
+  timeout: 'timeout',
+  unsupported: 'unsupported',
+  'too-large': 'tooLarge',
+  empty: 'empty',
+  network: 'network',
+  aborted: 'aborted',
 };
 
-export const describeFetchFailure = (reason: FetchFailureReason): string =>
-  REASON_LABELS[reason];
+export const describeFetchFailure = (
+  reason: FetchFailureReason,
+  t: TFunction,
+): string =>
+  t(
+    `components.messageListItem.searchTrace.fetchFailure.${REASON_KEYS[reason]}`,
+  );
 
-export const summarizeFetchFailures = (failures: FetchFailure[]): string => {
+export const summarizeFetchFailures = (
+  failures: FetchFailure[],
+  t: TFunction,
+): string => {
   const recoverable = failures.filter(failure =>
     isRecoverableFailure(failure.reason),
   );
@@ -123,8 +133,9 @@ export const summarizeFetchFailures = (failures: FetchFailure[]): string => {
   }
 
   const dominant = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]!;
-  const pages =
-    recoverable.length === 1 ? '1 page' : `${recoverable.length} pages`;
 
-  return `Couldn’t read ${pages} — ${describeFetchFailure(dominant[0])}`;
+  return t('components.messageListItem.searchTrace.failures', {
+    count: recoverable.length,
+    reason: describeFetchFailure(dominant[0], t),
+  });
 };

@@ -1,6 +1,19 @@
-import { buildRows, deriveTitle } from '../trace/webSearchTrace';
+import {
+  buildRows as buildRowsWith,
+  deriveTitle as deriveTitleWith,
+} from '../trace/webSearchTrace';
+import { t } from '../__fixtures__/englishT';
 import { type WebSearchTraceEntry } from '../webSearchStore';
 import { type SourceDocument } from '../types';
+
+const buildRows = (
+  isSearching: boolean,
+  trace: WebSearchTraceEntry[],
+  results: SourceDocument[],
+  challengeActive: boolean,
+) => buildRowsWith(isSearching, trace, results, challengeActive, t);
+const deriveTitle = (isSearching: boolean, trace: WebSearchTraceEntry[]) =>
+  deriveTitleWith(isSearching, trace, t);
 
 type Rows = ReturnType<typeof buildRows>;
 

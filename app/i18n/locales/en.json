@@ -183,7 +183,33 @@
       "searched": "Searched the web",
       "challengeRow": "Tap to confirm you’re not a robot",
       "challengeRowLabel": "The site wants to check you are not a robot — tap to continue",
-      "refining": "Checking the answer against the sources…"
+      "refining": "Checking the answer against the sources…",
+      "searchTrace": {
+        "objectives": "Deciding what to search for",
+        "recovering": "Couldn’t read those — looking for another source",
+        "query": "Searching “{{query}}”",
+        "web": "Searching the web",
+        "reading": "Reading the pages",
+        "done": "Done",
+        "nothingFound": "Nothing found",
+        "offline": "No internet — answered without the web",
+        "timeout": "Search took too long — stopped early",
+        "skipped": "No search needed — answered right away",
+        "weak": "Didn’t find much — the answer may be incomplete",
+        "failures_one": "Couldn’t read {{count}} page — {{reason}}",
+        "failures_other": "Couldn’t read {{count}} pages — {{reason}}",
+        "fetchFailure": {
+          "blocked": "blocked the reader",
+          "notFound": "page is gone",
+          "serverError": "site is down",
+          "timeout": "took too long",
+          "unsupported": "not readable text",
+          "tooLarge": "page too big",
+          "empty": "no readable text",
+          "network": "could not be reached",
+          "aborted": "stopped"
+        }
+      }
     },
     "conversationsList": {
       "recent": "Recent",

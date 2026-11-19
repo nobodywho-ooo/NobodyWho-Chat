@@ -7,6 +7,7 @@ import {
   summarizeFetchFailures,
   type FetchFailure,
 } from '../fetchFailure';
+import { t } from '../__fixtures__/englishT';
 import { FetchStatusError } from '../security/outboundFetch';
 
 const failure = (
@@ -140,29 +141,34 @@ describe('failure shape drives what recovery is worth trying', () => {
 
 describe('summarizeFetchFailures — the line the user actually reads', () => {
   it('says nothing when nothing recoverable failed', () => {
-    expect(summarizeFetchFailures([])).toBe('');
-    expect(summarizeFetchFailures([failure('a.example', 'aborted')])).toBe('');
+    expect(summarizeFetchFailures([], t)).toBe('');
+    expect(summarizeFetchFailures([failure('a.example', 'aborted')], t)).toBe(
+      '',
+    );
   });
 
   it('counts the pages and names the most common reason', () => {
-    expect(summarizeFetchFailures([failure('a.example', 'blocked')])).toBe(
+    expect(summarizeFetchFailures([failure('a.example', 'blocked')], t)).toBe(
       'Couldn’t read 1 page — blocked the reader',
     );
     expect(
-      summarizeFetchFailures([
-        failure('a.example', 'blocked'),
-        failure('b.example', 'blocked'),
-        failure('c.example', 'timeout'),
-      ]),
+      summarizeFetchFailures(
+        [
+          failure('a.example', 'blocked'),
+          failure('b.example', 'blocked'),
+          failure('c.example', 'timeout'),
+        ],
+        t,
+      ),
     ).toBe('Couldn’t read 3 pages — blocked the reader');
   });
 
   it('leaves an aborted fetch out of the count', () => {
     expect(
-      summarizeFetchFailures([
-        failure('a.example', 'blocked'),
-        failure('b.example', 'aborted'),
-      ]),
+      summarizeFetchFailures(
+        [failure('a.example', 'blocked'), failure('b.example', 'aborted')],
+        t,
+      ),
     ).toBe('Couldn’t read 1 page — blocked the reader');
   });
 
@@ -179,7 +185,7 @@ describe('summarizeFetchFailures — the line the user actually reads', () => {
       'aborted',
     ];
     for (const reason of reasons) {
-      expect(describeFetchFailure(reason)).toBeTruthy();
+      expect(describeFetchFailure(reason, t)).toBeTruthy();
     }
   });
 });

@@ -6,6 +6,8 @@ import { foldForMatching } from './text/queryTerms';
 
 export const DIGEST_MAX_CHARS = 200;
 
+export const DIGEST_ANSWER_MAX_CHARS = 1500;
+
 const DIGEST_SYSTEM_PROMPT =
   'You track what a conversation is currently about, so a later follow-up ' +
   'question can be understood on its own. Given the previous topic (if any) ' +
@@ -27,7 +29,11 @@ export const buildDigestPrompt = (
     role: 'user',
     content:
       `Previous topic: ${previousDigest?.trim() || 'none yet'}\n\n` +
-      `Latest exchange:\nUser: ${question}\nAssistant: ${answer}\n\n` +
+      `Latest exchange:\nUser: ${question}\nAssistant: ${
+        answer.length > DIGEST_ANSWER_MAX_CHARS
+          ? `${answer.slice(0, DIGEST_ANSWER_MAX_CHARS).trimEnd()}…`
+          : answer
+      }\n\n` +
       'Updated topic:',
   },
 ];

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { deviceRamGB, log } from 'helpers';
-import { useSlotModel } from 'hooks';
+import { useModels, useSlotModel } from 'hooks';
 import {
   NEW_CHAT_KEY,
   useAiService,
@@ -10,7 +10,7 @@ import {
   isWebSearchReady,
   useWebSearchStore,
 } from 'services';
-import { ModelSlot } from 'types';
+import { isEmbeddingPipeline, ModelSlot } from 'types';
 
 import type { EmbeddingPromptOutcome } from '../components';
 import type { ChatWebSearchOptions } from './useChatGeneration';
@@ -25,6 +25,10 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
   const { slots } = useAiService();
   const chatModel = useSlotModel(ModelSlot.chat);
   const embeddingModel = useSlotModel(ModelSlot.embedding);
+  const { models: installedModels } = useModels();
+  const hasInstalledEmbedding = installedModels.some(model =>
+    isEmbeddingPipeline(model.pipeline),
+  );
   const [ramGB, setRamGB] = useState<number | undefined>(undefined);
 
   useEffect(() => {
@@ -71,7 +75,12 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
 
     store.setEnabled(conversationId, !enabled);
 
-    if (enabled || embeddingModel || isMemoryConstrained(chatModel, ramGB)) {
+    if (
+      enabled ||
+      embeddingModel ||
+      hasInstalledEmbedding ||
+      isMemoryConstrained(chatModel, ramGB)
+    ) {
       return;
     }
 
@@ -81,7 +90,14 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
       setPromptRequired(required);
       setPromptOpen(true);
     }
-  }, [enabled, chatModel, embeddingModel, ramGB, conversationId]);
+  }, [
+    enabled,
+    chatModel,
+    embeddingModel,
+    hasInstalledEmbedding,
+    ramGB,
+    conversationId,
+  ]);
 
   const closePrompt = useCallback(
     (outcome: EmbeddingPromptOutcome) => {

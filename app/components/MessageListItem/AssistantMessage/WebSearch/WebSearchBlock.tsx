@@ -16,6 +16,7 @@ import { haptics, openExternalUrl } from 'helpers';
 import { useStyled } from 'hooks';
 import {
   buildRows,
+  deriveTitle,
   useWebSearchStore,
   type WebSearchTraceEntry,
 } from 'services';
@@ -70,8 +71,8 @@ export const WebSearchBlock: React.FC<WebSearchBlockProps> = ({
   }, [isLiveBlock, liveExpanded]);
 
   const rows = useMemo(
-    () => buildRows(isSearching, trace, sources, challengeActive),
-    [isSearching, trace, sources, challengeActive],
+    () => buildRows(isSearching, trace, sources, challengeActive, t),
+    [isSearching, trace, sources, challengeActive, t],
   );
 
   const seenKeys = useRef<Set<string>>(new Set());
@@ -120,23 +121,7 @@ export const WebSearchBlock: React.FC<WebSearchBlockProps> = ({
     return null;
   }
 
-  const title = (() => {
-    if (isSearching) {
-      return trace.some(entry => entry.type === 'searching')
-        ? t('components.messageListItem.searching')
-        : t('components.messageListItem.planning');
-    }
-
-    if (trace.some(entry => entry.type === 'offline')) {
-      return t('components.messageListItem.offline');
-    }
-
-    if (trace.some(entry => entry.type === 'skipped')) {
-      return t('components.messageListItem.skipped');
-    }
-
-    return t('components.messageListItem.searched');
-  })();
+  const title = deriveTitle(isSearching, trace, t);
 
   const currentRow = isSearching ? rows[rows.length - 1] : undefined;
   const listRows = isSearching ? rows.slice(0, -1) : rows;

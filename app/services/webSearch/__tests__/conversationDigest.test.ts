@@ -1,5 +1,6 @@
 import {
   buildDigestPrompt,
+  DIGEST_ANSWER_MAX_CHARS,
   DIGEST_MAX_CHARS,
   DIGEST_STOP_RAW_CHARS,
   digestReplyIsComplete,
@@ -31,6 +32,18 @@ describe('buildDigestPrompt', () => {
     );
     expect(messages[1]!.content).toContain(
       'Previous topic: Topic: Emmanuel Macron, president of France.',
+    );
+  });
+});
+
+describe('buildDigestPrompt answer cap', () => {
+  it('cuts a long answer, which would only slow the digest down', () => {
+    const answer = 'a'.repeat(DIGEST_ANSWER_MAX_CHARS + 500);
+    const [, user] = buildDigestPrompt(null, 'q', answer);
+
+    expect(user!.content).toContain(`${'a'.repeat(DIGEST_ANSWER_MAX_CHARS)}…`);
+    expect(user!.content).not.toContain(
+      'a'.repeat(DIGEST_ANSWER_MAX_CHARS + 1),
     );
   });
 });

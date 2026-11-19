@@ -1,3 +1,5 @@
+import { type TFunction } from 'i18next';
+
 import { type SourceDocument } from '../types';
 import { type WebSearchTraceEntry } from '../webSearchStore';
 import { hostname } from '../hostname';
@@ -38,22 +40,23 @@ const isUnopenedAndUnused = (source: SourceDocument): boolean =>
 export const deriveTitle = (
   isSearching: boolean,
   trace: WebSearchTraceEntry[],
+  t: TFunction,
 ): string => {
   if (isSearching) {
     return trace.some(entry => entry.type === 'searching')
-      ? 'Searching the web…'
-      : 'Checking whether to search…';
+      ? t('components.messageListItem.searching')
+      : t('components.messageListItem.planning');
   }
 
   if (trace.some(entry => entry.type === 'offline')) {
-    return 'No internet connection';
+    return t('components.messageListItem.offline');
   }
 
   if (trace.some(entry => entry.type === 'skipped')) {
-    return 'Answered without searching';
+    return t('components.messageListItem.skipped');
   }
 
-  return 'Searched the web';
+  return t('components.messageListItem.searched');
 };
 
 export const buildRows = (
@@ -61,7 +64,11 @@ export const buildRows = (
   trace: WebSearchTraceEntry[],
   results: SourceDocument[],
   challengeActive: boolean,
+  t: TFunction,
 ): Row[] => {
+  const label = (key: string, options?: Record<string, unknown>): string =>
+    t(`components.messageListItem.searchTrace.${key}`, options);
+
   const takenStepKeys = new Set<string>();
   const stepKey = (base: string) => {
     let key = base;
@@ -101,14 +108,14 @@ export const buildRows = (
     type: 'note',
     key: 'offline',
     tone: 'warn',
-    label: 'No internet — answered without the web',
+    label: label('offline'),
   };
 
   const timeoutNote: NoteRow = {
     type: 'note',
     key: 'timeout',
     tone: 'warn',
-    label: 'Search took too long — stopped early',
+    label: label('timeout'),
   };
 
   if (has('offline')) {
@@ -121,7 +128,7 @@ export const buildRows = (
         type: 'note',
         key: 'skipped',
         tone: 'muted',
-        label: 'No search needed — answered right away',
+        label: label('skipped'),
       },
     ];
   }
@@ -130,7 +137,7 @@ export const buildRows = (
   const doneRow: StepRow = {
     type: 'step',
     key: 'done',
-    label: 'Done',
+    label: label('done'),
     done: true,
   };
 
@@ -138,7 +145,7 @@ export const buildRows = (
     type: 'note',
     key: 'weak',
     tone: 'warn',
-    label: 'Didn’t find much — the answer may be incomplete',
+    label: label('weak'),
   };
   const closingRow: Row = has('weak') ? weakNote : doneRow;
 
@@ -150,6 +157,7 @@ export const buildRows = (
         host: entry.host ?? '',
         reason: entry.reason as FetchFailureReason,
       })),
+    t,
   );
 
   const failureNote: NoteRow | null = failureSummary
@@ -166,7 +174,7 @@ export const buildRows = (
 
   const phaseRows: StepRow[] =
     has('reading') || has('ranking')
-      ? [{ type: 'step', key: 'phase-reading', label: 'Reading the pages' }]
+      ? [{ type: 'step', key: 'phase-reading', label: label('reading') }]
       : [];
 
   const phaseRunning = isSearching && !has('done');
@@ -267,7 +275,7 @@ export const buildRows = (
         ...(entry.type === 'fetched' ? { failed: false } : {}),
         ...(failed ? { failed: true } : {}),
         ...(failed && entry.reason
-          ? { note: describeFetchFailure(entry.reason) }
+          ? { note: describeFetchFailure(entry.reason, t) }
           : {}),
       });
     }
@@ -294,18 +302,18 @@ export const buildRows = (
 
   const stepLabel = (entry: WebSearchTraceEntry): string => {
     if (entry.type === 'objectives') {
-      return 'Deciding what to search for';
+      return label('objectives');
     }
 
     if (entry.type === 'recovering') {
-      return 'Couldn’t read those — looking for another source';
+      return label('recovering');
     }
 
     if (entry.query) {
-      return `Searching “${entry.query}”`;
+      return label('query', { query: entry.query });
     }
 
-    return 'Searching the web';
+    return label('web');
   };
 
   const stepBase = (entry: WebSearchTraceEntry): string => {
@@ -379,7 +387,7 @@ export const buildRows = (
           : {
               type: 'step',
               key: 'no-results',
-              label: 'Nothing found',
+              label: label('nothingFound'),
               done: true,
             },
       );
@@ -412,12 +420,12 @@ export const buildRows = (
       {
         type: 'step',
         key: stepKey('objectives'),
-        label: 'Deciding what to search for',
+        label: label('objectives'),
       },
       ...queries.map(query => ({
         type: 'step' as const,
         key: stepKey('query'),
-        label: `Searching “${query}”`,
+        label: label('query', { query }),
       })),
     ];
   };
@@ -442,7 +450,12 @@ export const buildRows = (
     if (has('searching')) {
       return finalizeSteps([
         ...steps,
-        { type: 'step', key: 'no-results', label: 'Nothing found', done: true },
+        {
+          type: 'step',
+          key: 'no-results',
+          label: label('nothingFound'),
+          done: true,
+        },
       ]);
     }
 

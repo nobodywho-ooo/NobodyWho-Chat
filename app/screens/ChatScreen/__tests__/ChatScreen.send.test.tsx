@@ -1461,7 +1461,7 @@ describe('web search', () => {
       expect(mockSetDigest).toHaveBeenCalledWith(7, 'moka pot prices');
     });
 
-    test('a chat without web search never reads or writes a digest', async () => {
+    test('a chat without web search still keeps its digest up to date', async () => {
       mockWebSearchEnabled = false;
       const screen = await render(
         <ChatScreen
@@ -1471,9 +1471,37 @@ describe('web search', () => {
         />,
       );
 
-      await send(screen, 'hello');
+      await send(screen, 'tell me about moka pots');
 
-      expect(mockGetDigest).not.toHaveBeenCalled();
+      expect(mockPrepareWebSearchTurn).not.toHaveBeenCalled();
+      expect(mockUpdateDigest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          previousDigest: 'moka pot coffee',
+          question: 'tell me about moka pots',
+          answer: 'Hello world',
+        }),
+      );
+    });
+
+    test('a turn stopped mid-answer leaves the digest alone', async () => {
+      mockWebSearchEnabled = false;
+      const screen = await render(
+        <ChatScreen
+          conversationId={7}
+          messages={[]}
+          onConversationCreated={jest.fn()}
+        />,
+      );
+
+      mockChat.ask.mockImplementation(() =>
+        (async function* () {
+          yield 'partial';
+          inputBar(screen).props.onStop();
+        })(),
+      );
+
+      await send(screen, 'tell me about moka pots');
+
       expect(mockUpdateDigest).not.toHaveBeenCalled();
     });
   });

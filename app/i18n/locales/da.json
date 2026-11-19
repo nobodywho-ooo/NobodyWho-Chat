@@ -183,7 +183,33 @@
       "searched": "Søgte på nettet",
       "challengeRow": "Tryk for at bekræfte, at du ikke er en robot",
       "challengeRowLabel": "Siden vil tjekke, at du ikke er en robot — tryk for at fortsætte",
-      "refining": "Tjekker svaret mod kilderne…"
+      "refining": "Tjekker svaret mod kilderne…",
+      "searchTrace": {
+        "objectives": "Finder ud af, hvad der skal søges efter",
+        "recovering": "Kunne ikke læse dem — leder efter en anden kilde",
+        "query": "Søger efter “{{query}}”",
+        "web": "Søger på nettet",
+        "reading": "Læser siderne",
+        "done": "Færdig",
+        "nothingFound": "Intet fundet",
+        "offline": "Intet internet — svarede uden nettet",
+        "timeout": "Søgningen tog for lang tid — stoppede tidligt",
+        "skipped": "Ingen søgning nødvendig — svarede med det samme",
+        "weak": "Fandt ikke meget — svaret kan være ufuldstændigt",
+        "failures_one": "Kunne ikke læse {{count}} side — {{reason}}",
+        "failures_other": "Kunne ikke læse {{count}} sider — {{reason}}",
+        "fetchFailure": {
+          "blocked": "blokerede læseren",
+          "notFound": "siden findes ikke længere",
+          "serverError": "siden er nede",
+          "timeout": "tog for lang tid",
+          "unsupported": "ikke læsbar tekst",
+          "tooLarge": "siden er for stor",
+          "empty": "ingen læsbar tekst",
+          "network": "kunne ikke nås",
+          "aborted": "stoppet"
+        }
+      }
     },
     "conversationsList": {
       "recent": "Seneste",

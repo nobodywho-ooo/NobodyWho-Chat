@@ -27,6 +27,7 @@ import {
   restoreChatForTurn,
   restoreWebSearchTurn,
   runAnswerRecheck,
+  isWebSearchReady,
   settleConversationDigest,
   stripCitations,
   updateConversationDigestInBackground,
@@ -421,12 +422,10 @@ export function useChatGeneration({
       return;
     }
 
-    if (webSearch.enabled) {
-      digest = await getConversationDigest(id).catch(error => {
-        log('ChatScreen reading the conversation digest failed', error);
-        return null;
-      });
-    }
+    digest = await getConversationDigest(id).catch(error => {
+      log('ChatScreen reading the conversation digest failed', error);
+      return null;
+    });
 
     try {
       const hasMedia = !!imagePath || !!audioPath;
@@ -597,8 +596,8 @@ export function useChatGeneration({
 
       if (
         answered &&
-        webSearch.enabled &&
         answer &&
+        isWebSearchReady(webSearch.chatModel) &&
         chat.current === activeChat
       ) {
         const conversationIdForDigest = id;

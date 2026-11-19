@@ -168,6 +168,8 @@ jest.mock('repositories', () => ({
   getMessagesByConversationId: jest.fn(),
   insertConversation: jest.fn(),
   insertMessage: jest.fn(),
+  getConversationDigest: jest.fn(() => Promise.resolve(null)),
+  setConversationDigest: jest.fn(() => Promise.resolve()),
 }));
 
 // Drive whether a system dialog the app launched (photo library, document
