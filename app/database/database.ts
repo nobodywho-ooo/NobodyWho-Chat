@@ -142,10 +142,13 @@ const MIGRATIONS: string[][] = [
   ],
   // v2 -> v3: the web pages an assistant answer was grounded in, as a JSON
   // array of WebSource, so a reloaded answer still lists and links its sources,
-  // and how long that search took, in ms, shown in front of the metrics.
+  // and how long that search took, in ms, shown in front of the metrics. Plus
+  // the conversation's running topic line (conversationDigest), which the web
+  // search planner falls back on when a follow-up names no subject.
   [
     `ALTER TABLE messages ADD COLUMN web_sources TEXT NOT NULL DEFAULT '[]'`,
     `ALTER TABLE messages ADD COLUMN web_search_ms REAL`,
+    `ALTER TABLE conversations ADD COLUMN digest TEXT`,
   ],
 ];
 

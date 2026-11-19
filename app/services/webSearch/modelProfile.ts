@@ -2,7 +2,11 @@ import { Platform } from 'react-native';
 import { modelRequiredMemoryGB } from 'helpers';
 import type { Model } from 'types';
 
-import { WEB_FETCH_TOP_N_CONTENT, WEB_RETRIEVAL_TOP_K } from './constants/web';
+import {
+  STRONG_DEVICE_MEMORY_GB,
+  WEB_FETCH_TOP_N_CONTENT,
+  WEB_RETRIEVAL_TOP_K,
+} from './constants/web';
 
 export type WebPlannerMode = 'llm' | 'verbatim';
 
@@ -99,6 +103,14 @@ export const isMemoryConstrained = (
   !!model &&
   ramGB !== undefined &&
   ramGB - modelRequiredMemoryGB(model as Model) < LOW_MEMORY_HEADROOM_GB;
+
+export const isHighMemoryDevice = (
+  model: WebModel | null | undefined,
+  ramGB: number | undefined,
+): boolean =>
+  !!model &&
+  ramGB !== undefined &&
+  ramGB - modelRequiredMemoryGB(model as Model) >= STRONG_DEVICE_MEMORY_GB;
 
 export const hasMemoryForEmbeddings = (
   model: WebModel | null | undefined,

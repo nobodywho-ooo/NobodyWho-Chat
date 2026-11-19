@@ -41,6 +41,7 @@ export interface PrepareWebSearchTurnInput {
   embeddingModel?: Model;
   embeddingSlot: EmbeddingSlotAccess;
   signal: AbortSignal;
+  digest?: string;
 }
 
 export interface ChatSnapshot {
@@ -161,6 +162,7 @@ export const prepareWebSearchTurn = async ({
   embeddingModel,
   embeddingSlot,
   signal,
+  digest,
 }: PrepareWebSearchTurnInput): Promise<WebSearchTurn | undefined> => {
   const store = useWebSearchStore.getState();
   const snapshot = await snapshotChat(chat);
@@ -235,6 +237,7 @@ export const prepareWebSearchTurn = async ({
     const result = await runWebSearch({
       query: question,
       history: plannerHistory(snapshot.history),
+      ...(digest ? { digest } : {}),
       provider: webViewScrapeProvider,
       embeddings,
       embeddingModelReady: useEmbeddings,

@@ -5,11 +5,17 @@ import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { Prompt } from 'react-native-nobodywho';
 import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
 
-import { insertConversation, insertMessage } from 'repositories';
+import {
+  getConversationDigest,
+  insertConversation,
+  insertMessage,
+  setConversationDigest,
+} from 'repositories';
 import {
   prepareWebSearchTurn,
   restoreChatForTurn,
   restoreWebSearchTurn,
+  updateConversationDigestInBackground,
 } from 'services';
 import { implicitThinkOpen } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
@@ -105,6 +111,8 @@ jest.mock('services', () => ({
   prepareWebSearchTurn: jest.fn(),
   restoreChatForTurn: jest.fn(),
   restoreWebSearchTurn: jest.fn(),
+  settleConversationDigest: jest.fn(() => Promise.resolve()),
+  updateConversationDigestInBackground: jest.fn(() => Promise.resolve()),
 }));
 
 // Web search is off unless a test turns it on; the search itself is stubbed
@@ -119,12 +127,17 @@ jest.mock('../hooks/useWebSearchToggle', () => ({
       embeddingSlot: {},
     },
     toggle: jest.fn(),
+    embeddingPrompt: { open: false, required: false, close: jest.fn() },
+    chatModel: undefined,
+    ramGB: undefined,
   }),
 }));
 
 jest.mock('repositories', () => ({
   insertConversation: jest.fn(),
   insertMessage: jest.fn(),
+  getConversationDigest: jest.fn(() => Promise.resolve(null)),
+  setConversationDigest: jest.fn(() => Promise.resolve()),
 }));
 
 // Host stub for the camera sheet, so a test can hand ChatScreen a captured photo
@@ -1400,6 +1413,69 @@ describe('web search', () => {
       'weather in Paris?',
       undefined,
     );
+  });
+
+  describe('conversation digest', () => {
+    const mockUpdateDigest = updateConversationDigestInBackground as jest.Mock;
+    const mockGetDigest = getConversationDigest as jest.Mock;
+    const mockSetDigest = setConversationDigest as jest.Mock;
+
+    beforeEach(() => {
+      mockUpdateDigest.mockClear();
+      mockSetDigest.mockClear();
+      mockGetDigest.mockReset().mockResolvedValue('moka pot coffee');
+      mockPrepareWebSearchTurn.mockResolvedValue({
+        prompt: 'SOURCES… how much?',
+        sources,
+        snapshot,
+        chatWasBorrowed: false,
+      });
+    });
+
+    test('hands the stored digest to the search and updates it after the answer', async () => {
+      const screen = await render(
+        <ChatScreen
+          conversationId={7}
+          messages={[]}
+          onConversationCreated={jest.fn()}
+        />,
+      );
+
+      await send(screen, 'and how much does a decent one cost?');
+
+      expect(mockGetDigest).toHaveBeenCalledWith(7);
+      expect(mockPrepareWebSearchTurn).toHaveBeenCalledWith(
+        expect.objectContaining({ digest: 'moka pot coffee' }),
+      );
+      expect(mockUpdateDigest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          chat: mockChat,
+          previousDigest: 'moka pot coffee',
+          question: 'and how much does a decent one cost?',
+          answer: 'Hello world',
+        }),
+      );
+
+      const { onDigest } = mockUpdateDigest.mock.calls[0][0];
+      await onDigest('moka pot prices');
+      expect(mockSetDigest).toHaveBeenCalledWith(7, 'moka pot prices');
+    });
+
+    test('a chat without web search never reads or writes a digest', async () => {
+      mockWebSearchEnabled = false;
+      const screen = await render(
+        <ChatScreen
+          conversationId={7}
+          messages={[]}
+          onConversationCreated={jest.fn()}
+        />,
+      );
+
+      await send(screen, 'hello');
+
+      expect(mockGetDigest).not.toHaveBeenCalled();
+      expect(mockUpdateDigest).not.toHaveBeenCalled();
+    });
   });
 
   test('persists how long the search took and times the answer from after it', async () => {

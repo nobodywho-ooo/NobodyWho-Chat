@@ -16,8 +16,14 @@ export {
   type AnswerRecheckReason,
 } from './answerChecks';
 export {
+  settleConversationDigest,
+  updateConversationDigestInBackground,
+} from './digestJob';
+export {
   canRerankWithEmbeddings,
   hasMemoryForWebSearch,
+  isHighMemoryDevice,
+  isMemoryConstrained,
   isWebSearchReady,
   WEB_SEARCH_MIN_PARAMETERS_B,
 } from './modelProfile';

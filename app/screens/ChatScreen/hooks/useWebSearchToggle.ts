@@ -1,16 +1,25 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { deviceRamGB, log } from 'helpers';
 import { useSlotModel } from 'hooks';
 import {
   NEW_CHAT_KEY,
   useAiService,
   hasMemoryForWebSearch,
+  isHighMemoryDevice,
+  isMemoryConstrained,
   isWebSearchReady,
   useWebSearchStore,
 } from 'services';
 import { ModelSlot } from 'types';
 
+import type { EmbeddingPromptOutcome } from '../components';
 import type { ChatWebSearchOptions } from './useChatGeneration';
+
+export interface EmbeddingPrompt {
+  open: boolean;
+  required: boolean;
+  close: (outcome: EmbeddingPromptOutcome) => void;
+}
 
 export const useWebSearchToggle = (conversationId: number | undefined) => {
   const { slots } = useAiService();
@@ -37,6 +46,10 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
     state => state.enabledByChat[key] ?? false,
   );
 
+  const [promptOpen, setPromptOpen] = useState(false);
+  const [promptRequired, setPromptRequired] = useState(false);
+  const promptDismissedRef = useRef(false);
+
   const usable =
     isWebSearchReady(chatModel) && hasMemoryForWebSearch(chatModel, ramGB);
   const enabled = toggledOn && usable;
@@ -57,7 +70,40 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
     }
 
     store.setEnabled(conversationId, !enabled);
-  }, [enabled, chatModel, ramGB, conversationId]);
+
+    if (enabled || embeddingModel || isMemoryConstrained(chatModel, ramGB)) {
+      return;
+    }
+
+    const required = isHighMemoryDevice(chatModel, ramGB);
+
+    if (required || !promptDismissedRef.current) {
+      setPromptRequired(required);
+      setPromptOpen(true);
+    }
+  }, [enabled, chatModel, embeddingModel, ramGB, conversationId]);
+
+  const closePrompt = useCallback(
+    (outcome: EmbeddingPromptOutcome) => {
+      setPromptOpen(false);
+
+      if (outcome !== 'dismissed') {
+        return;
+      }
+
+      if (promptRequired) {
+        useWebSearchStore.getState().setEnabled(conversationId, false);
+      } else {
+        promptDismissedRef.current = true;
+      }
+    },
+    [promptRequired, conversationId],
+  );
+
+  const embeddingPrompt = useMemo<EmbeddingPrompt>(
+    () => ({ open: promptOpen, required: promptRequired, close: closePrompt }),
+    [promptOpen, promptRequired, closePrompt],
+  );
 
   const embeddingSlot = slots.embedding;
 
@@ -71,5 +117,5 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
     [enabled, chatModel, embeddingModel, embeddingSlot],
   );
 
-  return { webSearch, toggle };
+  return { webSearch, toggle, embeddingPrompt, chatModel, ramGB };
 };

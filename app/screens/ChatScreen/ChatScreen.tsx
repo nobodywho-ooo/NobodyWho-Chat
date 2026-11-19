@@ -25,7 +25,12 @@ import { useAiService, useWebSearchStore } from 'services';
 import { isAndroid } from 'helpers';
 import { Theme } from 'types';
 
-import { CameraCaptureModal, InputBar, MessageStarters } from './components';
+import {
+  CameraCaptureModal,
+  EmbeddingDownloadSheet,
+  InputBar,
+  MessageStarters,
+} from './components';
 import {
   useAttachments,
   useChatGeneration,
@@ -121,8 +126,13 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const list = useMessageListScroll(messages);
   const { showConversation } = list;
 
-  const { webSearch, toggle: toggleWebSearch } =
-    useWebSearchToggle(conversationId);
+  const {
+    webSearch,
+    toggle: toggleWebSearch,
+    embeddingPrompt,
+    chatModel: webChatModel,
+    ramGB,
+  } = useWebSearchToggle(conversationId);
 
   const webNotice = useWebSearchStore(state => state.notice);
   const clearWebNotice = useWebSearchStore(state => state.clearNotice);
@@ -389,6 +399,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         blurTarget={blurTargetRef}
         style={{ top: insets.top + toastMarginTop }}
       />
+      {embeddingPrompt.open && (
+        <EmbeddingDownloadSheet
+          chatModel={webChatModel}
+          ramGB={ramGB}
+          required={embeddingPrompt.required}
+          onClose={embeddingPrompt.close}
+        />
+      )}
       {ingestsImage && (
         <CameraCaptureModal
           visible={attachments.cameraVisible}

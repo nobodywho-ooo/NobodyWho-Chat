@@ -11,7 +11,12 @@ import {
   WebSource,
 } from 'types';
 import { getAppState } from 'database';
-import { insertConversation, insertMessage } from 'repositories';
+import {
+  getConversationDigest,
+  insertConversation,
+  insertMessage,
+  setConversationDigest,
+} from 'repositories';
 import {
   ANSWER_RECHECK_TIME_BUDGET_MS,
   EmbeddingSlotAccess,
@@ -22,6 +27,9 @@ import {
   restoreChatForTurn,
   restoreWebSearchTurn,
   runAnswerRecheck,
+  settleConversationDigest,
+  stripCitations,
+  updateConversationDigestInBackground,
   subscribeToolInvocations,
   useWebSearchStore,
 } from 'services';
@@ -31,6 +39,7 @@ import {
   hasMessageContent,
   haptics,
   log,
+  parseThinking,
   resolveMessageDocumentPath,
 } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
@@ -400,6 +409,25 @@ export function useChatGeneration({
     let webTurn: WebSearchTurn | undefined;
     let acceptedAnswer: string | undefined;
 
+    // Set once the answer is complete and kept: the digest then learns from it.
+    let answered = false;
+    let digest: string | null = null;
+
+    // The chat may still be writing the previous turn's digest on this chat.
+    await settleConversationDigest();
+
+    if (chat.current !== activeChat) {
+      setIsStreaming(false);
+      return;
+    }
+
+    if (webSearch.enabled) {
+      digest = await getConversationDigest(id).catch(error => {
+        log('ChatScreen reading the conversation digest failed', error);
+        return null;
+      });
+    }
+
     try {
       const hasMedia = !!imagePath || !!audioPath;
 
@@ -418,6 +446,7 @@ export function useChatGeneration({
             embeddingModel: webSearch.embeddingModel,
             embeddingSlot: webSearch.embeddingSlot,
             signal: searchAbort.signal,
+            ...(digest ? { digest } : {}),
           });
         } finally {
           searchAbortRef.current = null;
@@ -530,6 +559,8 @@ export function useChatGeneration({
 
       if (stoppedDuringAnswer) {
         await persistSystemMessage(t('screens.chat.generationStopped'));
+      } else {
+        answered = true;
       }
 
       haptics.medium();
@@ -561,6 +592,27 @@ export function useChatGeneration({
       }
 
       setIsStreaming(false);
+
+      const answer = stripCitations(parseThinking(accumulated).rest).trim();
+
+      if (
+        answered &&
+        webSearch.enabled &&
+        answer &&
+        chat.current === activeChat
+      ) {
+        const conversationIdForDigest = id;
+        updateConversationDigestInBackground({
+          chat: activeChat,
+          previousDigest: digest,
+          question: userInput,
+          answer,
+          onDigest: next =>
+            setConversationDigest(conversationIdForDigest, next).catch(error =>
+              log('ChatScreen saving the conversation digest failed', error),
+            ),
+        });
+      }
     }
   };
 

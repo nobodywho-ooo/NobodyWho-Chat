@@ -32,6 +32,7 @@ import {
   CURATED_TEXT_MODELS,
   CURATED_VOICE_ONLY_MODELS,
   CURATED_VOICE_PIPELINE_MODELS,
+  CURATED_SEARCH_MODELS,
 } from './curatedModels';
 import {
   downloadModelPart,
@@ -218,6 +219,7 @@ export {
   CURATED_TEXT_MODELS,
   CURATED_VOICE_ONLY_MODELS,
   CURATED_VOICE_PIPELINE_MODELS,
+  CURATED_SEARCH_MODELS,
   colorBetween,
   parseColor,
   withAlpha,

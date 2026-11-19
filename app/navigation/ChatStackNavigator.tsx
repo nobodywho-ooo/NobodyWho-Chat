@@ -41,6 +41,7 @@ import { useAppState, useModels, useStyled } from 'hooks';
 import {
   VOICE_SLOTS,
   VoiceSlot,
+  settleConversationDigest,
   subscribeConversationSync,
   useAiService,
 } from 'services';
@@ -211,6 +212,14 @@ export const ChatStackNavigator = () => {
 
     if (chat.current === undefined) {
       throw new Error('ChatStackNavigator: current chat is undefined');
+    }
+
+    // A background digest run restores the previous conversation's history
+    // when it ends: let it finish first so it can't overwrite this load.
+    await settleConversationDigest();
+
+    if (!isCurrent()) {
+      return;
     }
 
     const { modelIdInUse: modelId, conversationIdInUse } = getAppState();

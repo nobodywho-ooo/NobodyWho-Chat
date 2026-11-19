@@ -380,6 +380,16 @@
       "generationFailed": "Something went wrong while generating a response.",
       "generationStopped": "Generation stopped.",
       "attachmentFailedMessage": "The attachment couldn’t be added. {{error}}",
+      "embeddingDownload": {
+        "title": "Download the search model",
+        "optional": "Web search gives better answers with the on-device search model (~{{size}}): it ranks pages by what they mean instead of matching keywords alone. It's downloaded once.",
+        "required": "Your phone can comfortably run the on-device search model (~{{size}}), so web search uses it to pick the pages that really answer you. It's downloaded once.",
+        "downloading": "You can close this, the download keeps going in the background.",
+        "failed": "The search model couldn't be downloaded. Check your connection and try again.",
+        "download": "Download",
+        "retry": "Try again",
+        "cancel": "Not now"
+      },
       "webSearchNotice": {
         "nothingFound": "Couldn’t find anything useful online — answering without the web.",
         "noRoom": "This chat is too long to add web results — start a new chat to search.",

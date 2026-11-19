@@ -380,6 +380,16 @@
       "generationFailed": "Noget gik galt under genereringen af et svar.",
       "generationStopped": "Generering stoppet.",
       "attachmentFailedMessage": "Vedhæftningen kunne ikke tilføjes. {{error}}",
+      "embeddingDownload": {
+        "title": "Download søgemodellen",
+        "optional": "Websøgning giver bedre svar med søgemodellen på enheden (~{{size}}): den rangerer sider efter, hvad de betyder, i stedet for kun at matche nøgleord. Den downloades én gang.",
+        "required": "Din telefon kan sagtens køre søgemodellen på enheden (~{{size}}), så websøgning bruger den til at finde de sider, der virkelig besvarer dig. Den downloades én gang.",
+        "downloading": "Du kan lukke dette — downloadet fortsætter i baggrunden.",
+        "failed": "Søgemodellen kunne ikke downloades. Tjek din forbindelse, og prøv igen.",
+        "download": "Download",
+        "retry": "Prøv igen",
+        "cancel": "Ikke nu"
+      },
       "webSearchNotice": {
         "nothingFound": "Fandt ikke noget brugbart på nettet — svarer uden nettet.",
         "noRoom": "Denne chat er for lang til at tilføje søgeresultater — start en ny chat for at søge.",
