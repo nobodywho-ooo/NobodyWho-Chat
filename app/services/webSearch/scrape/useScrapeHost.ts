@@ -124,9 +124,11 @@ export const useScrapeHost = () => {
     webViewScrapeProvider.attachHost({
       navigate: (uri, nonce) =>
         setNav(prev => ({ uri, nonce, key: (prev?.key ?? 0) + 1 })),
+
       reset: () => {
         setNav(null);
         setExplaining(false);
+        setRevealed(false);
       },
       onChallenge: () => {
         const current = useWebSearchStore.getState();

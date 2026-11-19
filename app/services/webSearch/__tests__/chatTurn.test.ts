@@ -294,6 +294,21 @@ describe('restoreChatForTurn', () => {
 
     expect(chat.setSystemPrompt).toHaveBeenCalledWith('You are helpful.');
   });
+
+  it('puts the template variables the planner replaced back', async () => {
+    const chat = makeChat();
+
+    await restoreChatForTurn(chat, {
+      history: [],
+      systemPrompt: undefined,
+      templateVariables: { enable_thinking: true },
+    });
+
+    expect(chat.setTemplateVariable).toHaveBeenCalledWith(
+      'enable_thinking',
+      true,
+    );
+  });
 });
 
 describe('runAnswerRecheck', () => {

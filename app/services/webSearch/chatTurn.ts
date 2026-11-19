@@ -322,12 +322,18 @@ export const prepareWebSearchTurn = async ({
   }
 };
 
-// Puts the chat back the way the planner found it
+// Puts the chat back the way the planner found it: its leading system message
+// replaced the system prompt, and its `complete` options replaced the template
+// variables (thinking off) — both stick to the chat until set again.
 export const restoreChatForTurn = async (
   chat: Chat,
   snapshot: ChatSnapshot,
 ): Promise<void> => {
   await chat.setSystemPrompt(snapshot.systemPrompt);
+
+  for (const [name, value] of Object.entries(snapshot.templateVariables)) {
+    await chat.setTemplateVariable(name, value);
+  }
 };
 
 // After the answer: swap the grounded message the model was sent back to the

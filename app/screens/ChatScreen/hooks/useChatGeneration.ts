@@ -433,7 +433,9 @@ export function useChatGeneration({
             await activeChat.setChatHistory(webTurn.snapshot.history);
           }
 
-          setMessages(prev => prev.slice(0, -1));
+          setMessages(prev =>
+            prev.filter(message => message.uid !== assistantUid),
+          );
           await persistSystemMessage(t('screens.chat.generationStopped'));
 
           return;
