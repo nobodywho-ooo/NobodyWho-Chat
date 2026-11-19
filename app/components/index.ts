@@ -1,4 +1,5 @@
 import { Accordion } from './Accordion/Accordion';
+import { AmbientGlow } from './AmbientGlow/AmbientGlow';
 import { ActionButton } from './ActionButton/ActionButton';
 import { Button } from './Button/Button';
 import { Chevron } from './Chevron/Chevron';
@@ -33,6 +34,7 @@ import { WebScrapeHost } from './WebScrapeHost/WebScrapeHost';
 export {
   Accordion,
   ActionButton,
+  AmbientGlow,
   Button,
   Chevron,
   DownloadedModels,

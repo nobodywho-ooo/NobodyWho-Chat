@@ -13,6 +13,7 @@ interface OnboardingStepProps {
   subtitle: string;
   children: React.ReactNode;
   footer?: React.ReactNode;
+  background?: React.ReactNode;
 }
 
 export const OnboardingStep: React.FC<OnboardingStepProps> = ({
@@ -21,6 +22,7 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
   subtitle,
   children,
   footer,
+  background,
 }) => {
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
@@ -35,6 +37,7 @@ export const OnboardingStep: React.FC<OnboardingStepProps> = ({
         },
       ]}
     >
+      {background}
       <View style={styles.content}>
         <View style={styles.headerContainer}>
           <Text variant="h1" style={styles.header}>

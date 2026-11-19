@@ -14,7 +14,9 @@ import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { BlurTargetView, BlurView } from 'expo-blur';
 import { useHeaderHeight } from '@react-navigation/elements';
 import LinearGradient from 'react-native-linear-gradient';
+import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import {
+  AmbientGlow,
   GlassScrollEdge,
   MessageListItem,
   ScrollToBottomButton,
@@ -48,6 +50,8 @@ import {
 import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
+const GLOW_FADE_IN_MS = 520;
+const GLOW_FADE_OUT_MS = 320;
 
 const WEB_NOTICE_VISIBLE_MS = 3500;
 
@@ -315,6 +319,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             { backgroundColor: colors.surface },
           ]}
         >
+          {!hasMessages && (
+            <Animated.View
+              style={styles.glowContainer}
+              pointerEvents="none"
+              entering={FadeIn.duration(GLOW_FADE_IN_MS)}
+              exiting={FadeOut.duration(GLOW_FADE_OUT_MS)}
+            >
+              <AmbientGlow edge="top" />
+            </Animated.View>
+          )}
           <KeyboardAwareLegendList
             ref={list.listRef}
             data={messages}

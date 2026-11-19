@@ -346,6 +346,148 @@ exports[`renders correctly empty ChatScreen 1`] = `
       ]
     }
   >
+    <View
+      entering={
+        {
+          "delay": [Function],
+          "duration": [Function],
+        }
+      }
+      exiting={
+        {
+          "delay": [Function],
+          "duration": [Function],
+        }
+      }
+      pointerEvents="none"
+      style={
+        {
+          "bottom": 0,
+          "left": 0,
+          "position": "absolute",
+          "right": 0,
+          "top": 0,
+        }
+      }
+    >
+      <View
+        pointerEvents="none"
+        renderToHardwareTextureAndroid={true}
+        shouldRasterizeIOS={true}
+        style={
+          [
+            {
+              "bottom": 0,
+              "left": 0,
+              "position": "absolute",
+              "right": 0,
+              "top": 0,
+            },
+            {
+              "experimental_backgroundImage": [
+                {
+                  "colorStops": [
+                    {
+                      "color": "rgba(180, 70, 24, 0.45)",
+                      "positions": [
+                        "0%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(180, 70, 24, 0.2475)",
+                      "positions": [
+                        "35%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(180, 70, 24, 0)",
+                      "positions": [
+                        "100%",
+                      ],
+                    },
+                  ],
+                  "position": {
+                    "left": "15%",
+                    "top": "0%",
+                  },
+                  "shape": "ellipse",
+                  "size": {
+                    "x": "85%",
+                    "y": "45%",
+                  },
+                  "type": "radial-gradient",
+                },
+                {
+                  "colorStops": [
+                    {
+                      "color": "rgba(242, 160, 46, 0.35)",
+                      "positions": [
+                        "0%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(242, 160, 46, 0.1925)",
+                      "positions": [
+                        "35%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(242, 160, 46, 0)",
+                      "positions": [
+                        "100%",
+                      ],
+                    },
+                  ],
+                  "position": {
+                    "left": "55%",
+                    "top": "10%",
+                  },
+                  "shape": "ellipse",
+                  "size": {
+                    "x": "70%",
+                    "y": "38%",
+                  },
+                  "type": "radial-gradient",
+                },
+                {
+                  "colorStops": [
+                    {
+                      "color": "rgba(226, 116, 38, 0.4)",
+                      "positions": [
+                        "0%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(226, 116, 38, 0.22)",
+                      "positions": [
+                        "35%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(226, 116, 38, 0)",
+                      "positions": [
+                        "100%",
+                      ],
+                    },
+                  ],
+                  "position": {
+                    "left": "92%",
+                    "top": "20%",
+                  },
+                  "shape": "ellipse",
+                  "size": {
+                    "x": "70%",
+                    "y": "36%",
+                  },
+                  "type": "radial-gradient",
+                },
+              ],
+            },
+          ]
+        }
+        testID="ambient-glow"
+      />
+    </View>
     <LegendList
       maintainVisibleContentPosition={false}
     >
