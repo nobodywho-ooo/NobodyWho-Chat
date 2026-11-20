@@ -5,6 +5,10 @@ import {
   createDrawerNavigator,
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
+import {
+  getFocusedRouteNameFromRoute,
+  useIsFocused,
+} from '@react-navigation/native';
 import { VoiceAssistantScreen } from 'screens';
 import { useSlotModel, useStyled } from 'hooks';
 import { Spacings } from 'style';
@@ -40,6 +44,7 @@ export const RootDrawerNavigator = () => {
   const { width: windowWidth } = useWindowDimensions();
   const { openSide, scrollGestures, swipeExclusion } = useDrawerCoordination();
   const chatModel = useSlotModel(ModelSlot.chat);
+  const isFocused = useIsFocused();
 
   return (
     <Drawer.Navigator
@@ -70,12 +75,14 @@ export const RootDrawerNavigator = () => {
       <Drawer.Screen
         name="Main"
         component={DrawerNavigator}
-        options={{
+        options={({ route }) => ({
           swipeEnabled:
             chatModel !== undefined &&
             // Disabled while the left drawer is open so its close gesture wins.
-            openSide !== 'left',
-        }}
+            openSide !== 'left' &&
+            isFocused &&
+            getFocusedRouteNameFromRoute(route) !== 'Settings',
+        })}
       />
     </Drawer.Navigator>
   );

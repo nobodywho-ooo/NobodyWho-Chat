@@ -440,7 +440,7 @@ exports[`renders correctly empty ChatScreen 1`] = `
                   ],
                   "position": {
                     "left": "55%",
-                    "top": "10%",
+                    "top": "7%",
                   },
                   "shape": "ellipse",
                   "size": {
@@ -472,7 +472,7 @@ exports[`renders correctly empty ChatScreen 1`] = `
                   ],
                   "position": {
                     "left": "92%",
-                    "top": "20%",
+                    "top": "14%",
                   },
                   "shape": "ellipse",
                   "size": {

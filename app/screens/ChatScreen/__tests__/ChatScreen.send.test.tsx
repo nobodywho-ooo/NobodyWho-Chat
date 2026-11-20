@@ -1053,6 +1053,42 @@ test('switching conversation drops the anchor and jumps to the latest message', 
   expect(mockClearCaches).toHaveBeenCalledWith({ mode: 'sizes' });
 });
 
+test('reloading the shown conversation resets the list layout', async () => {
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+  expect(listProps(screen).anchoredEndSpace).toBeDefined();
+  mockScrollToOffset.mockClear();
+  mockClearCaches.mockClear();
+
+  // An assistant setting changed while Customize covered the chat: the
+  // navigator rebuilt the chat and handed back the same conversation from the
+  // database, every row re-keyed. Keeping the old sizes and anchor stacks the
+  // rows on top of each other.
+  await screen.rerender(
+    <ChatScreen
+      conversationId={7}
+      messages={[
+        { uid: 'row:1', role: 'user', content: 'hi' },
+        { uid: 'row:2', role: 'assistant', content: 'hello' },
+      ]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  expect(listProps(screen).anchoredEndSpace).toBeUndefined();
+  expect(mockClearCaches).toHaveBeenCalledWith({ mode: 'sizes' });
+  expect(mockScrollToOffset).toHaveBeenCalledWith(
+    expect.objectContaining({ animated: false }),
+  );
+});
+
 // --- Scroll-to-bottom chevron ----------------------------------------------
 
 const chevron = (screen: Screen) =>

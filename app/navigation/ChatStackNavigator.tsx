@@ -34,6 +34,7 @@ import {
 } from 'repositories';
 import { log, isForegroundHeld, toChatHistory, toModelHistory } from 'helpers';
 import { Toast } from 'components';
+import { Spacings } from 'style';
 import { useAppState, useModels } from 'hooks';
 import {
   VOICE_SLOTS,
@@ -101,6 +102,7 @@ const BelowHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 const ChatRootScreen = () => {
   const ctx = useContext(ChatRootContext);
+  const headerHeight = useHeaderHeight();
   const [blurTargetNode, setBlurTargetNode] = useState<ViewRef | null>(null);
   const blurTarget = useMemo(
     () => ({ current: blurTargetNode }),
@@ -158,6 +160,7 @@ const ChatRootScreen = () => {
         message={ctx.loadingMessage}
         loading
         blurTarget={blurTarget}
+        style={{ top: headerHeight + Spacings.md }}
       />
     </View>
   );

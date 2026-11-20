@@ -13,6 +13,7 @@ import { KeyboardAwareLegendList } from '@legendapp/list/keyboard';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { BlurTargetView, BlurView } from 'expo-blur';
 import { useHeaderHeight } from '@react-navigation/elements';
+import { useIsFocused } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import {
@@ -31,6 +32,7 @@ import {
 } from 'types';
 import { useAiService, useWebSearchStore } from 'services';
 import { isAndroid } from 'helpers';
+import { Spacings } from 'style';
 import { Theme } from 'types';
 
 import {
@@ -188,6 +190,33 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     setMessages(initialMessages);
   }, [initialMessages]);
 
+  // A history reload of the conversation already on screen (an assistant
+  // setting changed, a voice turn landed) re-keys every row (new:N -> row:<id>),
+  // usually while a pushed screen covers this one. The list then drops all its
+  // measured sizes and keeps the stale parked-message anchor, so rows end up
+  // stacked on top of each other. Reset its layout once we're visible again.
+  const isFocused = useIsFocused();
+  const [relayoutPending, setRelayoutPending] = useState(false);
+  const shownInitialMessagesRef = useRef(initialMessages);
+
+  useEffect(() => {
+    if (shownInitialMessagesRef.current === initialMessages) {
+      return;
+    }
+    shownInitialMessagesRef.current = initialMessages;
+    if (initialMessages.length > 0) {
+      setRelayoutPending(true);
+    }
+  }, [initialMessages]);
+
+  useEffect(() => {
+    if (!relayoutPending || !isFocused) {
+      return;
+    }
+    setRelayoutPending(false);
+    showConversation();
+  }, [relayoutPending, isFocused, showConversation]);
+
   useEffect(() => {
     const previous = previousConversationIdRef.current;
     previousConversationIdRef.current = initialConversationId;
@@ -303,7 +332,6 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const onAttachImage = useStableCallback(attachments.handleAttachImage);
   const onAttachCamera = useStableCallback(attachments.handleAttachCamera);
   const onAttachAudio = useStableCallback(attachments.handleAttachAudio);
-  const toastMarginTop = isAndroid ? 4 : -6;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
@@ -426,7 +454,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           webNotice ? t(`screens.chat.webSearchNotice.${webNotice.kind}`) : ''
         }
         blurTarget={blurTargetRef}
-        style={{ top: insets.top + toastMarginTop }}
+        style={{ top: headerInset + Spacings.md }}
       />
       {embeddingPrompt.open && (
         <EmbeddingDownloadSheet

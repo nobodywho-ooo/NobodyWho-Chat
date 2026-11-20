@@ -257,12 +257,8 @@ test('without canDelete (drawer entry) deletion is unavailable', async () => {
     conversationIdInUse: undefined,
   });
 
-  // No delete toggle is rendered in the header (no trash icon).
-  const headerRight = mockSetOptions.mock.calls.at(-1)![0].headerRight;
-  const header = await render(headerRight());
-  expect(
-    header.container.queryAll(node => node.props.iosIconName === 'trash'),
-  ).toHaveLength(0);
+  // No header-right button at all (an empty one would still show a glass pill).
+  expect(mockSetOptions.mock.calls.at(-1)![0].headerRight).toBeUndefined();
 
   alertSpy.mockRestore();
 });

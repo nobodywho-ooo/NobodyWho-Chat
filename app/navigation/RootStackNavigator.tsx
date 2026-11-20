@@ -43,7 +43,9 @@ const RootStack = () => {
         component={RootDrawerNavigator}
         // Stays live under a pushed screen: the chat session reacts to model and
         // settings changes made there, and expo-audio crashes when paused.
-        options={{ headerShown: false, inactiveBehavior: 'none' }}
+        // Empty title: the native bar stays up during a pop back here (see the
+        // react-native-screens patch) and would otherwise fade in "Drawers".
+        options={{ headerShown: false, title: '', inactiveBehavior: 'none' }}
       />
       <Stack.Screen
         name="CustomizeAssistantScreen"

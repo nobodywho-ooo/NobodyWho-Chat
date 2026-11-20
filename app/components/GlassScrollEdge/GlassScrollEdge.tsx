@@ -11,8 +11,7 @@ import styles from './GlassScrollEdge.styles';
 
 const BLUR_INTENSITY = isAndroid ? 16 : 8;
 const BLUR_REDUCTION_FACTOR = 4;
-const BLUR_REACH_BELOW_ANCHOR = 32;
-const RAMP_HEIGHT = 72;
+const BLUR_FADE_HEIGHT = 32;
 const TOP_ALPHA = 0.92;
 const GRADIENT_STOPS = 10;
 
@@ -51,18 +50,14 @@ export const GlassScrollEdge = React.memo(
       return null;
     }
 
-    const blurHeight = anchor + BLUR_REACH_BELOW_ANCHOR;
-    const solidUntil = anchor / blurHeight;
+    const solidUntil = Math.max(0, anchor - BLUR_FADE_HEIGHT) / anchor;
     const canBlur = !isAndroid || blurTarget !== undefined;
 
     return (
-      <View
-        pointerEvents="none"
-        style={[styles.container, { height: anchor + RAMP_HEIGHT }]}
-      >
+      <View pointerEvents="none" style={[styles.container, { height: anchor }]}>
         {canBlur && (
           <MaskedView
-            style={[styles.blur, { height: blurHeight }]}
+            style={[styles.blur, { height: anchor }]}
             maskElement={
               <LinearGradient
                 colors={[MASK_OPAQUE, MASK_OPAQUE, MASK_CLEAR]}

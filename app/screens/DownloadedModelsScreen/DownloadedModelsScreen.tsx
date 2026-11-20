@@ -35,37 +35,39 @@ export const DownloadedModelsScreen: React.FC = () => {
     }
   }, [hasModels, deleteMode]);
 
-  const renderHeaderRight = useCallback(() => {
-    const showDeleteAction = hasModels && canDelete;
-    return (
-      <View style={showDeleteAction ? styles.headerActionsContainer : null}>
-        {showDeleteAction && (
-          <Pressable
-            onPress={() => setDeleteMode(mode => !mode)}
-            hitSlop={8}
-            accessibilityRole="button"
-          >
-            {deleteMode ? (
-              <Text variant="body1" bold style={{ color: colors.primary }}>
-                {t('common.cancel')}
-              </Text>
-            ) : (
-              <PlatformIcon
-                iosIconName="trash"
-                androidIconName="delete"
-                color={colors.dangerSurface}
-                size={22}
-              />
-            )}
-          </Pressable>
-        )}
+  const showDeleteAction = hasModels && !!canDelete;
+
+  const renderHeaderRight = useCallback(
+    () => (
+      <View style={styles.headerActionsContainer}>
+        <Pressable
+          onPress={() => setDeleteMode(mode => !mode)}
+          hitSlop={8}
+          accessibilityRole="button"
+        >
+          {deleteMode ? (
+            <Text variant="body1" bold style={{ color: colors.primary }}>
+              {t('common.cancel')}
+            </Text>
+          ) : (
+            <PlatformIcon
+              iosIconName="trash"
+              androidIconName="delete"
+              color={colors.dangerSurface}
+              size={22}
+            />
+          )}
+        </Pressable>
       </View>
-    );
-  }, [deleteMode, hasModels, canDelete, colors, t]);
+    ),
+    [deleteMode, colors, t],
+  );
 
   useLayoutEffect(() => {
-    navigation.setOptions({ headerRight: () => renderHeaderRight() });
-  }, [navigation, renderHeaderRight]);
+    navigation.setOptions({
+      headerRight: showDeleteAction ? renderHeaderRight : undefined,
+    });
+  }, [navigation, renderHeaderRight, showDeleteAction]);
 
   if (!hasModels) {
     return (
