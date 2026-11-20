@@ -25,11 +25,10 @@ import {
 import { log, sleep } from 'helpers';
 import { isChatPipeline, MODEL_SLOTS } from 'types';
 import { useResumeModelDownloads, useStyled } from 'hooks';
-import { ErrorScreen, LoadingScreen, OnboardingScreen } from 'screens';
+import { DotsLoadingScreen, ErrorScreen, OnboardingScreen } from 'screens';
 import { WebScrapeHost } from 'components';
 import { AiServiceProvider, prefetchModelCatalogue } from 'services';
 import { RootNavigator } from 'navigation';
-import { useTranslation } from 'react-i18next';
 
 const unWantedError =
   'Cannot create devtools websocket connections in embedded environments.';
@@ -181,7 +180,6 @@ function AppLoader() {
   const [dbReady, setDbReady] = useState(false);
   const [dbError, setDbError] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { t } = useTranslation();
 
   const running = useRef(false);
 
@@ -247,7 +245,7 @@ function AppLoader() {
   }
 
   if (!dbReady) {
-    return <LoadingScreen message={t('screens.loadingScreen.loadingApp')} />;
+    return <DotsLoadingScreen />;
   }
 
   return (

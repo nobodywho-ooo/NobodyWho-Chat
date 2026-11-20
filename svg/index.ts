@@ -12,6 +12,7 @@ import openbmb from 'svg/open-bmb.svg';
 import ai9stars from 'svg/ai9stars.svg';
 import tokenrhythm from 'svg/tokenrhythm.svg';
 import dfm from 'svg/dfm.svg';
+import loaderDot from 'svg/o.svg';
 
 export {
   qwen,
@@ -28,4 +29,5 @@ export {
   ai9stars,
   tokenrhythm,
   dfm,
+  loaderDot,
 };
