@@ -20,9 +20,19 @@ export default StyleSheet.create({
     paddingVertical: Spacings.sm,
     paddingHorizontal: Spacings.md,
     shadowOffset: { width: 0, height: 2 },
-    // shadowOpacity: 0.8,
-    // shadowRadius: 10,
-    // elevation: 2,
+  },
+  glassWrapper: {
+    maxWidth: '90%',
+  },
+  glassToast: {
+    borderRadius: Spacings.xl,
+    paddingVertical: Spacings.sm,
+    paddingHorizontal: Spacings.md,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacings.sm,
   },
   blurFill: {
     position: 'absolute',
