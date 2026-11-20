@@ -80,15 +80,24 @@ describe('buildChatTools', () => {
     expect(result).toBe('The UI card was rendered successfully.');
   });
 
-  test('the render_ui tool reports a readable error for a bad payload', async () => {
+  test('the render_ui tool reports a readable error for an unrenderable payload', async () => {
+    const tool = (buildA2UiTool() as unknown as MockTool).opts;
+    const result = await tool.call({ components: 'not-an-array' });
+    expect(result).toContain('Error: the UI could not be rendered.');
+  });
+
+  test('the render_ui tool renders a sloppy payload instead of failing it', async () => {
+    // A dangling reference or a dropped component is recoverable — the model
+    // gets a success so the card renders (with a placeholder) rather than an
+    // error it would retry into.
     const tool = (buildA2UiTool() as unknown as MockTool).opts;
     const result = await tool.call({
       components: [
-        { component: 'Tabs', id: 't' },
+        { component: 'Column', id: 'root', children: ['missing'] },
+        { component: 'Text', id: 't', text: 'hi' },
       ],
     });
-    expect(result).toContain('Error: the UI could not be rendered.');
-    expect(result).toContain('unknown component');
+    expect(result).toBe('The UI card was rendered successfully.');
   });
 
   test('a render_ui call reports a structured invocation', async () => {

@@ -7,6 +7,7 @@ import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
+import { log } from 'helpers';
 import { Spacings } from 'style';
 import { validateUi } from 'services';
 import { ToolInvocation } from 'types';
@@ -25,12 +26,27 @@ export const A2UiToolCall: React.FC<A2UiToolCallProps> = ({ invocation }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
 
-  const surface = useMemo(() => {
-    const validation = validateUi(invocation.arguments?.ui);
-    return validation.valid ? validation.surface : null;
+  const render = useMemo(() => {
+    const raw = invocation.arguments?.ui;
+    const validation = validateUi(raw);
+    try {
+      log('[a2ui] A2UiToolCall validate', JSON.stringify({
+        raw,
+        valid: validation.valid,
+        warnings: validation.warnings,
+        components: 'surface' in validation
+          ? validation.surface.components.map(c => c.component)
+          : undefined,
+      }));
+    } catch {
+      log('[a2ui] A2UiToolCall validate failed to stringify', raw);
+    }
+    return validation.valid && validation.surface
+      ? { surface: validation.surface, warnings: validation.warnings }
+      : null;
   }, [invocation]);
 
-  if (surface === null) {
+  if (render === null) {
     return (
       <ToolCallBlock
         name={invocation.name}
@@ -55,7 +71,16 @@ export const A2UiToolCall: React.FC<A2UiToolCallProps> = ({ invocation }) => {
           {t('components.messageListItem.a2ui')}
         </Text>
       </View>
-      <A2UiSurface surface={surface} />
+      <A2UiSurface surface={render.surface} />
+      {render.warnings.length > 0 && (
+        <Text
+          variant="caption"
+          numberOfLines={1}
+          style={[styles.warningLabel, { color: colors.warningContent }]}
+        >
+          {render.warnings[0]}
+        </Text>
+      )}
     </View>
   );
 };
@@ -71,6 +96,9 @@ const styles = StyleSheet.create({
     columnGap: Spacings.xs,
   },
   headerLabel: {
+    includeFontPadding: false,
+  },
+  warningLabel: {
     includeFontPadding: false,
   },
 });

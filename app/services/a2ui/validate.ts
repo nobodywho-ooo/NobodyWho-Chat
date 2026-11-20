@@ -1,11 +1,17 @@
-// Defensive validator for `render_ui` arguments.
+// Lenient validator for `render_ui` arguments.
 //
 // Sampling is already constrained to the shape of `A2UI_UI_SCHEMA` by
-// nobodywho's tool-call grammar, and `Tool` hands the parsed object over as
-// JSON. This pass is the renderer's own gate: it type-checks what the grammar
-// could not (id references resolve, enums are real, values have the right
-// kind) so a stray-but-schema-valid object degrades to an error the model can
-// see and fix, never a crash. The `reason` doubles as the tool result string.
+// nobodywho's tool-call grammar, so most of what arrives is structurally
+// sound. What the grammar can't check — enum spellings, optional-property
+// types, nested shapes — is where small local models slip. Failing the whole
+// card on any of those turns a reasonable UI into a raw JSON blob. So this
+// pass is deliberately lenient: it normalizes what it can, skips what it
+// can't, and reports recoverable problems as `warnings` while still returning
+// a renderable surface. It only refuses outright when it cannot build a
+// surface at all (e.g. "components" missing or not an array).
+//
+// Components nest by value (no id registry), so there is no cross-reference
+// integrity step — a card either renders or skips a bad subtree.
 
 import {
   A2UiAction,
@@ -17,8 +23,8 @@ import {
 } from './types';
 
 export type Validation =
-  | { valid: true; surface: A2UiSurface }
-  | { valid: false; reason: string };
+  | { valid: true; surface: A2UiSurface; warnings: string[] }
+  | { valid: false; reason: string; warnings: string[] };
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -48,106 +54,83 @@ const describe = (value: unknown): string => {
 };
 
 export const validateUi = (input: unknown): Validation => {
+  const warnings: string[] = [];
+
   if (!isRecord(input) || !('components' in input)) {
     return {
       valid: false,
+      warnings,
       reason:
         'render_ui expects a JSON object with a "components" array and an optional "dataModel" object.',
     };
   }
 
-  const errors: string[] = [];
   const rawComponents = input.components;
   const dataModel = isRecord(input.dataModel) ? input.dataModel : {};
 
-  if (!Array.isArray(rawComponents) || rawComponents.length === 0) {
+  if (!Array.isArray(rawComponents)) {
     return {
       valid: false,
-      reason: '"components" must be a non-empty array of component objects.',
+      warnings,
+      reason: '"components" must be an array of component objects.',
     };
+  }
+
+  if (rawComponents.length === 0) {
+    warnings.push(
+      '"components" is empty — call render_ui again with at least one component.',
+    );
   }
 
   const components: A2UiComponent[] = [];
-  const byId = new Map<string, A2UiComponent>();
-
   rawComponents.forEach((raw, index) => {
     const at = `components[${index}]`;
-    if (!isRecord(raw)) {
-      errors.push(`${at}: expected an object, got ${describe(raw)}.`);
-      return;
-    }
-
-    const { component, id, ...props } = raw;
-
-    if (!isA2UiComponentName(component)) {
-      errors.push(
-        `${at}: unknown component "${String(component)}" — supported: ${A2UI_COMPONENTS.join(', ')}.`,
+    const parsed =
+      isRecord(raw) && 'component' in raw
+        ? parseComponent(raw, at, warnings)
+        : undefined;
+    if (parsed !== undefined) {
+      components.push(parsed);
+    } else if (isRecord(raw)) {
+      warnings.push(
+        `${at}: not a supported component (${describe(Object.keys(raw))}) — skipped.`,
       );
-      return;
-    }
-    if (!isString(id)) {
-      errors.push(`${at}: every component needs a non-empty string "id".`);
-      return;
-    }
-    if (byId.has(id)) {
-      errors.push(`${at}: duplicate id "${id}".`);
-      return;
-    }
-
-    const validated = parseComponent(component, id, props, at, errors);
-    if (validated !== undefined) {
-      byId.set(id, validated);
-      components.push(validated);
+    } else {
+      warnings.push(`${at}: expected an object, got ${describe(raw)} — skipped.`);
     }
   });
 
-  if (errors.length > 0) {
-    return { valid: false, reason: errors.join(' ') };
-  }
-
-  // Reference integrity: every child id must resolve within the flat list, or
-  // the renderer would draw a broken frame.
-  const referenced = new Set<string>();
-  components.forEach(component => {
-    switch (component.component) {
-      case 'Card':
-      case 'Button':
-        referenced.add(component.child);
-        break;
-      case 'Row':
-      case 'Column':
-        component.children.forEach(child => referenced.add(child));
-        break;
-      case 'List':
-        referenced.add(component.children.componentId);
-        break;
-    }
-  });
-  const dangling = [...referenced].filter(id => !byId.has(id));
-  if (dangling.length > 0) {
+  if (components.length === 0 && warnings.length === 0) {
     return {
       valid: false,
-      reason: `references to unknown component id(s): ${dangling.map(id => `"${id}"`).join(', ')}.`,
+      warnings,
+      reason: '"components" contained no renderable components.',
     };
   }
 
-  return { valid: true, surface: { components, dataModel } };
+  return { valid: true, surface: { components, dataModel }, warnings };
 };
 
 const stringOrBinding = (value: unknown): value is string | { '@path': string } =>
   isString(value) || isBinding(value);
 
 const parseComponent = (
-  component: A2UiComponent['component'],
-  id: string,
-  props: UnknownRecord,
+  raw: UnknownRecord,
   at: string,
-  errors: string[],
+  warnings: string[],
 ): A2UiComponent | undefined => {
+  const { component, ...props } = raw;
   const problem = (message: string): undefined => {
-    errors.push(`${at} (${component}): ${message}`);
+    warnings.push(`${at}: ${message}`);
     return undefined;
   };
+
+  if (!isA2UiComponentName(component)) {
+    warnings.push(
+      `${at}: unknown component "${String(component)}" — supported: ${A2UI_COMPONENTS.join(', ')}. Skipped.`,
+    );
+    return undefined;
+  }
 
   const expectStringValue = (value: unknown, what: string): string | undefined => {
     if (stringOrBinding(value)) return undefined;
@@ -166,14 +149,40 @@ const parseComponent = (
     return `${what} must be one of ${allowed.map(v => `"${v}"`).join(', ')}, got ${describe(value)}.`;
   };
 
+  const childAt = (child: unknown): string =>
+    `${at}.${isRecord(child) && 'component' in child ? String(child.component) : 'child'}`;
+
+  const parseChildren = (children: unknown): A2UiComponent[] | undefined => {
+    if (!Array.isArray(children)) {
+      problem('children must be an array of component objects.');
+      return undefined;
+    }
+    if (children.length === 0) {
+      warnings.push(`${at}: children is empty — nothing to show inside.`);
+    }
+    const parsed: A2UiComponent[] = [];
+    children.forEach((child, index) => {
+      const childAtth = `${at}[${index}]`;
+      if (!isRecord(child)) {
+        warnings.push(
+          `${childAtth}: expected a component object, got ${isString(child) ? JSON.stringify(child) : describe(child)} — skipped.`,
+        );
+        return;
+      }
+      const childParsed = parseComponent(child, childAtth, warnings);
+      if (childParsed !== undefined) parsed.push(childParsed);
+    });
+    return parsed;
+  };
+
   switch (component) {
     case 'Text': {
       const text = expectStringValue(props.text, 'text');
+      if (text) return problem(text);
       const variant = expectEnum(props.variant, ['caption', 'body'], 'variant');
-      if (text || variant) return problem([text, variant].filter(Boolean).join(' '));
+      if (variant) warnings.push(`${at} (Text): ${variant} — using the default.`);
       return {
         component,
-        id,
         text: props.text as string | { '@path': string },
         ...(props.variant === 'caption' || props.variant === 'body'
           ? { variant: props.variant }
@@ -183,16 +192,18 @@ const parseComponent = (
     }
     case 'Image': {
       const url = expectStringValue(props.url, 'url');
-      const description = props.description === undefined
-        ? undefined
-        : expectStringValue(props.description, 'description');
+      if (url) return problem(url);
+      const description =
+        props.description === undefined
+          ? undefined
+          : expectStringValue(props.description, 'description');
       const fit = expectEnum(props.fit, IMAGE_FITS, 'fit');
       const variant = expectEnum(props.variant, IMAGE_VARIANTS, 'variant');
-      const problems = [url, description, fit, variant].filter(Boolean);
-      if (problems.length > 0) return problem(problems.join(' '));
+      [description, fit, variant]
+        .filter((message): message is string => Boolean(message))
+        .forEach(message => warnings.push(`${at} (Image): ${message}`));
       return {
         component,
-        id,
         url: props.url as string | { '@path': string },
         ...(stringOrBinding(props.description)
           ? { description: props.description as string | { '@path': string } }
@@ -207,34 +218,33 @@ const parseComponent = (
       };
     }
     case 'Row': {
-      return parseRowColumn('Row', id, props, at, errors);
+      return parseRowColumn('Row', props, at, warnings, parseChildren);
     }
     case 'Column': {
-      return parseRowColumn('Column', id, props, at, errors);
+      return parseRowColumn('Column', props, at, warnings, parseChildren);
     }
     case 'List': {
       const children = props.children;
       if (!isRecord(children)) {
-        return problem('children must be an object with "path" and "componentId".');
+        return problem('children must be an object with "path" and "component".');
+      }
+      if (!isString(children.path)) {
+        return problem('children.path must be a non-empty string.');
+      }
+      const template = isRecord(children.component)
+        ? parseComponent(children.component, `${at}.component`, warnings)
+        : undefined;
+      if (template === undefined) {
+        return problem('children.component must be a supported component object.');
       }
       const direction = expectEnum(props.direction, ['vertical', 'horizontal'], 'direction');
       const align = expectEnum(props.align, ['start', 'center', 'end', 'stretch'], 'align');
-      const problems = [
-        isString(children.path) ? undefined : 'children.path must be a non-empty string.',
-        isString(children.componentId)
-          ? undefined
-          : 'children.componentId must be a non-empty string.',
-        direction,
-        align,
-      ].filter((message): message is string => Boolean(message));
-      if (problems.length > 0) return problem(problems.join(' '));
+      [direction, align]
+        .filter((message): message is string => Boolean(message))
+        .forEach(message => warnings.push(`${at} (List): ${message}`));
       return {
         component,
-        id,
-        children: {
-          path: children.path as string,
-          componentId: children.componentId as string,
-        },
+        children: { path: children.path as string, component: template },
         ...(props.direction === 'vertical' || props.direction === 'horizontal'
           ? { direction: props.direction }
           : {}),
@@ -246,36 +256,40 @@ const parseComponent = (
       };
     }
     case 'Card': {
-      if (!isString(props.child)) {
-        return problem('child must be a non-empty component id string.');
+      const child = isRecord(props.child)
+        ? parseComponent(props.child, childAt(props.child), warnings)
+        : undefined;
+      if (child === undefined) {
+        return problem('child must be a supported component object.');
       }
-      return { component, id, child: props.child };
+      return { component, child };
     }
     case 'Divider': {
       const axis = expectEnum(props.axis, ['horizontal', 'vertical'], 'axis');
-      if (axis) return problem(axis);
+      if (axis) warnings.push(`${at} (Divider): ${axis} — using the default.`);
       return {
         component,
-        id,
         ...(props.axis === 'horizontal' || props.axis === 'vertical'
           ? { axis: props.axis }
           : {}),
       };
     }
     case 'Button': {
-      if (!isString(props.child)) {
-        return problem('child must be a non-empty component id string.');
+      const child = isRecord(props.child)
+        ? parseComponent(props.child, childAt(props.child), warnings)
+        : undefined;
+      if (child === undefined) {
+        return problem('child must be a supported component object.');
       }
       const action = parseAction(props.action);
       if (action === undefined) {
         return problem('action must be an object with an "event" or an "openUrl" key.');
       }
       const variant = expectEnum(props.variant, ['default', 'primary', 'borderless'], 'variant');
-      if (variant) return problem(variant);
+      if (variant) warnings.push(`${at} (Button): ${variant} — using the default.`);
       return {
         component,
-        id,
-        child: props.child,
+        child,
         action,
         ...(props.variant === 'default' || props.variant === 'primary' || props.variant === 'borderless'
           ? { variant: props.variant }
@@ -285,6 +299,7 @@ const parseComponent = (
     case 'TextField': {
       const label = expectStringValue(props.label, 'label');
       const value = expectStringValue(props.value, 'value');
+      if (label || value) return problem([label, value].filter(Boolean).join(' '));
       const placeholder =
         props.placeholder === undefined
           ? undefined
@@ -294,11 +309,11 @@ const parseComponent = (
         ['longText', 'number', 'shortText', 'obscured'],
         'variant',
       );
-      const problems = [label, value, placeholder, variant].filter(Boolean);
-      if (problems.length > 0) return problem(problems.join(' '));
+      [placeholder, variant]
+        .filter((message): message is string => Boolean(message))
+        .forEach(message => warnings.push(`${at} (TextField): ${message}`));
       return {
         component,
-        id,
         label: props.label as string | { '@path': string },
         value: props.value as string | { '@path': string },
         ...(stringOrBinding(props.placeholder)
@@ -314,20 +329,12 @@ const parseComponent = (
     }
     case 'CheckBox': {
       const label = expectStringValue(props.label, 'label');
-      const valueOk = typeof props.value === 'boolean' || isBinding(props.value);
-      if (label || !valueOk) {
-        return problem(
-          [
-            label,
-            valueOk ? undefined : 'value must be a boolean or a {"@path": "..."} reference.',
-          ]
-            .filter(Boolean)
-            .join(' '),
-        );
+      if (label) return problem(label);
+      if (typeof props.value !== 'boolean' && !isBinding(props.value)) {
+        return problem('value must be a boolean or a {"@path": "..."} reference.');
       }
       return {
         component,
-        id,
         label: props.label as string | { '@path': string },
         value: props.value as boolean | { '@path': string },
         ...(typeof props.weight === 'number' ? { weight: props.weight } : {}),
@@ -339,13 +346,14 @@ const parseComponent = (
       const steps = props.steps === undefined ? undefined : finiteNumber(props.steps, 'steps');
       const label =
         props.label === undefined ? undefined : expectStringValue(props.label, 'label');
+      if (max) return problem(max);
       const valueOk = typeof props.value === 'number' || isBinding(props.value);
-      const problems = [max, min, steps, label, valueOk ? undefined : 'value must be a number or a {"@path": "..."} reference.']
-        .filter(Boolean);
-      if (problems.length > 0) return problem(problems.join(' '));
+      if (!valueOk) return problem('value must be a number or a {"@path": "..."} reference.');
+      [min, steps, label]
+        .filter((message): message is string => Boolean(message))
+        .forEach(message => warnings.push(`${at} (Slider): ${message}`));
       return {
         component,
-        id,
         min: typeof props.min === 'number' ? props.min : 0,
         max: props.max as number,
         value: props.value as number | { '@path': string },
@@ -357,26 +365,26 @@ const parseComponent = (
       };
     }
     case 'ChoicePicker': {
-      const options = parseOptions(props.options, at, errors);
+      const options = parseOptions(props.options, at, warnings);
       if (options === undefined) return undefined;
       const valueOk =
         Array.isArray(props.value)
           ? props.value.every(item => typeof item === 'string')
           : isBinding(props.value);
+      if (!valueOk) {
+        return problem(
+          'value must be an array of selected value strings or a {"@path": "..."} reference.',
+        );
+      }
       const variant = expectEnum(props.variant, ['multipleSelection', 'mutuallyExclusive'], 'variant');
       const displayStyle = expectEnum(props.displayStyle, ['checkbox', 'chips'], 'displayStyle');
       const label =
         props.label === undefined ? undefined : expectStringValue(props.label, 'label');
-      const problems = [
-        valueOk ? undefined : 'value must be an array of selected value strings or a {"@path": "..."} reference.',
-        variant,
-        displayStyle,
-        label,
-      ].filter(Boolean);
-      if (problems.length > 0) return problem(problems.join(' '));
+      [variant, displayStyle, label]
+        .filter((message): message is string => Boolean(message))
+        .forEach(message => warnings.push(`${at} (ChoicePicker): ${message}`));
       return {
         component,
-        id,
         options: options as A2UiChoiceOption[],
         value: props.value as string[] | { '@path': string },
         ...(stringOrBinding(props.label)
@@ -401,20 +409,14 @@ const finiteNumber = (value: unknown, what: string): string | undefined => {
 
 const parseRowColumn = (
   component: 'Row' | 'Column',
-  id: string,
   props: UnknownRecord,
   at: string,
-  errors: string[],
+  warnings: string[],
+  parseChildren: (children: unknown) => A2UiComponent[] | undefined,
 ): A2UiComponent | undefined => {
-  const problem = (message: string): undefined => {
-    errors.push(`${at} (${component}): ${message}`);
-    return undefined;
-  };
+  const children = parseChildren(props.children);
+  if (children === undefined) return undefined;
 
-  const children = props.children;
-  if (!Array.isArray(children) || children.some(item => !isString(item))) {
-    return problem('children must be an array of component id strings.');
-  }
   const rowJustify = ['center', 'end', 'spaceAround', 'spaceBetween', 'spaceEvenly', 'start', 'stretch'] as const;
   const columnJustify = ['start', 'center', 'end', 'spaceBetween', 'spaceAround', 'spaceEvenly', 'stretch'] as const;
   const align = ['start', 'center', 'end', 'stretch'] as const;
@@ -428,20 +430,19 @@ const parseRowColumn = (
       : undefined;
 
   if (props.justify !== undefined && justify === undefined) {
-    return problem(
-      `justify must be one of ${(component === 'Row' ? rowJustify : columnJustify).map(v => `"${v}"`).join(', ')}, got ${describe(props.justify)}.`,
+    warnings.push(
+      `${at}: justify must be one of ${(component === 'Row' ? rowJustify : columnJustify).map(v => `"${v}"`).join(', ')}, got ${describe(props.justify)}. Using the default.`,
     );
   }
   if (props.align !== undefined && !(align as readonly string[]).includes(props.align as string)) {
-    return problem(
-      `align must be one of ${align.map(v => `"${v}"`).join(', ')}, got ${describe(props.align)}.`,
+    warnings.push(
+      `${at}: align must be one of ${align.map(v => `"${v}"`).join(', ')}, got ${describe(props.align)}. Using the default.`,
     );
   }
 
   return {
     component,
-    id,
-    children: children as string[],
+    children,
     ...(justify !== undefined ? { justify } : {}),
     ...((align as readonly string[]).includes(props.align as string)
       ? { align: props.align as (typeof align)[number] }
@@ -475,23 +476,27 @@ const parseAction = (action: unknown): A2UiAction | undefined => {
 const parseOptions = (
   options: unknown,
   at: string,
-  errors: string[],
+  warnings: string[],
 ): A2UiChoiceOption[] | undefined => {
   if (!Array.isArray(options)) {
-    errors.push(`${at} (ChoicePicker): options must be an array of {"label", "value"} objects.`);
+    warnings.push(
+      `${at} (ChoicePicker): options must be an array of {"label", "value"} objects — component skipped.`,
+    );
     return undefined;
   }
   const parsed: A2UiChoiceOption[] = [];
   let failed = false;
   options.forEach((option, index) => {
     if (!isRecord(option) || !isString(option.value)) {
-      errors.push(`${at} (ChoicePicker): options[${index}] needs a string "value".`);
-      failed = true;
+      warnings.push(
+        `${at} (ChoicePicker): options[${index}] needs a string "value" — option skipped.`,
+      );
       return;
     }
     if (!stringOrBinding(option.label)) {
-      errors.push(`${at} (ChoicePicker): options[${index}].label must be a string or a {"@path": "..."} reference.`);
-      failed = true;
+      warnings.push(
+        `${at} (ChoicePicker): options[${index}].label must be a string or a {"@path": "..."} reference — option skipped.`,
+      );
       return;
     }
     parsed.push({

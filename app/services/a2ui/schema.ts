@@ -1,30 +1,54 @@
 // The JSON Schema that constrains `render_ui`'s `ui` argument.
 //
-// This schema does double duty:
+// Nobodywho compiles tool JSON Schemas into the llguidance grammar that
+// governs the model while it emits a tool call, so this schema is what keeps
+// the `ui` payload coherent. But the SAME schema is rendered into the model's
+// system prompt by the chat template (tool definitions, including
+// `parameters`). That is the hard constraint this file is written around:
 //
-// 1. It is the *constrained grammar*. NobodyWho's chat sampler derives the
-//    tool-call grammar for a model from the JSON Schemas of its tools
-//    (`build_tool_sampler` in nobodywho/core/src/chat.rs): once the model
-//    starts a tool call block, sampling switches to an llguidance grammar
-//    compiled from `%json <schema>` — the output literally cannot be emitted
-//    unless it parses as a JSON object matching this schema. So constraining
-//    the tool call is done by writing the schema, not by attaching a separate
-//    grammar string to the sampler (a hand-written whole-turn grammar would
-//    fight the auto-generated tool grammar and the model's own prose).
-//    The hand-readable GBNF pendant lives in `grammar.ts`.
+//   * It must be SMALL. A deep, fully-inlined recursive schema grows ~×5 per
+//     nesting level and the chat template injects it into the context, so a
+//     recursive expansion overflows before a token is sampled. (That was a
+//     real "one large message > context window" failure.)
+//   * It must be ACYCLIC. `Tool` runs `JSON.stringify` on it, and nobodywho
+//     wraps the tool's args inside its own `{ name, arguments }` object, which
+//     breaks `$ref`/`$defs` document-root pointers.
 //
-// 2. `Tool` also uses it to type-check/convert the parsed arguments on the
-//    JS side (see convert_value in react-native-nobodywho). A value with no
-//    top-level `type` is passed through untouched, which is what the `oneOf`
-//    unions below rely on: the grammar enforces the shape at sample time, the
-//    JS side just carries the object across.
-//
-// The schema is fully inlined (no `$ref`/`$defs`): llguidance's `%json`
-// support does not follow references, and nobodywho injects
-// `"x-guidance": {"lenient": true}` at the root so keywords it does not
-// implement are ignored instead of failing the build.
+// So recurrence is deliberately NOT in the schema. The top level is precise
+// (each component with its required fields), while children of Row/Column/List
+// and `child` of Card/Button are constrained only to be an OBJECT carrying a
+// valid `component` name. That is enough of a grammar to stop the model from
+// emitting bare-string children (the classic id-dangling failure) while
+// staying a few hundred tokens in the prompt. The full tree — required fields,
+// nesting correctness — is enforced by `validateUi` and the renderer, which
+// are unbounded and skip bad subtrees gracefully.
 
-/** `{"@path": "/a/b"}` — a data-model reference. */
+const COMPONENT_NAMES: readonly string[] = [
+  'Text',
+  'Image',
+  'Row',
+  'Column',
+  'List',
+  'Card',
+  'Divider',
+  'Button',
+  'TextField',
+  'CheckBox',
+  'Slider',
+  'ChoicePicker',
+];
+
+// The permissive "nested child" schema: an object with a valid component name.
+// No additionalProperties:false, so it can carry arbitrary fields (children,
+// text, …) that the deeper validator checks. This is what every Row/Column/
+// Card/Button/List child must match — forcing real component objects, never
+// bare strings or unknown types.
+const ANY_COMPONENT = {
+  type: 'object',
+  properties: { component: { enum: COMPONENT_NAMES } },
+  required: ['component'],
+} as const;
+
 const BINDING = {
   type: 'object',
   properties: { '@path': { type: 'string' } },
@@ -32,127 +56,18 @@ const BINDING = {
   additionalProperties: false,
 } as const;
 
-const stringOrBinding = {
-  oneOf: [{ type: 'string' }, BINDING],
-} as const;
-
-const numberOrBinding = {
-  oneOf: [{ type: 'number' }, BINDING],
-} as const;
-
-const booleanOrBinding = {
-  oneOf: [{ type: 'boolean' }, BINDING],
-} as const;
-
+const stringOrBinding = { oneOf: [{ type: 'string' }, BINDING] } as const;
+const numberOrBinding = { oneOf: [{ type: 'number' }, BINDING] } as const;
+const booleanOrBinding = { oneOf: [{ type: 'boolean' }, BINDING] } as const;
 const stringListOrBinding = {
   oneOf: [{ type: 'array', items: { type: 'string' } }, BINDING],
 } as const;
-
-const idList = { type: 'array', items: { type: 'string' } } as const;
-
 const weight = { type: 'number' } as const;
 
-const text = {
-  type: 'object',
-  properties: {
-    component: { enum: ['Text'] },
-    id: { type: 'string' },
-    text: stringOrBinding,
-    variant: { enum: ['caption', 'body'] },
-    weight,
-  },
-  required: ['component', 'id', 'text'],
-  additionalProperties: false,
-} as const;
-
-const image = {
-  type: 'object',
-  properties: {
-    component: { enum: ['Image'] },
-    id: { type: 'string' },
-    url: stringOrBinding,
-    description: stringOrBinding,
-    fit: { enum: ['contain', 'cover', 'fill', 'none', 'scaleDown'] },
-    variant: {
-      enum: ['avatar', 'smallFeature', 'mediumFeature', 'largeFeature'],
-    },
-    weight,
-  },
-  required: ['component', 'id', 'url'],
-  additionalProperties: false,
-} as const;
-
-const row = {
-  type: 'object',
-  properties: {
-    component: { enum: ['Row'] },
-    id: { type: 'string' },
-    children: idList,
-    justify: {
-      enum: ['center', 'end', 'spaceAround', 'spaceBetween', 'spaceEvenly', 'start', 'stretch'],
-    },
-    align: { enum: ['start', 'center', 'end', 'stretch'] },
-  },
-  required: ['component', 'id', 'children'],
-  additionalProperties: false,
-} as const;
-
-const column = {
-  type: 'object',
-  properties: {
-    component: { enum: ['Column'] },
-    id: { type: 'string' },
-    children: idList,
-    justify: {
-      enum: ['start', 'center', 'end', 'spaceBetween', 'spaceAround', 'spaceEvenly', 'stretch'],
-    },
-    align: { enum: ['start', 'center', 'end', 'stretch'] },
-  },
-  required: ['component', 'id', 'children'],
-  additionalProperties: false,
-} as const;
-
-const list = {
-  type: 'object',
-  properties: {
-    component: { enum: ['List'] },
-    id: { type: 'string' },
-    children: {
-      type: 'object',
-      properties: {
-        path: { type: 'string' },
-        componentId: { type: 'string' },
-      },
-      required: ['path', 'componentId'],
-      additionalProperties: false,
-    },
-    direction: { enum: ['vertical', 'horizontal'] },
-    align: { enum: ['start', 'center', 'end', 'stretch'] },
-  },
-  required: ['component', 'id', 'children'],
-  additionalProperties: false,
-} as const;
-
-const card = {
-  type: 'object',
-  properties: {
-    component: { enum: ['Card'] },
-    id: { type: 'string' },
-    child: { type: 'string' },
-  },
-  required: ['component', 'id', 'child'],
-  additionalProperties: false,
-} as const;
-
-const divider = {
-  type: 'object',
-  properties: {
-    component: { enum: ['Divider'] },
-    id: { type: 'string' },
-    axis: { enum: ['horizontal', 'vertical'] },
-  },
-  required: ['component', 'id'],
-  additionalProperties: false,
+const childrenList = {
+  type: 'array',
+  items: ANY_COMPONENT,
+  minItems: 1,
 } as const;
 
 const action = {
@@ -189,16 +104,111 @@ const action = {
   ],
 } as const;
 
+const text = {
+  type: 'object',
+  properties: {
+    component: { enum: ['Text'] },
+    text: stringOrBinding,
+    variant: { enum: ['caption', 'body'] },
+    weight,
+  },
+  required: ['component', 'text'],
+  additionalProperties: false,
+} as const;
+
+const image = {
+  type: 'object',
+  properties: {
+    component: { enum: ['Image'] },
+    url: stringOrBinding,
+    description: stringOrBinding,
+    fit: { enum: ['contain', 'cover', 'fill', 'none', 'scaleDown'] },
+    variant: {
+      enum: ['avatar', 'smallFeature', 'mediumFeature', 'largeFeature'],
+    },
+    weight,
+  },
+  required: ['component', 'url'],
+  additionalProperties: false,
+} as const;
+
+const row = {
+  type: 'object',
+  properties: {
+    component: { enum: ['Row'] },
+    children: childrenList,
+    justify: {
+      enum: ['center', 'end', 'spaceAround', 'spaceBetween', 'spaceEvenly', 'start', 'stretch'],
+    },
+    align: { enum: ['start', 'center', 'end', 'stretch'] },
+  },
+  required: ['component', 'children'],
+  additionalProperties: false,
+} as const;
+
+const column = {
+  type: 'object',
+  properties: {
+    component: { enum: ['Column'] },
+    children: childrenList,
+    justify: {
+      enum: ['start', 'center', 'end', 'spaceBetween', 'spaceAround', 'spaceEvenly', 'stretch'],
+    },
+    align: { enum: ['start', 'center', 'end', 'stretch'] },
+  },
+  required: ['component', 'children'],
+  additionalProperties: false,
+} as const;
+
+const list = {
+  type: 'object',
+  properties: {
+    component: { enum: ['List'] },
+    children: {
+      type: 'object',
+      properties: {
+        path: { type: 'string' },
+        component: ANY_COMPONENT,
+      },
+      required: ['path', 'component'],
+      additionalProperties: false,
+    },
+    direction: { enum: ['vertical', 'horizontal'] },
+    align: { enum: ['start', 'center', 'end', 'stretch'] },
+  },
+  required: ['component', 'children'],
+  additionalProperties: false,
+} as const;
+
+const card = {
+  type: 'object',
+  properties: {
+    component: { enum: ['Card'] },
+    child: ANY_COMPONENT,
+  },
+  required: ['component', 'child'],
+  additionalProperties: false,
+} as const;
+
+const divider = {
+  type: 'object',
+  properties: {
+    component: { enum: ['Divider'] },
+    axis: { enum: ['horizontal', 'vertical'] },
+  },
+  required: ['component'],
+  additionalProperties: false,
+} as const;
+
 const button = {
   type: 'object',
   properties: {
     component: { enum: ['Button'] },
-    id: { type: 'string' },
-    child: { type: 'string' },
+    child: ANY_COMPONENT,
     variant: { enum: ['default', 'primary', 'borderless'] },
     action,
   },
-  required: ['component', 'id', 'child', 'action'],
+  required: ['component', 'child', 'action'],
   additionalProperties: false,
 } as const;
 
@@ -206,14 +216,13 @@ const textField = {
   type: 'object',
   properties: {
     component: { enum: ['TextField'] },
-    id: { type: 'string' },
     label: stringOrBinding,
     value: stringOrBinding,
     placeholder: stringOrBinding,
     variant: { enum: ['longText', 'number', 'shortText', 'obscured'] },
     weight,
   },
-  required: ['component', 'id', 'label', 'value'],
+  required: ['component', 'label', 'value'],
   additionalProperties: false,
 } as const;
 
@@ -221,12 +230,11 @@ const checkBox = {
   type: 'object',
   properties: {
     component: { enum: ['CheckBox'] },
-    id: { type: 'string' },
     label: stringOrBinding,
     value: booleanOrBinding,
     weight,
   },
-  required: ['component', 'id', 'label', 'value'],
+  required: ['component', 'label', 'value'],
   additionalProperties: false,
 } as const;
 
@@ -234,7 +242,6 @@ const slider = {
   type: 'object',
   properties: {
     component: { enum: ['Slider'] },
-    id: { type: 'string' },
     label: stringOrBinding,
     min: { type: 'number' },
     max: { type: 'number' },
@@ -242,7 +249,7 @@ const slider = {
     steps: { type: 'integer' },
     weight,
   },
-  required: ['component', 'id', 'value', 'max'],
+  required: ['component', 'value', 'max'],
   additionalProperties: false,
 } as const;
 
@@ -250,7 +257,6 @@ const choicePicker = {
   type: 'object',
   properties: {
     component: { enum: ['ChoicePicker'] },
-    id: { type: 'string' },
     label: stringOrBinding,
     options: {
       type: 'array',
@@ -269,11 +275,11 @@ const choicePicker = {
     displayStyle: { enum: ['checkbox', 'chips'] },
     weight,
   },
-  required: ['component', 'id', 'options', 'value'],
+  required: ['component', 'options', 'value'],
   additionalProperties: false,
 } as const;
 
-/** Every component the on-device renderer understands, as a JSON Schema union. */
+/** Every component the renderer understands, as a precise JSON Schema union. */
 export const A2UI_COMPONENT_SCHEMAS = [
   text,
   image,
@@ -296,6 +302,7 @@ export const A2UI_UI_SCHEMA = {
     components: {
       type: 'array',
       items: { oneOf: A2UI_COMPONENT_SCHEMAS },
+      minItems: 1,
     },
     dataModel: { type: 'object' },
   },

@@ -6,10 +6,27 @@ interface LogOptions {
   contexts?: Record<string, Record<string, unknown>>;
 }
 
-const expandErrors = (value: unknown): unknown =>
-  value instanceof Error
-    ? `${value.message}${value.stack ? `\n${value.stack}` : ''}`
-    : value;
+// Error stacks from native inference can be enormous (a failed grammar build
+// embeds the whole generated grammar), and building that string has overflowed
+// the Hermes string limit and crashed `log` itself. Cut the expansion short so
+// logging an error can never bring the app down — the head of the message/stack
+// is what matters for diagnosis.
+const MAX_ERROR_TEXT = 60_000;
+
+// Truncate a single string *before* it participates in a concatenation — the
+// overflow happened while building the joined text, so it has to be guarded
+// at the source, not after.
+const truncate = (text: string): string =>
+  text.length <= MAX_ERROR_TEXT ? text : `${text.slice(0, MAX_ERROR_TEXT)}… (truncated)`;
+
+const expandErrors = (value: unknown): unknown => {
+  if (!(value instanceof Error)) {
+    return value;
+  }
+  const message = truncate(value.message ? String(value.message) : '');
+  const stack = value.stack ? truncate(value.stack) : '';
+  return stack ? `${message}\n${stack}` : message;
+};
 
 const isLogOptions = (value: unknown): value is LogOptions =>
   typeof value === 'object' &&

@@ -1,8 +1,9 @@
 // Renders one A2UI component against the surface's context — the switch that
-// turns the declarative component tree into React Native views. Children are
-// looked up by id in the surface's flat component table (`byId`); a List
-// re-renders its template once per data item with the item as the binding
-// scope. `depth` bounds the walk so a cyclic id chain degrades to a null
+// turns the declarative component tree into React Native views. Components
+// nest by value (no id registry), so a Row just maps over its sibling
+// elements and a List re-renders its inline template once per data item with
+// the item as the binding scope. `depth` bounds the walk so a cyclic tree
+// (only possible via a malformed but schema-legal payload) degrades to a null
 // render instead of a stack overflow.
 
 import React, { useState } from 'react';
@@ -14,6 +15,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { useStyled } from 'hooks';
+import { log } from 'helpers';
 import { Spacings } from 'style';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { SelectablePill } from '../SelectablePill/SelectablePill';
@@ -31,15 +33,6 @@ import { styles } from './styles';
 
 const MAX_DEPTH = 24;
 
-// The component an id resolves to. A dangling id (validated away at tool time,
-// but a persisted surface could still hold one) renders a visible placeholder
-// rather than silently disappearing.
-const missingComponent = (id: string): A2UiComponent => ({
-  component: 'Text',
-  id: `${id}-missing`,
-  text: `[unknown component ${id}]`,
-});
-
 interface ComponentViewProps {
   component: A2UiComponent;
   /** Binding scope: the surface data model at the top, a List item inside a template. */
@@ -56,6 +49,7 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
   const context = useA2UiContext();
 
   if (depth >= MAX_DEPTH) {
+    log('[a2ui] ComponentView depth cap hit', component.component);
     return null;
   }
 
@@ -66,6 +60,7 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
         ? ''
         : String(resolved);
       if (text === '') {
+        log('[a2ui] ComponentView empty text', JSON.stringify(component.text));
         return null;
       }
       return (
@@ -81,6 +76,7 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
     case 'Image': {
       const url = context.resolveValue(component.url, scope);
       if (typeof url !== 'string' || url === '') {
+        log('[a2ui] ComponentView no image url', JSON.stringify(component.url));
         return null;
       }
       const size = imageSize(component.variant);
@@ -109,12 +105,11 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
       const containerStyle = layoutStyle(isRow, component.justify, component.align);
       return (
         <View style={containerStyle}>
-          {component.children.map(id => {
-            const child = context.byId.get(id) ?? missingComponent(id);
+          {component.children.map((child, index) => {
             const weight = weightOf(child);
             const childStyle = weight !== undefined ? { flex: weight } : undefined;
             return (
-              <View key={id} style={childStyle}>
+              <View key={index} style={childStyle}>
                 <ComponentView component={child} scope={scope} depth={depth + 1} />
               </View>
             );
@@ -134,11 +129,10 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
         styles.card,
         { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
       ];
-      const child = context.byId.get(component.child) ?? missingComponent(component.child);
       return (
         <View style={cardStyle}>
           <View style={styles.cardChild}>
-            <ComponentView component={child} scope={scope} depth={depth + 1} />
+            <ComponentView component={component.child} scope={scope} depth={depth + 1} />
           </View>
         </View>
       );
@@ -168,7 +162,6 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
           alignSelf: borderless ? 'flex-start' : 'stretch',
         },
       ];
-      const child = context.byId.get(component.child) ?? missingComponent(component.child);
       return (
         <Pressable
           accessibilityRole="button"
@@ -184,7 +177,7 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
               textColor: primary ? colors.ctaContentPrimary : undefined,
             }}
           >
-            <ComponentView component={child} scope={scope} depth={depth + 1} />
+            <ComponentView component={component.child} scope={scope} depth={depth + 1} />
           </A2UiContextProvider>
         </Pressable>
       );
@@ -287,13 +280,13 @@ const ListView: React.FC<{
   scope?: unknown;
   depth: number;
 }> = ({ component, scope, depth }) => {
-  const { byId, resolveValue } = useA2UiContext();
+  const { resolveValue } = useA2UiContext();
   const items = resolveValue({ '@path': component.children.path }, scope);
 
   if (!Array.isArray(items)) {
+    log('[a2ui] ListView no array at', component.children.path, items);
     return null;
   }
-  const template = byId.get(component.children.componentId) ?? missingComponent(component.children.componentId);
   const horizontal = component.direction === 'horizontal';
   const containerStyle: ViewStyle[] = [
     styles.parentChild,
@@ -304,8 +297,8 @@ const ListView: React.FC<{
     <View style={containerStyle}>
       {items.map((item, index) => (
         <ComponentView
-          key={`${component.id}-${index}`}
-          component={template}
+          key={index}
+          component={component.children.component}
           scope={item}
           depth={depth + 1}
         />
@@ -441,8 +434,7 @@ const abbreviateNumber = (value: number): string =>
 
 // A tiny horizontal slider. The chat list and the settings screen both scroll,
 // so this is intentionally PanResponder-free: a plain Pressable track that
-// snaps on tap rather than dragging. It supports everything the A2UI Slider
-// grammar needs and stays out of the list's gesture recognizers.
+// snaps on tap rather than dragging.
 const SliderTrack: React.FC<{
   value: number;
   min: number;

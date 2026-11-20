@@ -231,14 +231,14 @@ const A2UI_TOOL_DESCRIPTION = `Draw an interactive UI card in the conversation.
 
 Use it when the user asks you to show/build/create/design/make a UI — a form, a list, a menu, options to pick, a summary card, a panel. Keep it compact; answer in at most one short line around it.
 
-"ui" is {"components": [...], "dataModel": {...}}. Every component is {"component":<Type>,"id":<unique string>, ...props}; nesting is by id reference (parents list child ids).
+"ui" is {"components": [...], "dataModel": {...}}. Components nest by value: Row/Column list full child objects in "children", Card/Button hold one full child object in "child", List holds a template object. NO ids, no references — write each child inline.
 
-Components (only these):
+Components (only these; nest them — a Row or Column always contains child objects):
 Text{text, variant?:"caption"|"body"}
-Row|Column{children:[ids], justify?, align?}
-Card{child:id}
-List{children:{path,componentId}, direction?:"vertical"|"horizontal"}
-Button{child:id, variant?:"default"|"primary"|"borderless", action:{"event":{"name"}}|{"openUrl":{"url"}}}
+Row|Column{children:[<components>], justify?, align?}
+Card{child:<component>}
+List{children:{path,component:<component>}, direction?:"vertical"|"horizontal"}
+Button{child:<component>, variant?:"default"|"primary"|"borderless", action:{"event":{"name":"..."}}|{"openUrl":{"url":"https://..."}}}
 Divider{axis?:"horizontal"|"vertical"}
 Image{url, description?}
 TextField{label, value, placeholder?, variant?:"shortText"|"longText"|"number"|"obscured"}
@@ -247,11 +247,11 @@ Slider{min?, max, value, steps?}
 ChoicePicker{label?, options:[{"label","value"}], value:[...], variant?:"multipleSelection"|"mutuallyExclusive"}
 
 Rules:
-- Every child/componentId id must exist in "components".
-- Read dataModel values with {"@path":"/a/b"}; NO string concatenation.
-- Only bind paths that exist. Keep the JSON small.
+- To show text: write the literal string, or put the value in "dataModel" and refer to it with {"@path":"/a/b"}. ALWAYS include in "dataModel" every value you bind — never reference a path with no data. If there is no data, write a literal string instead of a binding.
+- Do NOT wrap simple layouts in extra Rows/Columns; nest directly.
+- Keep the JSON small.
 
-Example: {"components":[{"component":"Card","id":"c","child":"t"},{"component":"Text","id":"t","text":{"@path":"/msg"}}],"dataModel":{"msg":"Hi"}}`;
+Example (a small form): {"components":[{"component":"Column","children":[{"component":"TextField","label":"Name","value":{"@path":"/form/name"},"placeholder":"Enter name"},{"component":"Slider","min":0,"max":100,"value":50},{"component":"Button","child":{"component":"Text","text":"Submit"},"variant":"primary","action":{"event":{"name":"submit"}}}]}],"dataModel":{"form":{"name":""}}}`;
 
 // The `call` receives the parsed, grammar-constrained `ui` object. It runs the
 // validator again so a malformed-but-parseable payload becomes a readable
@@ -269,7 +269,19 @@ export const buildA2UiTool = (): Tool =>
       },
     ],
     call: (ui: unknown): string => {
+      try {
+        log('[a2ui] render_ui call received', JSON.stringify(ui));
+      } catch {
+        log('[a2ui] render_ui call received', ui);
+      }
       const validation = validateUi(ui);
+      log('[a2ui] render_ui validation', {
+        valid: validation.valid,
+        warnings: validation.warnings,
+        ...('surface' in validation
+          ? { componentCount: validation.surface.components.length }
+          : {}),
+      });
 
       if (!validation.valid) {
         return `Error: the UI could not be rendered. ${validation.reason}`;

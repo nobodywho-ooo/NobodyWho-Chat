@@ -1,19 +1,22 @@
 import { validateUi } from '../validate';
 import { A2UI_GBNF } from '../grammar';
+import { A2UI_UI_SCHEMA } from '../schema';
 import { A2UI_COMPONENTS } from '../types';
 
 const sampleSurface = {
   components: [
-    { component: 'Column', id: 'root', children: ['greeting', 'cta'] },
-    { component: 'Text', id: 'greeting', text: { '@path': '/message' } },
     {
-      component: 'Button',
-      id: 'cta',
-      child: 'ctaLabel',
-      variant: 'primary',
-      action: { event: { name: 'continue', context: { page: 2 } } },
+      component: 'Column',
+      children: [
+        { component: 'Text', text: { '@path': '/message' } },
+        {
+          component: 'Button',
+          child: { component: 'Text', text: 'Continue' },
+          variant: 'primary',
+          action: { event: { name: 'continue', context: { page: 2 } } },
+        },
+      ],
     },
-    { component: 'Text', id: 'ctaLabel', text: 'Continue' },
   ],
   dataModel: { message: 'Welcome!' },
 };
@@ -23,43 +26,50 @@ describe('validateUi', () => {
     const validation = validateUi(sampleSurface);
     expect(validation.valid).toBe(true);
     if (validation.valid) {
-      expect(validation.surface.components).toHaveLength(4);
+      expect(validation.surface.components).toHaveLength(1);
       expect(validation.surface.dataModel).toEqual({ message: 'Welcome!' });
+      // Nested children are inline objects, not id references.
+      expect(validation.warnings).toEqual([]);
     }
   });
 
   test('accepts every supported component type', () => {
     const components = [
-      { component: 'Text', id: 'a', text: 'hi', variant: 'caption' },
-      { component: 'Image', id: 'b', url: { '@path': '/logo' } },
-      { component: 'Row', id: 'c', children: ['a', 'e'] },
-      { component: 'Column', id: 'e', children: ['a'] },
+      { component: 'Text', text: 'hi', variant: 'caption' },
+      { component: 'Image', url: { '@path': '/logo' } },
+      {
+        component: 'Row',
+        children: [{ component: 'Text', text: 'a' }],
+      },
+      {
+        component: 'Column',
+        children: [{ component: 'Text', text: 'b' }],
+      },
       {
         component: 'List',
-        id: 'f',
-        children: { path: '/breeds', componentId: 'b' },
+        children: {
+          path: '/breeds',
+          component: { component: 'Image', url: { '@path': 'url' } },
+        },
         direction: 'horizontal',
       },
-      { component: 'Card', id: 'g', child: 'a' },
-      { component: 'Divider', id: 'h', axis: 'vertical' },
+      { component: 'Card', child: { component: 'Text', text: 'c' } },
+      { component: 'Divider', axis: 'vertical' },
       {
         component: 'Button',
-        id: 'i',
-        child: 'a',
+        child: { component: 'Text', text: 'go' },
         variant: 'borderless',
         action: { openUrl: { url: 'https://example.com' } },
       },
       {
         component: 'TextField',
-        id: 'j',
         label: 'Name',
         value: { '@path': '/form/name' },
         placeholder: '…',
       },
-      { component: 'CheckBox', id: 'k', label: 'Agree', value: false },
+      { component: 'CheckBox', label: 'Agree', value: false },
       {
         component: 'Slider',
-        id: 'l',
         min: 0,
         max: 10,
         value: { '@path': '/form/level' },
@@ -67,7 +77,6 @@ describe('validateUi', () => {
       },
       {
         component: 'ChoicePicker',
-        id: 'm',
         label: 'Pick',
         options: [
           { label: 'One', value: '1' },
@@ -82,71 +91,58 @@ describe('validateUi', () => {
     expect(validation.valid).toBe(true);
   });
 
-  test('rejects an unknown component type by name', () => {
+  // Lenient by design: recoverable problems become warnings while the surface
+  // stays renderable — never a collapse to raw JSON.
+  test('skips an unknown component and warns', () => {
     const validation = validateUi({
-      components: [{ component: 'Video', id: 'v', url: 'x' }],
+      components: [{ component: 'Video', url: 'x' }],
     });
-    expect(validation.valid).toBe(false);
-    if (!validation.valid) {
-      expect(validation.reason).toContain('unknown component "Video"');
-    }
+    expect(validation.valid).toBe(true);
+    expect(validation.warnings.join(' ')).toContain('unknown component "Video"');
   });
 
-  test('rejects a dangling child reference', () => {
-    const validation = validateUi({
-      components: [
-        { component: 'Column', id: 'root', children: ['nope'] },
-      ],
-    });
-    expect(validation.valid).toBe(false);
-    if (!validation.valid) {
-      expect(validation.reason).toContain('"nope"');
-    }
-  });
-
-  test('rejects duplicate ids', () => {
+  test('drops non-object children and warns', () => {
     const validation = validateUi({
       components: [
-        { component: 'Text', id: 'x', text: 'one' },
-        { component: 'Text', id: 'x', text: 'two' },
+        { component: 'Row', children: ['ghost', { component: 'Text', text: 'ok' }] },
       ],
     });
-    expect(validation.valid).toBe(false);
-    if (!validation.valid) {
-      expect(validation.reason).toContain('duplicate id "x"');
-    }
+    expect(validation.valid).toBe(true);
+    const textCount = validation.valid
+      ? validation.surface.components[0].component === 'Row'
+        ? validation.surface.components[0].children.length
+        : -1
+      : -1;
+    expect(textCount).toBe(1);
+    expect(validation.warnings.join(' ')).toContain('ghost');
   });
 
-  test('rejects a bad button action', () => {
-    const validation = validateUi({
-      components: [
-        { component: 'Button', id: 'b', child: 'l', action: { waffle: true } },
-        { component: 'Text', id: 'l', text: 'label' },
-      ],
-    });
-    expect(validation.valid).toBe(false);
-  });
-
-  test('rejects a non-object payload', () => {
+  test('only rejects payloads that cannot render at all', () => {
     expect(validateUi([1, 2, 3]).valid).toBe(false);
     expect(validateUi('components').valid).toBe(false);
     expect(validateUi(null).valid).toBe(false);
     expect(validateUi({}).valid).toBe(false);
-    expect(validateUi({ components: [] }).valid).toBe(false);
+    expect(validateUi({ components: 'nope' }).valid).toBe(false);
   });
+});
 
-  test('tolerates an absent or weird dataModel', () => {
-    const without = validateUi({
-      components: [{ component: 'Text', id: 't', text: 'hi' }],
-    });
-    expect(without.valid).toBe(true);
+// A regression guard for the exact failure this feature has seen before: the
+// recursive schema must never be a cyclic object graph, because `Tool` runs
+// JSON.stringify on it (a cycle throws and the chat fails to build).
+test('the ui schema is acyclic and JSON-serializable', () => {
+  const json = JSON.stringify(A2UI_UI_SCHEMA);
+  expect(json).toBeTruthy();
+  const parsed = JSON.parse(json);
+  expect(parsed.properties.components.type).toBe('array');
+  expect(parsed.properties.components.items.oneOf.length).toBeGreaterThan(0);
+});
 
-    const weird = validateUi({
-      components: [{ component: 'Text', id: 't', text: 'hi' }],
-      dataModel: 'not-an-object',
-    });
-    expect(weird.valid).toBe(true);
-  });
+// This schema is also injected into the model's system prompt by the chat
+// template, so it must stay tiny — a huge schema overflowed the context
+// before generation even started (a real failure we hit). Guard the size.
+test('the ui schema stays small enough for the prompt and llguidance', () => {
+  const json = JSON.stringify(A2UI_UI_SCHEMA);
+  expect(json.length).toBeLessThan(50_000);
 });
 
 describe('grammar.ts reference grammar', () => {

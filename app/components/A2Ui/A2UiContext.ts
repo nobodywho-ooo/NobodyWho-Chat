@@ -1,13 +1,11 @@
-// Render context shared by every component of one A2UI surface: the flat
-// component table (looked up by id), value resolution/editing, and action
-// dispatch. Created once per surface by `<A2UiSurface>`.
+// Render context shared by every component of one A2UI surface: value
+// resolution/editing and action dispatch. Created once per surface by
+// `<A2UiSurface>`. (Components nest by value, so there is no id table.)
 
 import { createContext, useContext } from 'react';
-import { A2UiAction, A2UiComponent } from '../../services/a2ui/types';
+import { A2UiAction } from '../../services/a2ui/types';
 
 export interface A2UiContextValue {
-  /** Flat component list keyed by id, so children resolve in constant time. */
-  byId: ReadonlyMap<string, A2UiComponent>;
   /**
    * Resolve a wire value against the surface data model (or a list item
    * scope). A manual edit made on this surface shadows the base value.

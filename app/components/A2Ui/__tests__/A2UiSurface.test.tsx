@@ -3,31 +3,24 @@ import { fireEvent, render } from '@testing-library/react-native';
 import { haptics } from 'helpers';
 
 import { A2UiSurface } from '../A2UiSurface';
-import type { A2UiSurface as A2UiSurfaceData } from '../../../services/a2ui/types';
 
 // A surface exercising bindings, nesting and an interactive control, so the
-// snapshot covers the renderer's main paths. Text/PlatformIcon are mocked to
-// string components (jest/mock/components), the rest renders as RN host views.
-const surface = {
+// snapshot covers the renderer's main paths. Components nest by value — no ids.
+const surface: Parameters<typeof A2UiSurface>[0]['surface'] = {
   components: [
-    { component: 'Column', id: 'root', children: ['card', 'toggle'] },
     {
       component: 'Card',
-      id: 'card',
-      child: 'greeting',
+      child: { component: 'Text', text: { '@path': '/message' }, variant: 'body' },
     },
-    { component: 'Text', id: 'greeting', text: { '@path': '/message' }, variant: 'body' },
     {
       component: 'Button',
-      id: 'toggle',
-      child: 'toggleLabel',
+      child: { component: 'Text', text: 'Flip it' },
       variant: 'primary',
-      action: { event: { name: 'flip', context: { on: true } } },
+      action: { event: { name: 'flip', context: {} } },
     },
-    { component: 'Text', id: 'toggleLabel', text: 'Flip it' },
   ],
   dataModel: { message: 'Hello, Ada' },
-} as A2UiSurfaceData;
+};
 
 test('renders a binding-driven surface', async () => {
   const { toJSON } = await render(<A2UiSurface surface={surface} />);

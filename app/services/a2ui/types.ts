@@ -1,21 +1,17 @@
-// A2UI types: the subset of the A2UI Basic Catalog (v1.0 wire format) that the
-// on-device renderer supports. The model communicates a UI as a flat list of
-// components with string ids — nesting happens by id reference, exactly like
-// the `createSurface.components` of the A2UI v1.0 wire format — plus an
-// optional `dataModel` that `{"@path": "/..."}` bindings resolve against.
+// A2UI types: the on-device catalog subset rendered by the local model.
 //
-// The on-device subset deliberately leaves out components that need a server
-// round trip (events/functions), media sync, or complex host integration
-// (Tabs, Modal, Video, AudioPlayer, DateTimeInput). Extend the renderer and
-// the schema together if one of those becomes worth supporting.
+// Components nest by value (children are full component objects), never by
+// id reference. A flat id registry is what small local models fail at — LFM3
+// emits Row children that don't exist, and the whole card collapses. So the
+// wire format the model writes is a plain JSON tree: a `components` array of
+// inline components plus an optional `dataModel` that `{"@path": "/..."}`
+// bindings resolve against.
 
 /** A literal value or a reference into the surface's data model. */
 export type DynamicValue<T> = T | { '@path': string };
 
-/** A single Text component. */
 export interface A2UiText {
   component: 'Text';
-  id: string;
   text: DynamicValue<string>;
   variant?: 'caption' | 'body';
   weight?: number;
@@ -23,7 +19,6 @@ export interface A2UiText {
 
 export interface A2UiImage {
   component: 'Image';
-  id: string;
   url: DynamicValue<string>;
   description?: DynamicValue<string>;
   fit?: 'contain' | 'cover' | 'fill' | 'none' | 'scaleDown';
@@ -33,8 +28,7 @@ export interface A2UiImage {
 
 export interface A2UiRow {
   component: 'Row';
-  id: string;
-  children: string[];
+  children: A2UiComponent[];
   justify?:
     | 'center'
     | 'end'
@@ -48,8 +42,7 @@ export interface A2UiRow {
 
 export interface A2UiColumn {
   component: 'Column';
-  id: string;
-  children: string[];
+  children: A2UiComponent[];
   justify?:
     | 'start'
     | 'center'
@@ -63,29 +56,25 @@ export interface A2UiColumn {
 
 export interface A2UiList {
   component: 'List';
-  id: string;
-  /** An inline template: render `componentId` once per item of `path`. */
-  children: { path: string; componentId: string };
+  /** An inline template rendered once per item of `path`. */
+  children: { path: string; component: A2UiComponent };
   direction?: 'vertical' | 'horizontal';
   align?: 'start' | 'center' | 'end' | 'stretch';
 }
 
 export interface A2UiCard {
   component: 'Card';
-  id: string;
-  child: string;
+  child: A2UiComponent;
 }
 
 export interface A2UiDivider {
   component: 'Divider';
-  id: string;
   axis?: 'horizontal' | 'vertical';
 }
 
 export interface A2UiButton {
   component: 'Button';
-  id: string;
-  child: string;
+  child: A2UiComponent;
   variant?: 'default' | 'primary' | 'borderless';
   action: A2UiAction;
 }
@@ -102,7 +91,6 @@ export type A2UiAction = A2UiEventAction | A2UiOpenUrlAction;
 
 export interface A2UiTextInput {
   component: 'TextField';
-  id: string;
   label: DynamicValue<string>;
   value: DynamicValue<string>;
   placeholder?: DynamicValue<string>;
@@ -112,7 +100,6 @@ export interface A2UiTextInput {
 
 export interface A2UiCheckBox {
   component: 'CheckBox';
-  id: string;
   label: DynamicValue<string>;
   value: DynamicValue<boolean>;
   weight?: number;
@@ -120,12 +107,11 @@ export interface A2UiCheckBox {
 
 export interface A2UiSlider {
   component: 'Slider';
-  id: string;
-  label?: DynamicValue<string>;
-  min: number;
+  min?: number;
   max: number;
   value: DynamicValue<number>;
   steps?: number;
+  label?: DynamicValue<string>;
   weight?: number;
 }
 
@@ -136,11 +122,9 @@ export interface A2UiChoiceOption {
 
 export interface A2UiChoicePicker {
   component: 'ChoicePicker';
-  id: string;
   label?: DynamicValue<string>;
   options: A2UiChoiceOption[];
   value: DynamicValue<string[]>;
-  /** 'multipleSelection' lets any subset be picked; 'mutuallyExclusive' is single-pick. */
   variant?: 'multipleSelection' | 'mutuallyExclusive';
   displayStyle?: 'checkbox' | 'chips';
   weight?: number;
@@ -181,6 +165,8 @@ export const A2UI_COMPONENTS: readonly A2UiComponent['component'][] = [
   'ChoicePicker',
 ] as const;
 
-export const isA2UiComponentName = (value: unknown): value is A2UiComponent['component'] =>
+export const isA2UiComponentName = (
+  value: unknown,
+): value is A2UiComponent['component'] =>
   typeof value === 'string' &&
   (A2UI_COMPONENTS as readonly string[]).includes(value);
