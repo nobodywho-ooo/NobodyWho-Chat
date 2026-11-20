@@ -243,11 +243,13 @@ const GlowBlob: React.FC<GlowBlobProps> = ({
 interface VoiceGlowProps {
   levels: VoiceLevels;
   paused?: boolean;
+  opacity?: SharedValue<number>;
 }
 
 export const VoiceGlow: React.FC<VoiceGlowProps> = ({
   levels,
   paused = false,
+  opacity,
 }) => {
   const { colors } = useStyled();
   const windowSize = useWindowDimensions();
@@ -292,8 +294,15 @@ export const VoiceGlow: React.FC<VoiceGlowProps> = ({
     [],
   );
 
+  const revealStyle = useAnimatedStyle(() => ({
+    opacity: opacity ? opacity.value : 1,
+  }));
+
   return (
-    <View pointerEvents="none" style={[styles.glowContainer, { height }]}>
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.glowContainer, { height }, revealStyle]}
+    >
       <View style={styles.fieldContainer} onLayout={onLayout}>
         {BLOBS.map((blob, index) => (
           <GlowBlob
@@ -308,7 +317,7 @@ export const VoiceGlow: React.FC<VoiceGlowProps> = ({
           />
         ))}
       </View>
-    </View>
+    </Animated.View>
   );
 };
 

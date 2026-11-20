@@ -11,3 +11,4 @@ export type {
   VoiceModelDownloads,
   VoiceSetupState,
 } from './useVoiceModelDownloads';
+export { useDrawerRevealOpacity } from './useDrawerRevealOpacity';

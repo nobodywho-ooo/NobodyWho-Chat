@@ -273,6 +273,7 @@ jest.mock('react-native-reanimated', () => {
     },
     useSharedValue: initial => ({ value: initial }),
     useAnimatedStyle: () => ({}),
+    useAnimatedReaction: () => {},
     withTiming: value => value,
     withRepeat: animation => animation,
     cancelAnimation: () => {},
@@ -716,6 +717,7 @@ jest.mock('@react-navigation/drawer', () => {
   const mockReact = require('react');
   return {
     useDrawerStatus: () => 'open',
+    useDrawerProgress: () => ({ value: 1 }),
     createDrawerNavigator: () => ({
       Navigator: ({ children }) =>
         mockReact.createElement(mockReact.Fragment, null, children),

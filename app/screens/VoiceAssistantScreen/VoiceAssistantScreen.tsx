@@ -27,6 +27,7 @@ import { haptics } from 'helpers';
 
 import { VoiceGlow, VoiceSetup } from './components';
 import {
+  useDrawerRevealOpacity,
   useVoiceConversation,
   useVoiceLevels,
   type VoiceStatus,
@@ -55,6 +56,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   const { colors } = useStyled();
 
   const isDrawerOpen = useDrawerStatus() === 'open';
+  const glowOpacity = useDrawerRevealOpacity();
 
   const [showPreferences, setShowPreferences] = useState(false);
 
@@ -113,6 +115,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
         <VoiceGlow
           levels={voiceLevels.levels}
           paused={!isReady || !isDrawerOpen}
+          opacity={glowOpacity}
         />
       )}
 
