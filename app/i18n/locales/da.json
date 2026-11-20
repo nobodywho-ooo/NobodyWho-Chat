@@ -213,7 +213,8 @@
           "aborted": "stoppet"
         }
       },
-      "a2ui": "UI"
+      "a2ui": "UI",
+      "a2uiRendering": "Tegnes…"
     },
     "conversationsList": {
       "recent": "Seneste",

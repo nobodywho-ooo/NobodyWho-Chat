@@ -58,16 +58,14 @@ describe('buildChatTools', () => {
     ]);
   });
 
-  test('a2ui enabled adds the render_ui tool first', () => {
-    const off = (buildChatTools(false) as unknown as MockTool[]).map(
+  test('a2ui has no render_ui tool: it streams through the token stream', () => {
+    // The model must not be able to call render_ui — its UI flows through
+    // `<a2ui_ui>…</a2ui_ui>` sentinels in the ordinary text stream so the
+    // card can render live (see services/a2ui/stream.ts).
+    const names = (buildChatTools() as unknown as MockTool[]).map(
       t => t.opts.name,
     );
-    expect(off).not.toContain(RENDER_UI_TOOL);
-
-    const on = (buildChatTools(true) as unknown as MockTool[]).map(
-      t => t.opts.name,
-    );
-    expect(on[0]).toBe(RENDER_UI_TOOL);
+    expect(names).not.toContain(RENDER_UI_TOOL);
   });
 
   test('the render_ui tool accepts a valid ui payload', async () => {

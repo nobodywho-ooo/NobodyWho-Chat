@@ -13,13 +13,14 @@ import { useStyled, useThemeMode } from 'hooks';
 import {
   RENDER_UI_TOOL,
   attributeSourcesByBlock,
+  stripA2UiBlocks,
   stripCitations,
   useWebSearchStore,
 } from 'services';
 import { DisplayMessage } from 'types';
 
 import { AnswerBody } from './AnswerBody';
-import { A2UiToolCall } from './A2UiToolCall';
+import { A2UiSurfaceCard, A2UiToolCall } from './A2UiToolCall';
 import { AudioSpeakerButton } from './AudioSpeakerButton';
 import { ThinkingBlock } from './ThinkingBlock';
 import { ThinkingModal } from './ThinkingModal';
@@ -89,8 +90,9 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
   } = useMemo(() => parseThinking(content), [content]);
 
   const hasWebSources = webSources.length > 0;
+  // The `<a2ui_ui>…</a2ui_ui>` block is rendered as a card, not as text.
   const rest = useMemo(
-    () => (hasWebSources ? stripCitations(rawRest) : rawRest),
+    () => stripA2UiBlocks(hasWebSources ? stripCitations(rawRest) : rawRest),
     [hasWebSources, rawRest],
   );
 
@@ -205,6 +207,9 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
                 onPress={() => setOpenToolIndex(toolIndex)}
               />
             ),
+          )}
+          {message.a2uiLive && (
+            <A2UiSurfaceCard surface={message.a2uiLive} live />
           )}
           <AnswerBody
             text={rest}

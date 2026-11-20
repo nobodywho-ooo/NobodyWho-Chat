@@ -213,7 +213,8 @@
           "aborted": "arrêté"
         }
       },
-      "a2ui": "UI"
+      "a2ui": "UI",
+      "a2uiRendering": "Rendu…"
     },
     "conversationsList": {
       "recent": "Récentes",

@@ -1,7 +1,11 @@
-// The rendered form of a `render_ui` tool call: a small header (the same
-// visual language as ToolCallBlock) above the live A2UiSurface. Validation is
-// re-run here because persisted messages travel through the database and back;
-// an invalid payload falls back to the ordinary tool-call summary instead.
+// The rendered form of an A2UI card in the message list: a small header (the
+// same visual language as ToolCallBlock) above the live A2UiSurface.
+//
+// Two paths land here:
+//  - a settled `render_ui` invocation (persisted, survives reloads), and
+//  - the live preview of a `<a2ui_ui>…</a2ui_ui>` block mid-stream, which is
+//    re-validated on the way through (persisted messages travel the database
+//    and back, so validation is re-run rather than trusted).
 
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -13,49 +17,28 @@ import { validateUi } from 'services';
 import { ToolInvocation } from 'types';
 
 import { A2UiSurface } from '../../A2Ui/A2UiSurface';
+import type { A2UiSurface as A2UiSurfaceData } from '../../../services/a2ui/types';
 import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
 import { Text } from '../../Text/Text';
 
 import { ToolCallBlock } from './ToolCallBlock';
 
-interface A2UiToolCallProps {
-  invocation: ToolInvocation;
+interface A2UiSurfaceCardProps {
+  surface: A2UiSurfaceData;
+  /** Whether this is a still-streaming preview rather than a settled card. */
+  live?: boolean;
+  /** A warning/footnote caption shown under the card (e.g. a skip). */
+  footnote?: string;
 }
 
-export const A2UiToolCall: React.FC<A2UiToolCallProps> = ({ invocation }) => {
+/** The header + surface used by both the settled invocation and the live preview. */
+export const A2UiSurfaceCard: React.FC<A2UiSurfaceCardProps> = ({
+  surface,
+  live = false,
+  footnote,
+}) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-
-  const render = useMemo(() => {
-    const raw = invocation.arguments?.ui;
-    const validation = validateUi(raw);
-    try {
-      log('[a2ui] A2UiToolCall validate', JSON.stringify({
-        raw,
-        valid: validation.valid,
-        warnings: validation.warnings,
-        components: 'surface' in validation
-          ? validation.surface.components.map(c => c.component)
-          : undefined,
-      }));
-    } catch {
-      log('[a2ui] A2UiToolCall validate failed to stringify', raw);
-    }
-    return validation.valid && validation.surface
-      ? { surface: validation.surface, warnings: validation.warnings }
-      : null;
-  }, [invocation]);
-
-  if (render === null) {
-    return (
-      <ToolCallBlock
-        name={invocation.name}
-        arguments={invocation.arguments}
-        onPress={() => undefined}
-      />
-    );
-  }
-
   const headerLabelStyle = [styles.headerLabel, { color: colors.onSurfaceVariant }];
 
   return (
@@ -70,18 +53,55 @@ export const A2UiToolCall: React.FC<A2UiToolCallProps> = ({ invocation }) => {
         <Text variant="caption" style={headerLabelStyle}>
           {t('components.messageListItem.a2ui')}
         </Text>
+        {live && (
+          <Text variant="caption" style={[styles.liveLabel, { color: colors.onSurfaceDisabled }]}>
+            {t('components.messageListItem.a2uiRendering')}
+          </Text>
+        )}
       </View>
-      <A2UiSurface surface={render.surface} />
-      {render.warnings.length > 0 && (
+      <A2UiSurface surface={surface} />
+      {footnote !== undefined && (
         <Text
           variant="caption"
           numberOfLines={1}
-          style={[styles.warningLabel, { color: colors.warningContent }]}
+          style={[styles.footnote, { color: colors.warningContent }]}
         >
-          {render.warnings[0]}
+          {footnote}
         </Text>
       )}
     </View>
+  );
+};
+
+interface A2UiToolCallProps {
+  invocation: ToolInvocation;
+}
+
+export const A2UiToolCall: React.FC<A2UiToolCallProps> = ({ invocation }) => {
+  const render = useMemo(() => {
+    const validation = validateUi(invocation.arguments?.ui);
+    if (validation.valid && validation.surface) {
+      return { surface: validation.surface, warnings: validation.warnings };
+    }
+    log('[a2ui] A2UiToolCall unrenderable', validation.warnings);
+    return null;
+  }, [invocation]);
+
+  if (render === null) {
+    return (
+      <ToolCallBlock
+        name={invocation.name}
+        arguments={invocation.arguments}
+        onPress={() => undefined}
+      />
+    );
+  }
+
+  return (
+    <A2UiSurfaceCard
+      surface={render.surface}
+      footnote={render.warnings[0]}
+    />
   );
 };
 
@@ -98,7 +118,10 @@ const styles = StyleSheet.create({
   headerLabel: {
     includeFontPadding: false,
   },
-  warningLabel: {
+  liveLabel: {
+    includeFontPadding: false,
+  },
+  footnote: {
     includeFontPadding: false,
   },
 });

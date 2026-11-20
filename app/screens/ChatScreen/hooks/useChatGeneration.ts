@@ -21,7 +21,10 @@ import {
   ANSWER_RECHECK_TIME_BUDGET_MS,
   EmbeddingSlotAccess,
   NEW_CHAT_KEY,
+  RENDER_UI_TOOL,
   WebSearchTurn,
+  findA2UiBlock,
+  parseA2UiLive,
   planAnswerRecheck,
   prepareWebSearchTurn,
   restoreChatForTurn,
@@ -29,10 +32,12 @@ import {
   runAnswerRecheck,
   isWebSearchReady,
   settleConversationDigest,
+  stripA2UiBlocks,
   stripCitations,
   updateConversationDigestInBackground,
   subscribeToolInvocations,
   useWebSearchStore,
+  validateUi,
 } from 'services';
 import {
   applyThinking,
@@ -314,6 +319,40 @@ export function useChatGeneration({
       }
     };
 
+    // While the model streams a `<a2ui_ui>…</a2ui_ui>` block, its (tolerantly
+    // parsed) content renders live on the message. Once the block closes and
+    // becomes a persisted render_ui invocation, the live preview stops.
+    let a2uiSettled = false;
+    const liveA2UiOf = (content: string) =>
+      !a2uiSettled ? parseA2UiLive(findA2UiBlock(content)?.uiText ?? '') : null;
+
+    // A complete UI block is recorded as a render_ui invocation — the same
+    // shape a tool call used to have, so persistence, rendering and history
+    // reloads keep working unchanged.
+    const settleA2Ui = () => {
+      if (a2uiSettled) {
+        return;
+      }
+      const block = findA2UiBlock(accumulated);
+      if (!block?.complete) {
+        return;
+      }
+      try {
+        const parsed = JSON.parse(block.uiText);
+        const validation = validateUi(parsed);
+        if (validation.valid && validation.surface) {
+          turnToolCalls.push({
+            name: RENDER_UI_TOOL,
+            arguments: { ui: validation.surface },
+            result: 'The UI card was rendered successfully.',
+          });
+          a2uiSettled = true;
+        }
+      } catch (error) {
+        log('ChatScreen A2UI block parse failed', error);
+      }
+    };
+
     const renderAssistant = (extra?: {
       tokensPerSecond?: number;
       timeToFirstToken?: number;
@@ -325,6 +364,7 @@ export function useChatGeneration({
       const toolInvocations =
         turnToolCalls.length > 0 ? [...turnToolCalls] : undefined;
       const webSources = turnWebSources.length > 0 ? turnWebSources : undefined;
+      const a2uiLive = liveA2UiOf(content);
 
       setMessages(prev => {
         const at = prev.findIndex(message => message.uid === assistantUid);
@@ -341,6 +381,7 @@ export function useChatGeneration({
           ...(toolInvocations ? { toolInvocations } : {}),
           ...(webSources ? { webSources } : {}),
           ...(webSearchMs !== undefined ? { webSearchMs } : {}),
+          ...(a2uiLive ? { a2uiLive } : {}),
           ...extra,
         };
         return next;
@@ -391,7 +432,9 @@ export function useChatGeneration({
 
       await persist({
         role: 'assistant',
-        content: accumulated,
+        // The UI block is persisted as a render_ui invocation, so the raw
+        // sentinel JSON is not kept in the prose content.
+        content: stripA2UiBlocks(accumulated),
         documentsPath: [],
         toolInvocations: turnToolCalls,
         webSources: turnWebSources,
@@ -564,6 +607,7 @@ export function useChatGeneration({
         }
       }
 
+      settleA2Ui();
       renderAssistant(metrics);
       await persistAssistant(metrics);
 
@@ -577,6 +621,7 @@ export function useChatGeneration({
     } catch (error) {
       log('ChatScreen generation failed', error);
 
+      settleA2Ui();
       renderAssistant();
       await persistAssistant(
         webSearchMs !== undefined ? { webSearchMs } : undefined,
@@ -603,7 +648,9 @@ export function useChatGeneration({
 
       setIsStreaming(false);
 
-      const answer = stripCitations(parseThinking(accumulated).rest).trim();
+      const answer = stripA2UiBlocks(
+        stripCitations(parseThinking(accumulated).rest),
+      ).trim();
 
       if (
         answered &&

@@ -137,6 +137,12 @@ jest.mock('services', () => ({
     mockConversationSyncListener = listener;
     return jest.fn();
   }),
+  // A2UI streaming helpers (no sentinels appear in these tests).
+  RENDER_UI_TOOL: 'render_ui',
+  findA2UiBlock: jest.fn(() => null),
+  parseA2UiLive: jest.fn(() => null),
+  validateUi: jest.fn(() => ({ valid: false, reason: 'test stub' })),
+  stripA2UiBlocks: jest.fn((text: string) => text),
 }));
 
 // The starter selection is random; pin it so showEmptyChat can wait on a

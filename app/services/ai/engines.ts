@@ -165,11 +165,10 @@ export const CHAT_ENGINE: EngineSpec<Chat, ChatOptions> = {
     try {
       instance = new Chat({
         model: loaded,
-        // A2UI rides on the same tool-calling path: when the setting is on the
-        // `render_ui` tool joins the roster (and its schema-derived grammar
-        // constrains every call — nobodywho switches to it as soon as the
-        // model starts emitting a tool call).
-        tools: useTools ? buildChatTools(opts.a2ui ?? false) : undefined,
+        // A2UI is not a tool: it flows through the ordinary token stream so the
+        // card can render live (see services/a2ui/stream.ts). The chat's tools
+        // are the plain roster; the A2UI catalog lives in the system prompt.
+        tools: useTools ? buildChatTools() : undefined,
         systemPrompt: opts.systemPrompt,
         sampler: opts.sampler,
         contextSize,

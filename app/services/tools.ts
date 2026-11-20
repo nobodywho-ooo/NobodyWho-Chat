@@ -104,14 +104,13 @@ const defineTool = (opts: {
 // defineTool wraps each `call` so its invocation is reported live via
 // subscribeToolInvocations as the model runs it during ask().
 //
-// `a2uiEnabled` adds the `render_ui` tool that draws interactive UI cards:
-// the feature is a per-assistant setting, so the tool is only offered to the
-// model when the setting is on (a model that cannot see the tool cannot call
-// it, which keeps the constraint and the renderer honest). The `ui` argument
-// is constrained to the A2UI JSON Schema; the tool call then renders natively
-// in the message list (see A2UiSurface).
-export const buildChatTools = (a2uiEnabled: boolean = false): Tool[] => [
-  ...(a2uiEnabled ? [buildA2UiTool()] : []),
+// A2UI deliberately has NO tool here. A tool call's JSON is invisible until
+// the whole call completes, which is exactly what live card rendering must
+// not wait for — so A2UI runs through the ordinary token stream
+// (see app/services/a2ui/stream.ts) and the system-prompt hint. The emitted
+// UI is turned into a `render_ui` ToolInvocation for persistence/rendering
+// by the chat turn itself.
+export const buildChatTools = (): Tool[] => [
   defineTool({
     name: 'get_inference_engine',
     description:
@@ -227,9 +226,9 @@ export const buildChatTools = (a2uiEnabled: boolean = false): Tool[] => [
 // spells out when to call it, which components exist, and how to reference
 // data. The shape constraint on the `ui` argument comes from A2UI_UI_SCHEMA.
 
-const A2UI_TOOL_DESCRIPTION = `Draw an interactive UI card in the conversation.
+const A2UI_TOOL_DESCRIPTION = `Call this tool IMMEDIATELY — before writing any prose — whenever the user asks you to show, build, create, make, design, display, set up, fill in or put together ANY interactive UI: a form, a list, a menu, options to pick, a summary card, a panel, a calculator, a timer, a quiz, a survey or a control screen. If the user's request would be answered with a UI, call render_ui — do NOT describe the UI in text instead, do NOT ask clarifying questions first, and do NOT reason at length before calling. Provide the WHOLE UI in a single call, then add at most one short line mentioning what you rendered.
 
-Use it when the user asks you to show/build/create/design/make a UI — a form, a list, a menu, options to pick, a summary card, a panel. Keep it compact; answer in at most one short line around it.
+"ui" is {"components": [...], "dataModel": {...}}. Components nest by value: Row/Column list full child objects in "children", Card/Button hold one full child object in "child", List holds a template object. NO ids, no references — write each child inline.
 
 "ui" is {"components": [...], "dataModel": {...}}. Components nest by value: Row/Column list full child objects in "children", Card/Button hold one full child object in "child", List holds a template object. NO ids, no references — write each child inline.
 
