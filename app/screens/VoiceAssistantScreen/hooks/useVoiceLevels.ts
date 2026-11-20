@@ -4,10 +4,8 @@ import {
   useSharedValue,
   type FrameInfo,
 } from 'react-native-reanimated';
-import type { VoiceLevels } from 'components';
+import type { GlowLevels } from 'components';
 import { AudioEnvelope, micBands } from 'helpers';
-
-export type { VoiceLevels } from 'components';
 
 // Which source is currently writing the raw drivers.
 const REST = 0;
@@ -24,7 +22,7 @@ const VAD_ON = 0.2;
 const VAD_OFF = 0.09;
 
 export interface VoiceLevelsController {
-  levels: VoiceLevels;
+  levels: GlowLevels;
   /** Feed one window of mic PCM while listening (call per captured buffer). */
   feedPcm: (samples: Int16Array, sampleRate: number) => void;
   /** Switch to microphone drive and clear any stale energy. */
@@ -61,7 +59,7 @@ export const useVoiceLevels = ({
   const playheadMs = useSharedValue(0);
   const envelope = useSharedValue<AudioEnvelope | null>(null);
 
-  const levels = useMemo<VoiceLevels>(
+  const levels = useMemo<GlowLevels>(
     () => ({ level, low, high, active }),
     [level, low, high, active],
   );

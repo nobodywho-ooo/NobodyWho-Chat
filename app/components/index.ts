@@ -4,6 +4,8 @@ import { ActionButton } from './ActionButton/ActionButton';
 import { Button } from './Button/Button';
 import { Chevron } from './Chevron/Chevron';
 import { DownloadedModels } from './DownloadedModels/DownloadedModels';
+import { EdgeGlow } from './EdgeGlow/EdgeGlow';
+import type { GlowEdge, GlowLevels } from './EdgeGlow/EdgeGlow';
 import { ProgressBar } from './ProgressBar/ProgressBar';
 import { ErrorView } from './ErrorView/ErrorView';
 import { GlassScrollEdge } from './GlassScrollEdge/GlassScrollEdge';
@@ -29,8 +31,6 @@ import { Text, fontSizes } from './Text/Text';
 import { Toast } from './Toast/Toast';
 import { SpeechToTextPreferences } from './SpeechToTextPreferences/SpeechToTextPreferences';
 import { TextToSpeechPreferences } from './TextToSpeechPreferences/TextToSpeechPreferences';
-import { VoiceGlow } from './VoiceGlow/VoiceGlow';
-import type { VoiceGlowEdge, VoiceLevels } from './VoiceGlow/VoiceGlow';
 import { WebScrapeHost } from './WebScrapeHost/WebScrapeHost';
 
 export {
@@ -40,6 +40,7 @@ export {
   Button,
   Chevron,
   DownloadedModels,
+  EdgeGlow,
   ProgressBar,
   ErrorView,
   fontSizes,
@@ -64,8 +65,7 @@ export {
   Text,
   TextToSpeechPreferences,
   Toast,
-  VoiceGlow,
   WebScrapeHost,
 };
 
-export type { IconButtonIconProps, VoiceGlowEdge, VoiceLevels };
+export type { GlowEdge, GlowLevels, IconButtonIconProps };

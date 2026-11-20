@@ -15,7 +15,7 @@ import {
   SpeechToTextPreferences,
   Text,
   TextToSpeechPreferences,
-  VoiceGlow,
+  EdgeGlow,
 } from 'components';
 import {
   AssistantConfig,
@@ -113,7 +113,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   return (
     <View style={styles.container}>
       {!showPreferences && (
-        <VoiceGlow
+        <EdgeGlow
           levels={voiceLevels.levels}
           paused={!isReady || !isDrawerOpen}
           opacity={glowOpacity}

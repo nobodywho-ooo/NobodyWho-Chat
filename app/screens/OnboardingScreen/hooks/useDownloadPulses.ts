@@ -6,7 +6,7 @@ import {
   withTiming,
   type SharedValue,
 } from 'react-native-reanimated';
-import type { VoiceLevels } from 'components';
+import type { GlowLevels } from 'components';
 
 const STEPS = 10;
 
@@ -23,7 +23,7 @@ const stepOf = (progress: number) => Math.floor(clamp01(progress) * STEPS);
 const glowOpacityAt = (progress: number) =>
   clamp01((1 - clamp01(progress)) / (1 - FADE_FROM));
 
-export const useDownloadPulses = (progress: number): VoiceLevels => {
+export const useDownloadPulses = (progress: number): GlowLevels => {
   const level = useSharedValue(0);
   const low = useSharedValue(0);
   const high = useSharedValue(0);

@@ -6,7 +6,7 @@ import { curatedOnboardingModels, log, progressPercent } from 'helpers';
 import { useKeepAwakeWhile, useStyled } from 'hooks';
 import { getModelById } from 'repositories';
 import { Spacings } from 'style';
-import { Button, PlatformIcon, ProgressBar, Text, VoiceGlow } from 'components';
+import { Button, PlatformIcon, ProgressBar, Text, EdgeGlow } from 'components';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
 import { useOnboarding } from '../../hooks/useOnboarding';
@@ -146,7 +146,7 @@ export const OnboardingDownload: React.FC<
       title={t('screens.onboarding.downloadingTitle')}
       subtitle={t('screens.onboarding.downloadingSubtitle')}
       background={
-        <VoiceGlow edge="top" levels={glowLevels} opacity={glowOpacity} />
+        <EdgeGlow edge="top" levels={glowLevels} opacity={glowOpacity} />
       }
       footer={
         <Button

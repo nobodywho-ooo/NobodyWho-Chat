@@ -17,7 +17,7 @@ import { withAlpha } from 'helpers';
 import { useStyled } from 'hooks';
 import { Spacings } from 'style';
 
-export interface VoiceLevels {
+export interface GlowLevels {
   /** Overall loudness. */
   level: SharedValue<number>;
   /** Sub-250 Hz energy — the body of a vowel. */
@@ -28,7 +28,7 @@ export interface VoiceLevels {
   active: SharedValue<number>;
 }
 
-export type VoiceGlowEdge = 'top' | 'bottom';
+export type GlowEdge = 'top' | 'bottom';
 
 const HEIGHT_RATIO = 0.5;
 
@@ -182,9 +182,9 @@ interface GlowBlobProps {
   width: number;
   height: number;
   phase: SharedValue<number>;
-  levels: VoiceLevels;
+  levels: GlowLevels;
   motion: number; /** 1 normally, 0 with reduced motion: the blob then only brightens. */
-  edge: VoiceGlowEdge;
+  edge: GlowEdge;
 }
 
 const GlowBlob: React.FC<GlowBlobProps> = ({
@@ -254,14 +254,14 @@ const GlowBlob: React.FC<GlowBlobProps> = ({
   );
 };
 
-interface VoiceGlowProps {
-  levels: VoiceLevels;
-  edge?: VoiceGlowEdge;
+interface EdgeGlowProps {
+  levels: GlowLevels;
+  edge?: GlowEdge;
   paused?: boolean;
   opacity?: SharedValue<number>;
 }
 
-export const VoiceGlow: React.FC<VoiceGlowProps> = ({
+export const EdgeGlow: React.FC<EdgeGlowProps> = ({
   levels,
   edge = 'bottom',
   paused = false,
@@ -276,11 +276,11 @@ export const VoiceGlow: React.FC<VoiceGlowProps> = ({
 
   const gradients = useMemo<Record<Tone, string>>(
     () => ({
-      body: radialGradient(colors.voiceGlowBody),
-      haze: radialGradient(colors.voiceGlowHaze),
-      core: radialGradient(colors.voiceGlowCore),
+      body: radialGradient(colors.edgeGlowBody),
+      haze: radialGradient(colors.edgeGlowHaze),
+      core: radialGradient(colors.edgeGlowCore),
     }),
-    [colors.voiceGlowBody, colors.voiceGlowHaze, colors.voiceGlowCore],
+    [colors.edgeGlowBody, colors.edgeGlowHaze, colors.edgeGlowCore],
   );
 
   const { level, active } = levels;
