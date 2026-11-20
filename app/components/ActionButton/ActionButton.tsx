@@ -11,7 +11,7 @@ import { useStyled } from 'hooks';
 import styles from './ActionButton.styles';
 
 interface ActionButtonProps {
-  icon: {
+  icon?: {
     iosIconName: SFSymbolProps['name'];
     androidIconName: MaterialSymbolProps['name'];
   };
@@ -35,11 +35,13 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
         pressed && { opacity: 0.6 },
       ]}
     >
-      <PlatformIcon
-        iosIconName={icon.iosIconName}
-        androidIconName={icon.androidIconName}
-        color={colors.onSurface}
-      />
+      {icon && (
+        <PlatformIcon
+          iosIconName={icon.iosIconName}
+          androidIconName={icon.androidIconName}
+          color={colors.onSurface}
+        />
+      )}
       <Text variant="body1" style={styles.actionLabel}>
         {label}
       </Text>

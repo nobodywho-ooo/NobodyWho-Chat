@@ -80,3 +80,14 @@ test('pressing website opens the NobodyWho site', async () => {
 
   openURL.mockRestore();
 });
+
+test('pressing X opens the NobodyWho X profile', async () => {
+  const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  const screen = await render(<SettingsScreen />);
+
+  await fireEvent.press(screen.getByText('screens.settings.x'));
+
+  expect(openURL).toHaveBeenCalledWith('https://x.com/nobodywho_ai');
+
+  openURL.mockRestore();
+});

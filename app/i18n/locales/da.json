@@ -354,7 +354,8 @@
       "licences": "Licenser",
       "licencesSubtitle": "Modeller og open source-kode",
       "website": "Hjemmeside",
-      "github": "Github"
+      "github": "Github",
+      "x": "X"
     },
     "language": {
       "system": "Enhedens sprog",

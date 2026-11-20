@@ -80,19 +80,18 @@ export const SettingsScreen: React.FC = () => {
       />
       <View style={styles.buttonsContainer}>
         <ActionButton
-          icon={{ iosIconName: 'globe', androidIconName: 'public' }}
           label={t('screens.settings.website')}
           onPress={() => openExternalUrl('https://www.nobodywho.ai/')}
         />
         <ActionButton
-          icon={{
-            iosIconName: 'chevron.left.forwardslash.chevron.right',
-            androidIconName: 'code',
-          }}
           label={t('screens.settings.github')}
           onPress={() =>
             openExternalUrl('https://github.com/nobodywho-ooo/nobodywho')
           }
+        />
+        <ActionButton
+          label={t('screens.settings.x')}
+          onPress={() => openExternalUrl('https://x.com/nobodywho_ai')}
         />
       </View>
       <Text variant="h3" bold style={styles.appName}>

@@ -32,4 +32,15 @@ describe('ActionButton', () => {
 
     expect(onPress).toHaveBeenCalledTimes(1);
   });
+
+  test('renders without an icon when none is given', async () => {
+    const screen = await render(
+      <ActionButton label="Settings" onPress={() => {}} />,
+    );
+
+    expect(screen.getByText('Settings')).toBeTruthy();
+    expect(
+      screen.container.queryAll(node => node.props.iosIconName !== undefined),
+    ).toHaveLength(0);
+  });
 });

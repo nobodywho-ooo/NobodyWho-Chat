@@ -354,7 +354,8 @@
       "licences": "Licences",
       "licencesSubtitle": "Modèles et code open source",
       "website": "Site web",
-      "github": "Github"
+      "github": "Github",
+      "x": "X"
     },
     "language": {
       "system": "Langue de l’appareil",

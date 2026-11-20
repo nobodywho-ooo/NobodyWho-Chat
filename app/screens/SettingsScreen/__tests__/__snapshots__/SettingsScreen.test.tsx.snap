@@ -153,11 +153,6 @@ exports[`renders correctly SettingsScreen 1`] = `
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="public"
-            color="#000000"
-            iosIconName="globe"
-          />
           <Text
             style={
               {
@@ -217,11 +212,6 @@ exports[`renders correctly SettingsScreen 1`] = `
             ]
           }
         >
-          <PlatformIcon
-            androidIconName="code"
-            color="#000000"
-            iosIconName="chevron.left.forwardslash.chevron.right"
-          />
           <Text
             style={
               {
@@ -231,6 +221,65 @@ exports[`renders correctly SettingsScreen 1`] = `
             variant="body1"
           >
             screens.settings.github
+          </Text>
+        </View>
+        <View
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              {
+                "alignItems": "center",
+                "alignSelf": "flex-start",
+                "borderRadius": 12,
+                "flexDirection": "row",
+                "gap": 12,
+                "paddingHorizontal": 16,
+                "paddingVertical": 12,
+              },
+              {
+                "backgroundColor": "#ebebeb",
+              },
+              false,
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "fontWeight": "500",
+              }
+            }
+            variant="body1"
+          >
+            screens.settings.x
           </Text>
         </View>
       </View>
