@@ -66,7 +66,7 @@ export const buildRows = (
   challengeActive: boolean,
   t: TFunction,
 ): Row[] => {
-  const label = (key: string, options?: Record<string, unknown>): string =>
+  const label = (key: string, options: Record<string, unknown> = {}): string =>
     t(`components.messageListItem.searchTrace.${key}`, options);
 
   const takenStepKeys = new Set<string>();

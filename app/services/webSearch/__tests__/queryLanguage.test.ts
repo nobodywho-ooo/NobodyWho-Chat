@@ -105,10 +105,7 @@ describe('sharesLanguageWith', () => {
       ),
     ).toBe(false);
     expect(
-      sharesLanguageWith(
-        'दिल्ली मौसम आज',
-        'User: दिल्ली में आज का मौसम कैसा है',
-      ),
+      sharesLanguageWith('दिल्ली मौसम आज', 'User: दिल्ली में आज का मौसम कैसा है'),
     ).toBe(true);
   });
 

@@ -31,8 +31,8 @@ exports[`renders correctly DotsLoadingScreen 1`] = `
     >
       <SvgMock
         color="#b44618"
-        height={20}
-        width={20}
+        height={30}
+        width={30}
       />
     </View>
     <View
@@ -40,8 +40,8 @@ exports[`renders correctly DotsLoadingScreen 1`] = `
     >
       <SvgMock
         color="#e27426"
-        height={20}
-        width={20}
+        height={30}
+        width={30}
       />
     </View>
     <View
@@ -49,8 +49,8 @@ exports[`renders correctly DotsLoadingScreen 1`] = `
     >
       <SvgMock
         color="#f2a02e"
-        height={20}
-        width={20}
+        height={30}
+        width={30}
       />
     </View>
   </View>
