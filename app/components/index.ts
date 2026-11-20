@@ -3,6 +3,7 @@ import { AmbientGlow } from './AmbientGlow/AmbientGlow';
 import { ActionButton } from './ActionButton/ActionButton';
 import { Button } from './Button/Button';
 import { Chevron } from './Chevron/Chevron';
+import { DotMatrixLoader } from './DotMatrixLoader/DotMatrixLoader';
 import { DownloadedModels } from './DownloadedModels/DownloadedModels';
 import { ProgressBar } from './ProgressBar/ProgressBar';
 import { ErrorView } from './ErrorView/ErrorView';
@@ -37,6 +38,7 @@ export {
   AmbientGlow,
   Button,
   Chevron,
+  DotMatrixLoader,
   DownloadedModels,
   ProgressBar,
   ErrorView,

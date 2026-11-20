@@ -22,10 +22,10 @@ import {
   getModelById,
   getModelDownloads,
 } from 'repositories';
-import { log } from 'helpers';
+import { log, sleep } from 'helpers';
 import { isChatPipeline, MODEL_SLOTS } from 'types';
 import { useResumeModelDownloads, useStyled } from 'hooks';
-import { ErrorScreen, LoadingScreen, OnboardingScreen } from 'screens';
+import { DotMatrixLoadingScreen, ErrorScreen, OnboardingScreen } from 'screens';
 import { WebScrapeHost } from 'components';
 import { AiServiceProvider, prefetchModelCatalogue } from 'services';
 import { RootNavigator } from 'navigation';
@@ -35,6 +35,8 @@ const unWantedError =
   'Cannot create devtools websocket connections in embedded environments.';
 
 const SAMPLE_RATE = __DEV__ ? 0 : 0.1;
+
+const MIN_LOADING_MS = 2000;
 
 Sentry.init({
   dsn: 'https://5901cf2e433ebe444dd4dc9f8aebc790@o4511569171709952.ingest.de.sentry.io/4511569173217360',
@@ -193,6 +195,7 @@ function AppLoader() {
 
     setDbError(false);
     setDbReady(false);
+    const loadingSince = Date.now();
 
     setAudioModeAsync({ playsInSilentMode: true }).catch(error =>
       log('AppLoader setAudioModeAsync failed', error),
@@ -207,6 +210,7 @@ function AppLoader() {
       setShowOnboarding(await needsOnboarding());
 
       Sentry.appLoaded();
+      await sleep(Math.max(0, MIN_LOADING_MS - (Date.now() - loadingSince)));
       setDbReady(true);
     } catch (error) {
       log('App init failed', error, { capture: true });
@@ -243,7 +247,9 @@ function AppLoader() {
   }
 
   if (!dbReady) {
-    return <LoadingScreen message={t('screens.loadingScreen.loadingApp')} />;
+    return (
+      <DotMatrixLoadingScreen message={t('screens.loadingScreen.loadingApp')} />
+    );
   }
 
   return (

@@ -1,0 +1,3813 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`renders correctly DotMatrixLoadingScreen 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "flex": 1,
+        "justifyContent": "center",
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <View
+    accessibilityRole="progressbar"
+    style={
+      {
+        "gap": 8,
+      }
+    }
+    testID="dot-matrix-loader"
+  >
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "gap": 8,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+    </View>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "gap": 8,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+    </View>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "gap": 8,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+    </View>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "gap": 8,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+    </View>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "gap": 8,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+    </View>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "gap": 8,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+    </View>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "gap": 8,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+    </View>
+    <View
+      style={
+        {
+          "flexDirection": "row",
+          "gap": 8,
+        }
+      }
+    >
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+      <View
+        style={
+          {
+            "height": 14,
+            "width": 14,
+          }
+        }
+      >
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        >
+          <View
+            style={
+              [
+                {
+                  "borderRadius": 7,
+                  "bottom": 0,
+                  "left": 0,
+                  "position": "absolute",
+                  "right": 0,
+                  "top": 0,
+                },
+                {
+                  "backgroundColor": "rgba(226, 116, 38, 0.25)",
+                  "boxShadow": "0 0 7px 0px rgba(226, 116, 38, 0.25)",
+                },
+              ]
+            }
+          />
+        </View>
+        <View
+          style={
+            [
+              {
+                "borderRadius": 7,
+                "bottom": 0,
+                "left": 0,
+                "position": "absolute",
+                "right": 0,
+                "top": 0,
+              },
+              {},
+            ]
+          }
+        />
+      </View>
+    </View>
+  </View>
+</View>
+`;
