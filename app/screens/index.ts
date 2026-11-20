@@ -1,7 +1,6 @@
 export * from './ChatScreen/ChatScreen';
 export * from './CustomizeAssistantScreen/CustomizeAssistantScreen';
 export * from './ErrorScreen/ErrorScreen';
-export * from './DotMatrixLoadingScreen/DotMatrixLoadingScreen';
 export * from './LoadingScreen/LoadingScreen';
 export * from './SettingsScreen/SettingsScreen';
 export * from './NoModelDownloadedScreen/NoModelDownloadedScreen';

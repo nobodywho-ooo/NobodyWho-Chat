@@ -3,7 +3,7 @@ import { Alert, ScrollView, View } from 'react-native';
 import { HeaderScrollView } from 'components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { useModelDownloader, useStyled } from 'hooks';
+import { useKeepAwakeWhile, useModelDownloader, useStyled } from 'hooks';
 import { Spacings } from 'style';
 import { Model } from 'types';
 
@@ -34,6 +34,7 @@ export const ModelsScreen: React.FC = () => {
     refetch,
   } = useAvailableModels();
   const { startDownload, promptStopDownload } = useModelDownloader();
+  useKeepAwakeWhile(downloads.length > 0);
 
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const pendingScrollModelIdRef = useRef<number | undefined>(undefined);

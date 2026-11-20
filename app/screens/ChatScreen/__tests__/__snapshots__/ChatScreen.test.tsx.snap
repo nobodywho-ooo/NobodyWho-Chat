@@ -67,6 +67,109 @@ exports[`renders ChatScreen with existing messages 1`] = `
       ]
     }
   >
+    <View
+      pointerEvents="none"
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+          {
+            "transformOrigin": "top",
+          },
+          {},
+        ]
+      }
+      testID="ambient-glow"
+    >
+      <View
+        renderToHardwareTextureAndroid={true}
+        shouldRasterizeIOS={true}
+        style={
+          [
+            {
+              "bottom": 0,
+              "left": 0,
+              "position": "absolute",
+              "right": 0,
+              "top": 0,
+            },
+            {
+              "experimental_backgroundImage": [
+                {
+                  "colorStops": [
+                    {
+                      "color": "rgba(180, 70, 24, 0.336)",
+                      "positions": [
+                        "0%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(180, 70, 24, 0.1848)",
+                      "positions": [
+                        "35%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(180, 70, 24, 0)",
+                      "positions": [
+                        "100%",
+                      ],
+                    },
+                  ],
+                  "position": {
+                    "left": "30%",
+                    "top": "0%",
+                  },
+                  "shape": "ellipse",
+                  "size": {
+                    "x": "100%",
+                    "y": "55%",
+                  },
+                  "type": "radial-gradient",
+                },
+                {
+                  "colorStops": [
+                    {
+                      "color": "rgba(226, 116, 38, 0.304)",
+                      "positions": [
+                        "0%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(226, 116, 38, 0.1672)",
+                      "positions": [
+                        "35%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(226, 116, 38, 0)",
+                      "positions": [
+                        "100%",
+                      ],
+                    },
+                  ],
+                  "position": {
+                    "left": "70%",
+                    "top": "4%",
+                  },
+                  "shape": "ellipse",
+                  "size": {
+                    "x": "100%",
+                    "y": "50%",
+                  },
+                  "type": "radial-gradient",
+                },
+              ],
+            },
+          ]
+        }
+      />
+    </View>
     <LegendList
       maintainVisibleContentPosition={false}
     >
@@ -350,31 +453,25 @@ exports[`renders correctly empty ChatScreen 1`] = `
     }
   >
     <View
-      entering={
-        {
-          "delay": [Function],
-          "duration": [Function],
-        }
-      }
-      exiting={
-        {
-          "delay": [Function],
-          "duration": [Function],
-        }
-      }
       pointerEvents="none"
       style={
-        {
-          "bottom": 0,
-          "left": 0,
-          "position": "absolute",
-          "right": 0,
-          "top": 0,
-        }
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+          {
+            "transformOrigin": "top",
+          },
+          {},
+        ]
       }
+      testID="ambient-glow"
     >
       <View
-        pointerEvents="none"
         renderToHardwareTextureAndroid={true}
         shouldRasterizeIOS={true}
         style={
@@ -391,13 +488,13 @@ exports[`renders correctly empty ChatScreen 1`] = `
                 {
                   "colorStops": [
                     {
-                      "color": "rgba(180, 70, 24, 0.45)",
+                      "color": "rgba(180, 70, 24, 0.336)",
                       "positions": [
                         "0%",
                       ],
                     },
                     {
-                      "color": "rgba(180, 70, 24, 0.2475)",
+                      "color": "rgba(180, 70, 24, 0.1848)",
                       "positions": [
                         "35%",
                       ],
@@ -410,58 +507,26 @@ exports[`renders correctly empty ChatScreen 1`] = `
                     },
                   ],
                   "position": {
-                    "left": "15%",
+                    "left": "30%",
                     "top": "0%",
                   },
                   "shape": "ellipse",
                   "size": {
-                    "x": "85%",
-                    "y": "45%",
+                    "x": "100%",
+                    "y": "55%",
                   },
                   "type": "radial-gradient",
                 },
                 {
                   "colorStops": [
                     {
-                      "color": "rgba(242, 160, 46, 0.35)",
+                      "color": "rgba(226, 116, 38, 0.304)",
                       "positions": [
                         "0%",
                       ],
                     },
                     {
-                      "color": "rgba(242, 160, 46, 0.1925)",
-                      "positions": [
-                        "35%",
-                      ],
-                    },
-                    {
-                      "color": "rgba(242, 160, 46, 0)",
-                      "positions": [
-                        "100%",
-                      ],
-                    },
-                  ],
-                  "position": {
-                    "left": "55%",
-                    "top": "7%",
-                  },
-                  "shape": "ellipse",
-                  "size": {
-                    "x": "70%",
-                    "y": "38%",
-                  },
-                  "type": "radial-gradient",
-                },
-                {
-                  "colorStops": [
-                    {
-                      "color": "rgba(226, 116, 38, 0.4)",
-                      "positions": [
-                        "0%",
-                      ],
-                    },
-                    {
-                      "color": "rgba(226, 116, 38, 0.22)",
+                      "color": "rgba(226, 116, 38, 0.1672)",
                       "positions": [
                         "35%",
                       ],
@@ -474,13 +539,13 @@ exports[`renders correctly empty ChatScreen 1`] = `
                     },
                   ],
                   "position": {
-                    "left": "92%",
-                    "top": "14%",
+                    "left": "70%",
+                    "top": "4%",
                   },
                   "shape": "ellipse",
                   "size": {
-                    "x": "70%",
-                    "y": "36%",
+                    "x": "100%",
+                    "y": "50%",
                   },
                   "type": "radial-gradient",
                 },
@@ -488,7 +553,6 @@ exports[`renders correctly empty ChatScreen 1`] = `
             },
           ]
         }
-        testID="ambient-glow"
       />
     </View>
     <LegendList

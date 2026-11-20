@@ -15,6 +15,7 @@ import {
   SpeechToTextPreferences,
   Text,
   TextToSpeechPreferences,
+  VoiceGlow,
 } from 'components';
 import {
   AssistantConfig,
@@ -25,7 +26,7 @@ import {
 import { useAppState, useStyled } from 'hooks';
 import { haptics } from 'helpers';
 
-import { VoiceGlow, VoiceSetup } from './components';
+import { VoiceSetup } from './components';
 import {
   useDrawerRevealOpacity,
   useVoiceConversation,

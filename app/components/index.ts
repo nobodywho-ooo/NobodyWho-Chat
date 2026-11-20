@@ -3,7 +3,6 @@ import { AmbientGlow } from './AmbientGlow/AmbientGlow';
 import { ActionButton } from './ActionButton/ActionButton';
 import { Button } from './Button/Button';
 import { Chevron } from './Chevron/Chevron';
-import { DotMatrixLoader } from './DotMatrixLoader/DotMatrixLoader';
 import { DownloadedModels } from './DownloadedModels/DownloadedModels';
 import { ProgressBar } from './ProgressBar/ProgressBar';
 import { ErrorView } from './ErrorView/ErrorView';
@@ -30,6 +29,8 @@ import { Text, fontSizes } from './Text/Text';
 import { Toast } from './Toast/Toast';
 import { SpeechToTextPreferences } from './SpeechToTextPreferences/SpeechToTextPreferences';
 import { TextToSpeechPreferences } from './TextToSpeechPreferences/TextToSpeechPreferences';
+import { VoiceGlow } from './VoiceGlow/VoiceGlow';
+import type { VoiceGlowEdge, VoiceLevels } from './VoiceGlow/VoiceGlow';
 import { WebScrapeHost } from './WebScrapeHost/WebScrapeHost';
 
 export {
@@ -38,7 +39,6 @@ export {
   AmbientGlow,
   Button,
   Chevron,
-  DotMatrixLoader,
   DownloadedModels,
   ProgressBar,
   ErrorView,
@@ -64,7 +64,8 @@ export {
   Text,
   TextToSpeechPreferences,
   Toast,
+  VoiceGlow,
   WebScrapeHost,
 };
 
-export type { IconButtonIconProps };
+export type { IconButtonIconProps, VoiceGlowEdge, VoiceLevels };

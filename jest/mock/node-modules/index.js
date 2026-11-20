@@ -139,6 +139,12 @@ jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: opts => mockLaunchImageLibraryAsync(opts),
 }));
 
+jest.mock('expo-keep-awake', () => ({
+  activateKeepAwakeAsync: jest.fn(() => Promise.resolve()),
+  deactivateKeepAwake: jest.fn(() => Promise.resolve()),
+  useKeepAwake: jest.fn(),
+}));
+
 jest.mock('expo-document-picker', () => ({
   getDocumentAsync: opts => mockGetDocumentAsync(opts),
 }));
@@ -271,16 +277,30 @@ jest.mock('react-native-reanimated', () => {
       View: ReactNative.View,
       Image: ReactNative.Image,
     },
-    useSharedValue: initial => ({ value: initial }),
+    useSharedValue: initial => ({
+      value: initial,
+      get() {
+        return this.value;
+      },
+      set(next) {
+        this.value = next;
+      },
+    }),
     useAnimatedStyle: () => ({}),
     useAnimatedReaction: () => {},
     withTiming: value => value,
     withRepeat: animation => animation,
+    withSequence: (...animations) => animations[animations.length - 1],
+    withDelay: (_delay, animation) => animation,
     cancelAnimation: () => {},
     Easing: {
       linear: t => t,
       ease: t => t,
+      in: easing => easing,
+      out: easing => easing,
       inOut: easing => easing,
+      quad: t => t,
+      cubic: t => t,
       bezier: () => t => t,
     },
     // Layout animation builders: chainable no-ops (web search trace).

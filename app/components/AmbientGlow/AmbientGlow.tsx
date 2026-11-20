@@ -1,13 +1,20 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
+import { useTheme } from 'context';
 import { withAlpha } from 'helpers';
 import { useStyled } from 'hooks';
+import type { Theme } from 'types';
 
-type Edge = 'top' | 'bottom';
-
-/** centre (% of the width / % from the edge) and radii (% of the width / height). */
+/** centre (% of the width / % down from the top) and radii (% of the width / height). */
 interface Glow {
-  tone: 'primary' | 'secondary' | 'tertiary';
+  tone: 'primary' | 'secondary';
   x: number;
   y: number;
   rx: number;
@@ -16,10 +23,14 @@ interface Glow {
 }
 
 const GLOWS: ReadonlyArray<Glow> = [
-  { tone: 'primary', x: 15, y: 0, rx: 85, ry: 45, alpha: 0.45 },
-  { tone: 'tertiary', x: 55, y: 7, rx: 70, ry: 38, alpha: 0.35 },
-  { tone: 'secondary', x: 92, y: 14, rx: 70, ry: 36, alpha: 0.4 },
+  { tone: 'primary', x: 30, y: 0, rx: 100, ry: 55, alpha: 0.42 },
+  { tone: 'secondary', x: 70, y: 4, rx: 100, ry: 50, alpha: 0.38 },
 ];
+
+const THEME_STRENGTH: Record<Theme, number> = {
+  light: 0.8,
+  dark: 0.5,
+};
 
 const FALLOFF: ReadonlyArray<readonly [position: number, strength: number]> = [
   [0, 1],
@@ -27,43 +38,87 @@ const FALLOFF: ReadonlyArray<readonly [position: number, strength: number]> = [
   [100, 0],
 ];
 
+const RETRACTED_SCALE = 0.12;
+const FADE_SPAN = 0.35;
+const REVEAL_MS = 1000;
+const HIDE_MS = 900;
+
+export const AMBIENT_GLOW_HIDE_MS = HIDE_MS;
+
 interface AmbientGlowProps {
-  edge: Edge;
+  visible: boolean;
 }
 
 export const AmbientGlow: React.FC<AmbientGlowProps> = React.memo(
-  ({ edge }) => {
+  ({ visible }) => {
     const { colors } = useStyled();
+    const theme = useTheme();
+    const reducedMotion = useReducedMotion();
+    const shown = useSharedValue(0);
 
-    const style = useMemo<ViewStyle>(
+    useEffect(() => {
+      shown.set(
+        withTiming(visible ? 1 : 0, {
+          duration: visible ? REVEAL_MS : HIDE_MS,
+          easing: Easing.inOut(Easing.quad),
+        }),
+      );
+    }, [visible, shown]);
+
+    const animatedStyle = useAnimatedStyle(() => {
+      const value = shown.get();
+
+      if (reducedMotion) {
+        return { opacity: value, transform: [{ scaleY: 1 }] };
+      }
+
+      return {
+        opacity: Math.min(1, value / FADE_SPAN),
+        transform: [
+          { scaleY: RETRACTED_SCALE + (1 - RETRACTED_SCALE) * value },
+        ],
+      };
+    });
+
+    const paint = useMemo<ViewStyle>(
       () => ({
         experimental_backgroundImage: GLOWS.map(glow => ({
           type: 'radial-gradient' as const,
           shape: 'ellipse' as const,
           size: { x: `${glow.rx}%`, y: `${glow.ry}%` },
-          position:
-            edge === 'top'
-              ? { left: `${glow.x}%`, top: `${glow.y}%` }
-              : { left: `${glow.x}%`, bottom: `${glow.y}%` },
+          position: { left: `${glow.x}%`, top: `${glow.y}%` },
           colorStops: FALLOFF.map(([at, strength]) => ({
-            color: withAlpha(colors[glow.tone], glow.alpha * strength),
+            color: withAlpha(
+              colors[glow.tone],
+              glow.alpha * THEME_STRENGTH[theme] * strength,
+            ),
             positions: [`${at}%`],
           })),
         })),
       }),
-      [edge, colors],
+      [colors, theme],
     );
 
     return (
-      <View
+      <Animated.View
         testID="ambient-glow"
         pointerEvents="none"
-        style={[StyleSheet.absoluteFill, style]}
-        renderToHardwareTextureAndroid
-        shouldRasterizeIOS
-      />
+        style={[StyleSheet.absoluteFill, styles.anchor, animatedStyle]}
+      >
+        <View
+          style={[StyleSheet.absoluteFill, paint]}
+          renderToHardwareTextureAndroid
+          shouldRasterizeIOS
+        />
+      </Animated.View>
     );
   },
 );
 
 AmbientGlow.displayName = 'AmbientGlow';
+
+const styles = StyleSheet.create({
+  anchor: {
+    transformOrigin: 'top',
+  },
+});

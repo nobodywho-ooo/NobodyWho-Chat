@@ -295,6 +295,9 @@ const InputBarView: React.FC<InputBarProps> = ({
       backgroundColor={
         active ? colors.ctaSurfacePrimary : colors.surfaceContainer
       }
+      glass
+      compact
+      glassTint={active ? colors.ctaSurfacePrimary : undefined}
       accessibilityLabel={accessibilityLabel}
       style={styles.iconButtonSpacing}
     />
@@ -323,6 +326,9 @@ const InputBarView: React.FC<InputBarProps> = ({
         backgroundColor={
           active ? colors.ctaSurfacePrimary : colors.surfaceContainer
         }
+        glass
+        compact
+        glassTint={active ? colors.ctaSurfacePrimary : undefined}
         accessibilityLabel={accessibilityLabel}
       />
       <Pressable onPress={onPress}>
@@ -458,6 +464,9 @@ const InputBarView: React.FC<InputBarProps> = ({
                     size={20}
                     color={transcribingIconColor}
                     backgroundColor={transcribingIconBackgroundColor}
+                    glass
+                    compact
+                    glassTint={isRecording ? colors.dangerSurface : undefined}
                     accessibilityLabel={transcribingIconAccessibilityLabel}
                     style={styles.iconButtonSpacing}
                   />
@@ -484,6 +493,11 @@ const InputBarView: React.FC<InputBarProps> = ({
                       ? colors.ctaSurfacePrimary
                       : colors.surfaceContainer
                   }
+                  glass
+                  compact
+                  glassTint={
+                    thinkingEnabled ? colors.ctaSurfacePrimary : undefined
+                  }
                   accessibilityLabel={t('components.inputBar.thinking')}
                   accessibilityState={{ selected: thinkingEnabled }}
                   testID="thinking-toggle"
@@ -509,6 +523,11 @@ const InputBarView: React.FC<InputBarProps> = ({
                       ? colors.ctaSurfacePrimary
                       : colors.surfaceContainer
                   }
+                  glass
+                  compact
+                  glassTint={
+                    webSearchEnabled ? colors.ctaSurfacePrimary : undefined
+                  }
                   accessibilityLabel={t('components.inputBar.webSearch')}
                   accessibilityState={{ selected: webSearchEnabled }}
                   testID="web-search-toggle"
@@ -522,6 +541,8 @@ const InputBarView: React.FC<InputBarProps> = ({
                 size={20}
                 color={colors.onSurface}
                 backgroundColor={colors.surfaceContainer}
+                glass
+                compact
                 accessibilityLabel={t('components.inputBar.voiceAssistant')}
               />
             </View>
@@ -595,6 +616,9 @@ const InputBarAction: React.FC<InputBarActionProps> = ({
       size={20}
       color={color}
       backgroundColor={backgroundColor}
+      glass
+      compact
+      glassTint={isStreaming ? undefined : backgroundColor}
     />
   );
 };

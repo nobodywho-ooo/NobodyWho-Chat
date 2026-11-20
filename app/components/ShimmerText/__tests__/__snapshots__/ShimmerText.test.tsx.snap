@@ -2,6 +2,9 @@
 
 exports[`renders correctly ShimmerText 1`] = `
 <View
+  accessibilityLabel="Thinking…"
+  accessibilityRole="text"
+  accessible={true}
   onLayout={[Function]}
   style={
     {
@@ -10,16 +13,21 @@ exports[`renders correctly ShimmerText 1`] = `
   }
 >
   <Text
+    importantForAccessibility="no"
     numberOfLines={1}
     style={
       [
+        [
+          {
+            "fontWeight": "600",
+          },
+          {
+            "fontSize": 14,
+            "lineHeight": 19,
+          },
+        ],
         {
-          "fontWeight": "600",
-        },
-        {
-          "color": "#000000",
-          "fontSize": 14,
-          "lineHeight": 19,
+          "opacity": 0,
         },
       ]
     }
@@ -27,72 +35,74 @@ exports[`renders correctly ShimmerText 1`] = `
     Thinking…
   </Text>
   <View
-    pointerEvents="none"
     style={
-      {
-        "bottom": 0,
-        "left": 0,
-        "overflow": "hidden",
-        "position": "absolute",
-        "right": 0,
-        "top": 0,
-      }
+      [
+        {
+          "bottom": 0,
+          "left": 0,
+          "position": "absolute",
+          "right": 0,
+          "top": 0,
+        },
+        {
+          "backgroundColor": "#7c7c7c",
+        },
+      ]
+    }
+  />
+  <View
+    style={
+      [
+        {
+          "bottom": 0,
+          "left": 0,
+          "position": "absolute",
+          "top": 0,
+        },
+        {
+          "width": 60,
+        },
+        {},
+      ]
     }
   >
-    <View
-      style={
+    <LinearGradient
+      colors={
         [
-          {
-            "bottom": 0,
-            "left": 0,
-            "position": "absolute",
-            "top": 0,
-          },
-          {
-            "width": 340,
-          },
-          {},
+          "rgba(0, 0, 0, 0)",
+          "#000000",
+          "rgba(0, 0, 0, 0)",
         ]
       }
-    >
-      <LinearGradient
-        colors={
-          [
-            "rgba(255, 255, 255, 0.4863)",
-            "rgba(255, 255, 255, 0.4863)",
-            "rgba(255, 255, 255, 0)",
-            "rgba(255, 255, 255, 0.4863)",
-            "rgba(255, 255, 255, 0.4863)",
-          ]
+      end={
+        {
+          "x": 1,
+          "y": 0,
         }
-        end={
-          {
-            "x": 1,
-            "y": 0,
-          }
+      }
+      locations={
+        [
+          0,
+          0.5,
+          1,
+        ]
+      }
+      start={
+        {
+          "x": 0,
+          "y": 0,
         }
-        locations={
-          [
-            0,
-            0.4117647058823529,
-            0.5,
-            0.5882352941176471,
-            1,
-          ]
+      }
+      style={
+        {
+          "bottom": 0,
+          "left": 0,
+          "position": "absolute",
+          "right": 0,
+          "top": 0,
         }
-        start={
-          {
-            "x": 0,
-            "y": 0,
-          }
-        }
-        style={
-          {
-            "flex": 1,
-          }
-        }
-      />
-    </View>
+      }
+    />
   </View>
 </View>
 `;

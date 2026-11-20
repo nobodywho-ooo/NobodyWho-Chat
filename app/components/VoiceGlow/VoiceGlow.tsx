@@ -17,7 +17,18 @@ import { withAlpha } from 'helpers';
 import { useStyled } from 'hooks';
 import { Spacings } from 'style';
 
-import type { VoiceLevels } from '../hooks';
+export interface VoiceLevels {
+  /** Overall loudness. */
+  level: SharedValue<number>;
+  /** Sub-250 Hz energy — the body of a vowel. */
+  low: SharedValue<number>;
+  /** Above 2 kHz — consonants and sibilance. */
+  high: SharedValue<number>;
+  /** Voice-activity envelope: 1 while sound is flowing, 0 in silence. */
+  active: SharedValue<number>;
+}
+
+export type VoiceGlowEdge = 'top' | 'bottom';
 
 const HEIGHT_RATIO = 0.5;
 
@@ -53,12 +64,12 @@ const FALLOFF: ReadonlyArray<readonly [position: number, alpha: number]> = [
 
 type Tone = 'body' | 'haze' | 'core';
 
-/** x,y: centre, as fractions of the width and of the height above the bottom. */
+/** x,y: centre, as fractions of the width and of the height in from the edge. */
 /** rx,ry: radii, as fractions of the width and the height. */
 /** rest,peak: opacity in silence, and with its band wide open. */
 /** driftX,driftY: drift amplitude, as fractions of the width and the height. */
 /** speed,offset: drift speed (radians per phase unit) and offset, so none move in step. */
-/** lift: rise at full drive, as a fraction of the height. */
+/** lift: reach away from the edge at full drive, as a fraction of the height. */
 /** swell: vertical swell at full drive (it widens by 40% of that). */
 interface Blob {
   tone: Tone;
@@ -173,6 +184,7 @@ interface GlowBlobProps {
   phase: SharedValue<number>;
   levels: VoiceLevels;
   motion: number; /** 1 normally, 0 with reduced motion: the blob then only brightens. */
+  edge: VoiceGlowEdge;
 }
 
 const GlowBlob: React.FC<GlowBlobProps> = ({
@@ -183,8 +195,10 @@ const GlowBlob: React.FC<GlowBlobProps> = ({
   phase,
   levels,
   motion,
+  edge,
 }) => {
   const { level, low, high, active } = levels;
+  const away = edge === 'bottom' ? -1 : 1;
 
   const animatedStyle = useAnimatedStyle(() => {
     const drive =
@@ -207,7 +221,7 @@ const GlowBlob: React.FC<GlowBlobProps> = ({
         (blob.peak - blob.rest) * Math.max(drive, AWAKE_GLOW * active.value),
       transform: [
         { translateX: motion * driftX },
-        { translateY: motion * (driftY - blob.lift * height * drive) },
+        { translateY: motion * (driftY + away * blob.lift * height * drive) },
         { scaleX: 1 + motion * (breathe + 0.4 * swell) },
         { scaleY: 1 + motion * (breathe + swell) },
       ],
@@ -223,7 +237,7 @@ const GlowBlob: React.FC<GlowBlobProps> = ({
         styles.blobContainer,
         {
           left: blob.x * width - blobWidth / 2,
-          bottom: blob.y * height - blobHeight / 2,
+          [edge]: blob.y * height - blobHeight / 2,
           width: blobWidth,
           height: blobHeight,
         },
@@ -242,12 +256,14 @@ const GlowBlob: React.FC<GlowBlobProps> = ({
 
 interface VoiceGlowProps {
   levels: VoiceLevels;
+  edge?: VoiceGlowEdge;
   paused?: boolean;
   opacity?: SharedValue<number>;
 }
 
 export const VoiceGlow: React.FC<VoiceGlowProps> = ({
   levels,
+  edge = 'bottom',
   paused = false,
   opacity,
 }) => {
@@ -298,12 +314,20 @@ export const VoiceGlow: React.FC<VoiceGlowProps> = ({
     opacity: opacity ? opacity.value : 1,
   }));
 
+  const isBottom = edge === 'bottom';
+  const glowContainerStyle = isBottom
+    ? styles.bottomGlowContainer
+    : styles.topGlowContainer;
+  const fieldContainerStyle = isBottom
+    ? styles.bottomFieldContainer
+    : styles.topFieldContainer;
+
   return (
     <Animated.View
       pointerEvents="none"
-      style={[styles.glowContainer, { height }, revealStyle]}
+      style={[glowContainerStyle, { height }, revealStyle]}
     >
-      <View style={styles.fieldContainer} onLayout={onLayout}>
+      <View style={fieldContainerStyle} onLayout={onLayout}>
         {BLOBS.map((blob, index) => (
           <GlowBlob
             key={index}
@@ -314,6 +338,7 @@ export const VoiceGlow: React.FC<VoiceGlowProps> = ({
             phase={phase}
             levels={levels}
             motion={reducedMotion ? 0 : 1}
+            edge={edge}
           />
         ))}
       </View>
@@ -322,7 +347,7 @@ export const VoiceGlow: React.FC<VoiceGlowProps> = ({
 };
 
 const styles = StyleSheet.create({
-  glowContainer: {
+  bottomGlowContainer: {
     position: 'absolute',
     left: 0,
     right: -CORNER_RADIUS,
@@ -330,12 +355,26 @@ const styles = StyleSheet.create({
     borderRadius: CORNER_RADIUS,
     overflow: 'hidden',
   },
-  fieldContainer: {
+  bottomFieldContainer: {
     position: 'absolute',
     top: 0,
     bottom: 0,
     left: 0,
     right: CORNER_RADIUS,
+  },
+  topGlowContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    overflow: 'hidden',
+  },
+  topFieldContainer: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
   blobContainer: {
     position: 'absolute',

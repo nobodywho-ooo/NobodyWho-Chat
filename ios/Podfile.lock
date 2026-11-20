@@ -59,7 +59,7 @@ PODS:
     - SDWebImageWebPCoder
   - ExpoImagePicker (58.0.10):
     - ExpoModulesCore
-  - ExpoKeepAwake (58.0.3):
+  - ExpoKeepAwake (58.0.4):
     - ExpoModulesCore
   - ExpoLogBox (58.0.15):
     - React-Core
@@ -2555,7 +2555,7 @@ DEPENDENCIES:
   - ExpoFont (from `../node_modules/expo-font/ios`)
   - ExpoImageManipulator (from `../node_modules/expo-image-manipulator/ios`)
   - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
-  - ExpoKeepAwake (from `../node_modules/expo/node_modules/expo-keep-awake/ios`)
+  - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
   - "ExpoLogBox (from `../node_modules/@expo/log-box`)"
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoModulesJSI (from `../node_modules/expo-modules-jsi/apple`)
@@ -2708,7 +2708,7 @@ EXTERNAL SOURCES:
   ExpoImagePicker:
     :path: "../node_modules/expo-image-picker/ios"
   ExpoKeepAwake:
-    :path: "../node_modules/expo/node_modules/expo-keep-awake/ios"
+    :path: "../node_modules/expo-keep-awake/ios"
   ExpoLogBox:
     :path: "../node_modules/@expo/log-box"
   ExpoModulesCore:
@@ -2946,7 +2946,7 @@ SPEC CHECKSUMS:
   ExpoFont: 77eaad26c6a7ef6be8d431963358def09d8e3a73
   ExpoImageManipulator: a480e23723df0ed8d2d67b1251eb3a0afe26a42e
   ExpoImagePicker: a466134ec92fed0b38bbf9062c7eb5f3c8c49d94
-  ExpoKeepAwake: fd18a5d233329013c578030ad399d8e10b252b5f
+  ExpoKeepAwake: 3dc7cce59bdc13796f772ac54d3af1ca6b6954cd
   ExpoLogBox: 9bfba7bb99c806b678703e6c62323f3c4785e706
   ExpoModulesCore: 71ef92defce9cc6fd154498150e76a6b05665f3b
   ExpoModulesJSI: 600554f1b699e994b78398d87a39d477b6cd4bed

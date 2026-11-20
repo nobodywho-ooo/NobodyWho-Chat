@@ -124,7 +124,9 @@ exports[`renders correctly InputBar 1`] = `
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            compact={true}
             disabled={false}
+            glass={true}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -138,7 +140,10 @@ exports[`renders correctly InputBar 1`] = `
         <IconButton
           backgroundColor="#e5bdaf"
           color="#FFFFFF"
+          compact={true}
           disabled={false}
+          glass={true}
+          glassTint="#e5bdaf"
           icon={
             {
               "androidIconName": "arrow_upward",
@@ -278,7 +283,9 @@ exports[`renders correctly InputBar when streaming 1`] = `
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            compact={true}
             disabled={false}
+            glass={true}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -292,7 +299,9 @@ exports[`renders correctly InputBar when streaming 1`] = `
         <IconButton
           backgroundColor="#ebebeb"
           color="#000000"
+          compact={true}
           disabled={false}
+          glass={true}
           icon={
             {
               "androidIconName": "stop",
@@ -432,7 +441,9 @@ exports[`renders correctly InputBar with value 1`] = `
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            compact={true}
             disabled={false}
+            glass={true}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -446,7 +457,10 @@ exports[`renders correctly InputBar with value 1`] = `
         <IconButton
           backgroundColor="#b44618"
           color="#FFFFFF"
+          compact={true}
           disabled={false}
+          glass={true}
+          glassTint="#b44618"
           icon={
             {
               "androidIconName": "arrow_upward",
@@ -586,7 +600,9 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
               accessibilityLabel="components.inputBar.attach"
               backgroundColor="#ebebeb"
               color="#000000"
+              compact={true}
               disabled={false}
+              glass={true}
               icon={
                 {
                   "androidIconName": "add",
@@ -606,7 +622,9 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            compact={true}
             disabled={false}
+            glass={true}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -620,7 +638,10 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
         <IconButton
           backgroundColor="#e5bdaf"
           color="#FFFFFF"
+          compact={true}
           disabled={false}
+          glass={true}
+          glassTint="#e5bdaf"
           icon={
             {
               "androidIconName": "arrow_upward",

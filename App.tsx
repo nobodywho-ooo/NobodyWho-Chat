@@ -25,7 +25,7 @@ import {
 import { log, sleep } from 'helpers';
 import { isChatPipeline, MODEL_SLOTS } from 'types';
 import { useResumeModelDownloads, useStyled } from 'hooks';
-import { DotMatrixLoadingScreen, ErrorScreen, OnboardingScreen } from 'screens';
+import { ErrorScreen, LoadingScreen, OnboardingScreen } from 'screens';
 import { WebScrapeHost } from 'components';
 import { AiServiceProvider, prefetchModelCatalogue } from 'services';
 import { RootNavigator } from 'navigation';
@@ -247,9 +247,7 @@ function AppLoader() {
   }
 
   if (!dbReady) {
-    return (
-      <DotMatrixLoadingScreen message={t('screens.loadingScreen.loadingApp')} />
-    );
+    return <LoadingScreen message={t('screens.loadingScreen.loadingApp')} />;
   }
 
   return (

@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet } from 'react-native';
 import { render } from '@testing-library/react-native';
 
-import { VoiceGlow } from '../components';
+import { VoiceGlow } from '../VoiceGlow';
 
 // Shared values at rest; the glow only reads `.value` from them.
 const level = { value: 0 };

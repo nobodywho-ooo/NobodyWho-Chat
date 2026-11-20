@@ -3,6 +3,7 @@ export * from './useConversations';
 export * from './useDrawerScrollGesture';
 export * from './useMessages';
 export * from './useCuratedModels';
+export * from './useKeepAwakeWhile';
 export * from './useModelDownloader';
 export * from './useModelDownloads';
 export * from './useModels';

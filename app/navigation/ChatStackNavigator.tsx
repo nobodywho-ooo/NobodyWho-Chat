@@ -68,6 +68,7 @@ interface ChatRootContextValue {
   status: SessionStatus;
   chatHistory: DisplayMessage[];
   conversationId: LoadedConversationId;
+  historyPending: boolean;
   loadingMessage: string;
   onConversationCreated: (id: number) => void;
   onRetry: () => void;
@@ -80,6 +81,7 @@ const defaultChatRootValue: ChatRootContextValue = {
   status: SessionStatus.Loading,
   chatHistory: [],
   conversationId: undefined,
+  historyPending: true,
   loadingMessage: '',
   onConversationCreated: () => undefined,
   onRetry: () => undefined,
@@ -151,6 +153,7 @@ const ChatRootScreen = () => {
         <ChatScreen
           conversationId={ctx.conversationId}
           messages={ctx.chatHistory}
+          historyPending={ctx.historyPending}
           onConversationCreated={ctx.onConversationCreated}
           disabled={loading}
         />
@@ -169,7 +172,8 @@ const ChatRootScreen = () => {
 export const ChatStackNavigator = () => {
   const { t } = useTranslation();
   const { models, loading: modelsLoading } = useModels();
-  const { modelIdInUse } = useAppState();
+  const { modelIdInUse, conversationIdInUse: inUseConversationId } =
+    useAppState();
   const { slots, ensureVoiceEngine } = useAiService();
   const chat = slots.chat.ref;
 
@@ -564,6 +568,7 @@ export const ChatStackNavigator = () => {
       status,
       chatHistory,
       conversationId: loadedConversationId,
+      historyPending: inUseConversationId !== loadedConversationId,
       loadingMessage,
       onConversationCreated: handleConversationCreated,
       onRetry: startSession,
@@ -575,6 +580,7 @@ export const ChatStackNavigator = () => {
       status,
       chatHistory,
       loadedConversationId,
+      inUseConversationId,
       loadingMessage,
       handleConversationCreated,
       startSession,

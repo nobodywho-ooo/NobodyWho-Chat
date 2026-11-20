@@ -256,6 +256,24 @@
 			shellPath = /bin/sh;
 			shellScript = "if [ \"${CONFIGURATION}\" = \"Debug\" ]; then\n  ASSETS_DIR=\"${SRCROOT}/../assets\"\n  DEST_DIR=\"${BUILT_PRODUCTS_DIR}/${CONTENTS_FOLDER_PATH}\"\n\n  if [ ! -d \"${ASSETS_DIR}\" ]; then\n    echo \"No assets directory found, skipping.\"\n    exit 0\n  fi\n\n  for SRC in \"${ASSETS_DIR}\"/*; do\n    [ -f \"${SRC}\" ] || continue\n    FILENAME=$(basename \"${SRC}\")\n    echo \"Copying ${FILENAME} to bundle...\"\n    cp \"${SRC}\" \"${DEST_DIR}/${FILENAME}\"\n  done\nelse\n  echo \"Skipping asset copy for ${CONFIGURATION} build.\"\nfi\n";
 		};
+		53C2BF912FE01CE700924CCC /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh ../node_modules/@sentry/react-native/scripts/sentry-xcode-debug-files.sh\n";
+		};
 		53D7A1E02FF0A00100B1C2D3 /* Copy Prebuilt React Native dSYMs */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -274,24 +292,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "/bin/bash \"${SRCROOT}/scripts/copy-prebuilt-rn-dsyms.sh\"\n";
-		};
-		53C2BF912FE01CE700924CCC /* Upload Debug Symbols to Sentry */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			name = "Upload Debug Symbols to Sentry";
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "/bin/sh ../node_modules/@sentry/react-native/scripts/sentry-xcode-debug-files.sh\n";
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;

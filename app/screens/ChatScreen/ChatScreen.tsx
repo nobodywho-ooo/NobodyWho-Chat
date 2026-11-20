@@ -15,7 +15,6 @@ import { BlurTargetView, BlurView } from 'expo-blur';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { useIsFocused } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
-import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import {
   AmbientGlow,
   GlassScrollEdge,
@@ -53,8 +52,6 @@ import {
 import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
-const GLOW_FADE_IN_MS = 520;
-const GLOW_FADE_OUT_MS = 320;
 
 const WEB_NOTICE_VISIBLE_MS = 3500;
 
@@ -73,6 +70,7 @@ const EmptyArea: React.FC = () => (
 interface ChatScreenProps {
   conversationId: number | undefined;
   messages: DisplayMessage[];
+  historyPending?: boolean;
   onConversationCreated: (conversationId: number) => void;
   disabled?: boolean;
 }
@@ -80,6 +78,7 @@ interface ChatScreenProps {
 export const ChatScreen: React.FC<ChatScreenProps> = ({
   conversationId: initialConversationId,
   messages: initialMessages,
+  historyPending = false,
   onConversationCreated,
   disabled = false,
 }) => {
@@ -148,11 +147,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     ramGB,
   } = useWebSearchToggle(conversationId);
 
-  const {
-    thinking,
-    canThink,
-    toggle: toggleThinking,
-  } = useThinkingToggle();
+  const { thinking, canThink, toggle: toggleThinking } = useThinkingToggle();
 
   const webNotice = useWebSearchStore(state => state.notice);
   const clearWebNotice = useWebSearchStore(state => state.clearNotice);
@@ -311,7 +306,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const hasMessages = messages.length > 0;
 
-  const showStarters = !hasMessages && !attachExpanded;
+  const isEmptyChat = !hasMessages && !historyPending;
+
+  const showStarters = isEmptyChat && !attachExpanded;
   const messageStarters = useMemo(
     () =>
       showStarters && (
@@ -354,16 +351,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             { backgroundColor: colors.surface },
           ]}
         >
-          {!hasMessages && (
-            <Animated.View
-              style={styles.glowContainer}
-              pointerEvents="none"
-              entering={FadeIn.duration(GLOW_FADE_IN_MS)}
-              exiting={FadeOut.duration(GLOW_FADE_OUT_MS)}
-            >
-              <AmbientGlow edge="top" />
-            </Animated.View>
-          )}
+          <AmbientGlow visible={isEmptyChat} />
           <KeyboardAwareLegendList
             ref={list.listRef}
             data={messages}
@@ -388,9 +376,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           />
         </View>
       </BlurTargetView>
-      {hasMessages && (
-        <GlassScrollEdge anchor={headerInset} blurTarget={blurTargetRef} />
-      )}
+      <GlassScrollEdge
+        anchor={headerInset}
+        blurTarget={blurTargetRef}
+        visible={!isEmptyChat}
+      />
       {attachExpanded && (
         <Pressable
           style={styles.blurOverlay}

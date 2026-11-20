@@ -28,4 +28,7 @@ export default StyleSheet.create({
     left: 0,
     borderRadius: GLASS_SIZE / 2,
   },
+  compactGlass: {
+    borderRadius: SIZE / 2,
+  },
 });

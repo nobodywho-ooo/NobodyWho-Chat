@@ -941,10 +941,12 @@ test('switching conversations keeps the chat screen mounted (no loading flash)',
 
   // History injection is still pending. The old design flipped status to Loading
   // (unmounting ChatScreen for the loading screen); the new design stays Ready, so
-  // the previous conversation's content is still on screen instead of a flash.
+  // ChatScreen stays mounted, and while the history is pending it holds back the
+  // empty-chat starters instead of flashing them.
+  expect(getInputBar(screen)).toBeTruthy();
   expect(
-    screen.getByText('components.messageStarters.planParisTrip.title'),
-  ).toBeTruthy();
+    screen.queryByText('components.messageStarters.planParisTrip.title'),
+  ).toBeNull();
 
   await act(async () => {
     resolveSetHistory();
