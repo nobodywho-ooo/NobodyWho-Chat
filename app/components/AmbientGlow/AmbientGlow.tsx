@@ -3,7 +3,6 @@ import { StyleSheet, View, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   useAnimatedStyle,
-  useReducedMotion,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
@@ -38,8 +37,6 @@ const FALLOFF: ReadonlyArray<readonly [position: number, strength: number]> = [
   [100, 0],
 ];
 
-const RETRACTED_SCALE = 0.12;
-const FADE_SPAN = 0.35;
 const REVEAL_MS = 1000;
 const HIDE_MS = 900;
 
@@ -53,7 +50,6 @@ export const AmbientGlow: React.FC<AmbientGlowProps> = React.memo(
   ({ visible }) => {
     const { colors } = useStyled();
     const theme = useTheme();
-    const reducedMotion = useReducedMotion();
     const shown = useSharedValue(0);
 
     useEffect(() => {
@@ -65,20 +61,9 @@ export const AmbientGlow: React.FC<AmbientGlowProps> = React.memo(
       );
     }, [visible, shown]);
 
-    const animatedStyle = useAnimatedStyle(() => {
-      const value = shown.get();
-
-      if (reducedMotion) {
-        return { opacity: value, transform: [{ scaleY: 1 }] };
-      }
-
-      return {
-        opacity: Math.min(1, value / FADE_SPAN),
-        transform: [
-          { scaleY: RETRACTED_SCALE + (1 - RETRACTED_SCALE) * value },
-        ],
-      };
-    });
+    const animatedStyle = useAnimatedStyle(() => ({
+      opacity: shown.get(),
+    }));
 
     const paint = useMemo<ViewStyle>(
       () => ({
@@ -103,7 +88,7 @@ export const AmbientGlow: React.FC<AmbientGlowProps> = React.memo(
       <Animated.View
         testID="ambient-glow"
         pointerEvents="none"
-        style={[StyleSheet.absoluteFill, styles.anchor, animatedStyle]}
+        style={[StyleSheet.absoluteFill, animatedStyle]}
       >
         <View
           style={[StyleSheet.absoluteFill, paint]}
@@ -116,9 +101,3 @@ export const AmbientGlow: React.FC<AmbientGlowProps> = React.memo(
 );
 
 AmbientGlow.displayName = 'AmbientGlow';
-
-const styles = StyleSheet.create({
-  anchor: {
-    transformOrigin: 'top',
-  },
-});

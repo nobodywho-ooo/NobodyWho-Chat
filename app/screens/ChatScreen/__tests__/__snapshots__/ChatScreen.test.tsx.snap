@@ -78,9 +78,6 @@ exports[`renders ChatScreen with existing messages 1`] = `
             "right": 0,
             "top": 0,
           },
-          {
-            "transformOrigin": "top",
-          },
           {},
         ]
       }
@@ -462,9 +459,6 @@ exports[`renders correctly empty ChatScreen 1`] = `
             "position": "absolute",
             "right": 0,
             "top": 0,
-          },
-          {
-            "transformOrigin": "top",
           },
           {},
         ]
