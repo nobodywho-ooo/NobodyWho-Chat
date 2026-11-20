@@ -141,7 +141,8 @@
       "stopDictation": "Stop dictation",
       "microphoneDeniedTitle": "Microphone access needed",
       "microphoneDeniedMessage": "Allow microphone access in Settings to dictate your messages.",
-      "webSearch": "Search the web"
+      "webSearch": "Search the web",
+      "thinking": "Think before answering"
     },
     "cameraCapture": {
       "permission": "Camera access is needed to take a photo.",

@@ -46,6 +46,7 @@ import {
   useChatGeneration,
   useMessageListScroll,
   useSttTranscription,
+  useThinkingToggle,
   useTtsPlayback,
   useWebSearchToggle,
 } from './hooks';
@@ -87,7 +88,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const theme = useTheme();
   const insets = useSafeAreaInsets();
   const headerInset = useHeaderHeight();
-  const { slots, chatPipeline, chatThinkOpen } = useAiService();
+  const { slots, chatPipeline } = useAiService();
   const { ttsModelIdInUse, sttModelIdInUse } = useAppState();
 
   const canPlayAudio = ttsModelIdInUse !== undefined;
@@ -147,6 +148,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     ramGB,
   } = useWebSearchToggle(conversationId);
 
+  const {
+    thinking,
+    canThink,
+    toggle: toggleThinking,
+  } = useThinkingToggle();
+
   const webNotice = useWebSearchStore(state => state.notice);
   const clearWebNotice = useWebSearchStore(state => state.clearNotice);
 
@@ -171,7 +178,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const { isStreaming, handleSend, stopStreaming } = useChatGeneration({
     chat: slots.chat.ref,
-    thinkOpen: chatThinkOpen,
+    thinking,
     ingestsImage,
     ingestsAudio,
     inputText,
@@ -441,6 +448,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           showWebSearch
           webSearchEnabled={webSearch.enabled}
           onToggleWebSearch={toggleWebSearch}
+          showThinking={canThink}
+          thinkingEnabled={thinking.enabled}
+          onToggleThinking={toggleThinking}
           onChangeText={setInputText}
           onSend={onSend}
           onStop={onStop}

@@ -35,6 +35,7 @@ import {
   useWebSearchStore,
 } from 'services';
 import {
+  applyThinking,
   computeGenerationMetrics,
   createThinkOpenWriter,
   hasMessageContent,
@@ -91,6 +92,11 @@ const streamTurn = async (
   );
 };
 
+export interface ChatThinkingOptions {
+  enabled: boolean;
+  open: ImplicitThinkOpen | undefined;
+}
+
 export interface ChatWebSearchOptions {
   enabled: boolean;
   chatModel: Model | undefined;
@@ -100,7 +106,7 @@ export interface ChatWebSearchOptions {
 
 interface UseChatGenerationOptions {
   chat: React.RefObject<Chat | undefined>;
-  thinkOpen: ImplicitThinkOpen | undefined;
+  thinking: ChatThinkingOptions;
   ingestsImage: boolean;
   ingestsAudio: boolean;
   inputText: string;
@@ -117,7 +123,7 @@ interface UseChatGenerationOptions {
 
 export function useChatGeneration({
   chat,
-  thinkOpen,
+  thinking,
   ingestsImage,
   ingestsAudio,
   inputText,
@@ -289,7 +295,9 @@ export function useChatGeneration({
     const turnToolCalls: ToolInvocation[] = [];
     let turnWebSources: WebSource[] = [];
 
-    const thinkOpenWriter = createThinkOpenWriter(thinkOpen);
+    const thinkOpenWriter = createThinkOpenWriter(
+      thinking.enabled ? thinking.open : undefined,
+    );
     let accumulated = thinkOpenWriter.write('turn', '');
 
     // Written by uid, never by position: the screen may have switched to
@@ -421,6 +429,8 @@ export function useChatGeneration({
       setIsStreaming(false);
       return;
     }
+
+    await applyThinking(activeChat, thinking.enabled);
 
     digest = await getConversationDigest(id).catch(error => {
       log('ChatScreen reading the conversation digest failed', error);

@@ -473,11 +473,11 @@ export const ChatStackNavigator = () => {
       });
 
       // Only model changes or chat-affecting config rebuild the chat — a
-      // voice/language edit must not tear down the loaded chat model.
+      // voice/language edit must not tear down the loaded chat model. Thinking
+      // isn't one: each turn sets `enable_thinking` on the loaded chat.
       const chatConfigChanged =
         nextConfig.temperature !== prevConfig.temperature ||
         nextConfig.systemPrompt !== prevConfig.systemPrompt ||
-        nextConfig.thinking !== prevConfig.thinking ||
         nextConfig.toolCalling !== prevConfig.toolCalling ||
         nextConfig.contextSize !== prevConfig.contextSize;
 

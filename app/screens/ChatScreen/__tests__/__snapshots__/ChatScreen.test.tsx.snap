@@ -262,16 +262,19 @@ exports[`renders ChatScreen with existing messages 1`] = `
       onStartDictation={[Function]}
       onStop={[Function]}
       onStopDictation={[Function]}
+      onToggleThinking={[Function]}
       onToggleWebSearch={[Function]}
       showAudioAttach={false}
       showDictation={false}
       showImageAttach={false}
+      showThinking={false}
       showWebSearch={true}
       style={
         {
           "paddingBottom": 14,
         }
       }
+      thinkingEnabled={false}
       value=""
       webSearchEnabled={false}
     />
@@ -585,16 +588,19 @@ exports[`renders correctly empty ChatScreen 1`] = `
       onStartDictation={[Function]}
       onStop={[Function]}
       onStopDictation={[Function]}
+      onToggleThinking={[Function]}
       onToggleWebSearch={[Function]}
       showAudioAttach={false}
       showDictation={false}
       showImageAttach={false}
+      showThinking={false}
       showWebSearch={true}
       style={
         {
           "paddingBottom": 14,
         }
       }
+      thinkingEnabled={false}
       value=""
       webSearchEnabled={false}
     >

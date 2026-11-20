@@ -141,7 +141,8 @@
       "stopDictation": "Stop diktering",
       "microphoneDeniedTitle": "Mikrofonadgang kræves",
       "microphoneDeniedMessage": "Tillad mikrofonadgang i Indstillinger for at diktere dine beskeder.",
-      "webSearch": "Søg på nettet"
+      "webSearch": "Søg på nettet",
+      "thinking": "Tænk før du svarer"
     },
     "cameraCapture": {
       "permission": "Kameraadgang er nødvendig for at tage et billede.",

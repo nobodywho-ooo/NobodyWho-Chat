@@ -104,6 +104,7 @@ export const CHAT_ENGINE: EngineSpec<Chat, ChatOptions> = {
   slot: ModelSlot.chat,
   cleared: {
     chatPipeline: ModelPipeline.textGeneration,
+    chatCanThink: false,
     chatThinkOpen: undefined,
   },
   stop: instance => instance.stopGeneration(),
@@ -176,7 +177,8 @@ export const CHAT_ENGINE: EngineSpec<Chat, ChatOptions> = {
       instance,
       state: {
         chatPipeline: toChatPipeline(model.pipeline),
-        chatThinkOpen: implicitThinkOpen(model, enableThinking),
+        chatCanThink: model.thinking,
+        chatThinkOpen: implicitThinkOpen(model, model.thinking),
       },
     };
   },

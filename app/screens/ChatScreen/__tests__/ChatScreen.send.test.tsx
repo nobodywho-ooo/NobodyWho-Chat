@@ -17,6 +17,7 @@ import {
   restoreWebSearchTurn,
   updateConversationDigestInBackground,
 } from 'services';
+import { setAppState } from 'database';
 import { implicitThinkOpen } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
 import { Model, ModelPipeline } from 'types';
@@ -40,13 +41,17 @@ const mockUnlink = deleteAsync as jest.Mock;
 // from the service; mock both so handleSend can run without the real model/db.
 // getAppState must return a stable reference — useAppState() feeds it to
 // useSyncExternalStore, which loops if the snapshot identity changes each call.
-jest.mock('database', () => {
-  const appState = { modelIdInUse: 0 };
-  return {
-    getAppState: jest.fn(() => appState),
-    subscribeAppState: jest.fn(() => () => {}),
-  };
-});
+// Mutable so a test can switch thinking off; read lazily by the mock below.
+const mockAppState: {
+  modelIdInUse: number;
+  assistantConfig?: { thinking: boolean };
+} = { modelIdInUse: 0 };
+jest.mock('database', () => ({
+  getAppState: jest.fn(() => mockAppState),
+  subscribeAppState: jest.fn(() => () => {}),
+  setAppState: jest.fn(() => Promise.resolve()),
+  DEFAULT_ASSISTANT_CONFIG: { thinking: true },
+}));
 
 const mockChat = {
   ask: jest.fn(),
@@ -65,6 +70,8 @@ const mockChatRef: { current: typeof mockChat | undefined } = {
 let mockChatPipeline: ModelPipeline = ModelPipeline.textGeneration;
 // Set when the loaded model's template prefills the opening reasoning tag.
 let mockChatThinkOpen: ImplicitThinkOpen | undefined;
+// Whether the loaded model can reason at all (offers the thinking switch).
+let mockChatCanThink = true;
 // Built once, not per useAiService() call: the real provider hands down slots
 // whose identity is stable.
 const mockSlots = {
@@ -98,6 +105,7 @@ jest.mock('services', () => ({
   useAiService: () => ({
     slots: mockSlots,
     chatPipeline: mockChatPipeline,
+    chatCanThink: mockChatCanThink,
     chatThinkOpen: mockChatThinkOpen,
     ttsState: 'notLoaded',
   }),
@@ -165,6 +173,9 @@ beforeEach(() => {
   mockRestoreWebSearchTurn.mockReset().mockResolvedValue(undefined);
   mockChat.complete.mockReset().mockImplementation(() => stream());
   mockChatThinkOpen = undefined;
+  mockChatCanThink = true;
+  delete mockAppState.assistantConfig;
+  mockChat.setTemplateVariable.mockClear();
   mockChatRef.current = mockChat;
   mockChat.ask.mockReset().mockImplementation(() => stream());
   mockChatPipeline = ModelPipeline.textGeneration;
@@ -1335,6 +1346,98 @@ test('stopping mid-thinking keeps the block open for a template-opened model', a
 
     expect(assistant.content).toBe('<think>I was working out that');
   });
+});
+
+test('switching thinking off applies to the next turn without a reload', async () => {
+  mockChatThinkOpen = implicitThinkOpen(
+    { family: 'NeoHorse 1', parameterCountBillions: 4 } as Model,
+    true,
+  );
+  mockAppState.assistantConfig = { thinking: false };
+
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  expect(inputBar(screen).props.showThinking).toBe(true);
+  expect(inputBar(screen).props.thinkingEnabled).toBe(false);
+
+  await send(screen, 'hi');
+
+  expect(mockChat.setTemplateVariable).toHaveBeenCalledWith(
+    'enable_thinking',
+    false,
+  );
+  expect(mockChat.setTemplateVariable.mock.invocationCallOrder[0]).toBeLessThan(
+    mockChat.ask.mock.invocationCallOrder[0]!,
+  );
+  expect(mockSlots.chat.dispose).not.toHaveBeenCalled();
+
+  // No opener written back: with thinking off the template prefills none.
+  const assistant = mockInsertMessage.mock.calls
+    .map(([message]) => message)
+    .find(message => message.role === 'assistant');
+  expect(assistant.content).toBe('Hello world');
+});
+
+test('thinking on sets enable_thinking before asking', async () => {
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  expect(inputBar(screen).props.thinkingEnabled).toBe(true);
+
+  await send(screen, 'hi');
+
+  expect(mockChat.setTemplateVariable).toHaveBeenCalledWith(
+    'enable_thinking',
+    true,
+  );
+});
+
+test('the thinking switch flips the saved preference', async () => {
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(() => inputBar(screen).props.onToggleThinking());
+
+  expect(setAppState).toHaveBeenCalledWith({
+    assistantConfig: { thinking: false },
+  });
+});
+
+test('a model that cannot reason hides the switch and never thinks', async () => {
+  mockChatCanThink = false;
+
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  expect(inputBar(screen).props.showThinking).toBe(false);
+
+  await send(screen, 'hi');
+
+  expect(mockChat.setTemplateVariable).toHaveBeenCalledWith(
+    'enable_thinking',
+    false,
+  );
 });
 
 test('a conversation restored while the model loaded is adopted for the next send', async () => {

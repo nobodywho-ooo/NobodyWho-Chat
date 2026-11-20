@@ -141,7 +141,8 @@
       "stopDictation": "Arrêter la dictée",
       "microphoneDeniedTitle": "Accès au micro requis",
       "microphoneDeniedMessage": "Autorisez l'accès au micro dans les Réglages pour dicter vos messages.",
-      "webSearch": "Rechercher sur le web"
+      "webSearch": "Rechercher sur le web",
+      "thinking": "Réfléchir avant de répondre"
     },
     "cameraCapture": {
       "permission": "L'accès à l'appareil photo est nécessaire pour prendre une photo.",

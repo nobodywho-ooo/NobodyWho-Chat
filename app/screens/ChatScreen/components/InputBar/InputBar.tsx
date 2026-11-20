@@ -70,6 +70,9 @@ interface InputBarProps {
   showWebSearch?: boolean;
   webSearchEnabled?: boolean;
   onToggleWebSearch?: () => void;
+  showThinking?: boolean;
+  thinkingEnabled?: boolean;
+  onToggleThinking?: () => void;
 }
 
 const InputBarView: React.FC<InputBarProps> = ({
@@ -102,6 +105,9 @@ const InputBarView: React.FC<InputBarProps> = ({
   showWebSearch = false,
   webSearchEnabled = false,
   onToggleWebSearch,
+  showThinking = false,
+  thinkingEnabled = false,
+  onToggleThinking,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
@@ -456,6 +462,34 @@ const InputBarView: React.FC<InputBarProps> = ({
                     style={styles.iconButtonSpacing}
                   />
                 ))}
+              {showThinking && (
+                <IconButton
+                  icon={{
+                    iosIconName: 'lightbulb',
+                    androidIconName: 'lightbulb',
+                  }}
+                  onPress={() => {
+                    haptics.light();
+                    onToggleThinking?.();
+                  }}
+                  disabled={disabled}
+                  size={20}
+                  color={
+                    thinkingEnabled
+                      ? colors.ctaContentPrimary
+                      : colors.onSurface
+                  }
+                  backgroundColor={
+                    thinkingEnabled
+                      ? colors.ctaSurfacePrimary
+                      : colors.surfaceContainer
+                  }
+                  accessibilityLabel={t('components.inputBar.thinking')}
+                  accessibilityState={{ selected: thinkingEnabled }}
+                  testID="thinking-toggle"
+                  style={styles.iconButtonSpacing}
+                />
+              )}
               {showWebSearch && (
                 <IconButton
                   icon={{ iosIconName: 'globe', androidIconName: 'language' }}

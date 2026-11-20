@@ -5,6 +5,7 @@ import { capitalize } from './string';
 import { safeJsonParse } from './json';
 import { getMarkdownStyle } from './markdown';
 import {
+  applyThinking,
   createThinkOpenWriter,
   hasMessageContent,
   implicitThinkOpen,
@@ -174,6 +175,7 @@ export {
   capitalize,
   safeJsonParse,
   getMarkdownStyle,
+  applyThinking,
   createThinkOpenWriter,
   hasMessageContent,
   implicitThinkOpen,
