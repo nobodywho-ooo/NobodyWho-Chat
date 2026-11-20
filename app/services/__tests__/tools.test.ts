@@ -9,6 +9,8 @@ import {
   fetchWikipedia,
   fetchStockQuote,
   buildChatTools,
+  buildA2UiTool,
+  RENDER_UI_TOOL,
   subscribeToolInvocations,
 } from '../tools';
 
@@ -54,6 +56,54 @@ describe('buildChatTools', () => {
       'convert_length',
       'convert_temperature',
     ]);
+  });
+
+  test('a2ui enabled adds the render_ui tool first', () => {
+    const off = (buildChatTools(false) as unknown as MockTool[]).map(
+      t => t.opts.name,
+    );
+    expect(off).not.toContain(RENDER_UI_TOOL);
+
+    const on = (buildChatTools(true) as unknown as MockTool[]).map(
+      t => t.opts.name,
+    );
+    expect(on[0]).toBe(RENDER_UI_TOOL);
+  });
+
+  test('the render_ui tool accepts a valid ui payload', async () => {
+    const tool = (buildA2UiTool() as unknown as MockTool).opts;
+    const result = await tool.call({
+      components: [
+        { component: 'Text', id: 't', text: 'Hello' },
+      ],
+    });
+    expect(result).toBe('The UI card was rendered successfully.');
+  });
+
+  test('the render_ui tool reports a readable error for a bad payload', async () => {
+    const tool = (buildA2UiTool() as unknown as MockTool).opts;
+    const result = await tool.call({
+      components: [
+        { component: 'Tabs', id: 't' },
+      ],
+    });
+    expect(result).toContain('Error: the UI could not be rendered.');
+    expect(result).toContain('unknown component');
+  });
+
+  test('a render_ui call reports a structured invocation', async () => {
+    const invocations: ToolInvocation[] = [];
+    const unsubscribe = subscribeToolInvocations(invocation =>
+      invocations.push(invocation),
+    );
+
+    const ui = { components: [{ component: 'Text', id: 't', text: 'Hi' }] };
+    await (buildA2UiTool() as unknown as MockTool).opts.call(ui);
+
+    expect(invocations).toHaveLength(1);
+    expect(invocations[0].name).toBe(RENDER_UI_TOOL);
+    expect(invocations[0].arguments).toEqual({ ui });
+    unsubscribe();
   });
 
   test('a converter tool returns the converted value as JSON', async () => {

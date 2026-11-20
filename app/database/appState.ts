@@ -11,6 +11,8 @@ export type AssistantConfig = {
   systemPrompt: string;
   thinking: boolean;
   toolCalling: boolean;
+  /** Let the model draw interactive A2UI cards (needs tool calling). */
+  a2ui: boolean;
   contextSize: number;
   ttsVoice?: string;
   ttsLanguage?: string;
@@ -22,6 +24,7 @@ export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
   systemPrompt: 'You are a helpful assistant running on a smartphone.',
   thinking: true,
   toolCalling: false,
+  a2ui: false,
   contextSize: 8000,
 };
 
@@ -51,6 +54,7 @@ function sameAssistantConfig(
     a.systemPrompt === b.systemPrompt &&
     a.thinking === b.thinking &&
     a.toolCalling === b.toolCalling &&
+    a.a2ui === b.a2ui &&
     a.contextSize === b.contextSize &&
     a.ttsVoice === b.ttsVoice &&
     a.ttsLanguage === b.ttsLanguage &&

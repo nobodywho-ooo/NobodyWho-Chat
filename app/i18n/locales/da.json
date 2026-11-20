@@ -212,7 +212,8 @@
           "network": "kunne ikke nås",
           "aborted": "stoppet"
         }
-      }
+      },
+      "a2ui": "UI"
     },
     "conversationsList": {
       "recent": "Seneste",
@@ -418,7 +419,9 @@
       "speechToText": "Tale til tekst",
       "sttLanguage": "Sprog",
       "sttLanguageSubtitle": "Sproget du taler. Vælger du ét, springes registreringen over, og transskriberingen bliver hurtigere.",
-      "sttLanguageAutomatic": "Automatisk"
+      "sttLanguageAutomatic": "Automatisk",
+      "a2ui": "UI-kort",
+      "a2uiSubtitle": "Lad modellen tegne interaktive UI-kort (A2UI) i chatten — kræver værktøjskald"
     },
     "chat": {
       "generationFailed": "Noget gik galt under genereringen af et svar.",

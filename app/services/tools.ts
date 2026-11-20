@@ -1,8 +1,15 @@
 import { Tool } from 'react-native-nobodywho';
 import { ToolInvocation } from 'types';
 import { log } from 'helpers';
+import { A2UI_UI_SCHEMA, validateUi } from './a2ui';
 
 const API_TIMEOUT_MS = 5_000;
+
+// The tool the model calls to draw an interactive A2UI card in the chat. Its
+// `ui` argument is constrained by a JSON Schema — nobodywho compiles that
+// schema into the llguidance grammar that governs the model while it emits
+// the tool call (see schema.ts in app/services/a2ui).
+export const RENDER_UI_TOOL = 'render_ui';
 
 export type ToolInvocationListener = (invocation: ToolInvocation) => void;
 
@@ -96,7 +103,15 @@ const defineTool = (opts: {
 // tool calling. AiService calls this when `model.toolCalling` is true.
 // defineTool wraps each `call` so its invocation is reported live via
 // subscribeToolInvocations as the model runs it during ask().
-export const buildChatTools = (): Tool[] => [
+//
+// `a2uiEnabled` adds the `render_ui` tool that draws interactive UI cards:
+// the feature is a per-assistant setting, so the tool is only offered to the
+// model when the setting is on (a model that cannot see the tool cannot call
+// it, which keeps the constraint and the renderer honest). The `ui` argument
+// is constrained to the A2UI JSON Schema; the tool call then renders natively
+// in the message list (see A2UiSurface).
+export const buildChatTools = (a2uiEnabled: boolean = false): Tool[] => [
+  ...(a2uiEnabled ? [buildA2UiTool()] : []),
   defineTool({
     name: 'get_inference_engine',
     description:
@@ -206,7 +221,63 @@ export const buildChatTools = (): Tool[] => [
   }),
 ];
 
-// --- Tools ----------------------------------------------------------------
+// --- A2UI ------------------------------------------------------------------
+// The `render_ui` tool. The description is the model's whole instruction sheet
+// for the feature (nobodywho puts tool descriptions in the prompt), so it
+// spells out when to call it, which components exist, and how to reference
+// data. The shape constraint on the `ui` argument comes from A2UI_UI_SCHEMA.
+
+const A2UI_TOOL_DESCRIPTION = `Draw an interactive UI card in the conversation.
+
+Use it when the user asks you to show/build/create/design/make a UI — a form, a list, a menu, options to pick, a summary card, a panel. Keep it compact; answer in at most one short line around it.
+
+"ui" is {"components": [...], "dataModel": {...}}. Every component is {"component":<Type>,"id":<unique string>, ...props}; nesting is by id reference (parents list child ids).
+
+Components (only these):
+Text{text, variant?:"caption"|"body"}
+Row|Column{children:[ids], justify?, align?}
+Card{child:id}
+List{children:{path,componentId}, direction?:"vertical"|"horizontal"}
+Button{child:id, variant?:"default"|"primary"|"borderless", action:{"event":{"name"}}|{"openUrl":{"url"}}}
+Divider{axis?:"horizontal"|"vertical"}
+Image{url, description?}
+TextField{label, value, placeholder?, variant?:"shortText"|"longText"|"number"|"obscured"}
+CheckBox{label, value:bool}
+Slider{min?, max, value, steps?}
+ChoicePicker{label?, options:[{"label","value"}], value:[...], variant?:"multipleSelection"|"mutuallyExclusive"}
+
+Rules:
+- Every child/componentId id must exist in "components".
+- Read dataModel values with {"@path":"/a/b"}; NO string concatenation.
+- Only bind paths that exist. Keep the JSON small.
+
+Example: {"components":[{"component":"Card","id":"c","child":"t"},{"component":"Text","id":"t","text":{"@path":"/msg"}}],"dataModel":{"msg":"Hi"}}`;
+
+// The `call` receives the parsed, grammar-constrained `ui` object. It runs the
+// validator again so a malformed-but-parseable payload becomes a readable
+// error the model can immediately correct, then acknowledges.
+export const buildA2UiTool = (): Tool =>
+  defineTool({
+    name: RENDER_UI_TOOL,
+    description: A2UI_TOOL_DESCRIPTION,
+    parameters: [
+      {
+        name: 'ui',
+        ...A2UI_UI_SCHEMA,
+        description:
+          'The JSON object describing the UI to render: a flat "components" array plus an optional "dataModel".',
+      },
+    ],
+    call: (ui: unknown): string => {
+      const validation = validateUi(ui);
+
+      if (!validation.valid) {
+        return `Error: the UI could not be rendered. ${validation.reason}`;
+      }
+
+      return 'The UI card was rendered successfully.';
+    },
+  });
 
 // --- Unit conversions ------------------------------------------------------
 // Pure helpers, exported for testing. One foot is exactly 0.3048 metres.

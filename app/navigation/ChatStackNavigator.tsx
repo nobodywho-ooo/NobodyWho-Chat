@@ -37,6 +37,7 @@ import { Toast } from 'components';
 import { Spacings } from 'style';
 import { useAppState, useModels } from 'hooks';
 import {
+  A2UI_SYSTEM_PROMPT_HINT,
   VOICE_SLOTS,
   VoiceSlot,
   settleConversationDigest,
@@ -208,13 +209,23 @@ export const ChatStackNavigator = () => {
       );
     }
 
+    // When A2UI is on, the chat also carries a short directive telling the
+    // model to use render_ui for UI asks — tool descriptions alone don't make
+    // small local models reach for a tool mid-answer.
+    const systemPrompt = assistantConfig.a2ui
+      ? [assistantConfig.systemPrompt.trim(), A2UI_SYSTEM_PROMPT_HINT]
+          .filter(Boolean)
+          .join('\n\n')
+      : assistantConfig.systemPrompt.trim();
+
     const created = await slots.chat.create({
       model,
-      systemPrompt: assistantConfig.systemPrompt.trim() || undefined,
+      systemPrompt: systemPrompt || undefined,
       sampler: SamplerPresets.temperature(assistantConfig.temperature),
       contextSize: assistantConfig.contextSize,
       thinking: assistantConfig.thinking,
       toolCalling: assistantConfig.toolCalling,
+      a2ui: assistantConfig.a2ui,
     });
 
     return created && chat.current !== undefined;
@@ -479,6 +490,7 @@ export const ChatStackNavigator = () => {
         nextConfig.temperature !== prevConfig.temperature ||
         nextConfig.systemPrompt !== prevConfig.systemPrompt ||
         nextConfig.toolCalling !== prevConfig.toolCalling ||
+        nextConfig.a2ui !== prevConfig.a2ui ||
         nextConfig.contextSize !== prevConfig.contextSize;
 
       if (next.modelIdInUse !== prev.modelIdInUse || chatConfigChanged) {

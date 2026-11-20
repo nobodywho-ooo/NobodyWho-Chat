@@ -35,6 +35,8 @@ export interface ChatOptions {
   contextSize?: number;
   thinking?: boolean;
   toolCalling?: boolean;
+  /** Offer the model the `render_ui` tool that draws interactive A2UI cards. */
+  a2ui?: boolean;
 }
 
 export interface TtsOptions {
@@ -151,12 +153,23 @@ export const CHAT_ENGINE: EngineSpec<Chat, ChatOptions> = {
       (opts.toolCalling ?? true) &&
       model.pipeline === ModelPipeline.textGeneration;
 
+    log('AiService chat opened', {
+      model: model.name,
+      toolCalling: model.toolCalling,
+      a2ui: opts.a2ui ?? false,
+      useTools,
+    });
+
     let instance: Chat;
 
     try {
       instance = new Chat({
         model: loaded,
-        tools: useTools ? buildChatTools() : undefined,
+        // A2UI rides on the same tool-calling path: when the setting is on the
+        // `render_ui` tool joins the roster (and its schema-derived grammar
+        // constrains every call — nobodywho switches to it as soon as the
+        // model starts emitting a tool call).
+        tools: useTools ? buildChatTools(opts.a2ui ?? false) : undefined,
         systemPrompt: opts.systemPrompt,
         sampler: opts.sampler,
         contextSize,

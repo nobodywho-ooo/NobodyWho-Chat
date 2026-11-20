@@ -370,6 +370,7 @@ export function useChatGeneration({
     };
 
     const unsubscribe = subscribeToolInvocations(invocation => {
+      log('ChatScreen tool invocation', invocation.name);
       turnToolCalls.push(invocation);
       accumulated = thinkOpenWriter.write('toolResult', accumulated);
       renderAssistant();

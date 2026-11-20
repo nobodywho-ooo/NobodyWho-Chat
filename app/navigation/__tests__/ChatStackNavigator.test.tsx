@@ -233,6 +233,7 @@ const defaultCreateChatOpts = {
   contextSize: DEFAULT_ASSISTANT_CONFIG.contextSize,
   thinking: true,
   toolCalling: false,
+  a2ui: false,
 };
 
 // InputBar is host-mocked ('InputBar'), so it's found by host type.
@@ -411,6 +412,7 @@ test('disposes and rebuilds the chat when the assistant config changes', async (
         systemPrompt: 'Talk like a pirate.',
         thinking: false,
         toolCalling: false,
+        a2ui: false,
         contextSize: 2000,
         ttsVoice: 'M1',
         ttsLanguage: 'en',
@@ -427,6 +429,7 @@ test('disposes and rebuilds the chat when the assistant config changes', async (
     contextSize: 2000,
     thinking: false,
     toolCalling: false,
+    a2ui: false,
   });
 });
 

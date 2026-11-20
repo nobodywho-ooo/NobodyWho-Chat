@@ -11,6 +11,7 @@ import {
 } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
 import {
+  RENDER_UI_TOOL,
   attributeSourcesByBlock,
   stripCitations,
   useWebSearchStore,
@@ -18,6 +19,7 @@ import {
 import { DisplayMessage } from 'types';
 
 import { AnswerBody } from './AnswerBody';
+import { A2UiToolCall } from './A2UiToolCall';
 import { AudioSpeakerButton } from './AudioSpeakerButton';
 import { ThinkingBlock } from './ThinkingBlock';
 import { ThinkingModal } from './ThinkingModal';
@@ -189,14 +191,21 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
               onPress={() => setThinkingOpen(true)}
             />
           )}
-          {toolInvocations.map((invocation, toolIndex) => (
-            <ToolCallBlock
-              key={`${invocation.name}-${toolIndex}`}
-              name={invocation.name}
-              arguments={invocation.arguments}
-              onPress={() => setOpenToolIndex(toolIndex)}
-            />
-          ))}
+          {toolInvocations.map((invocation, toolIndex) =>
+            invocation.name === RENDER_UI_TOOL ? (
+              <A2UiToolCall
+                key={`${invocation.name}-${toolIndex}`}
+                invocation={invocation}
+              />
+            ) : (
+              <ToolCallBlock
+                key={`${invocation.name}-${toolIndex}`}
+                name={invocation.name}
+                arguments={invocation.arguments}
+                onPress={() => setOpenToolIndex(toolIndex)}
+              />
+            ),
+          )}
           <AnswerBody
             text={rest}
             isStreaming={isStreaming}

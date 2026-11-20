@@ -212,7 +212,8 @@
           "network": "could not be reached",
           "aborted": "stopped"
         }
-      }
+      },
+      "a2ui": "UI"
     },
     "conversationsList": {
       "recent": "Recent",
@@ -418,7 +419,9 @@
       "speechToText": "Speech To Text",
       "sttLanguage": "Language",
       "sttLanguageSubtitle": "The language you speak. Picking one skips detection and transcribes faster.",
-      "sttLanguageAutomatic": "Automatic"
+      "sttLanguageAutomatic": "Automatic",
+      "a2ui": "AI UI cards",
+      "a2uiSubtitle": "Let the model draw interactive UI cards (A2UI) in the chat — needs tool calling"
     },
     "chat": {
       "generationFailed": "Something went wrong while generating a response.",
