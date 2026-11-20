@@ -609,6 +609,7 @@ exports[`renders correctly empty ChatScreen 1`] = `
           {
             "columnGap": 8,
             "paddingHorizontal": 12,
+            "paddingVertical": 8,
           }
         }
         horizontal={true}
@@ -617,7 +618,8 @@ exports[`renders correctly empty ChatScreen 1`] = `
         showsHorizontalScrollIndicator={false}
         style={
           {
-            "marginBottom": 8,
+            "marginBottom": 0,
+            "marginTop": -8,
           }
         }
       >
@@ -661,10 +663,12 @@ exports[`renders correctly empty ChatScreen 1`] = `
                   "paddingHorizontal": 16,
                   "paddingVertical": 12,
                 },
-                {
-                  "backgroundColor": "#ebebeb",
-                },
-                false,
+                [
+                  {
+                    "backgroundColor": "#ebebeb",
+                  },
+                  false,
+                ],
               ]
             }
           >
@@ -726,10 +730,12 @@ exports[`renders correctly empty ChatScreen 1`] = `
                   "paddingHorizontal": 16,
                   "paddingVertical": 12,
                 },
-                {
-                  "backgroundColor": "#ebebeb",
-                },
-                false,
+                [
+                  {
+                    "backgroundColor": "#ebebeb",
+                  },
+                  false,
+                ],
               ]
             }
           >
