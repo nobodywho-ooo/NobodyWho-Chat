@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect } from 'react';
+import { useCallback, useRef, useEffect, useState } from 'react';
 import {
   Platform,
   Pressable,
@@ -57,17 +57,17 @@ const ChatHeaderRight = () => {
   const { conversationIdInUse } = useAppState();
   const { slots } = useAiService();
 
-  const handleMenuAction = useCallback(
-    async ({ nativeEvent }: NativeActionEvent) => {
+  const runMenuAction = useCallback(
+    async (event: string) => {
       slots.chat.ref.current?.stopGeneration();
 
-      if (nativeEvent.event === MENU_ACTION_NEW_CHAT) {
+      if (event === MENU_ACTION_NEW_CHAT) {
         setAppState({ conversationIdInUse: undefined });
         return;
       }
 
       if (
-        nativeEvent.event === MENU_ACTION_DELETE_CHAT &&
+        event === MENU_ACTION_DELETE_CHAT &&
         conversationIdInUse !== undefined
       ) {
         setAppState({ conversationIdInUse: undefined });
@@ -85,6 +85,28 @@ const ChatHeaderRight = () => {
       }
     },
     [conversationIdInUse, slots],
+  );
+
+  const isMenuOpenRef = useRef(false);
+  const [isMenuClosing, setIsMenuClosing] = useState(false);
+
+  const handleOpenMenu = useCallback(() => {
+    isMenuOpenRef.current = true;
+  }, []);
+
+  const handleCloseMenu = useCallback(() => {
+    isMenuOpenRef.current = false;
+    setIsMenuClosing(false);
+  }, []);
+
+  const handleMenuAction = useCallback(
+    ({ nativeEvent }: NativeActionEvent) => {
+      if (isIOS && isMenuOpenRef.current) {
+        setIsMenuClosing(true);
+      }
+      runMenuAction(nativeEvent.event);
+    },
+    [runMenuAction],
   );
 
   const newChatAction: MenuAction = {
@@ -129,19 +151,29 @@ const ChatHeaderRight = () => {
       ]
     : [newChatAction, deleteChatAction];
 
+  if (conversationIdInUse === undefined && !isMenuClosing) {
+    return null;
+  }
+
+  const isLeaving = conversationIdInUse === undefined;
+
   return (
-    <MenuView
-      style={styles.menuButton}
-      onPressAction={handleMenuAction}
-      actions={actions}
-    >
-      <PlatformIcon
-        iosIconName="ellipsis.circle"
-        androidIconName="more_horiz"
-        size={ICON_SIZE}
-        color={colors.onSurface}
-      />
-    </MenuView>
+    <View pointerEvents={isLeaving ? 'none' : 'auto'}>
+      <MenuView
+        style={styles.menuButton}
+        onPressAction={handleMenuAction}
+        onOpenMenu={handleOpenMenu}
+        onCloseMenu={handleCloseMenu}
+        actions={actions}
+      >
+        <PlatformIcon
+          iosIconName="ellipsis.circle"
+          androidIconName="more_horiz"
+          size={ICON_SIZE}
+          color={colors.onSurface}
+        />
+      </MenuView>
+    </View>
   );
 };
 
@@ -247,7 +279,6 @@ const renderDrawerContent = ({ navigation }: DrawerContentComponentProps) => (
 export const DrawerNavigator = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const { conversationIdInUse } = useAppState();
   const { openSide, scrollGestures, swipeExclusion } = useDrawerCoordination();
 
   const insets = useSafeAreaInsets();
@@ -286,10 +317,7 @@ export const DrawerNavigator = () => {
           swipeEnabled: openSide !== 'right',
           headerTitle: renderChatHeaderTitle,
           headerTitleContainerStyle: { marginHorizontal: 8 },
-          headerRight:
-            conversationIdInUse !== undefined
-              ? renderChatHeaderRight
-              : undefined,
+          headerRight: renderChatHeaderRight,
           inactiveBehavior: 'none',
         }}
       />
