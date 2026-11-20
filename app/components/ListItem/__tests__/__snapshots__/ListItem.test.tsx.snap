@@ -49,10 +49,14 @@ exports[`renders correctly ListItem 1`] = `
   />
   <View
     style={
-      {
-        "flex": 1,
-        "marginLeft": 12,
-      }
+      [
+        {
+          "flex": 1,
+        },
+        {
+          "marginLeft": 12,
+        },
+      ]
     }
   >
     <Text
@@ -149,10 +153,14 @@ exports[`renders correctly ListItem when disabled 1`] = `
   />
   <View
     style={
-      {
-        "flex": 1,
-        "marginLeft": 12,
-      }
+      [
+        {
+          "flex": 1,
+        },
+        {
+          "marginLeft": 12,
+        },
+      ]
     }
   >
     <Text

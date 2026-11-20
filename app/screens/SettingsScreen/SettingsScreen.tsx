@@ -3,11 +3,16 @@ import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
-import { openExternalUrl } from 'helpers';
+import { getIOSVersion, openExternalUrl } from 'helpers';
 import { useStyled } from 'hooks';
 import { ActionButton, HeaderScrollView, ListItem, Text } from 'components';
 
 import styles from './SettingsScreen.styles';
+
+const LICENCES_IOS_ICON =
+  getIOSVersion() >= 18
+    ? 'checkmark.seal.text.page.fill'
+    : 'checkmark.seal.fill';
 
 export const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -63,6 +68,15 @@ export const SettingsScreen: React.FC = () => {
         iconColor={colors.secondary}
         // @ts-ignore
         onPress={() => navigation.navigate('PrivacyPolicyScreen')}
+      />
+      <ListItem
+        title={t('screens.settings.licences')}
+        subtitle={t('screens.settings.licencesSubtitle')}
+        iosIconName={LICENCES_IOS_ICON}
+        androidIconName="license"
+        iconColor={colors.secondary}
+        // @ts-ignore
+        onPress={() => navigation.navigate('LicencesScreen')}
       />
       <View style={styles.buttonsContainer}>
         <ActionButton

@@ -16,6 +16,7 @@
     "downloadModels": "Downloadede modeller",
     "terms": "Vilkår og betingelser",
     "privacyPolicy": "Privatlivspolitik",
+    "licences": "Licenser",
     "close": "Luk",
     "chatMenu": {
       "newChat": "Ny chat",
@@ -333,6 +334,12 @@
         "downloadProgress": "{{percent}}%"
       }
     },
+    "licences": {
+      "models": "Modeller",
+      "others": "Andre",
+      "webSearch": "Websøgning (Private Mind)",
+      "loadFailed": "Modellernes licenser kunne ikke indlæses."
+    },
     "settings": {
       "app": "App",
       "customize": "Tilpas",
@@ -344,6 +351,8 @@
       "termsSubtitle": "Læs vores brugervilkår",
       "privacyPolicy": "Privatlivspolitik",
       "privacyPolicySubtitle": "Sådan håndterer vi dine data",
+      "licences": "Licenser",
+      "licencesSubtitle": "Modeller og open source-kode",
       "website": "Hjemmeside",
       "github": "Github"
     },

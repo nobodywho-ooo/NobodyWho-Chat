@@ -24,6 +24,12 @@ import {
   MODELS_URL,
 } from './modelCatalogue';
 import {
+  APP_LICENCES,
+  fetchModelLicences,
+  isModelLicenceList,
+  LICENCES_URL,
+} from './licences';
+import {
   curatedChatModel,
   curatedOnboardingModels,
   FIRST_PICK_TAG,
@@ -228,4 +234,8 @@ export {
   withAlpha,
   isHttpUrl,
   openExternalUrl,
+  APP_LICENCES,
+  fetchModelLicences,
+  isModelLicenceList,
+  LICENCES_URL,
 };

@@ -35,3 +35,13 @@ test('renders correctly ListItem when disabled', async () => {
   ).toJSON();
   expect(tree).toMatchSnapshot();
 });
+
+test('renders without an icon when none is given', async () => {
+  const screen = await render(
+    <ListItem title={'Some title'} subtitle={'Some subtitle'} />,
+  );
+
+  expect(
+    screen.container.queryAll(node => node.props.iosIconName !== undefined),
+  ).toHaveLength(1); // the chevron only
+});

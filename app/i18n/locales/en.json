@@ -16,6 +16,7 @@
     "downloadModels": "Downloaded Models",
     "terms": "Terms & Conditions",
     "privacyPolicy": "Privacy Policy",
+    "licences": "Licences",
     "close": "Close",
     "chatMenu": {
       "newChat": "New Chat",
@@ -333,6 +334,12 @@
         "downloadProgress": "{{percent}}%"
       }
     },
+    "licences": {
+      "models": "Models",
+      "others": "Others",
+      "webSearch": "Web search (Private Mind)",
+      "loadFailed": "Model licences could not be loaded."
+    },
     "settings": {
       "app": "App",
       "customize": "Customize",
@@ -344,6 +351,8 @@
       "termsSubtitle": "Read our terms of use",
       "privacyPolicy": "Privacy Policy",
       "privacyPolicySubtitle": "How we handle your data",
+      "licences": "Licences",
+      "licencesSubtitle": "Models and open source code",
       "website": "Website",
       "github": "Github"
     },

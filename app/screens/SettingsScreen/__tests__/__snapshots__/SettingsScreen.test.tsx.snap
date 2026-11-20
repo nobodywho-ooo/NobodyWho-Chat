@@ -87,6 +87,14 @@ exports[`renders correctly SettingsScreen 1`] = `
         subtitle="screens.settings.privacyPolicySubtitle"
         title="screens.settings.privacyPolicy"
       />
+      <ListItem
+        androidIconName="license"
+        iconColor="#e27426"
+        iosIconName="checkmark.seal.fill"
+        onPress={[Function]}
+        subtitle="screens.settings.licencesSubtitle"
+        title="screens.settings.licences"
+      />
       <View
         style={
           {

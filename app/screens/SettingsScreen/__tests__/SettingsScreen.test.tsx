@@ -62,6 +62,14 @@ test('pressing privacy policy navigates to the PrivacyPolicyScreen', async () =>
   expect(mockNavigate).toHaveBeenCalledWith('PrivacyPolicyScreen');
 });
 
+test('pressing licences navigates to the LicencesScreen', async () => {
+  const screen = await render(<SettingsScreen />);
+
+  await fireEvent.press(getRow(screen, 'screens.settings.licences'));
+
+  expect(mockNavigate).toHaveBeenCalledWith('LicencesScreen');
+});
+
 test('pressing website opens the NobodyWho site', async () => {
   const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   const screen = await render(<SettingsScreen />);
