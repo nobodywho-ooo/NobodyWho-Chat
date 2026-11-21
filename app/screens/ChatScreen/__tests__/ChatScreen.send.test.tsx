@@ -1940,6 +1940,36 @@ describe('web search', () => {
       );
     });
 
+    test('opening another conversation mid-re-check leaves the newly loaded history alone', async () => {
+      const listeners: ((next: { conversationIdInUse?: number }) => void)[] =
+        [];
+      (subscribeAppState as jest.Mock).mockImplementation(listener => {
+        listeners.push(listener);
+        return () => undefined;
+      });
+      mockChat.complete.mockImplementation(async function* () {
+        yield 'An adult day pass ';
+        listeners.forEach(listener => listener({ conversationIdInUse: 99 }));
+        yield 'costs 150.00 EUR.';
+      });
+      const screen = await renderChat();
+
+      await send(screen, question);
+
+      expect(mockChat.complete).toHaveBeenCalled();
+      expect(mockChat.setChatHistory).not.toHaveBeenCalled();
+      expect(mockChat.setTemplateVariable).toHaveBeenCalledWith(
+        'enable_thinking',
+        true,
+      );
+      expect(mockRestoreWebSearchTurn).not.toHaveBeenCalled();
+      expect(mockInsertMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({ role: 'assistant', content: draft }),
+      );
+
+      (subscribeAppState as jest.Mock).mockImplementation(() => () => {});
+    });
+
     test('keeps the first answer when the retry is still broken', async () => {
       mockChat.complete.mockImplementation(
         tokens('The sources do not state a price.'),

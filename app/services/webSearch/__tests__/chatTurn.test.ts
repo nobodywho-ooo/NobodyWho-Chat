@@ -378,4 +378,37 @@ describe('runAnswerRecheck', () => {
     expect(chat.stopGeneration).toHaveBeenCalled();
     expect(chat.setChatHistory).toHaveBeenCalledWith(history);
   });
+
+  it('leaves the history alone when the user moved to another conversation', async () => {
+    let abandoned = false;
+    const chat = makeChat({
+      getChatHistory: jest.fn(async () => history),
+      complete: jest.fn(() =>
+        (async function* () {
+          yield 'Rain';
+          abandoned = true;
+          yield ' tomorrow.';
+        })(),
+      ),
+    });
+
+    await runAnswerRecheck(
+      chat,
+      {
+        reason: 'wrongLanguage',
+        prompt: 'Again, in English.',
+        continuesConversation: true,
+        accepts: () => true,
+      },
+      () => abandoned,
+      () => abandoned,
+    );
+
+    expect(chat.stopGeneration).toHaveBeenCalled();
+    expect(chat.setChatHistory).not.toHaveBeenCalled();
+    expect(chat.setTemplateVariable).toHaveBeenCalledWith(
+      'enable_thinking',
+      true,
+    );
+  });
 });

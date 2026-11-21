@@ -394,6 +394,7 @@ export const runAnswerRecheck = async (
   chat: Chat,
   recheck: AnswerRecheck,
   isCancelled: () => boolean,
+  isAbandoned: () => boolean = () => false,
 ): Promise<string> => {
   const [history, templateVariables] = await Promise.all([
     chat.getChatHistory(),
@@ -417,7 +418,10 @@ export const runAnswerRecheck = async (
       retried += token;
     }
   } finally {
-    await chat.setChatHistory(history);
+    if (!isAbandoned()) {
+      await chat.setChatHistory(history);
+    }
+
     for (const [name, value] of Object.entries(templateVariables)) {
       await chat.setTemplateVariable(name, value);
     }

@@ -599,6 +599,7 @@ export function useChatGeneration({
               stopRequestedRef.current ||
               abandonedRef.current ||
               chat.current !== activeChat,
+            () => abandonedRef.current,
           );
         } catch (error) {
           log('ChatScreen answer re-check failed', error);
