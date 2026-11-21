@@ -1,4 +1,4 @@
-import { useCallback, useRef, useEffect, useState } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import {
   Platform,
   Pressable,
@@ -87,25 +87,8 @@ const ChatHeaderRight = () => {
     [conversationIdInUse, slots],
   );
 
-  const isMenuOpenRef = useRef(false);
-  const [isMenuClosing, setIsMenuClosing] = useState(false);
-
-  const handleOpenMenu = useCallback(() => {
-    isMenuOpenRef.current = true;
-  }, []);
-
-  const handleCloseMenu = useCallback(() => {
-    isMenuOpenRef.current = false;
-    setIsMenuClosing(false);
-  }, []);
-
   const handleMenuAction = useCallback(
-    ({ nativeEvent }: NativeActionEvent) => {
-      if (isIOS && isMenuOpenRef.current) {
-        setIsMenuClosing(true);
-      }
-      runMenuAction(nativeEvent.event);
-    },
+    ({ nativeEvent }: NativeActionEvent) => runMenuAction(nativeEvent.event),
     [runMenuAction],
   );
 
@@ -151,26 +134,26 @@ const ChatHeaderRight = () => {
       ]
     : [newChatAction, deleteChatAction];
 
-  if (conversationIdInUse === undefined && !isMenuClosing) {
-    return null;
-  }
-
-  const isLeaving = conversationIdInUse === undefined;
+  const hasConversation = conversationIdInUse !== undefined;
 
   return (
-    <View pointerEvents={isLeaving ? 'none' : 'auto'}>
+    <View
+      pointerEvents={hasConversation ? 'auto' : 'none'}
+      accessibilityElementsHidden={!hasConversation}
+      importantForAccessibility={
+        hasConversation ? 'auto' : 'no-hide-descendants'
+      }
+    >
       <MenuView
         style={styles.menuButton}
         onPressAction={handleMenuAction}
-        onOpenMenu={handleOpenMenu}
-        onCloseMenu={handleCloseMenu}
         actions={actions}
       >
         <PlatformIcon
           iosIconName="ellipsis.circle"
           androidIconName="more_horiz"
           size={ICON_SIZE}
-          color={colors.onSurface}
+          color={hasConversation ? colors.onSurface : colors.onSurfaceDisabled}
         />
       </MenuView>
     </View>

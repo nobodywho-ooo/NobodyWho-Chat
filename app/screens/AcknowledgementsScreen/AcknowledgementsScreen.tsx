@@ -7,17 +7,18 @@ import {
   fetchModelLicences,
   log,
   openExternalUrl,
+  WEB_SEARCH_PROVIDERS,
 } from 'helpers';
 import { useStyled } from 'hooks';
 import { ErrorView, HeaderScrollView, ListItem, Text } from 'components';
 import { Spacings } from 'style';
 import { ModelLicence } from 'types';
 
-import styles from './LicencesScreen.styles';
+import styles from './AcknowledgementsScreen.styles';
 
 type ModelLicences = ModelLicence[] | 'loading' | 'failed';
 
-export const LicencesScreen: React.FC = () => {
+export const AcknowledgementsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
@@ -30,7 +31,7 @@ export const LicencesScreen: React.FC = () => {
     fetchModelLicences()
       .then(licences => !isStale && setModelLicences(licences))
       .catch(error => {
-        log('LicencesScreen fetchModelLicences', error);
+        log('AcknowledgementsScreen fetchModelLicences', error);
         if (!isStale) {
           setModelLicences('failed');
         }
@@ -53,7 +54,7 @@ export const LicencesScreen: React.FC = () => {
     if (modelLicences === 'failed') {
       return (
         <ErrorView
-          message={t('screens.licences.loadFailed')}
+          message={t('screens.acknowledgements.loadFailed')}
           onRetry={load}
           paddingVertical={Spacings.lg}
           alignLeft
@@ -67,6 +68,7 @@ export const LicencesScreen: React.FC = () => {
         title={licence.modelName}
         subtitle={licence.licenceType}
         accessibilityRole="link"
+        external
         onPress={() => openExternalUrl(licence.url)}
       />
     ));
@@ -80,16 +82,30 @@ export const LicencesScreen: React.FC = () => {
         { paddingBottom: insets.bottom + Spacings.xl },
       ]}
     >
-      <Text>{t('screens.licences.models')}</Text>
+      <Text>{t('screens.acknowledgements.models')}</Text>
       {renderModelLicences()}
-      <Text style={styles.sectionHeader}>{t('screens.licences.others')}</Text>
+      <Text style={styles.sectionHeader}>{t('screens.acknowledgements.others')}</Text>
       {APP_LICENCES.map(licence => (
         <ListItem
           key={licence.titleKey}
           title={t(licence.titleKey)}
           subtitle={licence.licenceType}
           accessibilityRole="link"
+          external
           onPress={() => openExternalUrl(licence.url)}
+        />
+      ))}
+      <Text style={styles.sectionHeader}>
+        {t('screens.acknowledgements.searchProviders')}
+      </Text>
+      {WEB_SEARCH_PROVIDERS.map(provider => (
+        <ListItem
+          key={provider.name}
+          title={provider.name}
+          subtitle={t(provider.usageKey)}
+          accessibilityRole="link"
+          external
+          onPress={() => openExternalUrl(provider.url)}
         />
       ))}
     </HeaderScrollView>

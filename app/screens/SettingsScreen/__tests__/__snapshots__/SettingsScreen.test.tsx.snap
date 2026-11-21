@@ -92,8 +92,8 @@ exports[`renders correctly SettingsScreen 1`] = `
         iconColor="#e27426"
         iosIconName="checkmark.seal.fill"
         onPress={[Function]}
-        subtitle="screens.settings.licencesSubtitle"
-        title="screens.settings.licences"
+        subtitle="screens.settings.acknowledgementsSubtitle"
+        title="screens.settings.acknowledgements"
       />
       <View
         style={

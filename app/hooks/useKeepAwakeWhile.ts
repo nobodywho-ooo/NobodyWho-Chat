@@ -3,10 +3,13 @@ import { useIsFocused } from '@react-navigation/native';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { log } from 'helpers';
 
-export const useKeepAwakeWhile = (active: boolean) => {
+export const useKeepAwakeWhile = (
+  active: boolean,
+  { requireFocus = true }: { requireFocus?: boolean } = {},
+) => {
   const tag = useId();
   const isFocused = useIsFocused();
-  const shouldKeepAwake = active && isFocused;
+  const shouldKeepAwake = active && (isFocused || !requireFocus);
 
   useEffect(() => {
     if (!shouldKeepAwake) {

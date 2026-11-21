@@ -16,7 +16,7 @@
     "downloadModels": "Modèles téléchargés",
     "terms": "Conditions générales",
     "privacyPolicy": "Politique de confidentialité",
-    "licences": "Licences",
+    "acknowledgements": "Remerciements",
     "close": "Fermer",
     "chatMenu": {
       "newChat": "Nouvelle discussion",
@@ -334,9 +334,12 @@
         "downloadProgress": "{{percent}} %"
       }
     },
-    "licences": {
+    "acknowledgements": {
       "models": "Modèles",
       "others": "Autres",
+      "searchProviders": "Fournisseurs de recherche web",
+      "searchResults": "Résultats de recherche",
+      "searchResultsAndIcons": "Résultats de recherche et icônes des sites",
       "webSearch": "Recherche web (Private Mind)",
       "loadFailed": "Impossible de charger les licences des modèles."
     },
@@ -351,8 +354,8 @@
       "termsSubtitle": "Lisez nos conditions d’utilisation",
       "privacyPolicy": "Politique de confidentialité",
       "privacyPolicySubtitle": "Comment nous traitons vos données",
-      "licences": "Licences",
-      "licencesSubtitle": "Modèles et code open source",
+      "acknowledgements": "Remerciements",
+      "acknowledgementsSubtitle": "Modèles, code open source et fournisseurs de recherche web",
       "website": "Site web",
       "github": "Github",
       "x": "X"

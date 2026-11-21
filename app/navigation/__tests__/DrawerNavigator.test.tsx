@@ -13,6 +13,7 @@ import { buildConversation } from 'jest/factories/conversation';
 import { buildModel } from 'jest/factories/model';
 import { log } from 'helpers';
 import { AiServiceProvider } from 'services';
+import { lightColors } from 'style';
 import { ModelPipeline } from 'types';
 
 import { DrawerNavigator } from '../DrawerNavigator';
@@ -150,7 +151,7 @@ test('shows no header title when no model is in use', async () => {
   expect(queryHeaderChevrons(screen)).toHaveLength(0);
 });
 
-test('hides the header menu when no conversation is in use', async () => {
+test('greys out the header menu and ignores presses when no conversation is in use', async () => {
   mockUseAppState.mockReturnValue({
     modelIdInUse: 1,
     conversationIdInUse: undefined,
@@ -162,7 +163,12 @@ test('hides the header menu when no conversation is in use', async () => {
     </AiServiceProvider>,
   );
 
-  expect(queryMenus(screen)).toHaveLength(0);
+  const [menu] = queryMenus(screen);
+  expect(menu).toBeTruthy();
+  expect(menu!.parent?.props.pointerEvents).toBe('none');
+  expect(
+    menu!.queryAll(node => node.type === 'PlatformIcon')[0]!.props.color,
+  ).toBe(lightColors.onSurfaceDisabled);
 });
 
 test('shows the header menu with New Chat and Delete Chat actions', async () => {

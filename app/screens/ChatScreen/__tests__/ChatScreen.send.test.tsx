@@ -4,6 +4,7 @@ import { fireEvent, render, act } from '@testing-library/react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { Prompt } from 'react-native-nobodywho';
 import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 
 import {
   getConversationDigest,
@@ -1489,6 +1490,44 @@ test('a failure creating the conversation settles the screen', async () => {
   mockInsertConversation.mockResolvedValue(42);
   await send(screen, 'again');
   expect(mockInsertConversation).toHaveBeenCalledTimes(2);
+});
+
+test('keeps the screen awake while an answer streams, and lets it sleep after', async () => {
+  const activate = activateKeepAwakeAsync as jest.Mock;
+  const deactivate = deactivateKeepAwake as jest.Mock;
+  activate.mockClear();
+  deactivate.mockClear();
+  let releaseAnswer: () => void = () => {};
+  const answerGate = new Promise<void>(resolve => {
+    releaseAnswer = resolve;
+  });
+  mockChat.ask.mockImplementation(async function* () {
+    await answerGate;
+    yield 'Hello';
+  });
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(() => inputBar(screen).props.onChangeText('Hi'));
+  let sending: Promise<void> = Promise.resolve();
+  await act(async () => {
+    sending = inputBar(screen).props.onSend();
+  });
+
+  expect(activate).toHaveBeenCalledTimes(1);
+  expect(deactivate).not.toHaveBeenCalled();
+
+  await act(async () => {
+    releaseAnswer();
+    await sending;
+  });
+
+  expect(deactivate).toHaveBeenCalledWith(activate.mock.calls[0][0]);
 });
 
 describe('web search', () => {

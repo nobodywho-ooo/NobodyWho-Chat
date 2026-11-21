@@ -74,7 +74,7 @@ test('recognises a licence list by the shape of its entries', () => {
 test('credits the web search code under MIT', () => {
   expect(APP_LICENCES).toContainEqual(
     expect.objectContaining({
-      titleKey: 'screens.licences.webSearch',
+      titleKey: 'screens.acknowledgements.webSearch',
       licenceType: 'MIT',
     }),
   );

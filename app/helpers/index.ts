@@ -28,6 +28,7 @@ import {
   fetchModelLicences,
   isModelLicenceList,
   LICENCES_URL,
+  WEB_SEARCH_PROVIDERS,
 } from './licences';
 import {
   curatedChatModel,
@@ -238,4 +239,5 @@ export {
   fetchModelLicences,
   isModelLicenceList,
   LICENCES_URL,
+  WEB_SEARCH_PROVIDERS,
 };

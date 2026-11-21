@@ -7,7 +7,7 @@ import {
   waitFor,
 } from '@testing-library/react-native';
 
-import { LicencesScreen } from '../LicencesScreen';
+import { AcknowledgementsScreen } from '../AcknowledgementsScreen';
 
 const licences = [
   {
@@ -35,7 +35,7 @@ const byTitle = (title: string) =>
   screen.container.queryAll(node => node.props.title === title)[0];
 
 const findRow = async (title: string) => {
-  await screen.findByText('screens.licences.models');
+  await screen.findByText('screens.acknowledgements.models');
   await waitFor(() => expect(byTitle(title)).toBeTruthy());
   return byTitle(title);
 };
@@ -45,7 +45,7 @@ const respondWith = (body: unknown) =>
 
 test('lists the model licences first, then the others', async () => {
   respondWith(licences);
-  await render(<LicencesScreen />);
+  await render(<AcknowledgementsScreen />);
 
   await findRow('LFM2.5');
   const texts = screen.container
@@ -56,11 +56,15 @@ test('lists the model licences first, then the others', async () => {
     )
     .map(node => node.props.title ?? node.props.children);
   const order = [
-    'screens.licences.models',
+    'screens.acknowledgements.models',
     'LFM2.5',
     'Silero VAD',
-    'screens.licences.others',
-    'screens.licences.webSearch',
+    'screens.acknowledgements.others',
+    'screens.acknowledgements.webSearch',
+    'screens.acknowledgements.searchProviders',
+    'DuckDuckGo',
+    'Brave Search',
+    'Mojeek',
   ].map(text => texts.indexOf(text));
 
   expect(order).not.toContain(-1);
@@ -71,7 +75,7 @@ test('lists the model licences first, then the others', async () => {
 test('pressing a model licence opens its url', async () => {
   respondWith(licences);
   const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
-  await render(<LicencesScreen />);
+  await render(<AcknowledgementsScreen />);
 
   await fireEvent.press(await findRow('Silero VAD'));
 
@@ -82,9 +86,9 @@ test('pressing a model licence opens its url', async () => {
 test('pressing the web search licence opens the Private Mind licence', async () => {
   respondWith(licences);
   const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
-  await render(<LicencesScreen />);
+  await render(<AcknowledgementsScreen />);
 
-  await fireEvent.press(await findRow('screens.licences.webSearch'));
+  await fireEvent.press(await findRow('screens.acknowledgements.webSearch'));
 
   expect(openURL).toHaveBeenCalledWith(
     'https://github.com/software-mansion-labs/private-mind/blob/main/LICENSE',
@@ -94,10 +98,10 @@ test('pressing the web search licence opens the Private Mind licence', async () 
 
 test('keeps the other licences and offers a retry when the models fail', async () => {
   const fetchMock = mockFetch(async () => ({ ok: false, status: 500 }));
-  await render(<LicencesScreen />);
+  await render(<AcknowledgementsScreen />);
 
-  expect(await screen.findByText('screens.licences.loadFailed')).toBeTruthy();
-  expect(byTitle('screens.licences.webSearch')).toBeTruthy();
+  expect(await screen.findByText('screens.acknowledgements.loadFailed')).toBeTruthy();
+  expect(byTitle('screens.acknowledgements.webSearch')).toBeTruthy();
 
   fetchMock.mockImplementation(async () => ({
     ok: true,
@@ -106,5 +110,23 @@ test('keeps the other licences and offers a retry when the models fail', async (
   await fireEvent.press(byTitle('common.retry'));
 
   expect(await findRow('LFM2.5')).toBeTruthy();
-  expect(screen.queryByText('screens.licences.loadFailed')).toBeNull();
+  expect(screen.queryByText('screens.acknowledgements.loadFailed')).toBeNull();
+});
+
+test('credits the web search providers, opening their terms as external links', async () => {
+  respondWith(licences);
+  const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  await render(<AcknowledgementsScreen />);
+
+  const duckDuckGo = await findRow('DuckDuckGo');
+  expect(duckDuckGo.props.subtitle).toBe(
+    'screens.acknowledgements.searchResultsAndIcons',
+  );
+  expect(duckDuckGo.props.external).toBe(true);
+  expect(byTitle('LFM2.5').props.external).toBe(true);
+
+  await fireEvent.press(duckDuckGo);
+
+  expect(openURL).toHaveBeenCalledWith('https://duckduckgo.com/terms');
+  openURL.mockRestore();
 });

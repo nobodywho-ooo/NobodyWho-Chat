@@ -24,6 +24,11 @@ import {
 
 const Drawer = createDrawerNavigator();
 
+const SWIPE_BLOCKING_ROUTES = new Set<string | undefined>([
+  'Models',
+  'Settings',
+]);
+
 const renderVoiceAssistant = ({ navigation }: DrawerContentComponentProps) => (
   <>
     <DrawerStatusReporter side="right" />
@@ -81,7 +86,7 @@ export const RootDrawerNavigator = () => {
             // Disabled while the left drawer is open so its close gesture wins.
             openSide !== 'left' &&
             isFocused &&
-            getFocusedRouteNameFromRoute(route) !== 'Settings',
+            !SWIPE_BLOCKING_ROUTES.has(getFocusedRouteNameFromRoute(route)),
         })}
       />
     </Drawer.Navigator>

@@ -25,6 +25,7 @@ interface ListItemNoIconProps {
 type ListItemProps = Omit<PressableProps, 'children'> & {
   title: string;
   subtitle: string;
+  external?: boolean;
 } & (ListItemIconProps | ListItemNoIconProps);
 
 export const ListItem: React.FC<ListItemProps> = ({
@@ -33,6 +34,7 @@ export const ListItem: React.FC<ListItemProps> = ({
   iosIconName,
   androidIconName,
   iconColor,
+  external = false,
   disabled,
   ...props
 }) => {
@@ -59,8 +61,8 @@ export const ListItem: React.FC<ListItemProps> = ({
       </View>
       <View style={styles.chevron}>
         <PlatformIcon
-          iosIconName="chevron.right"
-          androidIconName="chevron_right"
+          iosIconName={external ? 'arrow.up.right' : 'chevron.right'}
+          androidIconName={external ? 'arrow_outward' : 'chevron_right'}
           size={16}
           color={colors.onSurfaceVariant}
         />

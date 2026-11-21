@@ -9,7 +9,7 @@ import { ActionButton, HeaderScrollView, ListItem, Text } from 'components';
 
 import styles from './SettingsScreen.styles';
 
-const LICENCES_IOS_ICON =
+const ACKNOWLEDGEMENTS_IOS_ICON =
   getIOSVersion() >= 18
     ? 'checkmark.seal.text.page.fill'
     : 'checkmark.seal.fill';
@@ -70,13 +70,13 @@ export const SettingsScreen: React.FC = () => {
         onPress={() => navigation.navigate('PrivacyPolicyScreen')}
       />
       <ListItem
-        title={t('screens.settings.licences')}
-        subtitle={t('screens.settings.licencesSubtitle')}
-        iosIconName={LICENCES_IOS_ICON}
+        title={t('screens.settings.acknowledgements')}
+        subtitle={t('screens.settings.acknowledgementsSubtitle')}
+        iosIconName={ACKNOWLEDGEMENTS_IOS_ICON}
         androidIconName="license"
         iconColor={colors.secondary}
         // @ts-ignore
-        onPress={() => navigation.navigate('LicencesScreen')}
+        onPress={() => navigation.navigate('AcknowledgementsScreen')}
       />
       <View style={styles.buttonsContainer}>
         <ActionButton

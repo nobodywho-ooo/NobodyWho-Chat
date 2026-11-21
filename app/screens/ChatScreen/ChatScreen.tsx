@@ -23,7 +23,12 @@ import {
   Toast,
 } from 'components';
 import { useTheme } from 'context';
-import { useAppState, useStableCallback, useStyled } from 'hooks';
+import {
+  useAppState,
+  useKeepAwakeWhile,
+  useStableCallback,
+  useStyled,
+} from 'hooks';
 import {
   DisplayMessage,
   pipelineIngestsAudio,
@@ -187,6 +192,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     onTurnStart: list.anchorSentMessage,
     webSearch,
   });
+
+  useKeepAwakeWhile(isStreaming, { requireFocus: false });
 
   useEffect(() => {
     setMessages(initialMessages);

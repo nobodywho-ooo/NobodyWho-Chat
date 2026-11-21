@@ -1,4 +1,4 @@
-import { AppLicence, ModelLicence } from 'types';
+import { AppLicence, ModelLicence, ServiceCredit } from 'types';
 import { TIMEOUT_MS } from './modelCatalogue';
 
 export const LICENCES_URL =
@@ -6,9 +6,27 @@ export const LICENCES_URL =
 
 export const APP_LICENCES: readonly AppLicence[] = [
   {
-    titleKey: 'screens.licences.webSearch',
+    titleKey: 'screens.acknowledgements.webSearch',
     licenceType: 'MIT',
     url: 'https://github.com/software-mansion-labs/private-mind/blob/main/LICENSE',
+  },
+];
+
+export const WEB_SEARCH_PROVIDERS: readonly ServiceCredit[] = [
+  {
+    name: 'DuckDuckGo',
+    usageKey: 'screens.acknowledgements.searchResultsAndIcons',
+    url: 'https://duckduckgo.com/terms',
+  },
+  {
+    name: 'Brave Search',
+    usageKey: 'screens.acknowledgements.searchResults',
+    url: 'https://brave.com/terms-of-use/',
+  },
+  {
+    name: 'Mojeek',
+    usageKey: 'screens.acknowledgements.searchResults',
+    url: 'https://www.mojeek.com/about/terms.html',
   },
 ];
 

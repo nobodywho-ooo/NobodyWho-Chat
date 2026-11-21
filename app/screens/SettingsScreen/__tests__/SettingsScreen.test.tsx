@@ -62,12 +62,12 @@ test('pressing privacy policy navigates to the PrivacyPolicyScreen', async () =>
   expect(mockNavigate).toHaveBeenCalledWith('PrivacyPolicyScreen');
 });
 
-test('pressing licences navigates to the LicencesScreen', async () => {
+test('pressing acknowledgements navigates to the AcknowledgementsScreen', async () => {
   const screen = await render(<SettingsScreen />);
 
-  await fireEvent.press(getRow(screen, 'screens.settings.licences'));
+  await fireEvent.press(getRow(screen, 'screens.settings.acknowledgements'));
 
-  expect(mockNavigate).toHaveBeenCalledWith('LicencesScreen');
+  expect(mockNavigate).toHaveBeenCalledWith('AcknowledgementsScreen');
 });
 
 test('pressing website opens the NobodyWho site', async () => {

@@ -6,7 +6,7 @@ import {
   CustomizeAssistantScreen,
   DownloadedModelsScreen,
   LanguageScreen,
-  LicencesScreen,
+  AcknowledgementsScreen,
   PrivacyPolicyScreen,
   TermsScreen,
 } from 'screens';
@@ -74,9 +74,9 @@ const RootStack = () => {
         options={{ title: t('navigation.privacyPolicy') }}
       />
       <Stack.Screen
-        name="LicencesScreen"
-        component={LicencesScreen}
-        options={{ title: t('navigation.licences') }}
+        name="AcknowledgementsScreen"
+        component={AcknowledgementsScreen}
+        options={{ title: t('navigation.acknowledgements') }}
       />
     </Stack.Navigator>
   );

@@ -5,6 +5,12 @@ export interface ModelLicence {
   url: string;
 }
 
+export interface ServiceCredit {
+  name: string;
+  usageKey: string;
+  url: string;
+}
+
 export interface AppLicence {
   titleKey: string;
   licenceType: string;
