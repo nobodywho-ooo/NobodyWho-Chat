@@ -1,9 +1,11 @@
 import { isIOS, isAndroid, getIOSVersion, isIOS26OrLater } from './platform';
 import { log } from './log';
+import { isHttpUrl, openExternalUrl } from './openExternalUrl';
 import { capitalize } from './string';
 import { safeJsonParse } from './json';
 import { getMarkdownStyle } from './markdown';
 import {
+  applyThinking,
   createThinkOpenWriter,
   hasMessageContent,
   implicitThinkOpen,
@@ -12,15 +14,21 @@ import {
 } from './thinking';
 import { haptics } from './haptics';
 import { getFamilyIcon } from './familyIcon';
-import { getPipelineIcon } from './pipelineIcon';
+import { ALL_PIPELINES_ICON, getPipelineIcon } from './pipelineIcon';
 import { copyToClipboard } from './clipboard';
 import { deleteModelFiles } from './modelFiles';
 import {
   byCatalogueOrder,
-  fetchDeviceCatalogue,
   fetchModelCatalogue,
+  isModelCatalogue,
   MODELS_URL,
 } from './modelCatalogue';
+import {
+  APP_LICENCES,
+  fetchModelLicences,
+  isModelLicenceList,
+  LICENCES_URL,
+} from './licences';
 import {
   curatedChatModel,
   curatedOnboardingModels,
@@ -31,6 +39,7 @@ import {
   CURATED_TEXT_MODELS,
   CURATED_VOICE_ONLY_MODELS,
   CURATED_VOICE_PIPELINE_MODELS,
+  CURATED_SEARCH_MODELS,
 } from './curatedModels';
 import {
   downloadModelPart,
@@ -43,6 +52,7 @@ import {
 } from './modelDownload';
 import { toFileUri, toPlainPath } from './fileUri';
 import {
+  deviceRamGB,
   filterModelsByDeviceMemory,
   fitsInDeviceMemory,
   modelRequiredMemoryGB,
@@ -127,6 +137,7 @@ export type {
 
 export {
   getFamilyIcon,
+  ALL_PIPELINES_ICON,
   getPipelineIcon,
   deleteModelFiles,
   downloadModelPart,
@@ -138,6 +149,7 @@ export {
   NetworkError,
   toFileUri,
   toPlainPath,
+  deviceRamGB,
   filterModelsByDeviceMemory,
   fitsInDeviceMemory,
   modelRequiredMemoryGB,
@@ -169,6 +181,7 @@ export {
   capitalize,
   safeJsonParse,
   getMarkdownStyle,
+  applyThinking,
   createThinkOpenWriter,
   hasMessageContent,
   implicitThinkOpen,
@@ -203,8 +216,8 @@ export {
   parameterCountLabel,
   modelSizeLabel,
   MODELS_URL,
-  fetchDeviceCatalogue,
   fetchModelCatalogue,
+  isModelCatalogue,
   byCatalogueOrder,
   curatedChatModel,
   curatedOnboardingModels,
@@ -215,7 +228,14 @@ export {
   CURATED_TEXT_MODELS,
   CURATED_VOICE_ONLY_MODELS,
   CURATED_VOICE_PIPELINE_MODELS,
+  CURATED_SEARCH_MODELS,
   colorBetween,
   parseColor,
   withAlpha,
+  isHttpUrl,
+  openExternalUrl,
+  APP_LICENCES,
+  fetchModelLicences,
+  isModelLicenceList,
+  LICENCES_URL,
 };

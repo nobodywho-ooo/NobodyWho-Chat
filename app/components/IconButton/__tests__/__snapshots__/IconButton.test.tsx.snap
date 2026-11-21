@@ -45,6 +45,7 @@ exports[`IconButton renders with custom size 1`] = `
         "backgroundColor": "#ebebeb",
       },
       false,
+      undefined,
     ]
   }
 >
@@ -102,6 +103,7 @@ exports[`IconButton renders with icon 1`] = `
         "backgroundColor": "#ebebeb",
       },
       false,
+      undefined,
     ]
   }
 >

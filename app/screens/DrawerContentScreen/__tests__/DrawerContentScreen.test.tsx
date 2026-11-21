@@ -51,21 +51,38 @@ test('renders correctly DrawerContentScreen', async () => {
   expect(tree).toMatchSnapshot();
 });
 
-test('pressing settings navigates to the SettingsScreen', async () => {
+test('pressing the settings icon replaces the chat with the Settings destination', async () => {
   const screen = await render(
     <AiServiceProvider>
       <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
-  await fireEvent.press(screen.getByText('screens.drawerContent.settings'));
+  await fireEvent.press(
+    screen.getByLabelText('screens.drawerContent.settings'),
+  );
 
-  expect(mockNavigate).toHaveBeenCalledWith('Chat', {
-    screen: 'SettingsScreen',
-  });
+  expect(mockNavigate).toHaveBeenCalledWith('Settings');
 });
 
-test('pressing new chat clears the conversation in use and closes the drawer', async () => {
+test('pressing models replaces the chat with the Models destination', async () => {
+  const onCloseDrawer = jest.fn();
+  const screen = await render(
+    <AiServiceProvider>
+      <DrawerContentScreen
+        navigation={navigation}
+        onCloseDrawer={onCloseDrawer}
+      />
+    </AiServiceProvider>,
+  );
+
+  await fireEvent.press(screen.getByText('screens.drawerContent.models'));
+
+  expect(mockNavigate).toHaveBeenCalledWith('Models');
+  expect(onCloseDrawer).toHaveBeenCalled();
+});
+
+test('pressing new chat clears the conversation in use, shows the chat and closes the drawer', async () => {
   mockUseModels.mockReturnValue({ models: [buildModel(1)] });
   const onCloseDrawer = jest.fn();
   const screen = await render(
@@ -82,6 +99,7 @@ test('pressing new chat clears the conversation in use and closes the drawer', a
   expect(mockSetAppState).toHaveBeenCalledWith({
     conversationIdInUse: undefined,
   });
+  expect(mockNavigate).toHaveBeenCalledWith('Chat');
   expect(onCloseDrawer).toHaveBeenCalled();
 });
 

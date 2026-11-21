@@ -3,9 +3,11 @@ import { ModelPipeline } from 'types';
 
 import {
   curatedChatModel,
+  curatedOnboardingModels,
   CURATED_VOICE_ONLY_MODELS,
   CURATED_VOICE_PIPELINE_MODELS,
   ModelInventory,
+  ModelSetup,
   onboardingChatModels,
   curatedAvailability,
 } from '../curatedModels';
@@ -219,5 +221,39 @@ describe('onboardingChatModels', () => {
     expect(
       onboardingChatModels({ models: [recommended, untagged], ramGB: 2.5 }),
     ).toEqual([]);
+  });
+});
+
+describe('curatedOnboardingModels', () => {
+  const embedding = buildModel(5, {
+    pipeline: ModelPipeline.featureExtraction,
+    tags: ['Recommended'],
+    parts: [part(0.31)],
+  });
+  const searchInventory = inventory({
+    catalogue: { models: [chat, stt, tts, vad, embedding], ramGB: 8 },
+  });
+
+  test('adds the recommended embedding model only to the search setups', () => {
+    const resolve = (setup: ModelSetup) => {
+      const availability = curatedAvailability(
+        curatedOnboardingModels(chat.id, setup),
+        searchInventory,
+      );
+      return availability.kind === 'automatic'
+        ? availability.models.map(({ id }) => id)
+        : [];
+    };
+
+    expect(resolve('textOnly')).toEqual([chat.id]);
+    expect(resolve('textAndVoice')).toEqual([chat.id, stt.id, tts.id, vad.id]);
+    expect(resolve('textAndSearch')).toEqual([chat.id, embedding.id]);
+    expect(resolve('allModels')).toEqual([
+      chat.id,
+      stt.id,
+      tts.id,
+      vad.id,
+      embedding.id,
+    ]);
   });
 });

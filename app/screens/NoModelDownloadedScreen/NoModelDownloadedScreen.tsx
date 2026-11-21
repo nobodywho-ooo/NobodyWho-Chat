@@ -50,7 +50,7 @@ export const NoModelDownloadedScreen: React.FC = () => {
         title={t('screens.noModelDownloaded.downloadModel')}
         onPress={() => {
           // @ts-ignore
-          navigation.navigate('ModelsScreen');
+          navigation.navigate('Models');
         }}
       />
     </View>

@@ -67,14 +67,119 @@ exports[`renders ChatScreen with existing messages 1`] = `
       ]
     }
   >
+    <View
+      pointerEvents="none"
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+          {},
+        ]
+      }
+      testID="ambient-glow"
+    >
+      <View
+        renderToHardwareTextureAndroid={true}
+        shouldRasterizeIOS={true}
+        style={
+          [
+            {
+              "bottom": 0,
+              "left": 0,
+              "position": "absolute",
+              "right": 0,
+              "top": 0,
+            },
+            {
+              "experimental_backgroundImage": [
+                {
+                  "colorStops": [
+                    {
+                      "color": "rgba(180, 70, 24, 0.336)",
+                      "positions": [
+                        "0%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(180, 70, 24, 0.1848)",
+                      "positions": [
+                        "35%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(180, 70, 24, 0)",
+                      "positions": [
+                        "100%",
+                      ],
+                    },
+                  ],
+                  "position": {
+                    "left": "30%",
+                    "top": "0%",
+                  },
+                  "shape": "ellipse",
+                  "size": {
+                    "x": "100%",
+                    "y": "55%",
+                  },
+                  "type": "radial-gradient",
+                },
+                {
+                  "colorStops": [
+                    {
+                      "color": "rgba(226, 116, 38, 0.304)",
+                      "positions": [
+                        "0%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(226, 116, 38, 0.1672)",
+                      "positions": [
+                        "35%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(226, 116, 38, 0)",
+                      "positions": [
+                        "100%",
+                      ],
+                    },
+                  ],
+                  "position": {
+                    "left": "70%",
+                    "top": "4%",
+                  },
+                  "shape": "ellipse",
+                  "size": {
+                    "x": "100%",
+                    "y": "50%",
+                  },
+                  "type": "radial-gradient",
+                },
+              ],
+            },
+          ]
+        }
+      />
+    </View>
     <LegendList
       maintainVisibleContentPosition={false}
     >
       <RCTScrollView
         contentContainerStyle={
-          {
-            "paddingBottom": 12,
-          }
+          [
+            {
+              "paddingBottom": 12,
+            },
+            {
+              "paddingTop": 0,
+            },
+          ]
         }
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
@@ -161,6 +266,7 @@ exports[`renders ChatScreen with existing messages 1`] = `
               }
             }
           >
+            <View />
             <View
               style={
                 {
@@ -256,15 +362,21 @@ exports[`renders ChatScreen with existing messages 1`] = `
       onStartDictation={[Function]}
       onStop={[Function]}
       onStopDictation={[Function]}
+      onToggleThinking={[Function]}
+      onToggleWebSearch={[Function]}
       showAudioAttach={false}
       showDictation={false}
       showImageAttach={false}
+      showThinking={false}
+      showWebSearch={true}
       style={
         {
           "paddingBottom": 14,
         }
       }
+      thinkingEnabled={false}
       value=""
+      webSearchEnabled={false}
     />
   </View>
 </View>
@@ -337,14 +449,119 @@ exports[`renders correctly empty ChatScreen 1`] = `
       ]
     }
   >
+    <View
+      pointerEvents="none"
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+          {},
+        ]
+      }
+      testID="ambient-glow"
+    >
+      <View
+        renderToHardwareTextureAndroid={true}
+        shouldRasterizeIOS={true}
+        style={
+          [
+            {
+              "bottom": 0,
+              "left": 0,
+              "position": "absolute",
+              "right": 0,
+              "top": 0,
+            },
+            {
+              "experimental_backgroundImage": [
+                {
+                  "colorStops": [
+                    {
+                      "color": "rgba(180, 70, 24, 0.336)",
+                      "positions": [
+                        "0%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(180, 70, 24, 0.1848)",
+                      "positions": [
+                        "35%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(180, 70, 24, 0)",
+                      "positions": [
+                        "100%",
+                      ],
+                    },
+                  ],
+                  "position": {
+                    "left": "30%",
+                    "top": "0%",
+                  },
+                  "shape": "ellipse",
+                  "size": {
+                    "x": "100%",
+                    "y": "55%",
+                  },
+                  "type": "radial-gradient",
+                },
+                {
+                  "colorStops": [
+                    {
+                      "color": "rgba(226, 116, 38, 0.304)",
+                      "positions": [
+                        "0%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(226, 116, 38, 0.1672)",
+                      "positions": [
+                        "35%",
+                      ],
+                    },
+                    {
+                      "color": "rgba(226, 116, 38, 0)",
+                      "positions": [
+                        "100%",
+                      ],
+                    },
+                  ],
+                  "position": {
+                    "left": "70%",
+                    "top": "4%",
+                  },
+                  "shape": "ellipse",
+                  "size": {
+                    "x": "100%",
+                    "y": "50%",
+                  },
+                  "type": "radial-gradient",
+                },
+              ],
+            },
+          ]
+        }
+      />
+    </View>
     <LegendList
       maintainVisibleContentPosition={false}
     >
       <RCTScrollView
         contentContainerStyle={
-          {
-            "paddingBottom": 12,
-          }
+          [
+            {
+              "paddingBottom": 12,
+            },
+            {
+              "paddingTop": 0,
+            },
+          ]
         }
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
@@ -429,21 +646,28 @@ exports[`renders correctly empty ChatScreen 1`] = `
       onStartDictation={[Function]}
       onStop={[Function]}
       onStopDictation={[Function]}
+      onToggleThinking={[Function]}
+      onToggleWebSearch={[Function]}
       showAudioAttach={false}
       showDictation={false}
       showImageAttach={false}
+      showThinking={false}
+      showWebSearch={true}
       style={
         {
           "paddingBottom": 14,
         }
       }
+      thinkingEnabled={false}
       value=""
+      webSearchEnabled={false}
     >
       <RCTScrollView
         contentContainerStyle={
           {
             "columnGap": 8,
             "paddingHorizontal": 12,
+            "paddingVertical": 8,
           }
         }
         horizontal={true}
@@ -452,7 +676,8 @@ exports[`renders correctly empty ChatScreen 1`] = `
         showsHorizontalScrollIndicator={false}
         style={
           {
-            "marginBottom": 8,
+            "marginBottom": 0,
+            "marginTop": -8,
           }
         }
       >
@@ -496,10 +721,12 @@ exports[`renders correctly empty ChatScreen 1`] = `
                   "paddingHorizontal": 16,
                   "paddingVertical": 12,
                 },
-                {
-                  "backgroundColor": "#ebebeb",
-                },
-                false,
+                [
+                  {
+                    "backgroundColor": "#ebebeb",
+                  },
+                  false,
+                ],
               ]
             }
           >
@@ -561,10 +788,12 @@ exports[`renders correctly empty ChatScreen 1`] = `
                   "paddingHorizontal": 16,
                   "paddingVertical": 12,
                 },
-                {
-                  "backgroundColor": "#ebebeb",
-                },
-                false,
+                [
+                  {
+                    "backgroundColor": "#ebebeb",
+                  },
+                  false,
+                ],
               ]
             }
           >

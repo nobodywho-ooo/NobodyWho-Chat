@@ -24,94 +24,121 @@ exports[`renders correctly ModelsScreen when empty 1`] = `
 `;
 
 exports[`renders downloaded models with one selected 1`] = `
-<RCTScrollView
-  contentInsetAdjustmentBehavior="automatic"
+<View
   style={
-    [
-      {
-        "flex": 1,
-        "paddingHorizontal": 16,
-        "paddingTop": 16,
-      },
-      {
-        "backgroundColor": "#FFFFFF",
-      },
-    ]
+    {
+      "flex": 1,
+    }
   }
 >
-  <View>
-    <View
-      style={
+  <RCTScrollView
+    contentContainerStyle={
+      [
+        undefined,
         {
-          "paddingBottom": 16,
-        }
+          "paddingTop": 0,
+        },
+      ]
+    }
+    contentInset={
+      {
+        "bottom": 0,
       }
-    >
-      <Text
-        bold={true}
+    }
+    contentInsetAdjustmentBehavior="never"
+    scrollIndicatorInsets={
+      {
+        "bottom": 0,
+        "top": 0,
+      }
+    }
+    style={
+      [
+        {
+          "flex": 1,
+          "paddingHorizontal": 16,
+          "paddingTop": 16,
+        },
+        {
+          "backgroundColor": "#FFFFFF",
+        },
+      ]
+    }
+  >
+    <View>
+      <View
         style={
-          [
-            {
-              "paddingBottom": 8,
-            },
-            {
-              "color": "#7c7c7c",
-            },
-          ]
+          {
+            "paddingBottom": 16,
+          }
         }
-        variant="body2"
       >
-        Text generation
-      </Text>
-      <ModelCard
-        deleteMode={false}
-        isDownloaded={true}
-        isSelected={false}
-        model={
-          {
-            "author": "Author",
-            "family": "Family",
-            "huggingfaceUrl": "https://huggingface.co/test/model-1",
-            "id": 1,
-            "languages": [],
-            "name": "Model 1",
-            "parameterCountBillions": 1,
-            "parts": [],
-            "pipeline": "textGeneration",
-            "sizeGB": 1,
-            "supportedFileFormat": [],
-            "tags": [],
-            "thinking": false,
-            "toolCalling": false,
+        <Text
+          bold={true}
+          style={
+            [
+              {
+                "paddingBottom": 8,
+              },
+              {
+                "color": "#7c7c7c",
+              },
+            ]
           }
-        }
-        onPress={[Function]}
-      />
-      <ModelCard
-        deleteMode={false}
-        isDownloaded={true}
-        isSelected={true}
-        model={
-          {
-            "author": "Author",
-            "family": "Family",
-            "huggingfaceUrl": "https://huggingface.co/test/model-2",
-            "id": 2,
-            "languages": [],
-            "name": "Model 2",
-            "parameterCountBillions": 1,
-            "parts": [],
-            "pipeline": "textGeneration",
-            "sizeGB": 1,
-            "supportedFileFormat": [],
-            "tags": [],
-            "thinking": false,
-            "toolCalling": false,
+          variant="body2"
+        >
+          Text generation
+        </Text>
+        <ModelCard
+          deleteMode={false}
+          isDownloaded={true}
+          isSelected={false}
+          model={
+            {
+              "author": "Author",
+              "family": "Family",
+              "huggingfaceUrl": "https://huggingface.co/test/model-1",
+              "id": 1,
+              "languages": [],
+              "name": "Model 1",
+              "parameterCountBillions": 1,
+              "parts": [],
+              "pipeline": "textGeneration",
+              "sizeGB": 1,
+              "supportedFileFormat": [],
+              "tags": [],
+              "thinking": false,
+              "toolCalling": false,
+            }
           }
-        }
-        onPress={[Function]}
-      />
+          onPress={[Function]}
+        />
+        <ModelCard
+          deleteMode={false}
+          isDownloaded={true}
+          isSelected={true}
+          model={
+            {
+              "author": "Author",
+              "family": "Family",
+              "huggingfaceUrl": "https://huggingface.co/test/model-2",
+              "id": 2,
+              "languages": [],
+              "name": "Model 2",
+              "parameterCountBillions": 1,
+              "parts": [],
+              "pipeline": "textGeneration",
+              "sizeGB": 1,
+              "supportedFileFormat": [],
+              "tags": [],
+              "thinking": false,
+              "toolCalling": false,
+            }
+          }
+          onPress={[Function]}
+        />
+      </View>
     </View>
-  </View>
-</RCTScrollView>
+  </RCTScrollView>
+</View>
 `;

@@ -72,6 +72,7 @@ exports[`renders correctly InputBar 1`] = `
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -82,7 +83,6 @@ exports[`renders correctly InputBar 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
@@ -124,7 +124,9 @@ exports[`renders correctly InputBar 1`] = `
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            compact={true}
             disabled={false}
+            glass={true}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -138,7 +140,10 @@ exports[`renders correctly InputBar 1`] = `
         <IconButton
           backgroundColor="#e5bdaf"
           color="#FFFFFF"
+          compact={true}
           disabled={false}
+          glass={true}
+          glassTint="#e5bdaf"
           icon={
             {
               "androidIconName": "arrow_upward",
@@ -226,6 +231,7 @@ exports[`renders correctly InputBar when streaming 1`] = `
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -236,7 +242,6 @@ exports[`renders correctly InputBar when streaming 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
@@ -278,7 +283,9 @@ exports[`renders correctly InputBar when streaming 1`] = `
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            compact={true}
             disabled={false}
+            glass={true}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -292,7 +299,9 @@ exports[`renders correctly InputBar when streaming 1`] = `
         <IconButton
           backgroundColor="#ebebeb"
           color="#000000"
+          compact={true}
           disabled={false}
+          glass={true}
           icon={
             {
               "androidIconName": "stop",
@@ -380,6 +389,7 @@ exports[`renders correctly InputBar with value 1`] = `
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -390,7 +400,6 @@ exports[`renders correctly InputBar with value 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
@@ -432,7 +441,9 @@ exports[`renders correctly InputBar with value 1`] = `
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            compact={true}
             disabled={false}
+            glass={true}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -446,7 +457,10 @@ exports[`renders correctly InputBar with value 1`] = `
         <IconButton
           backgroundColor="#b44618"
           color="#FFFFFF"
+          compact={true}
           disabled={false}
+          glass={true}
+          glassTint="#b44618"
           icon={
             {
               "androidIconName": "arrow_upward",
@@ -534,6 +548,7 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -544,7 +559,6 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
@@ -582,34 +596,35 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
               }
             }
           >
-            <View
+            <IconButton
+              accessibilityLabel="components.inputBar.attach"
+              backgroundColor="#ebebeb"
+              color="#000000"
+              compact={true}
+              disabled={false}
+              glass={true}
+              icon={
+                {
+                  "androidIconName": "add",
+                  "iosIconName": "plus",
+                }
+              }
+              onPress={[Function]}
+              size={20}
               style={
                 {
                   "marginRight": 8,
                 }
               }
-            >
-              <IconButton
-                accessibilityLabel="components.inputBar.attach"
-                backgroundColor="#ebebeb"
-                color="#000000"
-                disabled={false}
-                icon={
-                  {
-                    "androidIconName": "add",
-                    "iosIconName": "plus",
-                  }
-                }
-                onPress={[Function]}
-                size={20}
-              />
-            </View>
+            />
           </View>
           <IconButton
             accessibilityLabel="components.inputBar.voiceAssistant"
             backgroundColor="#ebebeb"
             color="#000000"
+            compact={true}
             disabled={false}
+            glass={true}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -623,7 +638,10 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
         <IconButton
           backgroundColor="#e5bdaf"
           color="#FFFFFF"
+          compact={true}
           disabled={false}
+          glass={true}
+          glassTint="#e5bdaf"
           icon={
             {
               "androidIconName": "arrow_upward",

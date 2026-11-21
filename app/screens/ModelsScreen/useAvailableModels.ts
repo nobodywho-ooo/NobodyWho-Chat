@@ -1,41 +1,52 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { map, prop } from 'ramda';
 import { useAppState, useModelDownloads, useModels } from 'hooks';
-import { fetchModelCatalogue, filterModelsByDeviceMemory } from 'helpers';
-import { MODEL_SLOTS, Model } from 'types';
+import { fitsInDeviceMemory, log } from 'helpers';
+import {
+  getModelCatalogue,
+  refreshModelCatalogue,
+  useModelCatalogue,
+} from 'services';
+import { MODEL_SLOTS } from 'types';
 
-// Fetches the catalogue, filters it to what the device can run, and derives the
-// three lists the screen renders: the models in use (one per occupied slot),
-// how many are downloaded, and which remain available (not already downloaded
-// or downloading).
+// Reads the shared catalogue cache, filters it to what the device can run, and
+// derives the lists the screen renders: the models in use (one per occupied
+// slot) and which remain available (not already downloaded or downloading).
 export const useAvailableModels = () => {
   const { models: storedModels } = useModels();
   const { downloads } = useModelDownloads();
   const appState = useAppState();
+  const [hasRequested, setHasRequested] = useState(false);
+  const { catalogue, isFetching, hasFailed } = useModelCatalogue();
 
-  const [models, setModels] = useState<Model[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasError, setHasError] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
-
-  const fetchModels = useCallback(async () => {
-    setIsLoading(true);
-    setHasError(false);
-    try {
-      const catalogue = await fetchModelCatalogue();
-      const runnableModels = await filterModelsByDeviceMemory(catalogue);
-      setModels(runnableModels);
-    } catch {
-      setHasError(true);
-    } finally {
-      setIsLoading(false);
-      setHasFetched(true);
-    }
+  // Serves the cache (refreshing it behind the scenes once stale), or fetches.
+  useEffect(() => {
+    setHasRequested(true);
+    getModelCatalogue().catch(error =>
+      log('useAvailableModels getModelCatalogue', error),
+    );
   }, []);
 
-  useEffect(() => {
-    fetchModels();
-  }, [fetchModels]);
+  const refetch = useCallback(() => {
+    refreshModelCatalogue().catch(error =>
+      log('useAvailableModels refreshModelCatalogue', error),
+    );
+  }, []);
+
+  const hasError =
+    catalogue === undefined && hasRequested && hasFailed && !isFetching;
+  const isLoading = catalogue === undefined && !hasError;
+  const hasFetched = catalogue !== undefined || hasError;
+
+  const models = useMemo(
+    () =>
+      catalogue === undefined
+        ? []
+        : catalogue.models.filter(model =>
+            fitsInDeviceMemory([model], catalogue.ramGB),
+          ),
+    [catalogue],
+  );
 
   const downloadedModelIds = useMemo(
     () => map(prop('id'), storedModels),
@@ -73,10 +84,9 @@ export const useAvailableModels = () => {
     downloads,
     availableModels,
     inUseModels,
-    downloadedCount: downloadedModelIds.length,
     isLoading,
     hasError,
     hasFetched,
-    refetch: fetchModels,
+    refetch,
   };
 };

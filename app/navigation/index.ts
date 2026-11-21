@@ -1,5 +1,5 @@
 import { DrawerNavigator } from './DrawerNavigator';
-import { RootDrawerNavigator } from './RootDrawerNavigator';
+import { RootNavigator } from './RootStackNavigator';
 import { useDrawerCoordination } from './DrawerCoordination';
 
-export { DrawerNavigator, RootDrawerNavigator, useDrawerCoordination };
+export { DrawerNavigator, RootNavigator, useDrawerCoordination };

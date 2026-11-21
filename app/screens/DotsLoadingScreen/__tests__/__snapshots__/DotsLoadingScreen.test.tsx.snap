@@ -1,0 +1,58 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`renders correctly DotsLoadingScreen 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "flex": 1,
+        "justifyContent": "center",
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <View
+    accessibilityRole="progressbar"
+    style={
+      {
+        "flexDirection": "row",
+        "gap": 12,
+        "paddingVertical": 16,
+      }
+    }
+    testID="bouncing-dots"
+  >
+    <View
+      style={{}}
+    >
+      <SvgMock
+        color="#b44618"
+        height={30}
+        width={30}
+      />
+    </View>
+    <View
+      style={{}}
+    >
+      <SvgMock
+        color="#e27426"
+        height={30}
+        width={30}
+      />
+    </View>
+    <View
+      style={{}}
+    >
+      <SvgMock
+        color="#f2a02e"
+        height={30}
+        width={30}
+      />
+    </View>
+  </View>
+</View>
+`;

@@ -11,11 +11,15 @@ import {
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import LinearGradient from 'react-native-linear-gradient';
+import {
+  LiquidGlassView,
+  isLiquidGlassSupported,
+} from '@callstack/liquid-glass';
 import { useStyled } from 'hooks';
 import { useTheme } from 'context';
 import { IconButton, IconButtonIconProps, Text } from 'components';
 import { useDrawerCoordination } from 'navigation';
-import { haptics } from 'helpers';
+import { haptics, isIOS } from 'helpers';
 import { Theme } from 'types';
 
 import { styles } from './InputBar.styles';
@@ -25,6 +29,13 @@ const KEYBOARD_HIDE_TIMEOUT = 400;
 const gradientColors: Record<Theme, string[]> = {
   light: ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.9)'],
   dark: ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 0.9)'],
+};
+
+const BOTTOM_FADE_LOCATIONS = [0, 0.25, 0.5, 0.75, 1];
+const BOTTOM_FADE_ALPHAS = [0, 0.156, 0.5, 0.844, 1];
+const bottomFadeColors: Record<Theme, string[]> = {
+  light: BOTTOM_FADE_ALPHAS.map(alpha => `rgba(255, 255, 255, ${alpha})`),
+  dark: BOTTOM_FADE_ALPHAS.map(alpha => `rgba(18, 18, 18, ${alpha})`),
 };
 
 export type ImageAttachSource = 'photo' | 'camera';
@@ -56,6 +67,12 @@ interface InputBarProps {
   isTranscribing?: boolean;
   onStartDictation?: () => void;
   onStopDictation?: () => void;
+  showWebSearch?: boolean;
+  webSearchEnabled?: boolean;
+  onToggleWebSearch?: () => void;
+  showThinking?: boolean;
+  thinkingEnabled?: boolean;
+  onToggleThinking?: () => void;
 }
 
 const InputBarView: React.FC<InputBarProps> = ({
@@ -85,6 +102,12 @@ const InputBarView: React.FC<InputBarProps> = ({
   isTranscribing = false,
   onStartDictation,
   onStopDictation,
+  showWebSearch = false,
+  webSearchEnabled = false,
+  onToggleWebSearch,
+  showThinking = false,
+  thinkingEnabled = false,
+  onToggleThinking,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
@@ -93,9 +116,27 @@ const InputBarView: React.FC<InputBarProps> = ({
 
   const [focused, setFocused] = useState(false);
 
+  // iOS doesn't grow a multiline TextInput to fit a value set from outside
+  const [syncedValue, setSyncedValue] = useState(value);
+  const [inputKey, setInputKey] = useState(0);
+  if (value !== syncedValue) {
+    setSyncedValue(value);
+    if (isIOS && value !== '') {
+      setInputKey(key => key + 1);
+    }
+  }
+
+  const handleChangeText = useCallback(
+    (text: string) => {
+      setSyncedValue(text);
+      onChangeText(text);
+    },
+    [onChangeText],
+  );
+
   const canAttach = showImageAttach || showAudioAttach;
-  const showToggle = canAttach && !isStreaming;
-  const expanded = showToggle && attachExpanded;
+  const showAttachButton = canAttach;
+  const expanded = showAttachButton && attachExpanded;
   const hasImage = imageSource !== undefined;
   const hasAttachment = hasImage || hasAudio;
 
@@ -117,10 +158,10 @@ const InputBarView: React.FC<InputBarProps> = ({
   }, [hasImage, hasAudio, onAttachExpandedChange]);
 
   useEffect(() => {
-    if (attachExpanded && !showToggle) {
+    if (attachExpanded && !showAttachButton) {
       onAttachExpandedChange(false);
     }
-  }, [attachExpanded, showToggle, onAttachExpandedChange]);
+  }, [attachExpanded, showAttachButton, onAttachExpandedChange]);
 
   const toggleAttach = () => {
     haptics.medium();
@@ -198,6 +239,8 @@ const InputBarView: React.FC<InputBarProps> = ({
     borderColor: focused ? colors.borderFocused : colors.border,
   };
 
+  const Card = isLiquidGlassSupported ? GlassCard : View;
+
   const attachButtonIcon: IconButtonIconProps = expanded
     ? { iosIconName: 'xmark', androidIconName: 'close' }
     : hasAttachment
@@ -243,19 +286,21 @@ const InputBarView: React.FC<InputBarProps> = ({
     onPress: (() => void) | undefined;
     accessibilityLabel: string;
   }) => (
-    <View style={styles.attachContainer}>
-      <IconButton
-        icon={icon}
-        onPress={onPress}
-        disabled={disabled}
-        size={20}
-        color={active ? colors.ctaContentPrimary : colors.onSurface}
-        backgroundColor={
-          active ? colors.ctaSurfacePrimary : colors.surfaceContainer
-        }
-        accessibilityLabel={accessibilityLabel}
-      />
-    </View>
+    <IconButton
+      icon={icon}
+      onPress={onPress}
+      disabled={disabled || isStreaming}
+      size={20}
+      color={active ? colors.ctaContentPrimary : colors.onSurface}
+      backgroundColor={
+        active ? colors.ctaSurfacePrimary : colors.surfaceContainer
+      }
+      glass
+      compact
+      glassTint={active ? colors.ctaSurfacePrimary : undefined}
+      accessibilityLabel={accessibilityLabel}
+      style={styles.iconButtonSpacing}
+    />
   );
 
   const renderAttachOption = ({
@@ -281,6 +326,9 @@ const InputBarView: React.FC<InputBarProps> = ({
         backgroundColor={
           active ? colors.ctaSurfacePrimary : colors.surfaceContainer
         }
+        glass
+        compact
+        glassTint={active ? colors.ctaSurfacePrimary : undefined}
         accessibilityLabel={accessibilityLabel}
       />
       <Pressable onPress={onPress}>
@@ -298,7 +346,12 @@ const InputBarView: React.FC<InputBarProps> = ({
     <View style={styles.mainContainer} onLayout={handleLayout}>
       {messageStarters}
       {expanded && (
-        <View style={[styles.attachOptionsList, extraStyle]}>
+        <Card
+          style={[
+            styles.attachOptionsList,
+            isLiquidGlassSupported ? styles.glassCard : extraStyle,
+          ]}
+        >
           {showPhoto &&
             renderAttachOption({
               icon: { iosIconName: 'photo', androidIconName: 'image' },
@@ -337,7 +390,7 @@ const InputBarView: React.FC<InputBarProps> = ({
               onPress: onAttachAudio,
               accessibilityLabel: t('components.inputBar.attachAudio'),
             })}
-        </View>
+        </Card>
       )}
       <View
         ref={composerRef}
@@ -345,24 +398,42 @@ const InputBarView: React.FC<InputBarProps> = ({
         style={[
           styles.inputFieldContainer,
           style,
-          { backgroundColor: colors.surface },
+          !isLiquidGlassSupported && { backgroundColor: colors.surface },
         ]}
       >
-        <LinearGradient
-          pointerEvents="none"
-          colors={gradientColors[theme]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={styles.topGradient}
-        />
-        <View style={[styles.inputBarContainer, inputBarStyle]}>
+        {isLiquidGlassSupported ? (
+          <LinearGradient
+            pointerEvents="none"
+            colors={bottomFadeColors[theme]}
+            locations={BOTTOM_FADE_LOCATIONS}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.bottomFade}
+          />
+        ) : (
+          <LinearGradient
+            pointerEvents="none"
+            colors={gradientColors[theme]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={styles.topGradient}
+          />
+        )}
+        <Card
+          style={[
+            styles.inputBarContainer,
+            isLiquidGlassSupported ? styles.glassCard : inputBarStyle,
+          ]}
+        >
           <TextInput
+            key={inputKey}
+            autoFocus={focused}
             style={[styles.textInput, { color: colors.onSurface }]}
             placeholder={t('components.inputBar.placeholder')}
             placeholderTextColor="#999"
             value={value}
             editable={!disabled}
-            onChangeText={onChangeText}
+            onChangeText={handleChangeText}
             onFocus={handleFocus}
             onBlur={handleBlur}
             multiline
@@ -370,7 +441,7 @@ const InputBarView: React.FC<InputBarProps> = ({
           <View style={styles.inputBarContainerBottomPart}>
             <View style={styles.inputBarContainerBottomPartLeft}>
               <View style={styles.attachMainContainer}>
-                {showToggle &&
+                {showAttachButton &&
                   renderAttachButton({
                     icon: attachButtonIcon,
                     active: !expanded && hasAttachment,
@@ -380,30 +451,89 @@ const InputBarView: React.FC<InputBarProps> = ({
               </View>
 
               {showDictation &&
-                (!isStreaming || isRecording || isTranscribing) && (
-                  <View style={styles.transcriptionContainer}>
-                    {isTranscribing ? (
-                      <View style={styles.transcriptionLoaderContainer}>
-                        <ActivityIndicator
-                          size="small"
-                          color={colors.onSurface}
-                        />
-                      </View>
-                    ) : (
-                      <IconButton
-                        icon={transcribingIconButton}
-                        onPress={
-                          isRecording ? onStopDictation : onStartDictation
-                        }
-                        disabled={disabled}
-                        size={20}
-                        color={transcribingIconColor}
-                        backgroundColor={transcribingIconBackgroundColor}
-                        accessibilityLabel={transcribingIconAccessibilityLabel}
-                      />
-                    )}
+                (!isStreaming || isRecording || isTranscribing) &&
+                (isTranscribing ? (
+                  <View style={styles.transcriptionLoaderContainer}>
+                    <ActivityIndicator size="small" color={colors.onSurface} />
                   </View>
-                )}
+                ) : (
+                  <IconButton
+                    icon={transcribingIconButton}
+                    onPress={isRecording ? onStopDictation : onStartDictation}
+                    disabled={disabled}
+                    size={20}
+                    color={transcribingIconColor}
+                    backgroundColor={transcribingIconBackgroundColor}
+                    glass
+                    compact
+                    glassTint={isRecording ? colors.dangerSurface : undefined}
+                    accessibilityLabel={transcribingIconAccessibilityLabel}
+                    style={styles.iconButtonSpacing}
+                  />
+                ))}
+              {showThinking && (
+                <IconButton
+                  icon={{
+                    iosIconName: 'lightbulb',
+                    androidIconName: 'lightbulb',
+                  }}
+                  onPress={() => {
+                    haptics.light();
+                    onToggleThinking?.();
+                  }}
+                  disabled={disabled}
+                  size={20}
+                  color={
+                    thinkingEnabled
+                      ? colors.ctaContentPrimary
+                      : colors.onSurface
+                  }
+                  backgroundColor={
+                    thinkingEnabled
+                      ? colors.ctaSurfacePrimary
+                      : colors.surfaceContainer
+                  }
+                  glass
+                  compact
+                  glassTint={
+                    thinkingEnabled ? colors.ctaSurfacePrimary : undefined
+                  }
+                  accessibilityLabel={t('components.inputBar.thinking')}
+                  accessibilityState={{ selected: thinkingEnabled }}
+                  testID="thinking-toggle"
+                  style={styles.iconButtonSpacing}
+                />
+              )}
+              {showWebSearch && (
+                <IconButton
+                  icon={{ iosIconName: 'globe', androidIconName: 'language' }}
+                  onPress={() => {
+                    haptics.light();
+                    onToggleWebSearch?.();
+                  }}
+                  disabled={disabled}
+                  size={20}
+                  color={
+                    webSearchEnabled
+                      ? colors.ctaContentPrimary
+                      : colors.onSurface
+                  }
+                  backgroundColor={
+                    webSearchEnabled
+                      ? colors.ctaSurfacePrimary
+                      : colors.surfaceContainer
+                  }
+                  glass
+                  compact
+                  glassTint={
+                    webSearchEnabled ? colors.ctaSurfacePrimary : undefined
+                  }
+                  accessibilityLabel={t('components.inputBar.webSearch')}
+                  accessibilityState={{ selected: webSearchEnabled }}
+                  testID="web-search-toggle"
+                  style={styles.iconButtonSpacing}
+                />
+              )}
               <IconButton
                 icon={voiceAssistantIconButton}
                 onPress={openVoiceAssistant}
@@ -411,6 +541,8 @@ const InputBarView: React.FC<InputBarProps> = ({
                 size={20}
                 color={colors.onSurface}
                 backgroundColor={colors.surfaceContainer}
+                glass
+                compact
                 accessibilityLabel={t('components.inputBar.voiceAssistant')}
               />
             </View>
@@ -422,10 +554,16 @@ const InputBarView: React.FC<InputBarProps> = ({
               onStop={onStop}
             />
           </View>
-        </View>
+        </Card>
       </View>
     </View>
   );
+};
+
+const GlassCard: React.FC<React.ComponentProps<typeof View>> = props => {
+  const theme = useTheme();
+
+  return <LiquidGlassView colorScheme={theme} {...props} />;
 };
 
 // Memoized: ChatScreen re-renders on every streamed token, and none of that
@@ -478,6 +616,9 @@ const InputBarAction: React.FC<InputBarActionProps> = ({
       size={20}
       color={color}
       backgroundColor={backgroundColor}
+      glass
+      compact
+      glassTint={isStreaming ? undefined : backgroundColor}
     />
   );
 };

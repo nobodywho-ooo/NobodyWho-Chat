@@ -34,7 +34,7 @@ export const NoModelSelectedScreen: React.FC = () => {
         title={t('screens.noModelSelected.selectModel')}
         onPress={() => {
           // @ts-ignore
-          navigation.navigate('ModelsScreen');
+          navigation.navigate('Models');
         }}
       />
     </View>

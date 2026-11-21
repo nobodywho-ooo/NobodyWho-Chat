@@ -90,9 +90,8 @@ test('pressing the header title opens the downloaded models screen', async () =>
 
   await fireEvent.press(screen.getByText('Model 1'));
 
-  expect(mockNavigate).toHaveBeenCalledWith('Chat', {
-    screen: 'DownloadedModelsScreen',
-    params: { canDelete: false },
+  expect(mockNavigate).toHaveBeenCalledWith('DownloadedModelsScreen', {
+    canDelete: false,
   });
 });
 

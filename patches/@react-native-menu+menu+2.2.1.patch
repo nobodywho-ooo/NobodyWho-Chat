@@ -1,0 +1,20 @@
+diff --git a/node_modules/@react-native-menu/menu/ios/Shared/MenuViewImplementation.swift b/node_modules/@react-native-menu/menu/ios/Shared/MenuViewImplementation.swift
+--- a/node_modules/@react-native-menu/menu/ios/Shared/MenuViewImplementation.swift
++++ b/node_modules/@react-native-menu/menu/ios/Shared/MenuViewImplementation.swift
+@@ -68,7 +68,15 @@
+     }
+     
+     public override func contextMenuInteraction(_ interaction: UIContextMenuInteraction, willEndFor configuration: UIContextMenuConfiguration, animator: UIContextMenuInteractionAnimating?) {
+-        sendMenuClose()
++        // Report the close once the dismiss animation has finished, so JS can
++        // safely unmount this view without breaking UIKit's morph back into it.
++        if let animator = animator {
++            animator.addCompletion { [weak self] in
++                self?.sendMenuClose()
++            }
++        } else {
++            sendMenuClose()
++        }
+     }
+ 
+     func setup () {

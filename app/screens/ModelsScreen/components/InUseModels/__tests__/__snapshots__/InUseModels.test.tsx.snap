@@ -5,7 +5,8 @@ exports[`renders correctly InUseModels 1`] = `
   <Text
     style={
       {
-        "marginBottom": 16,
+        "marginVertical": 12,
+        "paddingTop": 16,
       }
     }
     variant="h4"

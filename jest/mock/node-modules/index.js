@@ -139,6 +139,12 @@ jest.mock('expo-image-picker', () => ({
   launchImageLibraryAsync: opts => mockLaunchImageLibraryAsync(opts),
 }));
 
+jest.mock('expo-keep-awake', () => ({
+  activateKeepAwakeAsync: jest.fn(() => Promise.resolve()),
+  deactivateKeepAwake: jest.fn(() => Promise.resolve()),
+  useKeepAwake: jest.fn(),
+}));
+
 jest.mock('expo-document-picker', () => ({
   getDocumentAsync: opts => mockGetDocumentAsync(opts),
 }));
@@ -164,6 +170,15 @@ jest.mock('expo-blur', () => {
     BlurView: ({ children }) =>
       mockReact.createElement(mockReact.Fragment, null, children),
     BlurTargetView: ({ children }) =>
+      mockReact.createElement(mockReact.Fragment, null, children),
+  };
+});
+
+jest.mock('@react-native-masked-view/masked-view', () => {
+  const mockReact = require('react');
+  return {
+    __esModule: true,
+    default: ({ children }) =>
       mockReact.createElement(mockReact.Fragment, null, children),
   };
 });
@@ -249,18 +264,51 @@ jest.mock('react-native-gesture-handler', () => {
 // pass through) and stub the hooks/helpers FullScreenImageModal calls.
 jest.mock('react-native-reanimated', () => {
   const ReactNative = require('react-native');
+  const chainableAnimation = () => {
+    const builder = {
+      duration: () => builder,
+      delay: () => builder,
+    };
+    return builder;
+  };
   return {
     __esModule: true,
     default: {
       View: ReactNative.View,
       Image: ReactNative.Image,
     },
-    useSharedValue: initial => ({ value: initial }),
+    useSharedValue: initial => ({
+      value: initial,
+      get() {
+        return this.value;
+      },
+      set(next) {
+        this.value = next;
+      },
+    }),
     useAnimatedStyle: () => ({}),
+    useAnimatedReaction: () => {},
     withTiming: value => value,
     withRepeat: animation => animation,
+    withSequence: (...animations) => animations[animations.length - 1],
+    withDelay: (_delay, animation) => animation,
     cancelAnimation: () => {},
-    Easing: { linear: t => t },
+    Easing: {
+      linear: t => t,
+      ease: t => t,
+      in: easing => easing,
+      out: easing => easing,
+      inOut: easing => easing,
+      quad: t => t,
+      cubic: t => t,
+      bezier: () => t => t,
+    },
+    // Layout animation builders: chainable no-ops (web search trace).
+    FadeIn: chainableAnimation(),
+    FadeOut: chainableAnimation(),
+    FadeInDown: chainableAnimation(),
+    SlideInDown: chainableAnimation(),
+    LinearTransition: chainableAnimation(),
     interpolate: value => value,
     interpolateColor: (_value, _input, output) =>
       Array.isArray(output) ? output[0] : output,
@@ -279,6 +327,21 @@ jest.mock('react-native-reanimated', () => {
 jest.mock('react-native-worklets', () => ({
   scheduleOnRN: (fn, ...args) => fn(...args),
 }));
+
+// The scrape host's WebView: a plain View under Jest, with the ref methods
+// useScrapeHost calls.
+jest.mock('react-native-webview', () => {
+  const React = require('react');
+  const { View } = require('react-native');
+  const WebView = React.forwardRef((props, ref) => {
+    React.useImperativeHandle(ref, () => ({
+      injectJavaScript: jest.fn(),
+      reload: jest.fn(),
+    }));
+    return React.createElement(View, { testID: props.testID ?? 'webview' });
+  });
+  return { __esModule: true, WebView, default: WebView };
+});
 
 jest.mock('react-native-enriched-markdown', () => {
   return {
@@ -601,6 +664,19 @@ jest.mock('react-native-safe-area-context', () => {
   };
 });
 
+jest.mock('react-native-localize', () => ({
+  getLocales: () => [
+    {
+      countryCode: 'US',
+      languageTag: 'en-US',
+      languageCode: 'en',
+      isRTL: false,
+    },
+  ],
+  findBestLanguageTag: tags =>
+    tags.includes('en') ? { languageTag: 'en', isRTL: false } : undefined,
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({
     t: key => key,
@@ -624,6 +700,9 @@ jest.mock('@op-engineering/op-sqlite', () => {
     Storage: jest.fn().mockReturnValue({
       getItem: jest.fn().mockReturnValue(jest.fn()),
       setItem: jest.fn().mockReturnValue(jest.fn()),
+      getItemSync: jest.fn().mockReturnValue(undefined),
+      setItemSync: jest.fn(),
+      removeItemSync: jest.fn(),
     }),
   };
 });
@@ -650,10 +729,15 @@ jest.mock('@react-navigation/core', () => {
   };
 });
 
+jest.mock('@react-navigation/elements', () => ({
+  useHeaderHeight: () => 0,
+}));
+
 jest.mock('@react-navigation/drawer', () => {
   const mockReact = require('react');
   return {
     useDrawerStatus: () => 'open',
+    useDrawerProgress: () => ({ value: 1 }),
     createDrawerNavigator: () => ({
       Navigator: ({ children }) =>
         mockReact.createElement(mockReact.Fragment, null, children),
@@ -687,6 +771,7 @@ jest.mock('@react-navigation/native', () => ({
     setOptions: mockSetOptions,
   }),
   getFocusedRouteNameFromRoute: jest.fn(() => 'ChatScreen'),
+  useIsFocused: () => true,
   useRoute: () => mockUseRoute(),
   usePreventRemove: jest.fn(),
   SFSymbol: 'SFSymbol',

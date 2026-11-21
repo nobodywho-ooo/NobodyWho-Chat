@@ -9,6 +9,7 @@ import {
   CURATED_VOICE_ONLY_MODELS,
   CURATED_VOICE_PIPELINE_MODELS,
 } from 'helpers';
+import { resetModelCatalogueForTests } from 'services';
 import { Model, ModelPipeline } from 'types';
 import { buildModel } from 'jest/factories/model';
 
@@ -56,13 +57,14 @@ jest.mock('repositories', () => ({
   getModelById: jest.fn(),
 }));
 
+// The real catalogue cache, minus the rest of the services barrel.
+jest.mock('services', () => jest.requireActual('services/modelCatalogue'));
+
 jest.mock('helpers', () => ({
   ...jest.requireActual('helpers/curatedModels'),
   ...jest.requireActual('helpers/diskSpace'),
-  fetchDeviceCatalogue: jest.fn(async () => {
-    const response = await fetch('https://catalogue');
-    return { models: await response.json(), ramGB: undefined };
-  }),
+  ...jest.requireActual('helpers/modelCatalogue'),
+  deviceRamGB: jest.fn(async () => undefined),
   log: jest.fn(),
   checkDiskSpaceForModels: jest.fn(() => ({
     fits: true,
@@ -105,6 +107,7 @@ let alertSpy: jest.SpyInstance;
 
 beforeEach(() => {
   jest.clearAllMocks();
+  resetModelCatalogueForTests();
   mockStoredModels = [];
   mockPendingDownloads = [];
   mockIsModelsLoading = false;

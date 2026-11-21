@@ -29,4 +29,11 @@ export default StyleSheet.create({
     alignSelf: 'flex-start',
     gap: Spacings.sm,
   },
+  refiningContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: Spacings.sm,
+    marginTop: Spacings.md,
+  },
 });

@@ -22,7 +22,7 @@ import {
 // the startup sweep — is how they drift apart, so they live here instead.
 
 // Which model currently occupies the slot a model of `pipeline` would take.
-// Undefined for a pipeline no slot accepts (featureExtraction, textRanking, …).
+// Undefined for a pipeline no slot accepts (textRanking, imageToImage, …).
 export const inUseModelIdForPipeline = (
   pipeline: ModelPipeline,
   state: AppState,
@@ -69,6 +69,7 @@ export const selectModel = async (model: Model): Promise<boolean> => {
   // A computed key over a union of literals widens to a string index
   // signature — assert the narrow shape back.
   await setAppState({ [appStateKey]: model.id } as Partial<AppState>);
+
   return true;
 };
 

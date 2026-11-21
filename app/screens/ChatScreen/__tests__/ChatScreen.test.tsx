@@ -29,6 +29,23 @@ test('renders correctly empty ChatScreen', async () => {
   expect(screen.toJSON()).toMatchSnapshot();
 });
 
+test('offers no starters while an existing conversation is still loading', async () => {
+  const screen = await render(
+    <AiServiceProvider>
+      <ChatScreen
+        conversationId={undefined}
+        messages={[]}
+        historyPending
+        onConversationCreated={jest.fn()}
+      />
+    </AiServiceProvider>,
+  );
+
+  expect(
+    screen.queryByText('components.messageStarters.planParisTrip.title'),
+  ).toBeNull();
+});
+
 test('renders ChatScreen with existing messages', async () => {
   const messages: DisplayMessage[] = [
     { role: 'user', content: 'Hello there' },

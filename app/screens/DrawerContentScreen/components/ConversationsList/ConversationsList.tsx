@@ -10,7 +10,7 @@ import { Conversation } from 'types';
 import styles from './ConversationsList.styles';
 
 interface ConversationsListProps {
-  onCloseDrawer: () => void;
+  onSelect: () => void;
   /**
    * Room to leave below the last conversation, so it can be scrolled clear of
    * whatever floats over the bottom of the drawer. Without it the last items
@@ -21,7 +21,7 @@ interface ConversationsListProps {
 }
 
 export const ConversationsList: FC<ConversationsListProps> = ({
-  onCloseDrawer,
+  onSelect,
   bottomInset = 0,
 }) => {
   const { t } = useTranslation();
@@ -35,9 +35,9 @@ export const ConversationsList: FC<ConversationsListProps> = ({
         modelIdInUse: conversation.modelId,
         conversationIdInUse: conversation.id,
       });
-      onCloseDrawer();
+      onSelect();
     },
-    [onCloseDrawer],
+    [onSelect],
   );
 
   const renderItem = useCallback<ListRenderItem<Conversation>>(

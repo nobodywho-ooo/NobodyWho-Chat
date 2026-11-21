@@ -1,9 +1,16 @@
 import { Accordion } from './Accordion/Accordion';
+import { AmbientGlow } from './AmbientGlow/AmbientGlow';
+import { ActionButton } from './ActionButton/ActionButton';
 import { Button } from './Button/Button';
 import { Chevron } from './Chevron/Chevron';
+import { DownloadedModels } from './DownloadedModels/DownloadedModels';
+import { EdgeGlow } from './EdgeGlow/EdgeGlow';
+import type { GlowEdge, GlowLevels } from './EdgeGlow/EdgeGlow';
 import { ProgressBar } from './ProgressBar/ProgressBar';
 import { ErrorView } from './ErrorView/ErrorView';
+import { GlassScrollEdge } from './GlassScrollEdge/GlassScrollEdge';
 import { GradientText } from './GradientText/GradientText';
+import { HeaderScrollView } from './HeaderScrollView/HeaderScrollView';
 import { IconButton, IconButtonIconProps } from './IconButton/IconButton';
 import { iconButtonSize } from './IconButton/IconButton.styles';
 import { ListItem } from './ListItem/ListItem';
@@ -24,15 +31,22 @@ import { Text, fontSizes } from './Text/Text';
 import { Toast } from './Toast/Toast';
 import { SpeechToTextPreferences } from './SpeechToTextPreferences/SpeechToTextPreferences';
 import { TextToSpeechPreferences } from './TextToSpeechPreferences/TextToSpeechPreferences';
+import { WebScrapeHost } from './WebScrapeHost/WebScrapeHost';
 
 export {
   Accordion,
+  ActionButton,
+  AmbientGlow,
   Button,
   Chevron,
+  DownloadedModels,
+  EdgeGlow,
   ProgressBar,
   ErrorView,
   fontSizes,
+  GlassScrollEdge,
   GradientText,
+  HeaderScrollView,
   IconButton,
   iconButtonSize,
   ListItem,
@@ -51,6 +65,7 @@ export {
   Text,
   TextToSpeechPreferences,
   Toast,
+  WebScrapeHost,
 };
 
-export type { IconButtonIconProps };
+export type { GlowEdge, GlowLevels, IconButtonIconProps };

@@ -27,20 +27,6 @@ jest.mock('../../screens/ChatScreen/ChatScreen', () => {
 const renderedConversationId = () =>
   jest.mocked(ChatScreen).mock.lastCall?.[0].conversationId;
 
-jest.mock('@react-navigation/native-stack', () => {
-  const mockReact = require('react');
-  return {
-    createNativeStackNavigator: () => ({
-      Navigator: ({ children }: any) =>
-        mockReact.createElement(mockReact.Fragment, null, children),
-      Screen: ({ name, component }: any) =>
-        name === 'ChatScreen' && component
-          ? mockReact.createElement(component)
-          : null,
-    }),
-  };
-});
-
 const mockChatInstance = {
   setChatHistory: jest.fn(async (_history: unknown[] = []) => {}),
   getChatHistory: jest.fn(async () => []),
@@ -125,6 +111,7 @@ let mockEnsureVoiceEngine: (slot: string) => Promise<boolean> = async () =>
   false;
 
 jest.mock('services', () => ({
+  ...jest.requireActual('services/webSearch'),
   useAiService: () => {
     const { useEnsureVoiceEngine } = jest.requireActual(
       '../../services/ai/voiceEngines',
@@ -167,6 +154,8 @@ jest.mock('repositories', () => ({
   getMessagesByConversationId: jest.fn(),
   insertConversation: jest.fn(),
   insertMessage: jest.fn(),
+  getConversationDigest: jest.fn(() => Promise.resolve(null)),
+  setConversationDigest: jest.fn(() => Promise.resolve()),
 }));
 
 // Drive whether a system dialog the app launched (photo library, document
@@ -952,10 +941,12 @@ test('switching conversations keeps the chat screen mounted (no loading flash)',
 
   // History injection is still pending. The old design flipped status to Loading
   // (unmounting ChatScreen for the loading screen); the new design stays Ready, so
-  // the previous conversation's content is still on screen instead of a flash.
+  // ChatScreen stays mounted, and while the history is pending it holds back the
+  // empty-chat starters instead of flashing them.
+  expect(getInputBar(screen)).toBeTruthy();
   expect(
-    screen.getByText('components.messageStarters.planParisTrip.title'),
-  ).toBeTruthy();
+    screen.queryByText('components.messageStarters.planParisTrip.title'),
+  ).toBeNull();
 
   await act(async () => {
     resolveSetHistory();

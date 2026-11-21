@@ -3,21 +3,27 @@ import { ActivityIndicator, Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   ErrorView,
+  IconButton,
   ModelCard,
   PlatformIcon,
-  SelectablePill,
   Text,
 } from 'components';
 import { useStyled } from 'hooks';
-import { byCatalogueOrder, getPipelineIcon } from 'helpers';
-import { Model, ModelPipeline, pipelineLabel } from 'types';
+import { byCatalogueOrder } from 'helpers';
+import { Model, ModelPipeline } from 'types';
 import { Spacings } from 'style';
 
+import {
+  ALL_PIPELINES,
+  ModelFilterSheet,
+  type PipelineFilter,
+} from '../ModelFilterSheet/ModelFilterSheet';
 import styles from './AvailableModels.styles';
 
-const ALL_PIPELINES = 'all';
-
-type PipelineFilter = ModelPipeline | typeof ALL_PIPELINES;
+const FILTER_ICON = {
+  iosIconName: 'line.3.horizontal.decrease',
+  androidIconName: 'filter_list',
+} as const;
 
 interface AvailableModelsProps {
   models: Model[];
@@ -42,6 +48,7 @@ const AvailableModelsView: React.FC<AvailableModelsProps> = ({
   const { colors } = useStyled();
 
   const [filter, setFilter] = useState<PipelineFilter>(ALL_PIPELINES);
+  const [isFilterSheetOpen, setFilterSheetOpen] = useState(false);
 
   const pipelines = useMemo(() => {
     const present = new Set(models.map(model => model.pipeline));
@@ -50,7 +57,6 @@ const AvailableModelsView: React.FC<AvailableModelsProps> = ({
     );
   }, [models]);
 
-  // Fall back to All filter when downloading the last model of a selected pipeline
   useEffect(() => {
     if (filter !== ALL_PIPELINES && !pipelines.includes(filter)) {
       setFilter(ALL_PIPELINES);
@@ -72,20 +78,36 @@ const AvailableModelsView: React.FC<AvailableModelsProps> = ({
   return (
     <>
       <View style={styles.headerContainer}>
-        <Text variant="h4">{t('screens.models.availableToDownload')}</Text>
-        <Pressable
-          onPress={onInfoPress}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={t('screens.models.chooseModelTitle')}
-        >
-          <PlatformIcon
-            iosIconName="info.circle"
-            androidIconName="info"
-            size={20}
-            color={colors.primary}
+        <View>
+          <Text variant="h4">{t('screens.models.availableToDownload')}</Text>
+          <Pressable
+            onPress={onInfoPress}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('screens.models.chooseModelTitle')}
+            style={({ pressed }) => [styles.infoRow, pressed && styles.pressed]}
+          >
+            <PlatformIcon
+              iosIconName="info.circle"
+              androidIconName="info"
+              size={14}
+              color={colors.primary}
+            />
+            <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
+              {t('screens.models.chooseModelTitle')}
+            </Text>
+          </Pressable>
+        </View>
+        {showFilters && (
+          <IconButton
+            icon={FILTER_ICON}
+            glass
+            color={filter === ALL_PIPELINES ? undefined : colors.primary}
+            onPress={() => setFilterSheetOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel={t('screens.models.filterModels')}
           />
-        </Pressable>
+        )}
       </View>
 
       {isLoading && (
@@ -104,25 +126,6 @@ const AvailableModelsView: React.FC<AvailableModelsProps> = ({
         />
       )}
 
-      {showFilters && (
-        <View style={styles.filterContainer}>
-          <SelectablePill
-            label={t('screens.models.allPipelines')}
-            selected={filter === ALL_PIPELINES}
-            onPress={() => setFilter(ALL_PIPELINES)}
-          />
-          {pipelines.map(pipeline => (
-            <SelectablePill
-              key={pipeline}
-              label={pipelineLabel[pipeline]}
-              icon={getPipelineIcon(pipeline)}
-              selected={filter === pipeline}
-              onPress={() => setFilter(pipeline)}
-            />
-          ))}
-        </View>
-      )}
-
       {showModels &&
         visibleModels.map(model => (
           <ModelCard key={model.id} model={model} onPress={onModelPress} />
@@ -131,6 +134,14 @@ const AvailableModelsView: React.FC<AvailableModelsProps> = ({
       {hasFetched && !hasError && models.length === 0 && (
         <Text>{t('screens.models.youHaveDownloadedAllTheModels')}</Text>
       )}
+
+      <ModelFilterSheet
+        visible={isFilterSheetOpen && showFilters}
+        pipelines={pipelines}
+        selected={filter}
+        onSelect={setFilter}
+        onClose={() => setFilterSheetOpen(false)}
+      />
     </>
   );
 };

@@ -1,0 +1,34 @@
+diff --git a/node_modules/react-native-screens/ios/RNSScreenStackHeaderConfig.mm b/node_modules/react-native-screens/ios/RNSScreenStackHeaderConfig.mm
+index 12f2272..6f2e32e 100644
+--- a/node_modules/react-native-screens/ios/RNSScreenStackHeaderConfig.mm
++++ b/node_modules/react-native-screens/ios/RNSScreenStackHeaderConfig.mm
+@@ -615,6 +615,29 @@ + (void)updateViewController:(UIViewController *)vc
+   if (shouldHide) {
+     navitem.title = config.title;
+ 
++    // Reffen patch: popping (or swiping back) to a screen without a header used to hide the bar animated, which
++    // makes UIKit slide the whole bar out with the popped screen — the iOS 26 glass back button then rides the
++    // popped screen's left edge. Keep the bar in place for the transition (the back button fades out where it is,
++    // like any pop between two headers) and hide it once the pop has landed. A cancelled swipe keeps the bar.
++    id<UIViewControllerTransitionCoordinator> coordinator = navctr.transitionCoordinator;
++    if (animated && !wasHidden && coordinator != nil && coordinator.presentationStyle == UIModalPresentationNone &&
++        [coordinator viewControllerForKey:UITransitionContextToViewControllerKey] == vc &&
++        ![navctr.viewControllers containsObject:[coordinator
++                                                    viewControllerForKey:UITransitionContextFromViewControllerKey]]) {
++      __weak UINavigationController *weakNavctr = navctr;
++      __weak UIViewController *weakVc = vc;
++      [coordinator animateAlongsideTransition:nil
++                                   completion:^(id<UIViewControllerTransitionCoordinatorContext> _Nonnull context) {
++                                     UINavigationController *strongNavctr = weakNavctr;
++                                     if (context.isCancelled || strongNavctr == nil ||
++                                         strongNavctr.topViewController != weakVc) {
++                                       return;
++                                     }
++                                     [strongNavctr setNavigationBarHidden:YES animated:NO];
++                                   }];
++      return;
++    }
++
+     // Setting navigation bar visibility is split to mitigate iOS 26 bug with bar button items.
+     [navctr setNavigationBarHidden:YES animated:animated];
+     return;

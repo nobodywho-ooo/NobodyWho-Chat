@@ -1,5 +1,6 @@
 import {
   isChatPipeline,
+  isEmbeddingPipeline,
   isSttPipeline,
   isTtsPipeline,
   isVadPipeline,
@@ -43,16 +44,36 @@ export const CURATED_VOICE_ONLY_MODELS: readonly CuratedModel[] = [
   { accepts: isVadPipeline, matches: hasTag(RECOMMENDED_TAG) },
 ];
 
+export const CURATED_SEARCH_MODELS: readonly CuratedModel[] = [
+  { accepts: isEmbeddingPipeline, matches: hasTag(RECOMMENDED_TAG) },
+];
+
 // What onboarding downloads: the picked chat model alone, or with the voice
-// models.
-export type ModelSetup = 'textOnly' | 'textAndVoice';
+// models, the web-search embedding model, or both.
+export type ModelSetup =
+  'textOnly' | 'textAndVoice' | 'textAndSearch' | 'allModels';
+
+const SETUP_ADDS_VOICE: Record<ModelSetup, boolean> = {
+  textOnly: false,
+  textAndVoice: true,
+  textAndSearch: false,
+  allModels: true,
+};
+
+const SETUP_ADDS_SEARCH: Record<ModelSetup, boolean> = {
+  textOnly: false,
+  textAndVoice: false,
+  textAndSearch: true,
+  allModels: true,
+};
 
 export const curatedOnboardingModels = (
   modelId: number,
   setup: ModelSetup,
 ): CuratedModel[] => [
   curatedChatModel(modelId),
-  ...(setup === 'textAndVoice' ? CURATED_VOICE_ONLY_MODELS : []),
+  ...(SETUP_ADDS_VOICE[setup] ? CURATED_VOICE_ONLY_MODELS : []),
+  ...(SETUP_ADDS_SEARCH[setup] ? CURATED_SEARCH_MODELS : []),
 ];
 
 export const CURATED_VOICE_PIPELINE_MODELS: readonly CuratedModel[] = [

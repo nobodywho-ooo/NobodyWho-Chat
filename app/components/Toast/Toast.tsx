@@ -1,4 +1,4 @@
-import React, { ComponentRef, RefObject, useEffect } from 'react';
+import React, { ComponentRef, RefObject, useEffect, useState } from 'react';
 import { ActivityIndicator, StyleProp, View, ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -6,6 +6,10 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import {
+  LiquidGlassView,
+  isLiquidGlassSupported,
+} from '@callstack/liquid-glass';
 import { useTheme } from 'context';
 import { useStyled } from 'hooks';
 
@@ -45,13 +49,69 @@ export const Toast: React.FC<ToastProps> = ({
     progress.value = withTiming(1, { duration: ENTER_DURATION });
   }, [visible, progress]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: progress.value,
+  // UIKit glass renders nothing under an ancestor with opacity < 1, so on
+  // the glass path only the slide is animated on the wrapper; the glass
+  // materializes natively (effect 'none' -> 'regular') and the content fades
+  // inside it.
+  const slideStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: ENTER_OFFSET * (1 - progress.value) }],
   }));
+  const fadeStyle = useAnimatedStyle(() => ({ opacity: progress.value }));
+
+  const [glassEffect, setGlassEffect] = useState<'none' | 'regular'>('none');
+
+  useEffect(() => {
+    if (!isLiquidGlassSupported) {
+      return;
+    }
+
+    if (!visible) {
+      setGlassEffect('none');
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => setGlassEffect('regular'));
+
+    return () => cancelAnimationFrame(frame);
+  }, [visible]);
 
   if (!visible) {
     return null;
+  }
+
+  const content = (
+    <>
+      {loading && <ActivityIndicator size="small" color={colors.primary} />}
+      <Text
+        variant="body2"
+        numberOfLines={2}
+        style={[styles.message, { color: colors.onSurface }]}
+      >
+        {message}
+      </Text>
+    </>
+  );
+
+  if (isLiquidGlassSupported) {
+    return (
+      <View style={[styles.container, style]} pointerEvents="none">
+        <Animated.View
+          style={[styles.glassWrapper, slideStyle]}
+          accessibilityRole="alert"
+          accessibilityLiveRegion="polite"
+        >
+          <LiquidGlassView
+            effect={glassEffect}
+            colorScheme={theme}
+            style={styles.glassToast}
+          >
+            <Animated.View style={[styles.row, fadeStyle]}>
+              {content}
+            </Animated.View>
+          </LiquidGlassView>
+        </Animated.View>
+      </View>
+    );
   }
 
   return (
@@ -59,11 +119,9 @@ export const Toast: React.FC<ToastProps> = ({
       <Animated.View
         style={[
           styles.toast,
-          {
-            borderColor: colors.borderSecondary,
-            // shadowColor: colors.shadow,
-          },
-          animatedStyle,
+          { borderColor: colors.borderSecondary },
+          fadeStyle,
+          slideStyle,
         ]}
         accessibilityRole="alert"
         accessibilityLiveRegion="polite"
@@ -79,14 +137,7 @@ export const Toast: React.FC<ToastProps> = ({
         <View
           style={[styles.tint, { backgroundColor: colors.surfaceContainer }]}
         />
-        {loading && <ActivityIndicator size="small" color={colors.primary} />}
-        <Text
-          variant="body2"
-          numberOfLines={2}
-          style={[styles.message, { color: colors.onSurface }]}
-        >
-          {message}
-        </Text>
+        {content}
       </Animated.View>
     </View>
   );

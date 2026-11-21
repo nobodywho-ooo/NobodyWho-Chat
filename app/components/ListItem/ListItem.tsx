@@ -10,20 +10,29 @@ import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 
 import styles from './ListItem.styles';
 
-interface ListItemProps extends Omit<PressableProps, 'children'> {
-  title: string;
-  subtitle: string;
+interface ListItemIconProps {
   iosIconName: SFSymbolProps['name'];
   androidIconName: MaterialSymbolProps['name'];
-  iconBackgroundColor: string;
+  iconColor: string;
 }
+
+interface ListItemNoIconProps {
+  iosIconName?: never;
+  androidIconName?: never;
+  iconColor?: never;
+}
+
+type ListItemProps = Omit<PressableProps, 'children'> & {
+  title: string;
+  subtitle: string;
+} & (ListItemIconProps | ListItemNoIconProps);
 
 export const ListItem: React.FC<ListItemProps> = ({
   title,
   subtitle,
   iosIconName,
   androidIconName,
-  iconBackgroundColor,
+  iconColor,
   disabled,
   ...props
 }) => {
@@ -35,16 +44,14 @@ export const ListItem: React.FC<ListItemProps> = ({
       disabled={disabled}
       {...props}
     >
-      <View
-        style={[styles.iconContainer, { backgroundColor: iconBackgroundColor }]}
-      >
+      {iosIconName && androidIconName && (
         <PlatformIcon
           iosIconName={iosIconName}
           androidIconName={androidIconName}
-          color="#FFFFFF"
+          color={iconColor}
         />
-      </View>
-      <View style={styles.content}>
+      )}
+      <View style={[styles.content, iosIconName && styles.contentAfterIcon]}>
         <Text style={styles.title}>{title}</Text>
         <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
           {subtitle}

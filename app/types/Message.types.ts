@@ -6,6 +6,16 @@ export interface ToolInvocation {
   result: string;
 }
 
+export interface WebSource {
+  name: string;
+  url?: string;
+  passage?: string;
+  query?: string;
+  used?: boolean;
+  read?: boolean;
+  sourceNumber?: number;
+}
+
 export interface ChatMessage {
   id: number;
   timestamp: string;
@@ -14,8 +24,10 @@ export interface ChatMessage {
   content: string;
   tokensPerSecond?: number;
   timeToFirstToken?: number;
+  webSearchMs?: number;
   documentsPath: string[];
   toolInvocations?: ToolInvocation[];
+  webSources?: WebSource[];
 }
 
 type WithTextContent<T> = T extends { content: unknown }
@@ -25,7 +37,10 @@ type WithTextContent<T> = T extends { content: unknown }
 export type DisplayMessage = WithTextContent<Message> & {
   tokensPerSecond?: number;
   timeToFirstToken?: number;
+  webSearchMs?: number;
   documentsPath?: string[];
   toolInvocations?: ToolInvocation[];
+  webSources?: WebSource[];
+  refining?: boolean;
   uid?: string;
 };

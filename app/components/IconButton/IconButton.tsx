@@ -1,5 +1,11 @@
 import React from 'react';
-import { Pressable, PressableProps } from 'react-native';
+import {
+  ColorValue,
+  Pressable,
+  PressableProps,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import {
   type SFSymbolProps,
   type MaterialSymbolProps,
@@ -10,6 +16,7 @@ import {
 } from '@callstack/liquid-glass';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { useStyled } from 'hooks';
+import { useTheme } from 'context';
 
 import styles from './IconButton.styles';
 
@@ -24,6 +31,9 @@ interface IconButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   color?: string;
   backgroundColor?: string;
   glass?: boolean;
+  glassTint?: ColorValue;
+  compact?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const IconButton: React.FC<IconButtonProps> = ({
@@ -32,9 +42,13 @@ export const IconButton: React.FC<IconButtonProps> = ({
   color,
   backgroundColor,
   glass = false,
+  glassTint,
+  compact = false,
+  style,
   ...props
 }) => {
   const { colors } = useStyled();
+  const theme = useTheme();
   const isGlass = glass && isLiquidGlassSupported;
 
   return (
@@ -43,13 +57,21 @@ export const IconButton: React.FC<IconButtonProps> = ({
       style={({ pressed }) => [
         styles.button,
         isGlass
-          ? styles.glassButton
+          ? !compact && styles.glassButton
           : { backgroundColor: backgroundColor ?? colors.surfaceContainer },
         pressed && !isGlass && { opacity: 0.6 },
+        style,
       ]}
       {...props}
     >
-      {isGlass && <LiquidGlassView interactive style={styles.glass} />}
+      {isGlass && (
+        <LiquidGlassView
+          interactive
+          colorScheme={theme}
+          tintColor={glassTint}
+          style={[styles.glass, compact && styles.compactGlass]}
+        />
+      )}
       <PlatformIcon
         iosIconName={icon.iosIconName}
         androidIconName={icon.androidIconName}

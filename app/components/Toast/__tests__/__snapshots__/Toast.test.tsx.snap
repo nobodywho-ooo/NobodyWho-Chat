@@ -40,6 +40,7 @@ exports[`Toast renders the message when visible 1`] = `
           "borderColor": "#acacac",
         },
         {},
+        {},
       ]
     }
   >

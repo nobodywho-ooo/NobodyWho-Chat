@@ -1,4 +1,18 @@
+import type { Chat } from 'react-native-nobodywho';
 import { Model } from 'types';
+
+import { log } from './log';
+
+export const applyThinking = async (
+  chat: Chat,
+  enabled: boolean,
+): Promise<void> => {
+  try {
+    await chat.setTemplateVariable('enable_thinking', enabled);
+  } catch (error) {
+    log('applyThinking failed', error);
+  }
+};
 
 interface ThinkDelimiters {
   open: string;

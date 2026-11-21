@@ -37,7 +37,25 @@ describe('rowToMessage', () => {
       timeToFirstToken: 1,
       documentsPath: ['/x'],
       toolInvocations: [],
+      webSources: [],
     });
+  });
+
+  test('parses web_sources JSON on an assistant message', () => {
+    const message = rowToMessage({
+      id: 4,
+      timestamp: 't',
+      conversation_id: 2,
+      role: 'assistant',
+      content: 'Rain tomorrow.',
+      documents_path: '[]',
+      web_sources:
+        '[{"name":"Forecast","url":"https://weather.example/paris","used":true}]',
+    });
+
+    expect(message.webSources).toEqual([
+      { name: 'Forecast', url: 'https://weather.example/paris', used: true },
+    ]);
   });
 
   test('falls back to an empty documents_path on corrupt JSON', () => {
@@ -139,7 +157,7 @@ describe('insertMessage', () => {
 
     expect(db.execute).toHaveBeenCalledWith(
       expect.stringContaining('INSERT INTO messages'),
-      [2, 'user', 'hi', null, null, '["/a"]', '[]', 2],
+      [2, 'user', 'hi', null, null, null, '["/a"]', '[]', '[]', 2],
     );
     expect(id).toBe(11);
   });
@@ -178,10 +196,44 @@ describe('insertMessage', () => {
       'yo',
       9,
       3,
+      null,
+      '[]',
       '[]',
       '[]',
       2,
     ]);
+  });
+
+  test('persists how long the web search took', async () => {
+    db.execute.mockResolvedValue({ insertId: 15, rows: [], rowsAffected: 1 });
+
+    await insertMessage({
+      conversationId: 2,
+      role: 'assistant',
+      content: 'Rain tomorrow.',
+      webSearchMs: 6400,
+      documentsPath: [],
+    });
+
+    const params = db.execute.mock.calls[0][1] as unknown[];
+    expect(params[5]).toBe(6400);
+  });
+
+  test('serializes the web sources an answer was grounded in', async () => {
+    db.execute.mockResolvedValue({ insertId: 14, rows: [], rowsAffected: 1 });
+
+    await insertMessage({
+      conversationId: 2,
+      role: 'assistant',
+      content: 'Rain tomorrow.',
+      documentsPath: [],
+      webSources: [{ name: 'Forecast', url: 'https://weather.example/paris' }],
+    });
+
+    const params = db.execute.mock.calls[0][1] as unknown[];
+    expect(params[8]).toBe(
+      '[{"name":"Forecast","url":"https://weather.example/paris"}]',
+    );
   });
 
   test('serializes the assistant tool invocations', async () => {
@@ -202,7 +254,7 @@ describe('insertMessage', () => {
     });
 
     const params = db.execute.mock.calls[0][1] as unknown[];
-    expect(params[6]).toBe(
+    expect(params[7]).toBe(
       '[{"name":"get_weather","arguments":{"city":"Paris"},"result":"{\\"temperatureCelsius\\":12}"}]',
     );
   });

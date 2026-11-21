@@ -8,6 +8,10 @@ describe('getFamilyIcon', () => {
     expect(getFamilyIcon('Gemma 4')).toBeDefined();
   });
 
+  test('gives EmbeddingGemma the Gemma logo', () => {
+    expect(getFamilyIcon('EmbeddingGemma 2')).toBe(getFamilyIcon('Gemma 4'));
+  });
+
   test('matches regardless of the casing of the family', () => {
     expect(getFamilyIcon('lfm2')).toBeDefined();
     expect(getFamilyIcon('GEMMA 4')).toBeDefined();

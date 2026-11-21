@@ -2,15 +2,19 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Button, PlatformIcon, ProgressBar, Text } from 'components';
 import { curatedOnboardingModels, log, progressPercent } from 'helpers';
-import { useStyled } from 'hooks';
+import { useKeepAwakeWhile, useStyled } from 'hooks';
 import { getModelById } from 'repositories';
 import { Spacings } from 'style';
+import { Button, PlatformIcon, ProgressBar, Text, EdgeGlow } from 'components';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { useOnboardingHeader } from '../../hooks/useOnboardingHeader';
+import {
+  useDownloadGlowOpacity,
+  useDownloadPulses,
+} from '../../hooks/useDownloadPulses';
 import { OnboardingStep } from '../OnboardingStep/OnboardingStep';
 
 import styles from './OnboardingDownload.styles';
@@ -31,6 +35,9 @@ export const OnboardingDownload: React.FC<
   const [isLeaving, setIsLeaving] = useState(false);
 
   const { isLoaded, progress, downloadCurated, cancel } = curatedModels;
+  const glowLevels = useDownloadPulses(progress);
+  const glowOpacity = useDownloadGlowOpacity(progress);
+  useKeepAwakeWhile(!isDone && !isLeaving);
 
   useOnboardingHeader(navigation, !isLeaving);
 
@@ -138,6 +145,9 @@ export const OnboardingDownload: React.FC<
       header={t('screens.onboarding.downloadingHeader')}
       title={t('screens.onboarding.downloadingTitle')}
       subtitle={t('screens.onboarding.downloadingSubtitle')}
+      background={
+        <EdgeGlow edge="top" levels={glowLevels} opacity={glowOpacity} />
+      }
       footer={
         <Button
           title={t('common.cancel')}

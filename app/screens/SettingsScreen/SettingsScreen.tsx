@@ -1,13 +1,18 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
-import { log } from 'helpers';
+import { getIOSVersion, openExternalUrl } from 'helpers';
 import { useStyled } from 'hooks';
-import { Button, ListItem, Text } from 'components';
+import { ActionButton, HeaderScrollView, ListItem, Text } from 'components';
 
 import styles from './SettingsScreen.styles';
+
+const LICENCES_IOS_ICON =
+  getIOSVersion() >= 18
+    ? 'checkmark.seal.text.page.fill'
+    : 'checkmark.seal.fill';
 
 export const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -22,34 +27,28 @@ export const SettingsScreen: React.FC = () => {
     setAppInfo(`version ${version} - build ${buildNumber}`);
   }, []);
 
-  const openURL = (url: string) =>
-    Linking.openURL(url).catch(error =>
-      log(`Failed to open URL ${url}`, error),
-    );
-
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
+    <HeaderScrollView
       style={[styles.container, { backgroundColor: colors.surface }]}
     >
       <Text>{t('screens.settings.app')}</Text>
-      <ListItem
-        title={t('screens.settings.models')}
-        subtitle={t('screens.settings.manageYourModels')}
-        iosIconName="square.stack.3d.up.fill"
-        androidIconName="layers"
-        iconBackgroundColor="#5856D6"
-        // @ts-ignore
-        onPress={() => navigation.navigate('ModelsScreen')}
-      />
       <ListItem
         title={t('screens.settings.customize')}
         subtitle={t('screens.settings.customizeSubtitle')}
         iosIconName="slider.horizontal.3"
         androidIconName="tune"
-        iconBackgroundColor="#007AFF"
+        iconColor={colors.primary}
         // @ts-ignore
         onPress={() => navigation.navigate('CustomizeAssistantScreen')}
+      />
+      <ListItem
+        title={t('screens.settings.language')}
+        subtitle={t('screens.settings.languageSubtitle')}
+        iosIconName="character.bubble"
+        androidIconName="translate"
+        iconColor={colors.primary}
+        // @ts-ignore
+        onPress={() => navigation.navigate('LanguageScreen')}
       />
       <Text style={styles.sectionHeader}>{t('screens.settings.about')}</Text>
       <ListItem
@@ -57,7 +56,7 @@ export const SettingsScreen: React.FC = () => {
         subtitle={t('screens.settings.termsSubtitle')}
         iosIconName="doc.text.fill"
         androidIconName="description"
-        iconBackgroundColor="#FF9500"
+        iconColor={colors.secondary}
         // @ts-ignore
         onPress={() => navigation.navigate('TermsScreen')}
       />
@@ -66,27 +65,33 @@ export const SettingsScreen: React.FC = () => {
         subtitle={t('screens.settings.privacyPolicySubtitle')}
         iosIconName="lock.shield.fill"
         androidIconName="privacy_tip"
-        iconBackgroundColor="#34C759"
+        iconColor={colors.secondary}
         // @ts-ignore
         onPress={() => navigation.navigate('PrivacyPolicyScreen')}
       />
+      <ListItem
+        title={t('screens.settings.licences')}
+        subtitle={t('screens.settings.licencesSubtitle')}
+        iosIconName={LICENCES_IOS_ICON}
+        androidIconName="license"
+        iconColor={colors.secondary}
+        // @ts-ignore
+        onPress={() => navigation.navigate('LicencesScreen')}
+      />
       <View style={styles.buttonsContainer}>
-        <Button
-          title={t('screens.settings.website')}
-          variant="outline"
-          small
-          icon={{ iosIconName: 'globe', androidIconName: 'public' }}
-          onPress={() => openURL('https://www.nobodywho.ai/')}
+        <ActionButton
+          label={t('screens.settings.website')}
+          onPress={() => openExternalUrl('https://www.nobodywho.ai/')}
         />
-        <Button
-          title={t('screens.settings.github')}
-          variant="outline"
-          small
-          icon={{
-            iosIconName: 'chevron.left.forwardslash.chevron.right',
-            androidIconName: 'code',
-          }}
-          onPress={() => openURL('https://github.com/nobodywho-ooo/nobodywho')}
+        <ActionButton
+          label={t('screens.settings.github')}
+          onPress={() =>
+            openExternalUrl('https://github.com/nobodywho-ooo/nobodywho')
+          }
+        />
+        <ActionButton
+          label={t('screens.settings.x')}
+          onPress={() => openExternalUrl('https://x.com/nobodywho_ai')}
         />
       </View>
       <Text variant="h3" bold style={styles.appName}>
@@ -95,6 +100,6 @@ export const SettingsScreen: React.FC = () => {
       <Text variant="body2" style={styles.appInfo}>
         {appInfo}
       </Text>
-    </ScrollView>
+    </HeaderScrollView>
   );
 };

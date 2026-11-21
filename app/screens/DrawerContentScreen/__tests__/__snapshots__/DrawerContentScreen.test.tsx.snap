@@ -26,16 +26,39 @@ exports[`renders correctly DrawerContentScreen 1`] = `
     >
       nobodywho
     </Text>
-    <IconButton
-      glass={true}
-      icon={
+    <View
+      style={
         {
-          "androidIconName": "close",
-          "iosIconName": "xmark",
+          "alignItems": "center",
+          "flexDirection": "row",
+          "gap": 8,
         }
       }
-      onPress={[Function]}
-    />
+    >
+      <IconButton
+        accessibilityLabel="screens.drawerContent.settings"
+        accessibilityRole="button"
+        glass={true}
+        icon={
+          {
+            "androidIconName": "settings",
+            "iosIconName": "gearshape",
+          }
+        }
+        onPress={[Function]}
+      />
+      <IconButton
+        accessibilityRole="button"
+        glass={true}
+        icon={
+          {
+            "androidIconName": "close",
+            "iosIconName": "xmark",
+          }
+        }
+        onPress={[Function]}
+      />
+    </View>
   </View>
   <View
     style={
@@ -98,9 +121,9 @@ exports[`renders correctly DrawerContentScreen 1`] = `
       }
     >
       <PlatformIcon
-        androidIconName="settings"
+        androidIconName="layers"
         color="#000000"
-        iosIconName="gearshape"
+        iosIconName="square.stack.3d.up"
       />
       <Text
         style={
@@ -110,13 +133,13 @@ exports[`renders correctly DrawerContentScreen 1`] = `
         }
         variant="body1"
       >
-        screens.drawerContent.settings
+        screens.drawerContent.models
       </Text>
     </View>
   </View>
   <ConversationsList
     bottomInset={0}
-    onCloseDrawer={[Function]}
+    onSelect={[Function]}
   />
   <LinearGradient
     colors={
