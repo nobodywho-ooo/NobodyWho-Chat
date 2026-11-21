@@ -22,10 +22,10 @@ import {
   getModelById,
   getModelDownloads,
 } from 'repositories';
-import { log, sleep } from 'helpers';
+import { log } from 'helpers';
 import { isChatPipeline, MODEL_SLOTS } from 'types';
 import { useResumeModelDownloads, useStyled } from 'hooks';
-import { DotsLoadingScreen, ErrorScreen, OnboardingScreen } from 'screens';
+import { ErrorScreen, LogoLoadingScreen, OnboardingScreen } from 'screens';
 import { WebScrapeHost } from 'components';
 import { AiServiceProvider, prefetchModelCatalogue } from 'services';
 import { RootNavigator } from 'navigation';
@@ -34,8 +34,6 @@ const unWantedError =
   'Cannot create devtools websocket connections in embedded environments.';
 
 const SAMPLE_RATE = __DEV__ ? 0 : 0.1;
-
-const MIN_LOADING_MS = 2000;
 
 Sentry.init({
   dsn: 'https://5901cf2e433ebe444dd4dc9f8aebc790@o4511569171709952.ingest.de.sentry.io/4511569173217360',
@@ -180,8 +178,11 @@ function AppLoader() {
   const [dbReady, setDbReady] = useState(false);
   const [dbError, setDbError] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [introDone, setIntroDone] = useState(false);
 
   const running = useRef(false);
+
+  const finishIntro = useCallback(() => setIntroDone(true), []);
 
   const finishOnboarding = useCallback(() => setShowOnboarding(false), []);
 
@@ -193,7 +194,6 @@ function AppLoader() {
 
     setDbError(false);
     setDbReady(false);
-    const loadingSince = Date.now();
 
     setAudioModeAsync({ playsInSilentMode: true }).catch(error =>
       log('AppLoader setAudioModeAsync failed', error),
@@ -208,7 +208,6 @@ function AppLoader() {
       setShowOnboarding(await needsOnboarding());
 
       Sentry.appLoaded();
-      await sleep(Math.max(0, MIN_LOADING_MS - (Date.now() - loadingSince)));
       setDbReady(true);
     } catch (error) {
       log('App init failed', error, { capture: true });
@@ -244,8 +243,8 @@ function AppLoader() {
     return <ErrorScreen onRetry={init} onReset={reset} />;
   }
 
-  if (!dbReady) {
-    return <DotsLoadingScreen />;
+  if (!dbReady || !introDone) {
+    return <LogoLoadingScreen onAnimationEnd={finishIntro} />;
   }
 
   return (
