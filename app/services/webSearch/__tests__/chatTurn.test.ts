@@ -12,7 +12,7 @@ import { useWebSearchStore } from '../webSearchStore';
 
 jest.mock('../runWebSearch', () => ({ runWebSearch: jest.fn() }));
 jest.mock('../scrape/webViewScrapeProvider', () => ({
-  webViewScrapeProvider: { releaseHost: jest.fn() },
+  webViewScrapeProvider: { releaseHost: jest.fn(), beginRun: jest.fn() },
 }));
 jest.mock('helpers', () => ({
   log: jest.fn(),

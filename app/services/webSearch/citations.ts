@@ -25,12 +25,13 @@ const FENCE = /^\s*```/;
 const HEADING = /^\s*#{1,6}\s+/;
 const TABLE_ROW = /^\s*\|.*\|\s*$/;
 
-export const stripCitations = (text: string): string => {
-  if (!text) {
-    return text;
-  }
+// Fenced blocks (closed or still streaming) and inline code spans. Their
+// `[1]`s are code — `x = [1]` — and their spacing is indentation, so neither
+// citation removal nor whitespace tidying may reach inside them.
+const CODE_SPAN = /(```[\s\S]*?(?:```|$)|~~~[\s\S]*?(?:~~~|$)|`[^`\n]+`)/;
 
-  let stripped = text;
+const stripProseCitations = (prose: string): string => {
+  let stripped = prose;
   let previous: string;
   do {
     previous = stripped;
@@ -38,6 +39,18 @@ export const stripCitations = (text: string): string => {
   } while (stripped !== previous);
 
   return stripped.replace(/ +([.,;:!?])/g, '$1').replace(/[ \t]{2,}/g, ' ');
+};
+
+export const stripCitations = (text: string): string => {
+  if (!text) {
+    return text;
+  }
+
+  // split with a capturing group alternates prose (even) and code (odd).
+  return text
+    .split(CODE_SPAN)
+    .map((part, index) => (index % 2 === 1 ? part : stripProseCitations(part)))
+    .join('');
 };
 
 const citedSourceNumbersIn = (block: string): number[] => [

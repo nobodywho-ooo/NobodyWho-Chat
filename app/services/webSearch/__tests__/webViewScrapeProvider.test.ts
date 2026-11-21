@@ -172,6 +172,29 @@ describe('WebViewScrapeProvider engine chain', () => {
     expect(navigated).toHaveLength(1);
   });
 
+  it('keeps a cancel for the rest of the run, until the next run begins', async () => {
+    const provider = new WebViewScrapeProvider();
+    const navigated: string[] = [];
+    provider.attachHost({
+      navigate: (url: string, nonce: number) => {
+        navigated.push(url);
+        provider.handleMessage(
+          JSON.stringify({ type: 'serp-challenge', nonce }),
+        );
+        provider.cancelPending();
+      },
+    });
+
+    provider.beginRun();
+    expect(await settle(provider.search('first sub-query'))).toEqual([]);
+    expect(await settle(provider.search('second sub-query'))).toEqual([]);
+    expect(navigated).toHaveLength(1);
+
+    provider.beginRun();
+    await settle(provider.search('next question'));
+    expect(navigated).toHaveLength(2);
+  });
+
   it('moves to the next engine when one of them shows a challenge', async () => {
     const provider = new WebViewScrapeProvider();
     const navigated: string[] = [];

@@ -53,6 +53,14 @@ export class WebViewScrapeProvider implements WebSearchProvider {
   private challengeActive = false;
   private cancelled = false;
 
+  // Starts a search run: a cancel from the previous run no longer applies.
+  beginRun(): void {
+    this.cancelled = false;
+  }
+
+  // The user gave up on the search ("Skip search" on a bot check). Sticks for
+  // the rest of the run, so the remaining sub-queries don't bring the same
+  // check straight back; the next run clears it (beginRun).
   cancelPending(): void {
     this.cancelled = true;
     this.settle([], null);
@@ -143,7 +151,6 @@ export class WebViewScrapeProvider implements WebSearchProvider {
       return [];
     }
 
-    this.cancelled = false;
     const max = options.maxResults ?? WEB_SEARCH_MAX_RESULTS;
     let lastError: Error | null = null;
 

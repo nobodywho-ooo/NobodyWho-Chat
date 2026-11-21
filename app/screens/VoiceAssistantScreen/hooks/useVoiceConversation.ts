@@ -28,6 +28,7 @@ import { insertConversation, insertMessage } from 'repositories';
 import {
   AiModelState,
   notifyConversationSync,
+  settleConversationDigest,
   subscribeToolInvocations,
   useAiService,
   VAD_SAMPLE_RATE,
@@ -459,6 +460,16 @@ export const useVoiceConversation = ({
     // part of the answer — and gets spoken aloud below.
     // Read at turn time: the input bar's switch may have flipped it since the
     // chat loaded, and it applies without a reload.
+    // A typed turn may have left the conversation digest running on this same
+    // chat. It restores the history it captured when it ends, so let it finish
+    // first or it would wipe this turn (and answer under its system prompt).
+    await settleConversationDigest();
+
+    if (!isCurrent()) {
+      setStatus('idle');
+      return;
+    }
+
     const thinkingOn =
       chatCanThink &&
       (getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG).thinking;

@@ -199,6 +199,10 @@ export const prepareWebSearchTurn = async ({
   let chatWasBorrowed = false;
 
   const generate = async (messages: QueryRewriteMessage[]): Promise<string> => {
+    if (signal.aborted) {
+      return '';
+    }
+
     chatWasBorrowed = true;
     let out = '';
 
@@ -228,6 +232,8 @@ export const prepareWebSearchTurn = async ({
 
     return out;
   };
+
+  webViewScrapeProvider.beginRun();
 
   const searchStartedAt = Date.now();
   const elapsed = () => Date.now() - searchStartedAt;

@@ -17,7 +17,7 @@ import {
   restoreWebSearchTurn,
   updateConversationDigestInBackground,
 } from 'services';
-import { setAppState } from 'database';
+import { setAppState, subscribeAppState } from 'database';
 import { implicitThinkOpen } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
 import { Model, ModelPipeline } from 'types';
@@ -1552,6 +1552,82 @@ describe('web search', () => {
       'weather in Paris?',
       undefined,
     );
+  });
+
+  test('opening another conversation mid-search abandons the turn without touching the history', async () => {
+    const listeners: ((next: { conversationIdInUse?: number }) => void)[] =
+      [];
+    (subscribeAppState as jest.Mock).mockImplementation(listener => {
+      listeners.push(listener);
+      return () => undefined;
+    });
+    let searchSignal: AbortSignal | undefined;
+    mockPrepareWebSearchTurn.mockImplementation(async ({ signal }) => {
+      searchSignal = signal;
+      listeners.forEach(listener => listener({ conversationIdInUse: 99 }));
+      return {
+        prompt: 'SOURCES… weather in Paris?',
+        sources,
+        snapshot,
+        chatWasBorrowed: true,
+      };
+    });
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    expect(searchSignal?.aborted).toBe(true);
+    expect(mockChat.ask).not.toHaveBeenCalled();
+    expect(mockChat.complete).not.toHaveBeenCalled();
+    expect(mockChat.setChatHistory).not.toHaveBeenCalled();
+    expect(mockRestoreChatForTurn).toHaveBeenCalledWith(mockChat, snapshot);
+    expect(mockRestoreWebSearchTurn).not.toHaveBeenCalled();
+    expect(mockInsertMessage).toHaveBeenCalledTimes(1);
+    expect(inputBar(screen).props.isStreaming).toBe(false);
+
+    (subscribeAppState as jest.Mock).mockImplementation(() => () => {});
+  });
+
+  test('a screen unmounted mid-search stops the turn instead of answering', async () => {
+    let finishSearch: (turn: unknown) => void = () => undefined;
+    mockPrepareWebSearchTurn.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finishSearch = resolve;
+        }),
+    );
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await act(() => inputBar(screen).props.onChangeText('weather in Paris?'));
+    let sending: Promise<void> = Promise.resolve();
+    await act(async () => {
+      sending = inputBar(screen).props.onSend();
+    });
+    await act(async () => screen.unmount());
+    finishSearch({
+      prompt: 'weather in Paris?',
+      sources: [],
+      snapshot,
+      chatWasBorrowed: false,
+    });
+    await act(async () => {
+      await sending;
+    });
+
+    expect(mockChat.ask).not.toHaveBeenCalled();
+    expect(mockChat.complete).not.toHaveBeenCalled();
   });
 
   describe('conversation digest', () => {

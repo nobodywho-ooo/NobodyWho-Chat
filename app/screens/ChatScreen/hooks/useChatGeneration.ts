@@ -10,7 +10,7 @@ import {
   ToolInvocation,
   WebSource,
 } from 'types';
-import { getAppState } from 'database';
+import { getAppState, subscribeAppState } from 'database';
 import {
   getConversationDigest,
   insertConversation,
@@ -142,6 +142,9 @@ export function useChatGeneration({
   const stopRequestedRef = useRef(false);
   const searchAbortRef = useRef<AbortController | null>(null);
 
+  const turnConversationRef = useRef<number | undefined>(undefined);
+  const abandonedRef = useRef(false);
+
   // Halt native generation. Reads chat.current at call time (not capture time)
   // so it stops whichever chat instance is current — it may have been recreated
   // since this hook mounted.
@@ -154,10 +157,36 @@ export function useChatGeneration({
     }
   }, [chat]);
 
-  // Don't let a generation keep streaming into a screen that is gone.
+  // Don't let a generation keep streaming into a screen that is gone. Flagged
   useEffect(() => {
-    return () => haltGeneration();
+    return () => {
+      stopRequestedRef.current = true;
+      haltGeneration();
+    };
   }, [haltGeneration]);
+
+  // Another conversation was opened (New chat, delete, a drawer pick) while a
+  // turn runs. The navigator stops the stream itself, but not the web search,
+  // which would otherwise go on to answer into the shared chat after the new
+  // conversation's history was loaded. Runs synchronously with that switch, so
+  // the planner can't start another completion after the reload lands.
+  useEffect(
+    () =>
+      subscribeAppState(next => {
+        const turnConversation = turnConversationRef.current;
+
+        if (
+          turnConversation === undefined ||
+          next.conversationIdInUse === turnConversation
+        ) {
+          return;
+        }
+
+        abandonedRef.current = true;
+        searchAbortRef.current?.abort();
+      }),
+    [],
+  );
 
   const handleSend = async () => {
     const userInput = inputText.trim();
@@ -205,6 +234,7 @@ export function useChatGeneration({
 
     KeyboardController.dismiss();
     stopRequestedRef.current = false;
+    abandonedRef.current = false;
     useWebSearchStore.getState().resetTrace();
     setIsStreaming(true);
 
@@ -246,6 +276,8 @@ export function useChatGeneration({
       return;
     }
 
+    turnConversationRef.current = id;
+
     if (isNewConversation) {
       useWebSearchStore.getState().transfer(NEW_CHAT_KEY, id);
       setConversationId(id);
@@ -284,6 +316,7 @@ export function useChatGeneration({
     // into, and the screen is already showing another chat. A `failed` write
     // still generates — the answer on screen beats no answer at all.
     if (userOutcome === 'gone') {
+      turnConversationRef.current = undefined;
       setIsStreaming(false);
       return;
     }
@@ -405,7 +438,9 @@ export function useChatGeneration({
         documentsPath: [],
       });
 
-      if (outcome === 'gone') {
+      // Gone, or the screen shows another conversation now: the row is stored
+      // under this turn's conversation but doesn't belong on screen.
+      if (outcome === 'gone' || abandonedRef.current) {
         return;
       }
 
@@ -425,7 +460,9 @@ export function useChatGeneration({
     // The chat may still be writing the previous turn's digest on this chat.
     await settleConversationDigest();
 
-    if (chat.current !== activeChat) {
+    if (chat.current !== activeChat || abandonedRef.current) {
+      turnConversationRef.current = undefined;
+      unsubscribe();
       setIsStreaming(false);
       return;
     }
@@ -462,6 +499,15 @@ export function useChatGeneration({
         }
 
         if (chat.current !== activeChat) {
+          return;
+        }
+
+        // Moved to another conversation mid-search: nothing to answer here.
+        if (abandonedRef.current) {
+          if (webTurn?.chatWasBorrowed) {
+            await restoreChatForTurn(activeChat, webTurn.snapshot);
+          }
+
           return;
         }
 
@@ -523,6 +569,12 @@ export function useChatGeneration({
       };
 
       const stoppedDuringAnswer = stopRequestedRef.current;
+
+      if (abandonedRef.current) {
+        await persistAssistant(metrics);
+        return;
+      }
+
       const recheck =
         webTurn?.grounding &&
         !stoppedDuringAnswer &&
@@ -543,7 +595,10 @@ export function useChatGeneration({
           retried = await runAnswerRecheck(
             activeChat,
             recheck,
-            () => stopRequestedRef.current || chat.current !== activeChat,
+            () =>
+              stopRequestedRef.current ||
+              abandonedRef.current ||
+              chat.current !== activeChat,
           );
         } catch (error) {
           log('ChatScreen answer re-check failed', error);
@@ -553,7 +608,10 @@ export function useChatGeneration({
           return;
         }
 
-        const accepted = !stopRequestedRef.current && recheck.accepts(retried);
+        const accepted =
+          !stopRequestedRef.current &&
+          !abandonedRef.current &&
+          recheck.accepts(retried);
 
         log('ChatScreen answer re-check', accepted ? 'accepted' : 'rejected');
 
@@ -585,7 +643,10 @@ export function useChatGeneration({
       cancelScheduledRender();
       unsubscribe();
 
-      if (webTurn && chat.current === activeChat) {
+      const abandoned = abandonedRef.current;
+      turnConversationRef.current = undefined;
+
+      if (webTurn && chat.current === activeChat && !abandoned) {
         try {
           await restoreWebSearchTurn(
             activeChat,
@@ -606,6 +667,7 @@ export function useChatGeneration({
 
       if (
         answered &&
+        !abandoned &&
         answer &&
         isWebSearchReady(webSearch.chatModel) &&
         chat.current === activeChat

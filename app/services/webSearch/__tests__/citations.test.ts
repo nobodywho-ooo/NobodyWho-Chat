@@ -22,6 +22,21 @@ const weather: WebSource = {
 };
 
 describe('stripCitations', () => {
+  it('leaves bracketed numbers and indentation inside code alone', () => {
+    const answer =
+      'Make a list [1].\n\n```python\nx = [1]\nif x:\n    grid = [[0], [1]]\n```\n\nOr use `[2]` inline [2].';
+
+    expect(stripCitations(answer)).toBe(
+      'Make a list.\n\n```python\nx = [1]\nif x:\n    grid = [[0], [1]]\n```\n\nOr use `[2]` inline.',
+    );
+  });
+
+  it('leaves a code fence still being streamed alone', () => {
+    expect(stripCitations('Try this [1]:\n```js\nconst a = [1]')).toBe(
+      'Try this:\n```js\nconst a = [1]',
+    );
+  });
+
   it('drops bracketed source numbers and the space before punctuation', () => {
     expect(stripCitations('Rates rose to 4.5% [1]. Rain is due [2].')).toBe(
       'Rates rose to 4.5%. Rain is due.',

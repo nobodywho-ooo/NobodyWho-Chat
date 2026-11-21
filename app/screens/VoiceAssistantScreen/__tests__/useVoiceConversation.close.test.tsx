@@ -76,6 +76,7 @@ jest.mock('services', () => ({
   },
   subscribeToolInvocations: jest.fn(() => jest.fn()),
   notifyConversationSync: jest.fn(),
+  settleConversationDigest: jest.fn(async () => undefined),
   VAD_SAMPLE_RATE: 16000,
 }));
 
