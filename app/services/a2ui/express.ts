@@ -344,7 +344,13 @@ const convertNode = (node: Node | null): A2UiComponent | A2UiAction | null => {
   if (node === null || node.kind !== 'call') return null;
   const { name } = node;
   const pos = (i: number): Node | null => node.positionals[i] ?? null;
-  const kw = (key: string): Node | null => node.keywords.find(([k]) => k === key)?.[1] ?? null;
+  // Keyword lookup is case-insensitive: tiny models alternate `route=` and
+  // `Route=` freely (and occasionally `variant=` / `Variant=`), and matching
+  // loosely costs nothing.
+  const kw = (key: string): Node | null => {
+    const match = node.keywords.find(([k]) => k.toLowerCase() === key.toLowerCase());
+    return match?.[1] ?? null;
+  };
   const dyn = (v: Node | null): unknown => convertValue(v);
   const stringOrBinding = (v: Node | null): string | { '@path': string } =>
     (dyn(v) ?? '') as string | { '@path': string };

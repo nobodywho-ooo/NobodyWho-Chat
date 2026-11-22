@@ -2,6 +2,7 @@ import {
   A2UI_CLOSE,
   A2UI_OPEN,
   findA2UiBlock,
+  findImplicitA2UiBlock,
   parseA2UiLive,
   stripA2UiBlocks,
 } from '../stream';
@@ -117,5 +118,24 @@ describe('parseA2UiLive (Express)', () => {
       ]);
       expect(root.variant).toBe('medium');
     }
+  });
+});
+describe('findImplicitA2UiBlock', () => {
+  test('adopts a whole-answer card that forgot its sentinels', () => {
+    const found = findImplicitA2UiBlock(
+      'Column([Text("Museums in Paris"), Map(markers=[{label:"Louvre"}])])',
+    );
+    expect(found?.complete).toBe(true);
+    expect(found?.uiText).toContain('Map(');
+  });
+
+  test('rejects prose even when it starts with component-like text', () => {
+    expect(findImplicitA2UiBlock('Text me when you arrive.')).toBeNull();
+    expect(findImplicitA2UiBlock('Here is a plan: first the Louvre.')).toBeNull();
+    expect(findImplicitA2UiBlock('Divider')).toBeNull();
+  });
+
+  test('leaves sentinel-bearing text to the explicit path', () => {
+    expect(findImplicitA2UiBlock('<ui>Text("hi")</ui>')).toBeNull();
   });
 });

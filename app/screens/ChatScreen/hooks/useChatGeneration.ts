@@ -24,6 +24,7 @@ import {
   RENDER_UI_TOOL,
   WebSearchTurn,
   findA2UiBlock,
+  findImplicitA2UiBlock,
   parseA2UiLive,
   parseExpress,
   planAnswerRecheck,
@@ -369,7 +370,8 @@ export function useChatGeneration({
       if (a2uiSettled) {
         return;
       }
-      const block = findA2UiBlock(accumulated);
+      const block =
+        findA2UiBlock(accumulated) ?? findImplicitA2UiBlock(accumulated);
       if (!block?.complete) {
         return;
       }

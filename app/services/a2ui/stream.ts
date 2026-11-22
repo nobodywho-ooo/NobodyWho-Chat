@@ -6,7 +6,7 @@
 // unclosed construct, so the live card fills in component-by-component as the
 // block streams in.
 
-import { parseExpressLive } from './express';
+import { parseExpress, parseExpressLive } from './express';
 import type { A2UiSurface } from './types';
 
 export const A2UI_OPEN = '<ui>';
@@ -44,6 +44,24 @@ export const stripA2UiBlocks = (text: string): string =>
   text
     .replace(new RegExp(`${A2UI_OPEN}[\\s\\S]*?${A2UI_CLOSE}`, 'g'), '')
     .replace(new RegExp(`${A2UI_OPEN}[\\s\\S]*$`), '');
+
+// Tiny models sometimes copy the card faithfully but forget the sentinels,
+// so the whole answer comes back as one bare Express expression. That is
+// indistinguishable from prose until it parses, so this is only consulted at
+// settle time (never while streaming): if the ENTIRE turn is a single
+// renderable surface with no sentinels, adopt it as an implicit card.
+export const findImplicitA2UiBlock = (
+  text: string,
+): { complete: true; uiText: string } | null => {
+  const trimmed = text.trim();
+  if (trimmed === '' || trimmed.includes(A2UI_OPEN)) {
+    return null;
+  }
+  if (parseExpress(trimmed).surface === undefined) {
+    return null;
+  }
+  return { complete: true, uiText: trimmed };
+};
 
 /** Tolerantly parse the streaming Express block into a renderable surface. */
 export const parseA2UiLive = (raw: string): A2UiSurface | null =>

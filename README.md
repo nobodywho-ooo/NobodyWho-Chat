@@ -21,7 +21,7 @@ Built with **[NobodyWho](https://github.com/nobodywho-ooo/nobodywho)**, a librar
 - **Chat** — stream responses from a local LLM in real time
 - **Industry-leading models** — download and use several powerful LLMs, including thinking models
 - **Tool calling**: give the model access to custom functions (e.g. weather, historical facts, stock prices...)
-- **A2UI cards**: turn on *AI UI cards* in Assistant settings and the local model can draw interactive UI cards (forms, lists, sliders, buttons…) directly in the chat — a constrained grammar keeps every card well-formed, and cards render natively
+- **A2UI cards**: turn on *AI UI cards* in Assistant settings and the local model can draw interactive UI cards (forms, lists, sliders, buttons…, even a route map with pins) directly in the chat — a constrained grammar keeps every card well-formed, and cards render natively
 - **Vision & Hearing** — image & audio ingestion with a multimodal model
 - **Web Search** - reduce hallucinations, get more accurate & up to date answers without search API, thanks a WebView mounted off-screen. Based on [private-mind](https://github.com/software-mansion-labs/private-mind) implementation, using DuckDuckGo and an optional embedding model.
 
