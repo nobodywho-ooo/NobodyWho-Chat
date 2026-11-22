@@ -24,7 +24,16 @@ root      ::= "{" ws "\\\"components\\\"" ws ":" ws "[" ws component (ws "," ws 
               (ws "," ws "\\\"dataModel\\\"" ws ":" ws object)? ws "}"
 
 component ::= text | icon | image | row | column | list | card | divider | button
-            | textfield | checkbox | slider | choicepicker | tabs
+            | textfield | checkbox | slider | choicepicker | tabs | map
+
+map ::= "{" ws "\\\"component\\\":\\\"Map\\\"" ws "," ws
+         "\\\"markers\\\"" ws ":" ws "[" ws marker (ws "," ws marker)* ws "]" ws
+        (ws "," ws "\\\"route\\\"" ws ":" ws "[" ws route-point (ws "," ws route-point)* ws "]")? ws "}"
+marker ::= "{" ws ("\\\"label\\\"" ws ":" ws value)? ws
+            ("," ws "\\\"lat\\\"" ws ":" ws number)? ws
+            ("," ws "\\\"lon\\\"" ws ":" ws number)? ws "}"
+route-point ::= "{" ws "\\\"lat\\\"" ws ":" ws number ws "," ws
+                 "\\\"lon\\\"" ws ":" ws number ws "}"
 
 icon ::= "{" ws "\\\"component\\\":\\\"Icon\\\"" ws "," ws
           "\\\"name\\\"" ws ":" ws string ws
@@ -188,7 +197,7 @@ call ::= name ws "(" ws args ws ")"
 # Only real components (and the Event/OpenUrl actions) may be constructed; a
 # made-up name like museums(...) is not expressible, so the model is forced to
 # use the catalog.
-name ::= "Text" | "Icon" | "Image" | "Row" | "Column" | "List" | "Card" | "Divider" | "Button" | "TextField" | "CheckBox" | "Slider" | "ChoicePicker" | "Tabs" | "Event" | "OpenUrl"
+name ::= "Text" | "Icon" | "Image" | "Row" | "Column" | "List" | "Card" | "Divider" | "Button" | "TextField" | "CheckBox" | "Slider" | "ChoicePicker" | "Tabs" | "Map" | "Event" | "OpenUrl"
 args ::= (arg ("," ws arg)*)?
 arg ::= kwarg | item
 kwarg ::= ident ws "=" ws item

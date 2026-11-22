@@ -29,6 +29,7 @@ CheckBox(label, value:bool)
 Slider(min?, max, value, steps?)
 ChoicePicker(options=[{label, value}], value=[...], variant?="multipleSelection"|"mutuallyExclusive")
 Tabs(tabs=[{title, child:<component>}])
+Map(markers=[{label:"Louvre", lat?, lon?}], route=[{lat:48.86, lon:2.34}], variant?="small"|"medium"|"large") — a schematic map; markers = pins, route = the path through them. Markers may omit lat/lon.
 
 Rules:
 - Put every bound value into a $/path = value line at the top and reference it with $/path; never reference a path you did not set.
@@ -37,10 +38,12 @@ Rules:
   • a sheet/summary/finances -> a Column of labeled rows split by Dividers, with a bold total at the end;
   • settings/organizing -> Tabs; options -> ChoicePicker; ranges -> Slider; forms -> TextFields with checks.
 - Images only if you have a real https:// URL (or a $/path to one); otherwise use an Icon + Text in a Card. NEVER invent image URLs — they render blank.
+- For museums/Paris/trips you may reuse these working museum photos: Louvre "https://commons.wikimedia.org/wiki/Special:FilePath/Louvre_Museum_Wikimedia_Commons.jpg?width=320", Orsay "https://commons.wikimedia.org/wiki/Special:FilePath/MuseeDOrsay.jpg?width=320", Pompidou "https://commons.wikimedia.org/wiki/Special:FilePath/The_Centre_Pompidou_behind_Buildings.jpg?width=320".
 - If you don't know real facts/URLs for a request, fill with placeholder "$/…" bindings and let the user supply values, rather than fabricating.
 - Write the WHOLE UI in one block, close it with </ui>. Keep it compact.
 
 Examples — note each matches its request's shape:
 Form: <ui>$/form/name = "" root = Column([TextField(label="Name", value=$/form/name, checks=[{condition:"required",message:"Name is required"}]), Slider(min=0,max=100,value=50), Button(Text("Submit"), variant="primary", action=Event("submit", {}))])</ui>
 "show me a few museums" gallery: <ui>$/title = "Museums in Paris" root = Column([Text($/title, "body"), Divider(), Row([Card(Column([Icon("location"), Text("Louvre")])), Card(Column([Icon("location"), Text("Orsay")])), Card(Column([Icon("location"), Text("Pompidou")]))])])</ui>
-finance sheet: <ui>$/rent = 1200 $/food = 400 $/savings = 500 root = Column([Text("Monthly budget", "body"), Divider(), Row([Text("Rent"), Text("1200")]), Divider(), Row([Text("Food"), Text($/food)]), Divider(), Row([Text("Savings"), Text($/savings)]), Button(Text("Add expense"), action=Event("add_expense", {}))])</ui>`;
+finance sheet: <ui>$/rent = 1200 $/food = 400 $/savings = 500 root = Column([Text("Monthly budget", "body"), Divider(), Row([Text("Rent"), Text("1200")]), Divider(), Row([Text("Food"), Text($/food)]), Divider(), Row([Text("Savings"), Text($/savings)]), Button(Text("Add expense"), action=Event("add_expense", {}))])</ui>
+"plan a trip to paris"/museum visit: <ui>$/title = "Paris in a day" root = Column([Text($/title, "body"), Row([Image("https://commons.wikimedia.org/wiki/Special:FilePath/Louvre_Museum_Wikimedia_Commons.jpg?width=320"), Image("https://commons.wikimedia.org/wiki/Special:FilePath/MuseeDOrsay.jpg?width=320"), Image("https://commons.wikimedia.org/wiki/Special:FilePath/The_Centre_Pompidou_behind_Buildings.jpg?width=320")]), Map(markers=[{label:"Louvre"},{label:"Orsay"},{label:"Pompidou"}], route=[{lat:48.8606, lon:2.3376},{lat:48.8616, lon:2.3522}], variant="medium")])</ui>`;

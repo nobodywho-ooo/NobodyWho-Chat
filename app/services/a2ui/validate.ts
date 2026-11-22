@@ -18,6 +18,8 @@ import {
   A2UiCheckRule,
   A2UiChoiceOption,
   A2UiComponent,
+  A2UiMapMarker,
+  A2UiMapPoint,
   A2UiSurface,
   A2UiTab,
   isA2UiComponentName,
@@ -452,6 +454,68 @@ const parseComponent = (
         return problem('tabs must contain at least one usable tab.');
       }
       return { component, tabs };
+    }
+    case 'Map': {
+      const markers: A2UiMapMarker[] = [];
+      const rawMarkers = Array.isArray(props.markers) ? props.markers : [];
+      rawMarkers.forEach((rawMarker, index) => {
+        if (!isRecord(rawMarker)) {
+          warnings.push(
+            `${at} (Map) markers[${index}]: expected an object — skipped.`,
+          );
+          return;
+        }
+        const label = rawMarker.label;
+        if (label !== undefined && stringOrBinding(label) === false) {
+          warnings.push(
+            `${at} (Map) markers[${index}]: label must be a string or a {"@path": "..."} reference — skipped.`,
+          );
+          return;
+        }
+        if (rawMarker.icon !== undefined && typeof rawMarker.icon !== 'string') {
+          warnings.push(`${at} (Map) markers[${index}]: icon must be a string — ignored.`);
+        }
+        if (rawMarker.lat !== undefined && typeof rawMarker.lat !== 'number') {
+          warnings.push(`${at} (Map) markers[${index}]: lat must be a number — ignored.`);
+        }
+        if (rawMarker.lon !== undefined && typeof rawMarker.lon !== 'number') {
+          warnings.push(`${at} (Map) markers[${index}]: lon must be a number — ignored.`);
+        }
+        markers.push({
+          ...(stringOrBinding(label) ? { label: label as string | { '@path': string } } : {}),
+          ...(typeof rawMarker.icon === 'string' ? { icon: rawMarker.icon } : {}),
+          ...(typeof rawMarker.lat === 'number' ? { lat: rawMarker.lat } : {}),
+          ...(typeof rawMarker.lon === 'number' ? { lon: rawMarker.lon } : {}),
+        });
+      });
+      const route: A2UiMapPoint[] = [];
+      const rawRoute = Array.isArray(props.route) ? props.route : [];
+      rawRoute.forEach((rawPoint, index) => {
+        if (!isRecord(rawPoint)) {
+          warnings.push(`${at} (Map) route[${index}]: expected an object — skipped.`);
+          return;
+        }
+        if (typeof rawPoint.lat === 'number' && typeof rawPoint.lon === 'number') {
+          route.push({ lat: rawPoint.lat, lon: rawPoint.lon });
+        } else {
+          warnings.push(
+            `${at} (Map) route[${index}]: needs numeric lat and lon — skipped.`,
+          );
+        }
+      });
+      if (markers.length === 0 && route.length === 0) {
+        return problem('Map needs at least one marker or route point.');
+      }
+      const mapVariant = expectEnum(props.variant, ['small', 'medium', 'large'], 'variant');
+      if (mapVariant) warnings.push(`${at} (Map): ${mapVariant} — using the default.`);
+      return {
+        component,
+        markers,
+        ...(route.length ? { route } : {}),
+        ...(props.variant === 'small' || props.variant === 'medium' || props.variant === 'large'
+          ? { variant: props.variant }
+          : {}),
+      };
     }
   }
 };

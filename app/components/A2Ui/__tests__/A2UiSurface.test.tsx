@@ -99,3 +99,24 @@ test('a required TextField shows an inline error once touched', async () => {
   await fireEvent.changeText(input, 'ok@example.com');
   expect(screen.queryByText('Enter a valid email')).toBeNull();
 });
+test('renders a Map with pins and a route', async () => {
+  const screen = await render(
+    <A2UiSurface
+      surface={{
+        components: [
+          {
+            component: 'Map',
+            markers: [{ label: 'Louvre' }, { label: 'Orsay' }],
+            route: [
+              { lat: 48.8606, lon: 2.3376 },
+              { lat: 48.8616, lon: 2.3522 },
+            ],
+            variant: 'medium',
+          },
+        ],
+      }}
+    />,
+  );
+  expect(screen.getByText('Louvre')).toBeTruthy();
+  expect(screen.getByText('Orsay')).toBeTruthy();
+});

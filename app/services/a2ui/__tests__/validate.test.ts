@@ -95,6 +95,15 @@ describe('validateUi', () => {
           { title: 'Two', child: { component: 'Text', text: 'tab two' } },
         ],
       },
+      {
+        component: 'Map',
+        markers: [{ label: 'Louvre' }, { label: 'Orsay', lat: 48.86, lon: 2.33 }],
+        route: [
+          { lat: 48.8606, lon: 2.3376 },
+          { lat: 48.8616, lon: 2.3522 },
+        ],
+        variant: 'medium',
+      },
     ];
     const validation = validateUi({ components });
     expect(validation.valid).toBe(true);
@@ -108,6 +117,37 @@ describe('validateUi', () => {
     });
     expect(validation.valid).toBe(true);
     expect(validation.warnings.join(' ')).toContain('unknown component "Video"');
+  });
+
+  test('Map tolerates bad markers/route points and warns', () => {
+    const validation = validateUi({
+      components: [
+        {
+          component: 'Map',
+          markers: [
+            { label: { '@path': '/city' } },
+            { label: 42 },
+            'ghost',
+            { icon: 'location', lat: 'x', lon: 1 },
+          ],
+          route: [{ lat: 1 }, { lat: 2, lon: 3 }],
+        },
+      ],
+      dataModel: { city: 'Paris' },
+    });
+    expect(validation.valid).toBe(true);
+    if (validation.valid) {
+      const map = validation.surface.components[0];
+      expect(map.component).toBe('Map');
+      if (map.component === 'Map') {
+        expect(map.markers).toEqual([
+          { label: { '@path': '/city' } },
+          { icon: 'location', lon: 1 },
+        ]);
+        expect(map.route).toEqual([{ lat: 2, lon: 3 }]);
+      }
+      expect(validation.warnings.join(' ')).toContain('skipped');
+    }
   });
 
   test('drops non-object children and warns', () => {

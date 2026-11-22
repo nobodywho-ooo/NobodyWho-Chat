@@ -31,6 +31,7 @@ import {
   A2UiTextInput,
   type A2UiComponent,
 } from '../../services/a2ui/types';
+import { MapView } from './MapView';
 import { useA2UiContext, A2UiContextProvider } from './A2UiContext';
 import { styles } from './styles';
 
@@ -84,6 +85,16 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
           androidIconName={platform.androidIconName}
           size={size}
           color={context.textColor ?? colors.onSurface}
+        />
+      );
+    }
+
+    case 'Map': {
+      return (
+        <MapView
+          markers={component.markers}
+          route={component.route}
+          variant={component.variant}
         />
       );
     }

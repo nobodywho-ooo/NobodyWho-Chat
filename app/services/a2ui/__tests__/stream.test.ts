@@ -99,4 +99,23 @@ describe('parseA2UiLive (Express)', () => {
     expect(parseA2UiLive('')).toBeNull();
     expect(parseA2UiLive('garbage')).toBeNull();
   });
+
+  test('parses a Map with markers and a route', () => {
+    const surface = parseA2UiLive(
+      'Map(markers=[{label:"Louvre"},{label:"Orsay",lat:48.86,lon:2.33}], route=[{lat:48.8606, lon:2.3376},{lat:48.8616, lon:2.3522}], variant="medium")',
+    );
+    const root = surface?.components[0];
+    expect(root?.component).toBe('Map');
+    if (root && root.component === 'Map') {
+      expect(root.markers).toEqual([
+        { label: 'Louvre' },
+        { label: 'Orsay', lat: 48.86, lon: 2.33 },
+      ]);
+      expect(root.route).toEqual([
+        { lat: 48.8606, lon: 2.3376 },
+        { lat: 48.8616, lon: 2.3522 },
+      ]);
+      expect(root.variant).toBe('medium');
+    }
+  });
 });

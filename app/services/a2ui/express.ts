@@ -26,6 +26,8 @@ import {
   A2UiCheckRule,
   A2UiChoiceOption,
   A2UiComponent,
+  A2UiMapMarker,
+  A2UiMapPoint,
   A2UiSurface,
   isA2UiComponentName,
 } from './types';
@@ -530,6 +532,48 @@ const convertNode = (node: Node | null): A2UiComponent | A2UiAction | null => {
         return [{ title: convertValue(f.get('title') ?? null) as any, child }];
       });
       return tabs.length > 0 ? { component: 'Tabs', tabs } : null;
+    }
+    case 'Map': {
+      const markers: A2UiMapMarker[] = listArg(kw('markers') ?? pos(0)).flatMap(
+        item => {
+          if (item.kind !== 'object') return [];
+          const f = new Map(item.fields);
+          const label = f.get('label');
+          const icon = f.get('icon');
+          const marker: A2UiMapMarker = {};
+          if (label) marker.label = convertValue(label) as A2UiMapMarker['label'];
+          if (icon && icon.kind === 'string') marker.icon = icon.value;
+          const lat = f.get('lat');
+          const lon = f.get('lon');
+          if (lat && lat.kind === 'number') marker.lat = lat.value;
+          if (lon && lon.kind === 'number') marker.lon = lon.value;
+          return marker.label !== undefined ||
+            marker.icon !== undefined ||
+            marker.lat !== undefined ||
+            marker.lon !== undefined
+            ? [marker]
+            : [];
+        },
+      );
+      const route: A2UiMapPoint[] = listArg(kw('route') ?? pos(1)).flatMap(
+        item => {
+          if (item.kind !== 'object') return [];
+          const f = new Map(item.fields);
+          const lat = f.get('lat');
+          const lon = f.get('lon');
+          if (lat && lat.kind === 'number' && lon && lon.kind === 'number') {
+            return [{ lat: lat.value, lon: lon.value }];
+          }
+          return [];
+        },
+      );
+      if (markers.length === 0 && route.length === 0) return null;
+      return {
+        component: 'Map',
+        markers,
+        ...(route.length ? { route } : {}),
+        ...enumObj('variant', kw('variant'), null, ['small', 'medium', 'large']),
+      };
     }
     default:
       return null;

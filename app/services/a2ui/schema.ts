@@ -38,6 +38,7 @@ const COMPONENT_NAMES: readonly string[] = [
   'Slider',
   'ChoicePicker',
   'Tabs',
+  'Map',
 ];
 
 // The permissive "nested child" schema: an object with a valid component name.

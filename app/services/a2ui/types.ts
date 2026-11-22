@@ -151,6 +151,30 @@ export interface A2UiTabs {
   tabs: A2UiTab[];
 }
 
+/** A pin placed on a Map; geometry comes from its `route` sibling or defaults. */
+export interface A2UiMapMarker {
+  label?: DynamicValue<string>;
+  /** Pin icon; defaults to "location". */
+  icon?: string;
+  /** Optional explicit position; without one the pin gets a fixed slot. */
+  lat?: number;
+  lon?: number;
+}
+
+export interface A2UiMapPoint {
+  lat: number;
+  lon: number;
+}
+
+export interface A2UiMap {
+  component: 'Map';
+  /** Pins drawn on the map (in order). */
+  markers: A2UiMapMarker[];
+  /** A route polyline through these points, in order. */
+  route?: A2UiMapPoint[];
+  variant?: 'small' | 'medium' | 'large';
+}
+
 /** A validation rule a field is checked against; a failure shows `message`. */
 export interface A2UiCheckRule {
   condition: 'required' | 'numeric' | 'email';
@@ -171,7 +195,8 @@ export type A2UiComponent =
   | A2UiCheckBox
   | A2UiSlider
   | A2UiChoicePicker
-  | A2UiTabs;
+  | A2UiTabs
+  | A2UiMap;
 
 /** The `ui` argument of the `render_ui` tool call. */
 export interface A2UiSurface {
@@ -194,6 +219,7 @@ export const A2UI_COMPONENTS: readonly A2UiComponent['component'][] = [
   'Slider',
   'ChoicePicker',
   'Tabs',
+  'Map',
 ] as const;
 
 export const isA2UiComponentName = (
