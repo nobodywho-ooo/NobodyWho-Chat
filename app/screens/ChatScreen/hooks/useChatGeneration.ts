@@ -74,6 +74,38 @@ const nextUid = (): string => `new:${++optimisticMessages}`;
 
 const STREAM_RENDER_INTERVAL_MS = 50;
 
+// Dev-only generated-token logger (no-op in production). Every token is printed
+// to the console and streamed (batched) to the dev-inject report server so an
+// external harness can reconstruct the exact model output and see where it
+// stopped. This is how issues like "the card never appears" get reproduced.
+const devTokenBuffer: string[] = [];
+let devTokenBufferSize = 0;
+let devTokenFlushAt = 0;
+
+const logDevToken = (token: string, seq: number): void => {
+  if (!__DEV__) {
+    return;
+  }
+  console.log(`[a2ui-tok #${seq}] ${JSON.stringify(token)}`);
+  devTokenBuffer.push(token);
+  devTokenBufferSize += 1;
+  const now = Date.now();
+  if (devTokenBufferSize >= 32 || now - devTokenFlushAt >= 150) {
+    flushDevTokens();
+  }
+};
+
+const flushDevTokens = (): void => {
+  if (!__DEV__ || devTokenBuffer.length === 0) {
+    return;
+  }
+  const text = devTokenBuffer.join('');
+  devTokenBuffer.length = 0;
+  devTokenBufferSize = 0;
+  devTokenFlushAt = Date.now();
+  reportDev('stream', { text });
+};
+
 // Sends the user's turn to the model. Normally `ask` continues from the cached
 // prefix. A web search whose planner borrowed the chat left the planner's
 // exchange as the history, so that turn is replayed over the snapshot with
@@ -559,7 +591,12 @@ export function useChatGeneration({
         }
         tokenCount += 1;
         accumulated += token;
+        logDevToken(token, tokenCount);
         scheduleRender();
+      }
+
+      if (__DEV__) {
+        flushDevTokens();
       }
 
       if (chat.current !== activeChat) {
@@ -619,7 +656,10 @@ export function useChatGeneration({
       // Dev-only: push the finished turn out so an external harness can read it.
       if (__DEV__) {
         reportDev('turn', {
+          failed: false,
+          modelId: getAppState().modelIdInUse,
           content: stripA2UiBlocks(parseThinking(accumulated).rest ?? '').slice(0, 6000),
+          raw: accumulated.slice(0, 2000),
           tools: turnToolCalls.map(call => call.name),
           a2ui: turnToolCalls.some(call => call.name === RENDER_UI_TOOL),
           ui: settledUiSurface
@@ -648,6 +688,24 @@ export function useChatGeneration({
         webSearchMs !== undefined ? { webSearchMs } : undefined,
       );
       await persistSystemMessage(t('screens.chat.generationFailed'));
+
+      // Dev-only: report failures with the raw stream so a harness can see why.
+      if (__DEV__) {
+        reportDev('turn', {
+          failed: true,
+          modelId: getAppState().modelIdInUse,
+          content: stripA2UiBlocks(parseThinking(accumulated).rest ?? '').slice(0, 6000),
+          raw: accumulated.slice(0, 2000),
+          tools: turnToolCalls.map(call => call.name),
+          a2ui: turnToolCalls.some(call => call.name === RENDER_UI_TOOL),
+          ui: settledUiSurface
+            ? {
+                components: settledUiSurface.components.map(c => c.component),
+                dataModel: settledUiSurface.dataModel ?? null,
+              }
+            : null,
+        });
+      }
     } finally {
       cancelScheduledRender();
       unsubscribe();

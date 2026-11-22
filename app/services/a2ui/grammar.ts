@@ -153,7 +153,7 @@ ws      ::= [ \\t\\n]*
 
 // Master switch: set to false to drop the sampler constraint entirely (the
 // tolerant Express parser + validator still render valid cards).
-export const A2UI_CONSTRAINED = true;
+export const A2UI_CONSTRAINED = false;
 
 // The whole-turn GBNF fed to `SamplerPresets.constrainWithGrammar`.
 export const A2UI_STREAM_GBNF = `root ::= segment*
@@ -167,7 +167,11 @@ data_lines ::= (data_line ws)*
 data_line ::= "$" path ws "=" ws value
 path ::= "/" [a-zA-Z0-9_/-]+
 root_expr ::= (ident ws "=" ws)? call
-call ::= ident ws "(" ws args ws ")"
+call ::= name ws "(" ws args ws ")"
+# Only real components (and the Event/OpenUrl actions) may be constructed; a
+# made-up name like museums(...) is not expressible, so the model is forced to
+# use the catalog.
+name ::= "Text" | "Icon" | "Image" | "Row" | "Column" | "List" | "Card" | "Divider" | "Button" | "TextField" | "CheckBox" | "Slider" | "ChoicePicker" | "Tabs" | "Event" | "OpenUrl"
 args ::= (arg ("," ws arg)*)?
 arg ::= kwarg | item
 kwarg ::= ident ws "=" ws item
