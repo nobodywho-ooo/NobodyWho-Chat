@@ -18,6 +18,7 @@ import styles, { FLOATING_BUTTON_BOTTOM } from './DrawerContentScreen.styles';
 interface DrawerContentScreenProps {
   navigation: DrawerContentComponentProps['navigation'];
   onCloseDrawer: () => void;
+  isChatFocused?: boolean;
 }
 
 const gradientColors: Record<Theme, string[]> = {
@@ -28,6 +29,7 @@ const gradientColors: Record<Theme, string[]> = {
 export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
   navigation,
   onCloseDrawer,
+  isChatFocused = true,
 }) => {
   const { t } = useTranslation();
   const { models } = useModels();
@@ -110,7 +112,11 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         />
       </View>
 
-      <ConversationsList onSelect={showChat} bottomInset={listBottomInset} />
+      <ConversationsList
+        onSelect={showChat}
+        bottomInset={listBottomInset}
+        showSelection={isChatFocused}
+      />
 
       <LinearGradient
         pointerEvents="none"

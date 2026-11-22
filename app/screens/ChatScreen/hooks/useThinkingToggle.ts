@@ -16,12 +16,15 @@ export const useThinkingToggle = () => {
     [chatCanThink, thinkingOn, chatThinkOpen],
   );
 
-  const toggle = useCallback(() => {
+  const toggle = useCallback((): boolean => {
     const config = getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG;
+    const next = !config.thinking;
 
     setAppState({
-      assistantConfig: { ...config, thinking: !config.thinking },
+      assistantConfig: { ...config, thinking: next },
     }).catch(error => log('useThinkingToggle saving failed', error));
+
+    return next;
   }, []);
 
   return { thinking, canThink: chatCanThink, toggle };

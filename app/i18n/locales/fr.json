@@ -185,22 +185,22 @@
       "skipped": "Réponse sans recherche",
       "searched": "Recherche web effectuée",
       "challengeRow": "Touchez pour confirmer que vous n’êtes pas un robot",
-      "challengeRowLabel": "Le site veut vérifier que vous n’êtes pas un robot — touchez pour continuer",
+      "challengeRowLabel": "Le site veut vérifier que vous n’êtes pas un robot, touchez pour continuer",
       "refining": "Vérification de la réponse avec les sources…",
       "searchTrace": {
         "objectives": "Choix de quoi rechercher",
-        "recovering": "Lecture impossible — recherche d’une autre source",
+        "recovering": "Lecture impossible, recherche d’une autre source",
         "query": "Recherche « {{query}} »",
         "web": "Recherche sur le web",
         "reading": "Lecture des pages",
         "done": "Terminé",
         "nothingFound": "Aucun résultat",
-        "offline": "Pas d’Internet — réponse sans le web",
-        "timeout": "Recherche trop longue — arrêtée plus tôt",
-        "skipped": "Pas besoin de chercher — réponse immédiate",
-        "weak": "Peu de résultats — la réponse peut être incomplète",
-        "failures_one": "Impossible de lire {{count}} page — {{reason}}",
-        "failures_other": "Impossible de lire {{count}} pages — {{reason}}",
+        "offline": "Pas d’Internet, réponse sans le web",
+        "timeout": "Recherche trop longue, arrêtée plus tôt",
+        "skipped": "Pas besoin de chercher, réponse immédiate",
+        "weak": "Peu de résultats, la réponse peut être incomplète",
+        "failures_one": "Impossible de lire {{count}} page, {{reason}}",
+        "failures_other": "Impossible de lire {{count}} pages, {{reason}}",
         "fetchFailure": {
           "blocked": "lecture bloquée",
           "notFound": "page introuvable",
@@ -316,7 +316,7 @@
         "thinking": "Réflexion",
         "synthesizing": "Génération de la voix…",
         "speaking": "Parle…",
-        "error": "Une erreur est survenue — touchez pour réessayer"
+        "error": "Une erreur est survenue, touchez pour réessayer"
       },
       "setup": {
         "title": "Configurer la discussion vocale",
@@ -389,7 +389,10 @@
       "downloadFailedModelMessage": "{{name}} n’a pas pu être téléchargé. Vérifiez votre connexion et réessayez.",
       "notEnoughSpaceTitle": "Espace insuffisant",
       "notEnoughSpaceMessage_one": "{{name}} nécessite {{required}} d’espace libre, mais seulement {{available}} est disponible sur cet appareil. Libérez de l’espace et réessayez.",
-      "notEnoughSpaceMessage_other": "Les modèles que vous essayez de télécharger nécessitent {{required}} d’espace libre, mais seulement {{available}} est disponible sur cet appareil. Libérez de l’espace et réessayez."
+      "notEnoughSpaceMessage_other": "Les modèles que vous essayez de télécharger nécessitent {{required}} d’espace libre, mais seulement {{available}} est disponible sur cet appareil. Libérez de l’espace et réessayez.",
+      "confirmDownloadTitle": "Télécharger {{name}} ?",
+      "confirmDownloadMessage": "{{name}} nécessite {{size}} d'espace libre sur votre appareil. Il est conseillé de le télécharger en Wi-Fi.",
+      "confirmDownload": "Télécharger"
     },
     "downloadedModels": {
       "noModelDownloaded": "Aucun modèle téléchargé",
@@ -437,12 +440,16 @@
         "retry": "Réessayer",
         "cancel": "Plus tard"
       },
+      "webSearchOn": "Recherche web activée",
+      "webSearchOff": "Recherche web désactivée",
+      "thinkingOn": "Réflexion activée",
+      "thinkingOff": "Réflexion désactivée",
       "webSearchNotice": {
-        "nothingFound": "Rien d’utile trouvé en ligne — réponse sans le web.",
-        "noRoom": "Cette discussion est trop longue pour ajouter des résultats web — démarrez une nouvelle discussion pour chercher.",
-        "unavailable": "La recherche web n’est pas encore prête — réponse sans le web.",
-        "modelTooSmall": "Ce modèle ne peut pas utiliser les résultats web de façon fiable — choisissez-en un plus grand.",
-        "notEnoughMemory": "Ce modèle occupe déjà toute la mémoire du téléphone — chercher en parallèle pourrait fermer l’app. Choisissez un modèle plus petit.",
+        "nothingFound": "Rien d’utile trouvé en ligne, réponse sans le web.",
+        "noRoom": "Cette discussion est trop longue pour ajouter des résultats web, démarrez une nouvelle discussion pour chercher.",
+        "unavailable": "La recherche web n’est pas encore prête, réponse sans le web.",
+        "modelTooSmall": "Ce modèle ne peut pas utiliser les résultats web de façon fiable, choisissez-en un plus grand.",
+        "notEnoughMemory": "Ce modèle occupe déjà toute la mémoire du téléphone, chercher en parallèle pourrait fermer l’app. Choisissez un modèle plus petit.",
         "attachment": "La recherche web est ignorée quand une photo ou un enregistrement est joint."
       }
     },

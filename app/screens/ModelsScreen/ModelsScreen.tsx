@@ -4,6 +4,7 @@ import { HeaderScrollView } from 'components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useKeepAwakeWhile, useModelDownloader, useStyled } from 'hooks';
+import { modelSizeLabel } from 'helpers';
 import { Spacings } from 'style';
 import { Model } from 'types';
 
@@ -45,6 +46,26 @@ export const ModelsScreen: React.FC = () => {
       startDownload(model);
     },
     [startDownload],
+  );
+
+  const confirmDownload = useCallback(
+    (model: Model) =>
+      Alert.alert(
+        t('screens.models.confirmDownloadTitle', { name: model.name }),
+        t('screens.models.confirmDownloadMessage', {
+          name: model.name,
+          size: modelSizeLabel(model.sizeGB),
+        }),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('screens.models.confirmDownload'),
+            isPreferred: true,
+            onPress: () => downloadModel(model),
+          },
+        ],
+      ),
+    [t, downloadModel],
   );
 
   useEffect(() => {
@@ -92,7 +113,7 @@ export const ModelsScreen: React.FC = () => {
             isLoading={isLoading}
             hasError={hasError}
             hasFetched={hasFetched}
-            onModelPress={downloadModel}
+            onModelPress={confirmDownload}
             onRetry={refetch}
             onInfoPress={showModelInfo}
           />

@@ -185,22 +185,22 @@
       "skipped": "Answered without searching",
       "searched": "Searched the web",
       "challengeRow": "Tap to confirm you’re not a robot",
-      "challengeRowLabel": "The site wants to check you are not a robot — tap to continue",
+      "challengeRowLabel": "The site wants to check you are not a robot, tap to continue",
       "refining": "Checking the answer against the sources…",
       "searchTrace": {
         "objectives": "Deciding what to search for",
-        "recovering": "Couldn’t read those — looking for another source",
+        "recovering": "Couldn’t read those, looking for another source",
         "query": "Searching “{{query}}”",
         "web": "Searching the web",
         "reading": "Reading the pages",
         "done": "Done",
         "nothingFound": "Nothing found",
-        "offline": "No internet — answered without the web",
-        "timeout": "Search took too long — stopped early",
-        "skipped": "No search needed — answered right away",
-        "weak": "Didn’t find much — the answer may be incomplete",
-        "failures_one": "Couldn’t read {{count}} page — {{reason}}",
-        "failures_other": "Couldn’t read {{count}} pages — {{reason}}",
+        "offline": "No internet, answered without the web",
+        "timeout": "Search took too long, stopped early",
+        "skipped": "No search needed, answered right away",
+        "weak": "Didn’t find much, the answer may be incomplete",
+        "failures_one": "Couldn’t read {{count}} page, {{reason}}",
+        "failures_other": "Couldn’t read {{count}} pages, {{reason}}",
         "fetchFailure": {
           "blocked": "blocked the reader",
           "notFound": "page is gone",
@@ -316,7 +316,7 @@
         "thinking": "Thinking",
         "synthesizing": "Generating speech…",
         "speaking": "Speaking…",
-        "error": "Something went wrong — tap to try again"
+        "error": "Something went wrong, tap to try again"
       },
       "setup": {
         "title": "Set up voice chat",
@@ -389,7 +389,10 @@
       "downloadFailedModelMessage": "{{name}} could not be downloaded. Check your connection and try again.",
       "notEnoughSpaceTitle": "Not enough storage",
       "notEnoughSpaceMessage_one": "{{name}} needs {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again.",
-      "notEnoughSpaceMessage_other": "The models you're trying to download need {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again."
+      "notEnoughSpaceMessage_other": "The models you're trying to download need {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again.",
+      "confirmDownloadTitle": "Download {{name}}?",
+      "confirmDownloadMessage": "{{name}} needs {{size}} of free space on your device. Downloading over Wi-Fi is recommended.",
+      "confirmDownload": "Download"
     },
     "downloadedModels": {
       "noModelDownloaded": "No model downloaded",
@@ -437,12 +440,16 @@
         "retry": "Try again",
         "cancel": "Not now"
       },
+      "webSearchOn": "Web search on",
+      "webSearchOff": "Web search off",
+      "thinkingOn": "Thinking on",
+      "thinkingOff": "Thinking off",
       "webSearchNotice": {
-        "nothingFound": "Couldn’t find anything useful online — answering without the web.",
-        "noRoom": "This chat is too long to add web results — start a new chat to search.",
-        "unavailable": "Web search isn’t ready yet — answering without the web.",
-        "modelTooSmall": "This model can’t use web results reliably — pick a larger one.",
-        "notEnoughMemory": "This model already fills the phone’s memory — searching alongside it could close the app. Pick a smaller model.",
+        "nothingFound": "Couldn’t find anything useful online, answering without the web.",
+        "noRoom": "This chat is too long to add web results, start a new chat to search.",
+        "unavailable": "Web search isn’t ready yet, answering without the web.",
+        "modelTooSmall": "This model can’t use web results reliably, pick a larger one.",
+        "notEnoughMemory": "This model already fills the phone’s memory, searching alongside it could close the app. Pick a smaller model.",
         "attachment": "Web search is skipped when a photo or recording is attached."
       }
     },

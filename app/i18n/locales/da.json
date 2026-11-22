@@ -185,22 +185,22 @@
       "skipped": "Besvaret uden søgning",
       "searched": "Søgte på nettet",
       "challengeRow": "Tryk for at bekræfte, at du ikke er en robot",
-      "challengeRowLabel": "Siden vil tjekke, at du ikke er en robot — tryk for at fortsætte",
+      "challengeRowLabel": "Siden vil tjekke, at du ikke er en robot, tryk for at fortsætte",
       "refining": "Tjekker svaret mod kilderne…",
       "searchTrace": {
         "objectives": "Finder ud af, hvad der skal søges efter",
-        "recovering": "Kunne ikke læse dem — leder efter en anden kilde",
+        "recovering": "Kunne ikke læse dem, leder efter en anden kilde",
         "query": "Søger efter “{{query}}”",
         "web": "Søger på nettet",
         "reading": "Læser siderne",
         "done": "Færdig",
         "nothingFound": "Intet fundet",
-        "offline": "Intet internet — svarede uden nettet",
-        "timeout": "Søgningen tog for lang tid — stoppede tidligt",
-        "skipped": "Ingen søgning nødvendig — svarede med det samme",
-        "weak": "Fandt ikke meget — svaret kan være ufuldstændigt",
-        "failures_one": "Kunne ikke læse {{count}} side — {{reason}}",
-        "failures_other": "Kunne ikke læse {{count}} sider — {{reason}}",
+        "offline": "Intet internet, svarede uden nettet",
+        "timeout": "Søgningen tog for lang tid, stoppede tidligt",
+        "skipped": "Ingen søgning nødvendig, svarede med det samme",
+        "weak": "Fandt ikke meget, svaret kan være ufuldstændigt",
+        "failures_one": "Kunne ikke læse {{count}} side, {{reason}}",
+        "failures_other": "Kunne ikke læse {{count}} sider, {{reason}}",
         "fetchFailure": {
           "blocked": "blokerede læseren",
           "notFound": "siden findes ikke længere",
@@ -316,7 +316,7 @@
         "thinking": "Tænker…",
         "synthesizing": "Genererer tale…",
         "speaking": "Taler…",
-        "error": "Noget gik galt — tryk for at prøve igen"
+        "error": "Noget gik galt, tryk for at prøve igen"
       },
       "setup": {
         "title": "Konfigurer stemmechat",
@@ -389,7 +389,10 @@
       "downloadFailedModelMessage": "{{name}} kunne ikke downloades. Tjek din forbindelse og prøv igen.",
       "notEnoughSpaceTitle": "Ikke nok lagerplads",
       "notEnoughSpaceMessage_one": "{{name}} kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen.",
-      "notEnoughSpaceMessage_other": "Modellerne, du prøver at downloade, kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen."
+      "notEnoughSpaceMessage_other": "Modellerne, du prøver at downloade, kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen.",
+      "confirmDownloadTitle": "Download {{name}}?",
+      "confirmDownloadMessage": "{{name}} kræver {{size}} ledig plads på din enhed. Vi anbefaler at downloade via Wi-Fi.",
+      "confirmDownload": "Download"
     },
     "downloadedModels": {
       "noModelDownloaded": "Ingen model downloadet",
@@ -431,18 +434,22 @@
         "title": "Download søgemodellen",
         "optional": "Websøgning giver bedre svar med søgemodellen på enheden (~{{size}}): den rangerer sider efter, hvad de betyder, i stedet for kun at matche nøgleord. Den downloades én gang.",
         "required": "Din telefon kan sagtens køre søgemodellen på enheden (~{{size}}), så websøgning bruger den til at finde de sider, der virkelig besvarer dig. Den downloades én gang.",
-        "downloading": "Du kan lukke dette — downloadet fortsætter i baggrunden.",
+        "downloading": "Du kan lukke dette, downloadet fortsætter i baggrunden.",
         "failed": "Søgemodellen kunne ikke downloades. Tjek din forbindelse, og prøv igen.",
         "download": "Download",
         "retry": "Prøv igen",
         "cancel": "Ikke nu"
       },
+      "webSearchOn": "Websøgning slået til",
+      "webSearchOff": "Websøgning slået fra",
+      "thinkingOn": "Tænkning slået til",
+      "thinkingOff": "Tænkning slået fra",
       "webSearchNotice": {
-        "nothingFound": "Fandt ikke noget brugbart på nettet — svarer uden nettet.",
-        "noRoom": "Denne chat er for lang til at tilføje søgeresultater — start en ny chat for at søge.",
-        "unavailable": "Websøgning er ikke klar endnu — svarer uden nettet.",
-        "modelTooSmall": "Denne model kan ikke bruge søgeresultater pålideligt — vælg en større.",
-        "notEnoughMemory": "Denne model fylder allerede telefonens hukommelse — en søgning ved siden af kan lukke appen. Vælg en mindre model.",
+        "nothingFound": "Fandt ikke noget brugbart på nettet, svarer uden nettet.",
+        "noRoom": "Denne chat er for lang til at tilføje søgeresultater, start en ny chat for at søge.",
+        "unavailable": "Websøgning er ikke klar endnu, svarer uden nettet.",
+        "modelTooSmall": "Denne model kan ikke bruge søgeresultater pålideligt, vælg en større.",
+        "notEnoughMemory": "Denne model fylder allerede telefonens hukommelse, en søgning ved siden af kan lukke appen. Vælg en mindre model.",
         "attachment": "Websøgning springes over, når et billede eller en optagelse er vedhæftet."
       }
     },

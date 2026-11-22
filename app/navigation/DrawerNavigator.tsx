@@ -248,13 +248,17 @@ const OpenChatOnModelArrival = ({
   return null;
 };
 
-const renderDrawerContent = ({ navigation }: DrawerContentComponentProps) => (
+const renderDrawerContent = ({
+  navigation,
+  state,
+}: DrawerContentComponentProps) => (
   <>
     <DrawerStatusReporter side="left" />
     <OpenChatOnModelArrival navigation={navigation} />
     <DrawerContentScreen
       navigation={navigation}
       onCloseDrawer={() => navigation.closeDrawer()}
+      isChatFocused={state.routes[state.index]?.name === 'Chat'}
     />
   </>
 );

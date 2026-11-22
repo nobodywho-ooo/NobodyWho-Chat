@@ -59,6 +59,7 @@ import styles from './ChatScreen.styles';
 const INPUT_BAR_PADDING = 14;
 
 const WEB_NOTICE_VISIBLE_MS = 3500;
+const TOGGLE_NOTICE_VISIBLE_MS = 2000;
 
 const BLUR_INTENSITY = isAndroid ? 40 : 16;
 const BLUR_REDUCTION_FACTOR = 5;
@@ -154,6 +155,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const { thinking, canThink, toggle: toggleThinking } = useThinkingToggle();
 
+  const [toggleNotice, setToggleNotice] = useState<{
+    id: number;
+    message: string;
+  } | null>(null);
+
   const webNotice = useWebSearchStore(state => state.notice);
   const clearWebNotice = useWebSearchStore(state => state.clearNotice);
 
@@ -162,6 +168,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       return;
     }
 
+    setToggleNotice(null);
+
     const timeout = setTimeout(
       () => clearWebNotice(webNotice.id),
       WEB_NOTICE_VISIBLE_MS,
@@ -169,6 +177,53 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
     return () => clearTimeout(timeout);
   }, [webNotice, clearWebNotice]);
+
+  const showToggleNotice = useCallback(
+    (message: string) => {
+      const current = useWebSearchStore.getState().notice;
+
+      if (current) {
+        clearWebNotice(current.id);
+      }
+
+      setToggleNotice(previous => ({
+        id: (previous?.id ?? 0) + 1,
+        message,
+      }));
+    },
+    [clearWebNotice],
+  );
+
+  useEffect(() => {
+    if (!toggleNotice) {
+      return;
+    }
+
+    const timeout = setTimeout(
+      () => setToggleNotice(null),
+      TOGGLE_NOTICE_VISIBLE_MS,
+    );
+
+    return () => clearTimeout(timeout);
+  }, [toggleNotice]);
+
+  const handleToggleWebSearch = useCallback(() => {
+    const enabled = toggleWebSearch();
+
+    if (enabled !== undefined) {
+      showToggleNotice(
+        t(enabled ? 'screens.chat.webSearchOn' : 'screens.chat.webSearchOff'),
+      );
+    }
+  }, [toggleWebSearch, showToggleNotice, t]);
+
+  const handleToggleThinking = useCallback(() => {
+    const enabled = toggleThinking();
+
+    showToggleNotice(
+      t(enabled ? 'screens.chat.thinkingOn' : 'screens.chat.thinkingOff'),
+    );
+  }, [toggleThinking, showToggleNotice, t]);
 
   const ingestsImage = pipelineIngestsImage(chatPipeline);
   const ingestsAudio = pipelineIngestsAudio(chatPipeline);
@@ -444,10 +499,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           onStopDictation={stopRecording}
           showWebSearch
           webSearchEnabled={webSearch.enabled}
-          onToggleWebSearch={toggleWebSearch}
+          onToggleWebSearch={handleToggleWebSearch}
           showThinking={canThink}
           thinkingEnabled={thinking.enabled}
-          onToggleThinking={toggleThinking}
+          onToggleThinking={handleToggleThinking}
           onChangeText={setInputText}
           onSend={onSend}
           onStop={onStop}
@@ -456,9 +511,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         />
       </KeyboardStickyView>
       <Toast
-        visible={webNotice !== null}
+        visible={webNotice !== null || toggleNotice !== null}
         message={
-          webNotice ? t(`screens.chat.webSearchNotice.${webNotice.kind}`) : ''
+          webNotice
+            ? t(`screens.chat.webSearchNotice.${webNotice.kind}`)
+            : (toggleNotice?.message ?? '')
         }
         blurTarget={blurTargetRef}
         style={{ top: headerInset + Spacings.md }}

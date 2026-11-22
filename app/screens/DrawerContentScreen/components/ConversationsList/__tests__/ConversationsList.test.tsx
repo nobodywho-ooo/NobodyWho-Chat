@@ -38,6 +38,19 @@ test('renders the conversation in use in bold', async () => {
   expect(screen.getByText('Conversation 1').props.bold).toBe(false);
 });
 
+test('marks no conversation as selected when the chat is not shown', async () => {
+  mockUseAppState.mockReturnValue({ conversationIdInUse: 2 });
+  mockUseConversations.mockReturnValue({
+    conversations: [buildConversation(1), buildConversation(2)],
+  });
+
+  const screen = await render(
+    <ConversationsList onSelect={jest.fn()} showSelection={false} />,
+  );
+
+  expect(screen.getByText('Conversation 2').props.bold).toBe(false);
+});
+
 test('renders the empty state when there are no conversations', async () => {
   const screen = await render(<ConversationsList onSelect={jest.fn()} />);
 

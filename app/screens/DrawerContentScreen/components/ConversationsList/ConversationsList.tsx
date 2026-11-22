@@ -18,16 +18,20 @@ interface ConversationsListProps {
    * and takes their taps.
    */
   bottomInset?: number;
+  /** Mark the conversation in use as selected (off when the chat isn't shown). */
+  showSelection?: boolean;
 }
 
 export const ConversationsList: FC<ConversationsListProps> = ({
   onSelect,
   bottomInset = 0,
+  showSelection = true,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { conversations } = useConversations();
   const { conversationIdInUse } = useAppState();
+  const selectedId = showSelection ? conversationIdInUse : undefined;
 
   const handleConversationPress = useCallback(
     (conversation: Conversation) => {
@@ -54,7 +58,7 @@ export const ConversationsList: FC<ConversationsListProps> = ({
         <Text
           style={[styles.itemText, { color: colors.onSurface }]}
           numberOfLines={1}
-          bold={item.id === conversationIdInUse}
+          bold={item.id === selectedId}
         >
           {capitalize(item.title)}
         </Text>
@@ -63,7 +67,7 @@ export const ConversationsList: FC<ConversationsListProps> = ({
     [
       colors.surfaceContainer,
       colors.onSurface,
-      conversationIdInUse,
+      selectedId,
       handleConversationPress,
     ],
   );

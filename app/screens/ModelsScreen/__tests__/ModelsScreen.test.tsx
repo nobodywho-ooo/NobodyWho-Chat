@@ -177,9 +177,11 @@ describe('scrolling to the top when a download starts', () => {
   });
 
   let startDownload: jest.Mock;
+  let alertSpy: jest.SpyInstance<void, Parameters<typeof Alert.alert>>;
 
   beforeEach(() => {
     startDownload = jest.fn();
+    alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     jest.spyOn(hooks, 'useModelDownloader').mockReturnValue({
       startDownload,
       promptStopDownload: jest.fn(),
@@ -203,9 +205,24 @@ describe('scrolling to the top when a download starts', () => {
     return screen;
   };
 
+  // Presses the confirmation alert's button with the given text.
+  const answerConfirm = async (text: string) => {
+    const buttons = alertSpy.mock.calls.at(-1)?.[2] ?? [];
+    const button = buttons.find(b => b.text === text);
+    await act(async () => button?.onPress?.());
+  };
+
   test('waits for the pressed model to appear among the downloads', async () => {
     const model = buildModel(20, { parts: [part('chat-model', 1)] });
     const screen = await renderAndPress(model);
+
+    expect(startDownload).not.toHaveBeenCalled();
+    expect(alertSpy).toHaveBeenCalledWith(
+      'screens.models.confirmDownloadTitle',
+      'screens.models.confirmDownloadMessage',
+      expect.any(Array),
+    );
+    await answerConfirm('screens.models.confirmDownload');
 
     expect(startDownload).toHaveBeenCalledWith(model);
     expect(scrollTo).not.toHaveBeenCalled();
@@ -224,6 +241,7 @@ describe('scrolling to the top when a download starts', () => {
     const model = buildModel(20, { parts: [part('chat-model', 1)] });
     const other = buildModel(30, { parts: [part('chat-model', 1)] });
     const screen = await renderAndPress(model);
+    await answerConfirm('screens.models.confirmDownload');
 
     mockUseModelDownloads.mockReturnValue({
       downloads: [downloadOf(other)],
@@ -232,5 +250,13 @@ describe('scrolling to the top when a download starts', () => {
     await screen.rerender(<ModelsScreen />);
 
     expect(scrollTo).not.toHaveBeenCalled();
+  });
+
+  test('cancelling the confirmation does not download', async () => {
+    const model = buildModel(20, { parts: [part('chat-model', 1)] });
+    await renderAndPress(model);
+    await answerConfirm('common.cancel');
+
+    expect(startDownload).not.toHaveBeenCalled();
   });
 });

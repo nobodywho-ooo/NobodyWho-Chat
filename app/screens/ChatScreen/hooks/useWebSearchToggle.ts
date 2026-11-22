@@ -58,18 +58,18 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
     isWebSearchReady(chatModel) && hasMemoryForWebSearch(chatModel, ramGB);
   const enabled = toggledOn && usable;
 
-  const toggle = useCallback(() => {
+  const toggle = useCallback((): boolean | undefined => {
     const store = useWebSearchStore.getState();
 
     if (!enabled) {
       if (!isWebSearchReady(chatModel)) {
         store.showNotice('modelTooSmall');
-        return;
+        return undefined;
       }
 
       if (!hasMemoryForWebSearch(chatModel, ramGB)) {
         store.showNotice('notEnoughMemory');
-        return;
+        return undefined;
       }
     }
 
@@ -81,7 +81,7 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
       hasInstalledEmbedding ||
       isMemoryConstrained(chatModel, ramGB)
     ) {
-      return;
+      return !enabled;
     }
 
     const required = isHighMemoryDevice(chatModel, ramGB);
@@ -90,6 +90,8 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
       setPromptRequired(required);
       setPromptOpen(true);
     }
+
+    return true;
   }, [
     enabled,
     chatModel,

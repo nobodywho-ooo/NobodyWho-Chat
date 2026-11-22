@@ -140,6 +140,7 @@ exports[`renders correctly DrawerContentScreen 1`] = `
   <ConversationsList
     bottomInset={0}
     onSelect={[Function]}
+    showSelection={true}
   />
   <LinearGradient
     colors={
