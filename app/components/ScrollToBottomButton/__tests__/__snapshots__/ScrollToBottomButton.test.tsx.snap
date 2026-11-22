@@ -49,16 +49,18 @@ exports[`ScrollToBottomButton renders a chevron when visible 1`] = `
       [
         {
           "alignItems": "center",
-          "borderRadius": 18,
-          "borderWidth": 1,
           "height": 36,
           "justifyContent": "center",
+          "width": 36,
+        },
+        {
+          "borderRadius": 18,
+          "borderWidth": 1,
           "overflow": "hidden",
           "shadowOffset": {
             "height": 2,
             "width": 0,
           },
-          "width": 36,
         },
         {
           "borderColor": "#acacac",

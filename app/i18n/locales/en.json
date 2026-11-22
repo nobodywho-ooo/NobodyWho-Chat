@@ -372,6 +372,7 @@
       "systemSubtitle": "Currently: {{language}}"
     },
     "models": {
+      "recommended": "Recommended",
       "discover": "Discover",
       "inUse": "In Use",
       "noModelInUse": "No model in use",

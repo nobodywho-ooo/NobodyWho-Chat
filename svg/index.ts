@@ -1,4 +1,5 @@
 import qwen from 'svg/qwen.svg';
+import qwen4 from 'svg/qwen4.svg';
 import bonsai from 'svg/bonsai.svg';
 import liquid from 'svg/liquid.svg';
 import gemma4 from 'svg/gemma4.svg';
@@ -18,6 +19,7 @@ import logoDot from 'svg/dot.svg';
 
 export {
   qwen,
+  qwen4,
   bonsai,
   liquid,
   gemma4,

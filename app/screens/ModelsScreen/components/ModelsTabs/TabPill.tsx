@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable } from 'react-native';
+import { LayoutChangeEvent, Pressable } from 'react-native';
 import { Text } from 'components';
 import { useStyled } from 'hooks';
 
@@ -9,18 +9,21 @@ interface TabPillProps {
   label: string;
   selected: boolean;
   onPress: () => void;
+  onLayout?: (event: LayoutChangeEvent) => void;
 }
 
 export const TabPill: React.FC<TabPillProps> = ({
   label,
   selected,
   onPress,
+  onLayout,
 }) => {
   const { colors } = useStyled();
 
   return (
     <Pressable
       onPress={onPress}
+      onLayout={onLayout}
       accessibilityRole="tab"
       accessibilityState={{ selected }}
       accessibilityLabel={label}

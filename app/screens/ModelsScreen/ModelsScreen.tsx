@@ -28,6 +28,7 @@ export const ModelsScreen: React.FC = () => {
   const {
     downloads,
     availableModels,
+    recommendedModels,
     inUseModels,
     isLoading,
     hasError,
@@ -78,7 +79,7 @@ export const ModelsScreen: React.FC = () => {
     }
 
     pendingScrollModelIdRef.current = undefined;
-    if (tab === 'discover') {
+    if (tab === 'discover' || tab === 'recommended') {
       scrollRef.current?.scrollTo({ y: 0, animated: true });
     }
   }, [downloads, tab]);
@@ -99,7 +100,7 @@ export const ModelsScreen: React.FC = () => {
     >
       <ModelsTabs selected={tab} onSelect={setTab} />
 
-      {tab === 'discover' && (
+      {(tab === 'discover' || tab === 'recommended') && (
         <>
           {downloads.length > 0 && (
             <DownloadingModels
@@ -109,7 +110,7 @@ export const ModelsScreen: React.FC = () => {
           )}
 
           <AvailableModels
-            models={availableModels}
+            models={tab === 'recommended' ? recommendedModels : availableModels}
             isLoading={isLoading}
             hasError={hasError}
             hasFetched={hasFetched}

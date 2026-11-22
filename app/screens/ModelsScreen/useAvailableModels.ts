@@ -1,13 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { map, prop } from 'ramda';
 import { useAppState, useModelDownloads, useModels } from 'hooks';
-import { fitsInDeviceMemory, log } from 'helpers';
+import {
+  FIRST_PICK_TAG,
+  fitsInDeviceMemory,
+  log,
+  RECOMMENDED_TAG,
+} from 'helpers';
 import {
   getModelCatalogue,
   refreshModelCatalogue,
   useModelCatalogue,
 } from 'services';
 import { MODEL_SLOTS } from 'types';
+
+const RECOMMENDED_TAGS = [RECOMMENDED_TAG, FIRST_PICK_TAG];
 
 // Reads the shared catalogue cache, filters it to what the device can run, and
 // derives the lists the screen renders: the models in use (one per occupied
@@ -69,6 +76,14 @@ export const useAvailableModels = () => {
     [models, downloadedModelIds, downloadingModelIds],
   );
 
+  const recommendedModels = useMemo(
+    () =>
+      availableModels.filter(model =>
+        RECOMMENDED_TAGS.some(tag => model.tags.includes(tag)),
+      ),
+    [availableModels],
+  );
+
   const inUseModels = useMemo(
     () =>
       MODEL_SLOTS.flatMap(({ appStateKey }) => {
@@ -83,6 +98,7 @@ export const useAvailableModels = () => {
   return {
     downloads,
     availableModels,
+    recommendedModels,
     inUseModels,
     isLoading,
     hasError,

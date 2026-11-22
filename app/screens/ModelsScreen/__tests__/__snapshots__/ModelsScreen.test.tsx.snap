@@ -51,7 +51,9 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
           }
         }
         horizontal={true}
+        onContentSizeChange={[Function]}
         onGestureUpdate_CAN_CAUSE_INFINITE_RERENDER={[Function]}
+        onLayout={[Function]}
         showsHorizontalScrollIndicator={false}
         style={
           {
@@ -88,6 +90,7 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
             onBlur={[Function]}
             onClick={[Function]}
             onFocus={[Function]}
+            onLayout={[Function]}
             onResponderGrant={[Function]}
             onResponderMove={[Function]}
             onResponderRelease={[Function]}
@@ -119,6 +122,62 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
             </Text>
           </View>
           <View
+            accessibilityLabel="screens.models.recommended"
+            accessibilityRole="tab"
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": false,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            hitSlop={4}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onFocus={[Function]}
+            onLayout={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              [
+                {
+                  "borderRadius": 999,
+                  "paddingHorizontal": 16,
+                  "paddingVertical": 10,
+                },
+                false,
+                false,
+              ]
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#7c7c7c",
+                }
+              }
+            >
+              screens.models.recommended
+            </Text>
+          </View>
+          <View
             accessibilityLabel="screens.models.inUse"
             accessibilityRole="tab"
             accessibilityState={
@@ -145,6 +204,7 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
             onBlur={[Function]}
             onClick={[Function]}
             onFocus={[Function]}
+            onLayout={[Function]}
             onResponderGrant={[Function]}
             onResponderMove={[Function]}
             onResponderRelease={[Function]}
@@ -200,6 +260,7 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
             onBlur={[Function]}
             onClick={[Function]}
             onFocus={[Function]}
+            onLayout={[Function]}
             onResponderGrant={[Function]}
             onResponderMove={[Function]}
             onResponderRelease={[Function]}
@@ -409,7 +470,9 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
           }
         }
         horizontal={true}
+        onContentSizeChange={[Function]}
         onGestureUpdate_CAN_CAUSE_INFINITE_RERENDER={[Function]}
+        onLayout={[Function]}
         showsHorizontalScrollIndicator={false}
         style={
           {
@@ -446,6 +509,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
             onBlur={[Function]}
             onClick={[Function]}
             onFocus={[Function]}
+            onLayout={[Function]}
             onResponderGrant={[Function]}
             onResponderMove={[Function]}
             onResponderRelease={[Function]}
@@ -477,6 +541,62 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
             </Text>
           </View>
           <View
+            accessibilityLabel="screens.models.recommended"
+            accessibilityRole="tab"
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": false,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            hitSlop={4}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onFocus={[Function]}
+            onLayout={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              [
+                {
+                  "borderRadius": 999,
+                  "paddingHorizontal": 16,
+                  "paddingVertical": 10,
+                },
+                false,
+                false,
+              ]
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#7c7c7c",
+                }
+              }
+            >
+              screens.models.recommended
+            </Text>
+          </View>
+          <View
             accessibilityLabel="screens.models.inUse"
             accessibilityRole="tab"
             accessibilityState={
@@ -503,6 +623,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
             onBlur={[Function]}
             onClick={[Function]}
             onFocus={[Function]}
+            onLayout={[Function]}
             onResponderGrant={[Function]}
             onResponderMove={[Function]}
             onResponderRelease={[Function]}
@@ -558,6 +679,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
             onBlur={[Function]}
             onClick={[Function]}
             onFocus={[Function]}
+            onLayout={[Function]}
             onResponderGrant={[Function]}
             onResponderMove={[Function]}
             onResponderRelease={[Function]}
@@ -767,7 +889,9 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
           }
         }
         horizontal={true}
+        onContentSizeChange={[Function]}
         onGestureUpdate_CAN_CAUSE_INFINITE_RERENDER={[Function]}
+        onLayout={[Function]}
         showsHorizontalScrollIndicator={false}
         style={
           {
@@ -804,6 +928,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
             onBlur={[Function]}
             onClick={[Function]}
             onFocus={[Function]}
+            onLayout={[Function]}
             onResponderGrant={[Function]}
             onResponderMove={[Function]}
             onResponderRelease={[Function]}
@@ -835,6 +960,62 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
             </Text>
           </View>
           <View
+            accessibilityLabel="screens.models.recommended"
+            accessibilityRole="tab"
+            accessibilityState={
+              {
+                "busy": undefined,
+                "checked": undefined,
+                "disabled": undefined,
+                "expanded": undefined,
+                "selected": false,
+              }
+            }
+            accessibilityValue={
+              {
+                "max": undefined,
+                "min": undefined,
+                "now": undefined,
+                "text": undefined,
+              }
+            }
+            accessible={true}
+            collapsable={false}
+            focusable={true}
+            hitSlop={4}
+            onBlur={[Function]}
+            onClick={[Function]}
+            onFocus={[Function]}
+            onLayout={[Function]}
+            onResponderGrant={[Function]}
+            onResponderMove={[Function]}
+            onResponderRelease={[Function]}
+            onResponderTerminate={[Function]}
+            onResponderTerminationRequest={[Function]}
+            onStartShouldSetResponder={[Function]}
+            style={
+              [
+                {
+                  "borderRadius": 999,
+                  "paddingHorizontal": 16,
+                  "paddingVertical": 10,
+                },
+                false,
+                false,
+              ]
+            }
+          >
+            <Text
+              style={
+                {
+                  "color": "#7c7c7c",
+                }
+              }
+            >
+              screens.models.recommended
+            </Text>
+          </View>
+          <View
             accessibilityLabel="screens.models.inUse"
             accessibilityRole="tab"
             accessibilityState={
@@ -861,6 +1042,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
             onBlur={[Function]}
             onClick={[Function]}
             onFocus={[Function]}
+            onLayout={[Function]}
             onResponderGrant={[Function]}
             onResponderMove={[Function]}
             onResponderRelease={[Function]}
@@ -916,6 +1098,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
             onBlur={[Function]}
             onClick={[Function]}
             onFocus={[Function]}
+            onLayout={[Function]}
             onResponderGrant={[Function]}
             onResponderMove={[Function]}
             onResponderRelease={[Function]}

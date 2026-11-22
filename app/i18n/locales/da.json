@@ -372,6 +372,7 @@
       "systemSubtitle": "Lige nu: {{language}}"
     },
     "models": {
+      "recommended": "Anbefalet",
       "discover": "Opdag",
       "inUse": "I brug",
       "noModelInUse": "Ingen model i brug",
