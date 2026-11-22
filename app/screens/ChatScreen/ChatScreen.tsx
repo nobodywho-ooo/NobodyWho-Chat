@@ -32,6 +32,7 @@ import {
 } from 'types';
 import { useAiService, useWebSearchStore } from 'services';
 import { isAndroid } from 'helpers';
+import { setAppState } from 'database';
 import { Spacings } from 'style';
 import { Theme } from 'types';
 
@@ -346,6 +347,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const sendRef = useRef<() => void>(() => undefined);
   sendRef.current = onSend;
   const injectMessage = useCallback((text: string) => {
+    // Dev sentinel: start a brand-new conversation (mirrors the drawer's
+    // New Chat) so a test never inherits a previous conversation's history.
+    if (text === '__new__') {
+      setAppState({ conversationIdInUse: undefined });
+      return;
+    }
     setInputText(text);
     setTimeout(() => sendRef.current?.(), 150);
   }, []);
