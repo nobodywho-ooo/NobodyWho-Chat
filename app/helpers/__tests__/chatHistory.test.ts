@@ -101,6 +101,50 @@ describe('toModelHistory (nobodywho context)', () => {
     ]);
   });
 
+  test('does NOT replay render_ui into model history (avoids tool-call contamination)', () => {
+    const uiInvocation = {
+      name: 'render_ui',
+      arguments: { ui: { components: [] } },
+      result: 'The UI card was rendered successfully.',
+    };
+    expect(
+      toModelHistory([
+        {
+          ...base,
+          role: 'assistant',
+          content: 'Here is the form.',
+          toolInvocations: [uiInvocation],
+        },
+      ]),
+    ).toEqual([
+      { role: 'assistant', content: 'Here is the form.', toolCalls: [] },
+    ]);
+  });
+
+  test('keeps genuine tool calls while only dropping render_ui', () => {
+    expect(
+      toModelHistory([
+        {
+          ...base,
+          role: 'assistant',
+          content: 'Submitted.',
+          toolInvocations: [
+            { name: 'render_ui', arguments: { ui: {} }, result: 'ok' },
+            weatherInvocation,
+          ],
+        },
+      ]),
+    ).toEqual([
+      {
+        role: 'assistant',
+        content: '',
+        toolCalls: [{ name: 'get_weather', argumentsJson: '{"city":"Paris"}' }],
+      },
+      { role: 'tool', name: 'get_weather', content: '{"temperatureCelsius":12}' },
+      { role: 'assistant', content: 'Submitted.', toolCalls: [] },
+    ]);
+  });
+
   test('expands several tools of one round into one call and one result each', () => {
     // A parallel round is still a single stored row: nobodywho expects one
     // assistant message carrying every call, then a result per call in the same
