@@ -488,22 +488,30 @@ const parseComponent = (
           ...(typeof rawMarker.lon === 'number' ? { lon: rawMarker.lon } : {}),
         });
       });
-      const route: A2UiMapPoint[] = [];
-      const rawRoute = Array.isArray(props.route) ? props.route : [];
-      rawRoute.forEach((rawPoint, index) => {
-        if (!isRecord(rawPoint)) {
-          warnings.push(`${at} (Map) route[${index}]: expected an object — skipped.`);
-          return;
-        }
-        if (typeof rawPoint.lat === 'number' && typeof rawPoint.lon === 'number') {
-          route.push({ lat: rawPoint.lat, lon: rawPoint.lon });
-        } else {
-          warnings.push(
-            `${at} (Map) route[${index}]: needs numeric lat and lon — skipped.`,
-          );
-        }
-      });
-      if (markers.length === 0 && route.length === 0) {
+      let route: A2UiMapPoint[] | { '@path': string } = [];
+      if (isBinding(props.route)) {
+        route = props.route;
+      } else if (Array.isArray(props.route)) {
+        const points: A2UiMapPoint[] = [];
+        props.route.forEach((rawPoint, index) => {
+          if (!isRecord(rawPoint)) {
+            warnings.push(`${at} (Map) route[${index}]: expected an object — skipped.`);
+            return;
+          }
+          if (typeof rawPoint.lat === 'number' && typeof rawPoint.lon === 'number') {
+            points.push({ lat: rawPoint.lat, lon: rawPoint.lon });
+          } else {
+            warnings.push(
+              `${at} (Map) route[${index}]: needs numeric lat and lon — skipped.`,
+            );
+          }
+        });
+        route = points;
+      }
+      if (
+        markers.length === 0 &&
+        (isBinding(route) ? false : route.length === 0)
+      ) {
         return problem('Map needs at least one marker or route point.');
       }
       const mapVariant = expectEnum(props.variant, ['small', 'medium', 'large'], 'variant');
@@ -511,7 +519,9 @@ const parseComponent = (
       return {
         component,
         markers,
-        ...(route.length ? { route } : {}),
+        ...((typeof route === 'string' || Array.isArray(route) ? route.length > 0 : true)
+          ? { route }
+          : {}),
         ...(props.variant === 'small' || props.variant === 'medium' || props.variant === 'large'
           ? { variant: props.variant }
           : {}),

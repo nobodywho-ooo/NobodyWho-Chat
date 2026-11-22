@@ -170,8 +170,8 @@ export interface A2UiMap {
   component: 'Map';
   /** Pins drawn on the map (in order). */
   markers: A2UiMapMarker[];
-  /** A route polyline through these points, in order. */
-  route?: A2UiMapPoint[];
+  /** A route polyline through these points, in order — or a $/path to one. */
+  route?: A2UiMapPoint[] | { '@path': string };
   variant?: 'small' | 'medium' | 'large';
 }
 

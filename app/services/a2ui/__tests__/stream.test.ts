@@ -101,6 +101,21 @@ describe('parseA2UiLive (Express)', () => {
     expect(parseA2UiLive('garbage')).toBeNull();
   });
 
+  test('accepts a $/path binding as the Map route', () => {
+    const surface = parseA2UiLive(
+      '$/route = [{lat:48.86, lon:2.33},{lat:48.87, lon:2.35}]\nroot = Map(markers=[{label:\"Louvre\"}], route=$/route)',
+    );
+    const root = surface?.components[0];
+    expect(root?.component).toBe('Map');
+    if (root && root.component === 'Map') {
+      expect(root.route).toEqual({ '@path': '/route' });
+    }
+    expect(surface?.dataModel?.route).toEqual([
+      { lat: 48.86, lon: 2.33 },
+      { lat: 48.87, lon: 2.35 },
+    ]);
+  });
+
   test('parses a Map with markers and a route', () => {
     const surface = parseA2UiLive(
       'Map(markers=[{label:"Louvre"},{label:"Orsay",lat:48.86,lon:2.33}], route=[{lat:48.8606, lon:2.3376},{lat:48.8616, lon:2.3522}], variant="medium")',

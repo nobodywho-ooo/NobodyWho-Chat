@@ -26,6 +26,7 @@ import { bindingPath } from '../../services/a2ui/bindings';
 import {
   A2UiCheckRule,
   A2UiList,
+  A2UiMapPoint,
   A2UiSlider,
   A2UiTabs,
   A2UiTextInput,
@@ -90,10 +91,20 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
     }
 
     case 'Map': {
+      const resolvedRoute = context.resolveValue(component.route, scope);
+      const routePoints = Array.isArray(resolvedRoute)
+        ? resolvedRoute.filter(
+            (p): p is A2UiMapPoint =>
+              p !== null &&
+              typeof p === 'object' &&
+              typeof (p as { lat?: unknown }).lat === 'number' &&
+              typeof (p as { lon?: unknown }).lon === 'number',
+          )
+        : undefined;
       return (
         <MapView
           markers={component.markers}
-          route={component.route}
+          route={routePoints}
           variant={component.variant}
         />
       );

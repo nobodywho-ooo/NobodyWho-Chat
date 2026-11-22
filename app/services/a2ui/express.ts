@@ -561,23 +561,25 @@ const convertNode = (node: Node | null): A2UiComponent | A2UiAction | null => {
             : [];
         },
       );
-      const route: A2UiMapPoint[] = listArg(kw('route') ?? pos(1)).flatMap(
-        item => {
-          if (item.kind !== 'object') return [];
-          const f = new Map(item.fields);
-          const lat = f.get('lat');
-          const lon = f.get('lon');
-          if (lat && lat.kind === 'number' && lon && lon.kind === 'number') {
-            return [{ lat: lat.value, lon: lon.value }];
-          }
-          return [];
-        },
-      );
-      if (markers.length === 0 && route.length === 0) return null;
+      const routeNode = kw('route') ?? pos(1);
+      const route: A2UiMapPoint[] | { '@path': string } =
+        routeNode && routeNode.kind === 'binding'
+          ? { '@path': routeNode.path }
+          : listArg(routeNode).flatMap(item => {
+              if (item.kind !== 'object') return [];
+              const f = new Map(item.fields);
+              const lat = f.get('lat');
+              const lon = f.get('lon');
+              if (lat && lat.kind === 'number' && lon && lon.kind === 'number') {
+                return [{ lat: lat.value, lon: lon.value }];
+              }
+              return [];
+            });
+      if (markers.length === 0 && !routeNode) return null;
       return {
         component: 'Map',
         markers,
-        ...(route.length ? { route } : {}),
+        ...((Array.isArray(route) ? route.length > 0 : true) ? { route } : {}),
         ...enumObj('variant', kw('variant'), null, ['small', 'medium', 'large']),
       };
     }

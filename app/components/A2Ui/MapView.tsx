@@ -19,7 +19,6 @@ const HEIGHTS = { small: 120, medium: 180, large: 240 } as const;
 // The internal math uses a nominal width; the box itself stretches to the
 // parent, so proportions are what matter.
 const NOMINAL_WIDTH = 320;
-const NOMINAL_HEIGHT = 240;
 
 const GRID = [0.22, 0.5, 0.78];
 
@@ -84,15 +83,15 @@ export const MapView: React.FC<MapViewProps> = ({ markers, route, variant }) => 
       {route !== undefined && route.length > 0 ? (
         <>
           {route.length > 1
-            ? segments(route).map(({ from, to }, i) => (
+            ? segments(route, height).map(({ from, to }, i) => (
                 <RouteSegment key={i} from={from} to={to} color={colors.primary} />
               ))
             : null}
           <View
             style={{
               position: 'absolute',
-              left: project(route[route.length - 1]).x - 5,
-              top: project(route[route.length - 1]).y - 5,
+              left: project(route[route.length - 1], height).x - 5,
+              top: project(route[route.length - 1], height).y - 5,
               width: 10,
               height: 10,
               borderRadius: 5,
@@ -155,7 +154,7 @@ function positionMarkers(
 
   const anyCoords = markers.some(m => m.lat !== undefined || m.lon !== undefined);
   if (anyCoords) {
-    const projectFn = makeProjection(route && route.length > 0 ? route : []);
+    const projectFn = makeProjection(route && route.length > 0 ? route : [], height);
     return markers.map(m => {
       if (m.lat !== undefined && m.lon !== undefined) {
         const p = projectFn({ lat: m.lat, lon: m.lon });
@@ -175,9 +174,10 @@ function positionMarkers(
 
 function makeProjection(
   points: A2UiMapPoint[],
+  height: number,
 ): (p: { lat: number; lon: number }) => Positioned {
   if (points.length === 0) {
-    return () => ({ x: NOMINAL_WIDTH / 2, y: NOMINAL_HEIGHT / 2 });
+    return () => ({ x: NOMINAL_WIDTH / 2, y: height / 2 });
   }
   const lats = points.map(p => p.lat);
   const lons = points.map(p => p.lon);
@@ -195,17 +195,17 @@ function makeProjection(
   }
   return p => ({
     x: ((p.lon - minLon) / (maxLon - minLon)) * NOMINAL_WIDTH,
-    y: (1 - (p.lat - minLat) / (maxLat - minLat)) * NOMINAL_HEIGHT,
+    y: (1 - (p.lat - minLat) / (maxLat - minLat)) * height,
   });
 }
 
-function project(p: A2UiMapPoint): Positioned {
+function project(p: A2UiMapPoint, height: number): Positioned {
   // A single point spans the whole box after the padding in makeProjection.
-  return makeProjection([p])(p);
+  return makeProjection([p], height)(p);
 }
 
-function segments(points: A2UiMapPoint[]): { from: Positioned; to: Positioned }[] {
-  const proj = makeProjection(points);
+function segments(points: A2UiMapPoint[], height: number): { from: Positioned; to: Positioned }[] {
+  const proj = makeProjection(points, height);
   const out: { from: Positioned; to: Positioned }[] = [];
   for (let i = 0; i < points.length - 1; i++) {
     out.push({ from: proj(points[i]), to: proj(points[i + 1]) });
