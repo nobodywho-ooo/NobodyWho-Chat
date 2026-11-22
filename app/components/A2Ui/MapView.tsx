@@ -188,6 +188,17 @@ function positionMarkers(
     });
   }
 
+  if (route && route.length > 0) {
+    // Without coordinates the pins are meaningless unless they sit on the
+    // route: anchor marker i to route point i (the last point holds extras).
+    const projectFn = makeProjection(route, width, height);
+    return markers.map((marker, i) => {
+      const point = route[Math.min(i, route.length - 1)];
+      const p = projectFn(point);
+      return { marker, x: p.x, y: p.y };
+    });
+  }
+
   // Even spread with an alternate stagger so labels don't collide.
   return markers.map((marker, i) => {
     const x = width * ((i + 0.5) / markers.length);
