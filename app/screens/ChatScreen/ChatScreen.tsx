@@ -31,6 +31,7 @@ import {
   pipelineIngestsImage,
 } from 'types';
 import { useAiService, useWebSearchStore } from 'services';
+import { subscribeA2UiEvents } from '../../services/a2ui/eventsClient';
 import { isAndroid } from 'helpers';
 import { setAppState } from 'database';
 import { Spacings } from 'style';
@@ -342,10 +343,17 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const onAttachCamera = useStableCallback(attachments.handleAttachCamera);
   const onAttachAudio = useStableCallback(attachments.handleAttachAudio);
 
-  // Dev-only: let an HTTP hook inject a message into the chat (set the input,
-  // let it render, then send with the latest handler). No-op in production.
+  // Set the input, let it render, then send with the latest handler. Shared by
+  // the dev-inject hook and A2UI button events.
   const sendRef = useRef<() => void>(() => undefined);
   sendRef.current = onSend;
+  const sendText = useCallback((text: string) => {
+    setInputText(text);
+    setTimeout(() => sendRef.current?.(), 150);
+  }, []);
+
+  // Dev-only: let an HTTP hook inject a message into the chat. No-op in
+  // production (the server is never running there).
   const injectMessage = useCallback((text: string) => {
     // Dev sentinel: start a brand-new conversation (mirrors the drawer's
     // New Chat) so a test never inherits a previous conversation's history.
@@ -353,13 +361,40 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       setAppState({ conversationIdInUse: undefined });
       return;
     }
-    setInputText(text);
-    setTimeout(() => sendRef.current?.(), 150);
-  }, []);
+    sendText(text);
+  }, [sendText]);
   useDevTestInjection({ isStreaming, onInjected: injectMessage });
+
+  // A2UI Button `Event` actions: show a toast and hand the action back to the
+  // model as a follow-up user turn so it can actually respond (e.g. "add an
+  // expense").
+  const [a2uiAction, setA2uiAction] = useState<{ message: string } | null>(null);
+  useEffect(() => {
+    if (!a2uiAction) {
+      return;
+    }
+    const timeout = setTimeout(() => setA2uiAction(null), 3500);
+    return () => clearTimeout(timeout);
+  }, [a2uiAction]);
+  useEffect(() => {
+    return subscribeA2UiEvents(event => {
+      setA2uiAction({
+        message: t('screens.chat.a2uiAction', { name: event.name }),
+      });
+      if (!isStreaming) {
+        sendText(`(A2UI) ${event.name}`);
+      }
+    });
+  }, [isStreaming, sendText, t]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>
+      <Toast
+        visible={a2uiAction !== null}
+        message={a2uiAction ? a2uiAction.message : ''}
+        blurTarget={blurTargetRef}
+        style={{ top: headerInset + Spacings.md + 48 }}
+      />
       <Pressable
         style={styles.dismissOverlay}
         onPress={Keyboard.dismiss}

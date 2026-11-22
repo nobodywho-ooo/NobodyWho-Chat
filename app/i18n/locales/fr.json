@@ -445,7 +445,8 @@
         "modelTooSmall": "Ce modèle ne peut pas utiliser les résultats web de façon fiable — choisissez-en un plus grand.",
         "notEnoughMemory": "Ce modèle occupe déjà toute la mémoire du téléphone — chercher en parallèle pourrait fermer l’app. Choisissez un modèle plus petit.",
         "attachment": "La recherche web est ignorée quand une photo ou un enregistrement est joint."
-      }
+      },
+      "a2uiAction": "Action : {{name}}"
     },
     "loadingScreen": {
       "loadingModel": "Chargement de {{model}}",

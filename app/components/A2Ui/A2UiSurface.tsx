@@ -10,6 +10,7 @@ import { useStyled } from 'hooks';
 import { haptics, log, openExternalUrl } from 'helpers';
 import { Spacings } from 'style';
 
+import { emitA2UiEvent } from '../../services/a2ui/eventsClient';
 import { A2UiAction, A2UiSurface as A2UiSurfaceData } from '../../services/a2ui/types';
 import { A2UiContextProvider } from './A2UiContext';
 import { ComponentView } from './ComponentView';
@@ -45,11 +46,10 @@ export const A2UiSurface: React.FC<A2UiSurfaceProps> = ({ surface }) => {
         }
         return;
       }
-      // An `event` has no server to go to in an offline chat; acknowledge it
-      // so the interaction still feels alive. A future backend could forward
-      // these to the model.
+      // An `event` has no server to go to in an offline chat; surface it to
+      // the chat (feedback + a follow-up turn the model can act on).
       haptics.medium();
-      log('A2UI event dispatched', action.event.name);
+      emitA2UiEvent(action.event.name, action.event.context);
     };
 
     return {

@@ -151,8 +151,13 @@ ws      ::= [ \\t\\n]*
 // Rules are deliberately single-line (nobodywho's GBNF->Lark converter breaks
 // a top-level rule body at a newline). Validated against that converter.
 
-// Master switch: set to false to drop the sampler constraint entirely (the
-// tolerant Express parser + validator still render valid cards).
+// Master switch. Default OFF — measured, not guessed: with the whole-turn
+// grammar ON (llguidance), Bonsai-4B consistently derails on the museum
+// gallery prompt, committing to `$/title = 3 museums` then stalling in
+// whitespace until the app's stall guard ends it — no card, repeated across
+// default/temperature/name-restricted variants. With it OFF, the same model
+// follows the gallery example and renders the card. Keep the grammar and the
+// stall guard for models where it helps; flip true to try.
 export const A2UI_CONSTRAINED = false;
 
 // The whole-turn GBNF fed to `SamplerPresets.constrainWithGrammar`.

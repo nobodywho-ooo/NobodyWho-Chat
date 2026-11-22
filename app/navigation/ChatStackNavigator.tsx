@@ -13,7 +13,11 @@ import { BlurTargetView } from 'expo-blur';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { AppState, AppStateStatus, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { SamplerPresets } from 'react-native-nobodywho';
+import {
+  SamplerBuilder,
+  SamplerPresets,
+  type SamplerConfig,
+} from 'react-native-nobodywho';
 import {
   DisplayMessage,
   ModelSlot,
@@ -225,12 +229,18 @@ export const ChatStackNavigator = () => {
       systemPrompt: systemPrompt || undefined,
       // With A2UI on, constrain sampling so the token stream is free prose
       // (and free tool calls) until the model opens a <ui> block, after which
-      // the UI JSON is enforced by the grammar until </ui>. The temperature
-      // setting is deliberately dropped here: a constrained generation is
-      // their own quality trade beside grammar validity.
-      sampler: A2UI_CONSTRAINED && assistantConfig.a2ui
-        ? SamplerPresets.constrainWithGrammar(A2UI_STREAM_GBNF)
-        : SamplerPresets.temperature(assistantConfig.temperature),
+      // the block's contents are enforced by the grammar until </ui>.
+      // Temperature is kept via SamplerBuilder (dropping it — a plain
+      // constrainWithGrammar preset — measurably derails small models into
+      // low-probability fragments like "3 museums" rather than the gallery;
+      // see the A2UI dev-loop findings).
+      sampler:
+        A2UI_CONSTRAINED && assistantConfig.a2ui
+          ? (new SamplerBuilder()
+              .temperature(assistantConfig.temperature)
+              .constrainWithGrammar(A2UI_STREAM_GBNF)
+              .dist() as SamplerConfig)
+          : SamplerPresets.temperature(assistantConfig.temperature),
       contextSize: assistantConfig.contextSize,
       thinking: assistantConfig.thinking,
       toolCalling: assistantConfig.toolCalling,

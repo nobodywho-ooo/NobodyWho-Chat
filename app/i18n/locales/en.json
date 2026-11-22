@@ -445,7 +445,8 @@
         "modelTooSmall": "This model can’t use web results reliably — pick a larger one.",
         "notEnoughMemory": "This model already fills the phone’s memory — searching alongside it could close the app. Pick a smaller model.",
         "attachment": "Web search is skipped when a photo or recording is attached."
-      }
+      },
+      "a2uiAction": "Action: {{name}}"
     },
     "loadingScreen": {
       "loadingModel": "Loading {{model}}",

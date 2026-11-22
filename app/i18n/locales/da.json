@@ -445,7 +445,8 @@
         "modelTooSmall": "Denne model kan ikke bruge søgeresultater pålideligt — vælg en større.",
         "notEnoughMemory": "Denne model fylder allerede telefonens hukommelse — en søgning ved siden af kan lukke appen. Vælg en mindre model.",
         "attachment": "Websøgning springes over, når et billede eller en optagelse er vedhæftet."
-      }
+      },
+      "a2uiAction": "Handling: {{name}}"
     },
     "loadingScreen": {
       "loadingModel": "Indlæser {{model}}",

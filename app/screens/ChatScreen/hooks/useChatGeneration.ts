@@ -581,6 +581,11 @@ export function useChatGeneration({
 
       const streamResult = await streamTurn(activeChat, askInput, webTurn);
 
+      // Grammar-stall guard: a whole-turn grammar can trap a weak model into
+      // emitting an endless run of whitespace inside an open `<ui>` block (the
+      // lenient ws* rule absorbs invalid tokens). Bound it so the turn ends
+      // instead of hanging.
+      let wsRun = 0;
       for await (const token of streamResult) {
         if (chat.current !== activeChat) {
           break;
@@ -592,6 +597,18 @@ export function useChatGeneration({
         tokenCount += 1;
         accumulated += token;
         logDevToken(token, tokenCount);
+
+        const inOpenA2Ui =
+          accumulated.includes('<ui>') && !accumulated.includes('</ui>');
+        wsRun = /^\s*$/.test(token) ? wsRun + token.length : 0;
+        if (inOpenA2Ui && wsRun > 200) {
+          log(
+            'ChatScreen A2UI whitespace-stall guard: ending a stuck <ui> block',
+          );
+          activeChat.stopGeneration();
+          break;
+        }
+
         scheduleRender();
       }
 
