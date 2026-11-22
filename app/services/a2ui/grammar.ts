@@ -155,17 +155,28 @@ ws      ::= [ \\t\\n]*
 // garbling strings) was traced to the sampler chain, not the grammar: it had
 // to mirror nobodywho's from_openai_parameters (top_k + top_p) or the model
 // got trapped, and temperature had to be low for clean strings under
-// constrained decoding on a tiny vocabulary. ChatStackNavigator now builds
-// topK(20).topP(0.95).temperature(<=0.2).grammar().dist(); with that, Bonsai
-// emits valid, clean Express for the museum gallery (server-verified). The
-// app's whitespace-stall guard stays as a safety net.
+// constrained decoding on a tiny vocabulary. ChatStackNavigator now uses
+// SamplerPresets.constrainWithGrammar (that preset already builds
+// top_k + top_p + default temperature + dist); with it, Bonsai emits valid,
+// clean Express for the museum gallery (server-verified). The app's
+// whitespace-stall guard stays as a safety net.
 export const A2UI_CONSTRAINED = true;
 
 // The whole-turn GBNF fed to `SamplerPresets.constrainWithGrammar`.
-export const A2UI_STREAM_GBNF = `root ::= segment*
+export const A2UI_STREAM_GBNF = String.raw`root ::= segment*
 segment ::= prose | uiblock
-# prose: maximal text that does not contain the literal "<ui>"
-prose ::= ([^<] | "<" [^u] | "<u" [^i] | "<ui" [^>])+
+# prose may not contain any '<' — tags can only appear via a real <ui> block.
+# (Previously prose excluded only the literal "<ui>", so a bare "</ui>" could
+# leak into prose and the model happily spammed "**</ui>**</ui>…" forever —
+# measured in-app. With '<' banned outside uiblocks, stray closers are
+# structurally impossible.)
+# NB: this is a String.raw template on purpose — the source text must be
+# byte-identical to what the sampler receives (an earlier non-raw template
+# silently escaped \\x00 etc. into control bytes, and the app's rendered
+# string then failed llguidance's parser while the same-looking file passed
+# on a server — measured). Keep char classes to [^…] ranges/sets without
+# escapes; dchar allows \\ only, schar has no escapes at all.
+prose ::= ([^<])+
 uiblock ::= "<ui>" ws block ws "</ui>"
 ws ::= [ \t\n]*
 block ::= data_lines root_expr
@@ -190,13 +201,12 @@ null ::= "null"
 string ::= dquote | squote
 dquote ::= "\"" dchar* "\""
 squote ::= "'" schar* "'"
-dchar ::= [^"\\\\\\x00-\\x1F\\x7F] | "\\\\" ["\\\\/bfnrt]
-schar ::= [^'\\\\\\x00-\\x1F\\x7F] | "\\\\" ['\\\\/bfnrt]
+dchar ::= [^"\\\\] | "\\\\" ["\\\\/bfnrt]
+schar ::= [^'\\]
 array ::= "[" ws items ws "]"
 items ::= (item ("," ws item)*)?
 object ::= "{" ws fields ws "}"
 fields ::= (field ("," ws field)*)?
 field ::= key ws ":" ws item
 key ::= ident | dquote | squote
-ident ::= [a-zA-Z_] [a-zA-Z0-9_]*
-`.trim();
+ident ::= [a-zA-Z_] [a-zA-Z0-9_]*`;
