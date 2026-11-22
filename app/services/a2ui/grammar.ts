@@ -140,9 +140,38 @@ ws      ::= [ \\t\\n]*
 // (the tolerant parser + validator still render valid cards).
 export const A2UI_CONSTRAINED = true;
 
-// The UI object grammar above, promoted from its `root` rule to a reusable
-// `ui` rule so the wrapper can reference it.
-const UI_OBJECT_GBNF = A2UI_GBNF.replace(/^root\s+::=/m, 'ui ::=');
+// nobodywho's GBNF→Lark converter breaks a rule body at a newline (only rules
+// nested in `(...)` may wrap), so the object grammar must be single-line per
+// rule before it is embedded in the stream grammar. `A2UI_GBNF` above stays
+// hand-formatted for readability; this collapses it for the converter.
+const normalizeGbnf = (gbnf: string): string => {
+  const lines: string[] = [];
+  let buffer: string | null = null;
+  for (const raw of gbnf.split('\n')) {
+    const line = raw.trim();
+    if (line.length === 0) {
+      continue;
+    }
+    if (line.startsWith('#')) {
+      lines.push(line);
+    } else if (line.includes('::=')) {
+      if (buffer !== null) {
+        lines.push(buffer);
+      }
+      buffer = line;
+    } else {
+      buffer = buffer === null ? line : `${buffer} ${line}`;
+    }
+  }
+  if (buffer !== null) {
+    lines.push(buffer);
+  }
+  return lines.join('\n');
+};
+
+// The UI object grammar, promoted from its `root` rule to a reusable `ui` rule
+// so the wrapper can reference it.
+const UI_OBJECT_GBNF = normalizeGbnf(A2UI_GBNF).replace(/^root\s+::=/m, 'ui ::=');
 
 // The whole-turn GBNF fed to `SamplerPresets.constrainWithGrammar`.
 export const A2UI_STREAM_GBNF = `root ::= segment*

@@ -54,6 +54,15 @@ describe('A2UI_STREAM_GBNF (whole-turn grammar)', () => {
     expect(A2UI_STREAM_GBNF).toMatch(/uiblock ::=/);
     expect(A2UI_STREAM_GBNF).toMatch(/segment ::= prose | uiblock/);
   });
+
+  test('every rule body is on a single line (nobodywho converter constraint)', () => {
+    // nobodywho's GBNF→Lark converter breaks top-level rule bodies at a
+    // newline; the whole grammar is unusable if any rule wraps. Pin that.
+    const wrapped = A2UI_STREAM_GBNF.split('\n').some(
+      line => line.trim().length > 0 && /^\s/.test(line),
+    );
+    expect(wrapped).toBe(false);
+  });
 });
 
 describe('parseA2UiLive', () => {
