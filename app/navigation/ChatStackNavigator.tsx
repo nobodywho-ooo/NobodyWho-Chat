@@ -13,11 +13,7 @@ import { BlurTargetView } from 'expo-blur';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { AppState, AppStateStatus, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import {
-  SamplerBuilder,
-  SamplerPresets,
-  type SamplerConfig,
-} from 'react-native-nobodywho';
+import { SamplerPresets } from 'react-native-nobodywho';
 import {
   DisplayMessage,
   ModelSlot,
@@ -231,21 +227,15 @@ export const ChatStackNavigator = () => {
       // (and free tool calls) until the model opens a <ui> block, after which
       // its contents are enforced by the grammar until </ui>.
       //
-      // Measured on Bonsai-4B against nobodywho's own server: the chain MUST
-      // include top_k/top_p (mirroring SamplerConfig::from_openai_parameters)
-      // or the model gets trapped under the grammar; and temperature must be
-      // low, because constrained decoding garbles free strings (Cyrillic
-      // lookalikes) on a tiny vocabulary at 0.8 — at ~0.2 it emits clean,
-      // correct Express.
-      sampler:
-        A2UI_CONSTRAINED && assistantConfig.a2ui
-          ? (new SamplerBuilder()
-              .topK(20)
-              .topP(0.95, 1)
-              .temperature(Math.min(assistantConfig.temperature, 0.2))
-              .constrainWithGrammar(A2UI_STREAM_GBNF)
-              .dist() as SamplerConfig)
-          : SamplerPresets.temperature(assistantConfig.temperature),
+      // SamplerPresets.constrainWithGrammar already builds the correct chain
+      // (top_k + top_p + default temperature + dist) — hand-rolling a
+      // SamplerBuilder chain without top_k/top_p is what originally trapped
+      // Bonsai into the whitespace stall. Measured against nobodywho's server:
+      // with this preset, Bonsai emits clean, valid Express (museum gallery
+      // verified; default temperature 0.6 does not garble strings).
+      sampler: A2UI_CONSTRAINED && assistantConfig.a2ui
+        ? SamplerPresets.constrainWithGrammar(A2UI_STREAM_GBNF)
+        : SamplerPresets.temperature(assistantConfig.temperature),
       contextSize: assistantConfig.contextSize,
       thinking: assistantConfig.thinking,
       toolCalling: assistantConfig.toolCalling,
