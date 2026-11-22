@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Platform, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
@@ -13,6 +13,14 @@ const ACKNOWLEDGEMENTS_IOS_ICON =
   getIOSVersion() >= 18
     ? 'checkmark.seal.text.page.fill'
     : 'checkmark.seal.fill';
+
+// iOS opens the App Store straight on the "Write a Review" sheet; Play has no
+// equivalent deep link, so Android lands on the store page (the https URL is
+// handed to the Play Store app by Android's app links).
+const RATE_APP_URL = Platform.select({
+  ios: 'https://apps.apple.com/app/id6781001350?action=write-review',
+  default: 'https://play.google.com/store/apps/details?id=ai.nobodywho.mobile',
+});
 
 export const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
@@ -49,6 +57,14 @@ export const SettingsScreen: React.FC = () => {
         iconColor={colors.primary}
         // @ts-ignore
         onPress={() => navigation.navigate('LanguageScreen')}
+      />
+      <ListItem
+        title={t('screens.settings.rateApp')}
+        subtitle={t('screens.settings.rateAppSubtitle')}
+        iosIconName="star.fill"
+        androidIconName="star"
+        iconColor={colors.primary}
+        onPress={() => openExternalUrl(RATE_APP_URL)}
       />
       <Text style={styles.sectionHeader}>{t('screens.settings.about')}</Text>
       <ListItem
