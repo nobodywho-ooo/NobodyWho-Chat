@@ -208,9 +208,10 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
               />
             ),
           )}
-          {message.a2uiLive && (
-            <A2UiSurfaceCard surface={message.a2uiLive} live />
-          )}
+          {"a2uiLive" in message && message.a2uiLive &&
+            toolInvocations.every(invocation => invocation.name !== RENDER_UI_TOOL) && (
+              <A2UiSurfaceCard surface={message.a2uiLive} live />
+            )}
           <AnswerBody
             text={rest}
             isStreaming={isStreaming}
