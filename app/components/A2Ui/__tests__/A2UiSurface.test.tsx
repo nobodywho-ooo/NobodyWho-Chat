@@ -42,3 +42,60 @@ test('a button press dispatches its event with a haptic', async () => {
     medium.mockRestore();
   }
 });
+
+test('renders an Icon and switches Tabs', async () => {
+  const screen = await render(
+    <A2UiSurface
+      surface={{
+        components: [
+          {
+            component: 'Tabs',
+            tabs: [
+              {
+                title: 'Summary',
+                child: {
+                  component: 'Column',
+                  children: [
+                    { component: 'Icon', name: 'search' },
+                    { component: 'Text', text: 'Summary content' },
+                  ],
+                },
+              },
+              { title: 'Details', child: { component: 'Text', text: 'Details content' } },
+            ],
+          },
+        ],
+      }}
+    />,
+  );
+
+  expect(screen.getByText('Summary content')).toBeTruthy();
+  await fireEvent.press(screen.getAllByRole('tab')[1]);
+  expect(screen.getByText('Details content')).toBeTruthy();
+  expect(screen.queryByText('Summary content')).toBeNull();
+});
+
+test('a required TextField shows an inline error once touched', async () => {
+  const screen = await render(
+    <A2UiSurface
+      surface={{
+        components: [
+          {
+            component: 'TextField',
+            label: 'Email',
+            value: '',
+            placeholder: 'you@example.com',
+            '@checks': [{ condition: 'email', message: 'Enter a valid email' }],
+          },
+        ],
+      }}
+    />,
+  );
+
+  const input = screen.getByPlaceholderText('you@example.com');
+  await fireEvent.changeText(input, 'not-an-email');
+  expect(screen.getByText('Enter a valid email')).toBeTruthy();
+
+  await fireEvent.changeText(input, 'ok@example.com');
+  expect(screen.queryByText('Enter a valid email')).toBeNull();
+});

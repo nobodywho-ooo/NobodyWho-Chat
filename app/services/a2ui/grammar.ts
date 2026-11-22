@@ -23,8 +23,18 @@ export const A2UI_GBNF = `
 root      ::= "{" ws "\\\"components\\\"" ws ":" ws "[" ws component (ws "," ws component)* ws "]" ws
               (ws "," ws "\\\"dataModel\\\"" ws ":" ws object)? ws "}"
 
-component ::= text | image | row | column | list | card | divider | button
-            | textfield | checkbox | slider | choicepicker
+component ::= text | icon | image | row | column | list | card | divider | button
+            | textfield | checkbox | slider | choicepicker | tabs
+
+icon ::= "{" ws "\\\"component\\\":\\\"Icon\\\"" ws "," ws
+          "\\\"name\\\"" ws ":" ws string ws
+         ("," ws "\\\"variant\\\"" ws ":" ws ("\\\"small\\\"" | "\\\"medium\\\"" | "\\\"large\\\""))? ws
+         ("," ws weight-pair)? ws "}"
+
+tabs ::= "{" ws "\\\"component\\\":\\\"Tabs\\\"" ws "," ws
+          "\\\"tabs\\\"" ws ":" ws "[" ws tab (ws "," ws tab)* ws "]" ws "}"
+tab   ::= "{" ws "\\\"title\\\"" ws ":" ws value ws "," ws
+          "\\\"child\\\"" ws ":" ws component ws "}"
 
 children-list ::= "[" ws component (ws "," ws component)* ws "]"
 
@@ -83,8 +93,11 @@ textfield ::= "{" ws "\\\"component\\\":\\\"TextField\\\"" ws "," ws
                "\\\"value\\\"" ws ":" ws value ws
               ("," ws "\\\"placeholder\\\"" ws ":" ws value)? ws
               ("," ws "\\\"variant\\\"" ws ":" ws textfield-variant)? ws
+              ("," ws "\\\"@checks\\\"" ws ":" ws "[" ws check (ws "," ws check)* ws "]")? ws
               ("," ws weight-pair)? ws "}"
 textfield-variant ::= "\\\"longText\\\"" | "\\\"number\\\"" | "\\\"shortText\\\"" | "\\\"obscured\\\""
+check ::= "{" ws "\\\"condition\\\"" ws ":" ws ("\\\"required\\\"" | "\\\"numeric\\\"" | "\\\"email\\\"") ws
+          ("," ws "\\\"message\\\"" ws ":" ws value)? ws "}"
 
 checkbox ::= "{" ws "\\\"component\\\":\\\"CheckBox\\\"" ws "," ws
               "\\\"label\\\"" ws ":" ws value ws "," ws

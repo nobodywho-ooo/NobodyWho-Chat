@@ -17,6 +17,15 @@ export interface A2UiText {
   weight?: number;
 }
 
+export interface A2UiIcon {
+  component: 'Icon';
+  /** A semantic icon name (e.g. "search", "heart", "settings"); an
+   *  unmapped name falls back to a generic help icon. */
+  name: string;
+  variant?: 'small' | 'medium' | 'large';
+  weight?: number;
+}
+
 export interface A2UiImage {
   component: 'Image';
   url: DynamicValue<string>;
@@ -96,6 +105,8 @@ export interface A2UiTextInput {
   placeholder?: DynamicValue<string>;
   variant?: 'longText' | 'number' | 'shortText' | 'obscured';
   weight?: number;
+  /** Validation rules shown as inline errors while the user fills the field. */
+  '@checks'?: A2UiCheckRule[];
 }
 
 export interface A2UiCheckBox {
@@ -130,8 +141,25 @@ export interface A2UiChoicePicker {
   weight?: number;
 }
 
+export interface A2UiTab {
+  title: DynamicValue<string>;
+  child: A2UiComponent;
+}
+
+export interface A2UiTabs {
+  component: 'Tabs';
+  tabs: A2UiTab[];
+}
+
+/** A validation rule a field is checked against; a failure shows `message`. */
+export interface A2UiCheckRule {
+  condition: 'required' | 'numeric' | 'email';
+  message?: DynamicValue<string>;
+}
+
 export type A2UiComponent =
   | A2UiText
+  | A2UiIcon
   | A2UiImage
   | A2UiRow
   | A2UiColumn
@@ -142,7 +170,8 @@ export type A2UiComponent =
   | A2UiTextInput
   | A2UiCheckBox
   | A2UiSlider
-  | A2UiChoicePicker;
+  | A2UiChoicePicker
+  | A2UiTabs;
 
 /** The `ui` argument of the `render_ui` tool call. */
 export interface A2UiSurface {
@@ -152,6 +181,7 @@ export interface A2UiSurface {
 
 export const A2UI_COMPONENTS: readonly A2UiComponent['component'][] = [
   'Text',
+  'Icon',
   'Image',
   'Row',
   'Column',
@@ -163,6 +193,7 @@ export const A2UI_COMPONENTS: readonly A2UiComponent['component'][] = [
   'CheckBox',
   'Slider',
   'ChoicePicker',
+  'Tabs',
 ] as const;
 
 export const isA2UiComponentName = (

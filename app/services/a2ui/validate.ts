@@ -15,9 +15,11 @@
 
 import {
   A2UiAction,
+  A2UiCheckRule,
   A2UiChoiceOption,
   A2UiComponent,
   A2UiSurface,
+  A2UiTab,
   isA2UiComponentName,
   A2UI_COMPONENTS,
 } from './types';
@@ -190,6 +192,21 @@ const parseComponent = (
         ...(typeof props.weight === 'number' ? { weight: props.weight } : {}),
       };
     }
+    case 'Icon': {
+      if (typeof props.name !== 'string' || props.name.length === 0) {
+        return problem('name must be a non-empty icon name string.');
+      }
+      const variant = expectEnum(props.variant, ['small', 'medium', 'large'], 'variant');
+      if (variant) warnings.push(`${at} (Icon): ${variant} — using the default.`);
+      return {
+        component,
+        name: props.name,
+        ...(props.variant === 'small' || props.variant === 'medium' || props.variant === 'large'
+          ? { variant: props.variant }
+          : {}),
+        ...(typeof props.weight === 'number' ? { weight: props.weight } : {}),
+      };
+    }
     case 'Image': {
       const url = expectStringValue(props.url, 'url');
       if (url) return problem(url);
@@ -312,6 +329,7 @@ const parseComponent = (
       [placeholder, variant]
         .filter((message): message is string => Boolean(message))
         .forEach(message => warnings.push(`${at} (TextField): ${message}`));
+      const checks = parseChecks(props['@checks'], at, warnings);
       return {
         component,
         label: props.label as string | { '@path': string },
@@ -324,6 +342,7 @@ const parseComponent = (
         )
           ? { variant: props.variant as 'shortText' }
           : {},
+        ...(checks.length > 0 ? { '@checks': checks } : {}),
         ...(typeof props.weight === 'number' ? { weight: props.weight } : {}),
       };
     }
@@ -399,7 +418,79 @@ const parseComponent = (
         ...(typeof props.weight === 'number' ? { weight: props.weight } : {}),
       };
     }
+    case 'Tabs': {
+      const rawTabs = props.tabs;
+      if (!Array.isArray(rawTabs)) {
+        return problem('tabs must be an array of {"title", "child"} objects.');
+      }
+      const tabs: A2UiTab[] = [];
+      rawTabs.forEach((rawTab, index) => {
+        if (!isRecord(rawTab)) {
+          warnings.push(`${at} (Tabs)[${index}]: expected an object — skipped.`);
+          return;
+        }
+        if (stringOrBinding(rawTab.title) === false) {
+          warnings.push(`${at} (Tabs)[${index}]: title must be a string or a {"@path": "..."} reference — tab skipped.`);
+          return;
+        }
+        const child = isRecord(rawTab.child)
+          ? parseComponent(rawTab.child, `${at} (Tabs)[${index}].child`, warnings)
+          : undefined;
+        if (child === undefined) {
+          warnings.push(`${at} (Tabs)[${index}]: child must be a supported component object — tab skipped.`);
+          return;
+        }
+        tabs.push({ title: rawTab.title as string | { '@path': string }, child });
+      });
+      if (tabs.length === 0) {
+        return problem('tabs must contain at least one usable tab.');
+      }
+      return { component, tabs };
+    }
   }
+};
+
+const parseChecks = (
+  checks: unknown,
+  at: string,
+  warnings: string[],
+): A2UiCheckRule[] => {
+  if (checks === undefined) {
+    return [];
+  }
+  if (!Array.isArray(checks)) {
+    warnings.push(`${at} (TextField): @checks must be an array — ignored.`);
+    return [];
+  }
+  const parsed: A2UiCheckRule[] = [];
+  checks.forEach((check, index) => {
+    if (!isRecord(check)) {
+      warnings.push(`${at} (TextField) @checks[${index}]: expected an object — skipped.`);
+      return;
+    }
+    const condition = check.condition;
+    if (
+      condition !== 'required' &&
+      condition !== 'numeric' &&
+      condition !== 'email'
+    ) {
+      warnings.push(
+        `${at} (TextField) @checks[${index}]: condition must be required|numeric|email — skipped.`,
+      );
+      return;
+    }
+    if (check.message !== undefined && !stringOrBinding(check.message)) {
+      warnings.push(`${at} (TextField) @checks[${index}]: message must be a string — skipped.`);
+      return;
+    }
+    parsed.push({
+      condition,
+      ...(stringOrBinding(check.message)
+        ? { message: check.message as string | { '@path': string } }
+        : {}),
+    });
+  });
+  return parsed;
 };
 
 const finiteNumber = (value: unknown, what: string): string | undefined => {

@@ -36,6 +36,7 @@ describe('validateUi', () => {
   test('accepts every supported component type', () => {
     const components = [
       { component: 'Text', text: 'hi', variant: 'caption' },
+      { component: 'Icon', name: 'search', variant: 'medium' },
       { component: 'Image', url: { '@path': '/logo' } },
       {
         component: 'Row',
@@ -66,6 +67,7 @@ describe('validateUi', () => {
         label: 'Name',
         value: { '@path': '/form/name' },
         placeholder: '…',
+        '@checks': [{ condition: 'required', message: 'Needed' }],
       },
       { component: 'CheckBox', label: 'Agree', value: false },
       {
@@ -85,6 +87,13 @@ describe('validateUi', () => {
         value: ['1'],
         variant: 'mutuallyExclusive',
         displayStyle: 'chips',
+      },
+      {
+        component: 'Tabs',
+        tabs: [
+          { title: 'One', child: { component: 'Text', text: 'tab one' } },
+          { title: 'Two', child: { component: 'Text', text: 'tab two' } },
+        ],
       },
     ];
     const validation = validateUi({ components });

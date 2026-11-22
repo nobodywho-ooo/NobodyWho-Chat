@@ -25,6 +25,7 @@
 
 const COMPONENT_NAMES: readonly string[] = [
   'Text',
+  'Icon',
   'Image',
   'Row',
   'Column',
@@ -36,6 +37,7 @@ const COMPONENT_NAMES: readonly string[] = [
   'CheckBox',
   'Slider',
   'ChoicePicker',
+  'Tabs',
 ];
 
 // The permissive "nested child" schema: an object with a valid component name.
@@ -113,6 +115,18 @@ const text = {
     weight,
   },
   required: ['component', 'text'],
+  additionalProperties: false,
+} as const;
+
+const icon = {
+  type: 'object',
+  properties: {
+    component: { enum: ['Icon'] },
+    name: { type: 'string' },
+    variant: { enum: ['small', 'medium', 'large'] },
+    weight,
+  },
+  required: ['component', 'name'],
   additionalProperties: false,
 } as const;
 
@@ -221,8 +235,42 @@ const textField = {
     placeholder: stringOrBinding,
     variant: { enum: ['longText', 'number', 'shortText', 'obscured'] },
     weight,
+    '@checks': {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          condition: { enum: ['required', 'numeric', 'email'] },
+          message: stringOrBinding,
+        },
+        required: ['condition'],
+        additionalProperties: false,
+      },
+    },
   },
   required: ['component', 'label', 'value'],
+  additionalProperties: false,
+} as const;
+
+const tabs = {
+  type: 'object',
+  properties: {
+    component: { enum: ['Tabs'] },
+    tabs: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          title: stringOrBinding,
+          child: ANY_COMPONENT,
+        },
+        required: ['title', 'child'],
+        additionalProperties: false,
+      },
+      minItems: 1,
+    },
+  },
+  required: ['component', 'tabs'],
   additionalProperties: false,
 } as const;
 
@@ -282,6 +330,7 @@ const choicePicker = {
 /** Every component the renderer understands, as a precise JSON Schema union. */
 export const A2UI_COMPONENT_SCHEMAS = [
   text,
+  icon,
   image,
   row,
   column,
@@ -293,6 +342,7 @@ export const A2UI_COMPONENT_SCHEMAS = [
   checkBox,
   slider,
   choicePicker,
+  tabs,
 ] as const;
 
 /** The `ui` argument schema handed to `render_ui`'s Tool definition. */

@@ -16,16 +16,18 @@ UI JSON format: {"components":[...], "dataModel":{...}}. Components nest by valu
 
 Components (only these):
 Text{text, variant?:"caption"|"body"}
+Icon{name, variant?:"small"|"medium"|"large"} — e.g. search, heart, settings, check, close, user, star, bell, mail, phone, camera, calendar, location, info, warning, play, share, send, trash
+Image{url, description?}
 Row|Column{children:[<components>], justify?, align?}
 Card{child:<component>}
 List{children:{path,component:<component>}, direction?:"vertical"|"horizontal"}
 Button{child:<component>, variant?:"default"|"primary"|"borderless", action:{"event":{"name":"..."}}|{"openUrl":{"url":"https://..."}}}
 Divider{axis?:"horizontal"|"vertical"}
-Image{url, description?}
-TextField{label, value, placeholder?, variant?:"shortText"|"longText"|"number"|"obscured"}
+TextField{label, value, placeholder?, variant?:"shortText"|"longText"|"number"|"obscured", @checks?:[{"condition":"required"|"numeric"|"email", "message":"..."}]}
 CheckBox{label, value:bool}
 Slider{min?, max, value, steps?}
 ChoicePicker{label?, options:[{"label","value"}], value:[...], variant?:"multipleSelection"|"mutuallyExclusive"}
+Tabs{tabs:[{"title":"...", "child":<component>}]}
 
 Rules:
 - Put every value you bind into "dataModel" and reference it with {"@path":"/a/b"} — never reference a path you did not put there; if there is no data, write a literal string instead.

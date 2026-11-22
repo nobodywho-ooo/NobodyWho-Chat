@@ -52,6 +52,9 @@ export const styles = StyleSheet.create({
   fieldLabel: {
     marginBottom: 2,
   },
+  errorText: {
+    color: '#c62828',
+  },
   field: {
     borderWidth: StyleSheet.hairlineWidth,
     borderRadius: 10,
@@ -113,5 +116,20 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     columnGap: Spacings.sm,
     paddingVertical: Spacings.xs,
+  },
+  tabsContainer: {
+    rowGap: Spacings.sm,
+  },
+  tabsBar: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: Spacings.lg,
+  },
+  tabItem: {
+    paddingVertical: Spacings.xs,
+    borderBottomWidth: 2,
+  },
+  tabTitle: {
+    includeFontPadding: false,
   },
 });

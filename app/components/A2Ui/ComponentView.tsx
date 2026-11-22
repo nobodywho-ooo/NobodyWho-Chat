@@ -20,11 +20,14 @@ import { Spacings } from 'style';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { SelectablePill } from '../SelectablePill/SelectablePill';
 import { Text } from '../Text/Text';
+import { platformIconFor } from './icons';
 
 import { bindingPath } from '../../services/a2ui/bindings';
 import {
+  A2UiCheckRule,
   A2UiList,
   A2UiSlider,
+  A2UiTabs,
   A2UiTextInput,
   type A2UiComponent,
 } from '../../services/a2ui/types';
@@ -70,6 +73,19 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
         >
           {text}
         </Text>
+      );
+    }
+
+    case 'Icon': {
+      const size = iconSize(component.variant);
+      const platform = platformIconFor(component.name);
+      return (
+        <PlatformIcon
+          iosIconName={platform.iosIconName}
+          androidIconName={platform.androidIconName}
+          size={size}
+          color={context.textColor ?? colors.onSurface}
+        />
       );
     }
 
@@ -199,6 +215,10 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
       return <ChoicePickerView component={component} scope={scope} />;
     }
 
+    case 'Tabs': {
+      return <TabsView component={component} scope={scope} depth={depth} />;
+    }
+
     default:
       return null;
   }
@@ -242,6 +262,14 @@ const weightOf = (component: A2UiComponent): number | undefined =>
   'weight' in component && typeof component.weight === 'number'
     ? component.weight
     : undefined;
+
+const iconSize = (variant: string | undefined): number => {
+  switch (variant) {
+    case 'small': return 16;
+    case 'large': return 28;
+    default: return 22;
+  }
+};
 
 const imageSize = (
   variant: string | undefined,
@@ -307,6 +335,62 @@ const ListView: React.FC<{
   );
 };
 
+const TabsView: React.FC<{
+  component: A2UiTabs;
+  scope?: unknown;
+  depth: number;
+}> = ({ component, scope, depth }) => {
+  const { colors } = useStyled();
+  const { resolveValue } = useA2UiContext();
+  const [active, setActive] = useState(0);
+  const clampActive = Math.min(active, component.tabs.length - 1);
+
+  return (
+    <View style={styles.tabsContainer}>
+      <View style={styles.tabsBar}>
+        {component.tabs.map((tab, index) => {
+          const title = resolveValue(tab.title, scope);
+          const selected = index === clampActive;
+          const tabStyle = [
+            styles.tabItem,
+            {
+              borderBottomColor: selected
+                ? colors.ctaSurfacePrimary
+                : colors.border,
+            },
+          ];
+          return (
+            <Pressable
+              key={index}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              onPress={() => setActive(index)}
+              style={({ pressed }) => [tabStyle, pressed && styles.buttonPressed]}
+            >
+              <Text
+                variant="body2"
+                style={[
+                  styles.tabTitle,
+                  selected && { color: colors.ctaSurfacePrimary },
+                ]}
+              >
+                {String(title ?? '')}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      {component.tabs[clampActive] && (
+        <ComponentView
+          component={component.tabs[clampActive].child}
+          scope={scope}
+          depth={depth + 1}
+        />
+      )}
+    </View>
+  );
+};
+
 const TextFieldView: React.FC<{
   component: A2UiTextInput;
   scope?: unknown;
@@ -320,12 +404,21 @@ const TextFieldView: React.FC<{
       ? undefined
       : resolveValue(component.placeholder, scope);
   const multiline = component.variant === 'longText';
+  const checks = component['@checks'] ?? [];
+  // Validate after the user has typed (not while untouched), so empty required
+  // fields don't nag before they are reached.
+  const text = String(value ?? '');
+  const [touched, setTouched] = useState(false);
+  const error = touched
+    ? firstCheckError(checks, text, value, resolveValue)
+    : null;
+  const hasError = error !== null;
   const fieldStyle = [
     styles.field,
     {
       color: colors.onSurface,
-      borderColor: colors.border,
       backgroundColor: colors.surface,
+      borderColor: hasError ? colors.dangerSurface : colors.border,
     },
   ];
 
@@ -340,14 +433,51 @@ const TextFieldView: React.FC<{
         multiline={multiline}
         secureTextEntry={component.variant === 'obscured'}
         keyboardType={component.variant === 'number' ? 'numeric' : 'default'}
-        value={String(value ?? '')}
-        onChangeText={setValue}
+        value={text}
+        onFocus={() => setTouched(true)}
+        onChangeText={next => {
+          setValue(next);
+          setTouched(true);
+        }}
         placeholder={placeholder === null || placeholder === undefined ? undefined : String(placeholder)}
         placeholderTextColor={colors.onSurfaceDisabled}
         style={fieldStyle}
       />
+      {hasError && (
+        <Text variant="caption" style={styles.errorText}>
+          {error}
+        </Text>
+      )}
     </View>
   );
+};
+
+// The first failing check's message, or null when the value passes.
+const firstCheckError = (
+  checks: A2UiCheckRule[],
+  text: string,
+  value: unknown,
+  resolveValue: (value: unknown, scope?: unknown) => unknown,
+): string | null => {
+  for (const check of checks) {
+    const passes = (() => {
+      switch (check.condition) {
+        case 'required':
+          return text.trim().length > 0;
+        case 'email':
+          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text.trim());
+        case 'numeric':
+          return text.trim() !== '' && !Number.isNaN(Number(text.trim()));
+      }
+    })();
+    if (passes) {
+      continue;
+    }
+    const message =
+      check.message === undefined ? undefined : resolveValue(check.message);
+    return message === undefined || message === null ? null : String(message);
+  }
+  return null;
 };
 
 const CheckBoxView: React.FC<{
