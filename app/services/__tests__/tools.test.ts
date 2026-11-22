@@ -60,7 +60,7 @@ describe('buildChatTools', () => {
 
   test('a2ui has no render_ui tool: it streams through the token stream', () => {
     // The model must not be able to call render_ui — its UI flows through
-    // `<a2ui_ui>…</a2ui_ui>` sentinels in the ordinary text stream so the
+    // `<ui>…</ui>` sentinels in the ordinary text stream so the
     // card can render live (see services/a2ui/stream.ts).
     const names = (buildChatTools() as unknown as MockTool[]).map(
       t => t.opts.name,

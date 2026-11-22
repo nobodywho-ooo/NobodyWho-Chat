@@ -3,7 +3,7 @@
 //
 // Two paths land here:
 //  - a settled `render_ui` invocation (persisted, survives reloads), and
-//  - the live preview of a `<a2ui_ui>…</a2ui_ui>` block mid-stream, which is
+//  - the live preview of a `<ui>…</ui>` block mid-stream, which is
 //    re-validated on the way through (persisted messages travel the database
 //    and back, so validation is re-run rather than trusted).
 

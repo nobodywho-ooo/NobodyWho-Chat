@@ -1,10 +1,10 @@
-// Streaming A2UI: the model writes its UI inside `<a2ui_ui>...</a2ui_ui>`
-// sentinels in the normal assistant token stream — the one place an app can
-// see tokens as they arrive (a native tool call swallows its JSON until the
-// call completes). This module finds the sentinel block in the accumulating
-// text and parses it *tolerantly*, so the card can render progressively:
-// every time a component object closes, it becomes visible; everything not
-// yet closed is skipped until it completes.
+// Streaming A2UI: the model writes its UI inside `<ui>...</ui>` sentinels in
+// the normal assistant token stream — the one place an app can see tokens as
+// they arrive (a native tool call swallows its JSON until the call
+// completes). This module finds the sentinel block in the accumulating text
+// and parses it *tolerantly*, so the card can render progressively: every
+// time a component object closes, it becomes visible; everything not yet
+// closed is skipped until it completes.
 //
 // The content between the sentinels is the same `ui` JSON the tool used to
 // take (the A2UiSurface shape), so validation, rendering and persistence are
@@ -13,8 +13,8 @@
 import { validateUi } from './validate';
 import type { A2UiSurface } from './types';
 
-export const A2UI_OPEN = '<a2ui_ui>';
-export const A2UI_CLOSE = '</a2ui_ui>';
+export const A2UI_OPEN = '<ui>';
+export const A2UI_CLOSE = '</ui>';
 
 export interface A2UiBlock {
   /** The raw text between the sentinels (growing while streaming). */

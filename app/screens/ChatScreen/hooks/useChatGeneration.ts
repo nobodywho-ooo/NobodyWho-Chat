@@ -319,7 +319,7 @@ export function useChatGeneration({
       }
     };
 
-    // While the model streams a `<a2ui_ui>…</a2ui_ui>` block, its (tolerantly
+    // While the model streams a `<ui>…</ui>` block, its (tolerantly
     // parsed) content renders live on the message. Once the block closes and
     // becomes a persisted render_ui invocation, the live preview stops.
     let a2uiSettled = false;

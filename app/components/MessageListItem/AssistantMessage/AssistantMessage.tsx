@@ -90,7 +90,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
   } = useMemo(() => parseThinking(content), [content]);
 
   const hasWebSources = webSources.length > 0;
-  // The `<a2ui_ui>…</a2ui_ui>` block is rendered as a card, not as text.
+  // The `<ui>…</ui>` block is rendered as a card, not as text.
   const rest = useMemo(
     () => stripA2UiBlocks(hasWebSources ? stripCitations(rawRest) : rawRest),
     [hasWebSources, rawRest],
