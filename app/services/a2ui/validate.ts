@@ -116,6 +116,12 @@ export const validateUi = (input: unknown): Validation => {
 const stringOrBinding = (value: unknown): value is string | { '@path': string } =>
   isString(value) || isBinding(value);
 
+// Like stringOrBinding, but allows an empty string literal — an empty form
+// value is legitimate (a TextField started blank), while an '@path' still
+// must be non-empty.
+const dynamicString = (value: unknown): value is string | { '@path': string } =>
+  typeof value === 'string' || isBinding(value);
+
 const parseComponent = (
   raw: UnknownRecord,
   at: string,
@@ -135,7 +141,7 @@ const parseComponent = (
   }
 
   const expectStringValue = (value: unknown, what: string): string | undefined => {
-    if (stringOrBinding(value)) return undefined;
+    if (dynamicString(value)) return undefined;
     return `${what} must be a string or a {"@path": "..."} reference, got ${describe(value)}.`;
   };
 

@@ -149,9 +149,10 @@ ws      ::= [ \\t\\n]*
 // in GBNF: `prose` matches any text that does not contain the literal sequence
 // `<ui>`, so a `<ui>` routes to the constrained block instead.
 
-// Master switch: set to false to fall back to unconstrained streaming
-// (the tolerant parser + validator still render valid cards).
-export const A2UI_CONSTRAINED = true;
+// Master switch. Currently OFF: A2UI streams Express (a compact DSL), and a
+// constrained-sampling grammar for Express is a follow-up. The JSON whole-turn
+// grammar below no longer matches the Express output format.
+export const A2UI_CONSTRAINED = false;
 
 // nobodywho's GBNF→Lark converter breaks a rule body at a newline (only rules
 // nested in `(...)` may wrap), so the object grammar must be single-line per

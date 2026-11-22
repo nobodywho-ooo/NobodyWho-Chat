@@ -1,16 +1,12 @@
-// Streaming A2UI: the model writes its UI inside `<ui>...</ui>` sentinels in
-// the normal assistant token stream — the one place an app can see tokens as
-// they arrive (a native tool call swallows its JSON until the call
-// completes). This module finds the sentinel block in the accumulating text
-// and parses it *tolerantly*, so the card can render progressively: every
-// time a component object closes, it becomes visible; everything not yet
-// closed is skipped until it completes.
-//
-// The content between the sentinels is the same `ui` JSON the tool used to
-// take (the A2UiSurface shape), so validation, rendering and persistence are
-// unchanged.
+// Streaming A2UI: the model writes its UI as an Express DSL inside
+// `<ui>...</ui>` sentinels in the normal assistant token stream — the one
+// place an app can see tokens as they arrive. This module finds the sentinel
+// block and hands its growing text to the Express parser, which is tolerant
+// and streamed naturally: it parses from the start and stops at the first
+// unclosed construct, so the live card fills in component-by-component as the
+// block streams in.
 
-import { validateUi } from './validate';
+import { parseExpressLive } from './express';
 import type { A2UiSurface } from './types';
 
 export const A2UI_OPEN = '<ui>';
@@ -24,9 +20,9 @@ export interface A2UiBlock {
 }
 
 /**
- * The first UI block in `text`. Before the opening sentinel is seen this is
- * null; afterwards it always returns a block — `complete: false` while the
- * model is still writing it — so callers can render a live preview.
+ * The first UI block in `text`. Before the opening sentinel this is null;
+ * afterwards it always returns a block — `complete: false` while the model is
+ * still writing it — so callers can render a live preview.
  */
 export const findA2UiBlock = (text: string): A2UiBlock | null => {
   const start = text.indexOf(A2UI_OPEN);
@@ -49,95 +45,6 @@ export const stripA2UiBlocks = (text: string): string =>
     .replace(new RegExp(`${A2UI_OPEN}[\\s\\S]*?${A2UI_CLOSE}`, 'g'), '')
     .replace(new RegExp(`${A2UI_OPEN}[\\s\\S]*$`), '');
 
-/**
- * Best-effort parse of the UI text. Tries the exact JSON first; when the
- * stream is mid-object, falls back to hardening: scan the `components` array
- * for the complete component objects seen so far and render those. Returns
- * null when nothing renderable has arrived yet.
- */
-export const parseA2UiLive = (raw: string): A2UiSurface | null => {
-  const trimmed = raw.trim();
-  if (trimmed.length === 0) {
-    return null;
-  }
-
-  const surface = parseUiText(trimmed);
-  return surface ?? parseUiText(hardenPartial(trimmed) ?? '');
-};
-
-const parseUiText = (text: string): A2UiSurface | null => {
-  if (text.trim().length === 0) {
-    return null;
-  }
-  try {
-    const validation = validateUi(JSON.parse(text));
-    return validation.valid && validation.surface ? validation.surface : null;
-  } catch {
-    return null;
-  }
-};
-
-// Finds the matching '}' for a '{' at `from`, skipping string contents.
-const findClosingBrace = (text: string, from: number): number => {
-  let depth = 0;
-  let inString = false;
-  let escaped = false;
-  for (let i = from; i < text.length; i++) {
-    const ch = text[i];
-    if (inString) {
-      if (escaped) {
-        escaped = false;
-      } else if (ch === '\\') {
-        escaped = true;
-      } else if (ch === '"') {
-        inString = false;
-      }
-      continue;
-    }
-    if (ch === '"') {
-      inString = true;
-    } else if (ch === '{') {
-      depth += 1;
-    } else if (ch === '}') {
-      depth -= 1;
-      if (depth === 0) {
-        return i;
-      }
-    }
-  }
-  return -1;
-};
-
-// Rebuild a valid root object from the complete top-level component objects
-// currently present in a partially-streamed `ui` text. `dataModel` and any
-// trailing incomplete object are dropped until they complete.
-const hardenPartial = (text: string): string | null => {
-  const componentsKey = text.indexOf('"components"');
-  if (componentsKey === -1) {
-    return null;
-  }
-  const arrayOpen = text.indexOf('[', componentsKey);
-  if (arrayOpen === -1) {
-    return null;
-  }
-
-  const rest = text.slice(arrayOpen + 1);
-  const objects: string[] = [];
-  let at = 0;
-  while (at < rest.length) {
-    const open = rest.indexOf('{', at);
-    if (open === -1) {
-      break;
-    }
-    const close = findClosingBrace(rest, open);
-    if (close === -1) {
-      break; // the last object is still being written — leave it out
-    }
-    objects.push(rest.slice(open, close + 1));
-    at = close + 1;
-  }
-
-  return objects.length > 0
-    ? `{"components":[${objects.join(',')}]}`
-    : null;
-};
+/** Tolerantly parse the streaming Express block into a renderable surface. */
+export const parseA2UiLive = (raw: string): A2UiSurface | null =>
+  parseExpressLive(raw);

@@ -5,9 +5,9 @@ import {
   parseA2UiLive,
   stripA2UiBlocks,
 } from '../stream';
-import { A2UI_STREAM_GBNF } from '../grammar';
+import { parseExpress } from '../express';
 
-const block = (ui: string) => `${A2UI_OPEN}${ui}${A2UI_CLOSE}`;
+const block = (expr: string) => `${A2UI_OPEN}${expr}${A2UI_CLOSE}`;
 
 describe('findA2UiBlock', () => {
   test('returns null before the opening sentinel', () => {
@@ -15,89 +15,68 @@ describe('findA2UiBlock', () => {
   });
 
   test('returns an incomplete block while streaming', () => {
-    const found = findA2UiBlock(`${A2UI_OPEN}{"components":[{"component":"T`);
-    expect(found).not.toBeNull();
-    expect(found?.uiText).toBe('{"components":[{"component":"T');
+    const found = findA2UiBlock(`${A2UI_OPEN}Column([Text("`);
     expect(found?.complete).toBe(false);
+    expect(found?.uiText).toBe('Column([Text("');
   });
 
   test('returns a complete block once the closing sentinel arrives', () => {
-    const text = `Here it is: ${block(JSON.stringify({ components: [] }))}`;
-    const found = findA2UiBlock(text);
+    const found = findA2UiBlock(`Here it is: ${block('Text("hi")')}`);
     expect(found?.complete).toBe(true);
-    expect(found?.uiText).toContain('"components"');
+    expect(found?.uiText).toContain('Text(');
   });
 });
 
 describe('stripA2UiBlocks', () => {
   test('removes closed blocks and keeps prose', () => {
-    const text = `One line. ${block('{"components":[]}')} Another line.`;
-    expect(stripA2UiBlocks(text)).toBe('One line.  Another line.');
+    expect(stripA2UiBlocks(`One. ${block('Text("x")')} Two.`)).toBe('One.  Two.');
   });
 
   test('removes an unterminated trailing block', () => {
-    const text = 'One line. ' + `${A2UI_OPEN}{"components":[]`;
-    expect(stripA2UiBlocks(text).trim()).toBe('One line.');
+    expect(stripA2UiBlocks('One. ' + `${A2UI_OPEN}Text("x`).trim()).toBe('One.');
   });
 });
 
-describe('A2UI_STREAM_GBNF (whole-turn grammar)', () => {
-  test('wraps the UI-object grammar inside the <ui> sentinels', () => {
-    expect(A2UI_STREAM_GBNF).toContain('<ui>');
-    expect(A2UI_STREAM_GBNF).toContain('</ui>');
-    // The UI object grammar promotes its root rule to a reusable `ui` rule.
-    expect(A2UI_STREAM_GBNF).toMatch(/^ui\s+::=/m);
+describe('parseA2UiLive (Express)', () => {
+  test('parses a complete Express block with bindings and data lines', () => {
+    const surface = parseA2UiLive('$/user/name = "Ada"\nroot = Column([Text($/user/name)])');
+    expect(surface).not.toBeNull();
+    expect(surface?.dataModel).toEqual({ user: { name: 'Ada' } });
+    const root = surface?.components[0];
+    expect(root?.component).toBe('Column');
   });
 
-  test('lets prose be free while a <ui> routes to the constrained block', () => {
-    expect(A2UI_STREAM_GBNF).toMatch(/prose ::=/);
-    expect(A2UI_STREAM_GBNF).toMatch(/uiblock ::=/);
-    expect(A2UI_STREAM_GBNF).toMatch(/segment ::= prose | uiblock/);
-  });
-
-  test('every rule body is on a single line (nobodywho converter constraint)', () => {
-    // nobodywho's GBNF→Lark converter breaks top-level rule bodies at a
-    // newline; the whole grammar is unusable if any rule wraps. Pin that.
-    const wrapped = A2UI_STREAM_GBNF.split('\n').some(
-      line => line.trim().length > 0 && /^\s/.test(line),
-    );
-    expect(wrapped).toBe(false);
-  });
-});
-
-describe('parseA2UiLive', () => {
-  test('parses complete ui JSON', () => {
-    const ui = JSON.stringify({
-      components: [
-        { component: 'Text', text: 'Hello' },
-        { component: 'Divider' },
-      ],
-    });
-    const surface = parseA2UiLive(ui);
-    expect(surface?.components.map(c => c.component)).toEqual(['Text', 'Divider']);
-  });
-
-  test('renders the components streamed so far, skipping the unfinished tail', () => {
-    // The stream is partway through a second Text object.
-    const partial =
-      '{"components":[{"component":"Text","text":"First"},{"component":"Text","text":"Sec';
-    const surface = parseA2UiLive(partial);
-    expect(surface?.components).toHaveLength(1);
-    if (surface && surface.components[0].component === 'Text') {
-      expect(surface.components[0].text).toBe('First');
+  test('includes components as they stream in, even mid-string tails', () => {
+    // The second Text's string is still being written, but is already visible.
+    const surface = parseA2UiLive('Column([Text("First"), Text("Sec');
+    const root = surface?.components[0];
+    if (root && root.component === 'Column') {
+      expect(root.children.map(c => c.component)).toEqual(['Text', 'Text']);
+      const first = root.children[0];
+      if (first.component === 'Text') {
+        expect(first.text).toBe('First');
+      }
     }
   });
 
-  test('returns null before anything renderable exists', () => {
-    expect(parseA2UiLive('')).toBeNull();
-    expect(parseA2UiLive('{"components":[]')).toBeNull();
-    expect(parseA2UiLive('garbage')).toBeNull();
+  test('renders a TextField with checks and a Button action', () => {
+    const surface = parseA2UiLive(
+      'Column([TextField(label="Email", value="", checks=[{condition:"email", message:"bad"}] ), Button(Text("Go"), variant="primary", action=Event("submit", {}))])',
+    );
+    const root = surface?.components[0];
+    if (root && root.component === 'Column') {
+      expect(root.children.map(c => c.component)).toEqual(['TextField', 'Button']);
+      const field = root.children[0];
+      if (field.component === 'TextField') {
+        expect(field['@checks']).toEqual([{ condition: 'email', message: 'bad' }]);
+      }
+    }
   });
 
-  test('validates: unknown components inside the block are dropped, not fatal', () => {
-    const surface = parseA2UiLive(
-      '{"components":[{"component":"Video","url":"x"},{"component":"Text","text":"ok"}]}',
-    );
-    expect(surface?.components.map(c => c.component)).toEqual(['Text']);
+  test('returns null on an empty / unparseable block', () => {
+    expect(parseExpress('')).toBeDefined();
+    expect(parseExpress('').error).toBeDefined();
+    expect(parseA2UiLive('')).toBeNull();
+    expect(parseA2UiLive('garbage')).toBeNull();
   });
 });

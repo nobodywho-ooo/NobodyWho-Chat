@@ -25,6 +25,7 @@ import {
   WebSearchTurn,
   findA2UiBlock,
   parseA2UiLive,
+  parseExpress,
   planAnswerRecheck,
   prepareWebSearchTurn,
   restoreChatForTurn,
@@ -337,9 +338,9 @@ export function useChatGeneration({
       if (!block?.complete) {
         return;
       }
-      try {
-        const parsed = JSON.parse(block.uiText);
-        const validation = validateUi(parsed);
+      const parsed = parseExpress(block.uiText);
+      if (parsed.surface) {
+        const validation = validateUi(parsed.surface);
         if (validation.valid && validation.surface) {
           turnToolCalls.push({
             name: RENDER_UI_TOOL,
@@ -348,8 +349,8 @@ export function useChatGeneration({
           });
           a2uiSettled = true;
         }
-      } catch (error) {
-        log('ChatScreen A2UI block parse failed', error);
+      } else {
+        log('ChatScreen A2UI block parse failed', parsed.error);
       }
     };
 

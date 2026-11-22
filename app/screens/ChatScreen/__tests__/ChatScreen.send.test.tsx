@@ -126,6 +126,7 @@ jest.mock('services', () => ({
   RENDER_UI_TOOL: 'render_ui',
   findA2UiBlock: jest.fn(() => null),
   parseA2UiLive: jest.fn(() => null),
+  parseExpress: jest.fn(() => ({ error: 'test stub' })),
   validateUi: jest.fn(() => ({ valid: false, reason: 'test stub' })),
   stripA2UiBlocks: jest.fn(text => text),
 }));
