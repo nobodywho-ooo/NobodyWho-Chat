@@ -44,6 +44,7 @@ import {
 import {
   useAttachments,
   useChatGeneration,
+  useDevTestInjection,
   useMessageListScroll,
   useSttTranscription,
   useThinkingToggle,
@@ -339,6 +340,16 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const onAttachImage = useStableCallback(attachments.handleAttachImage);
   const onAttachCamera = useStableCallback(attachments.handleAttachCamera);
   const onAttachAudio = useStableCallback(attachments.handleAttachAudio);
+
+  // Dev-only: let an HTTP hook inject a message into the chat (set the input,
+  // let it render, then send with the latest handler). No-op in production.
+  const sendRef = useRef<() => void>(() => undefined);
+  sendRef.current = onSend;
+  const injectMessage = useCallback((text: string) => {
+    setInputText(text);
+    setTimeout(() => sendRef.current?.(), 150);
+  }, []);
+  useDevTestInjection({ isStreaming, onInjected: injectMessage });
 
   return (
     <View style={[styles.container, { backgroundColor: colors.surface }]}>

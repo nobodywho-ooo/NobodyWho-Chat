@@ -63,7 +63,6 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
         ? ''
         : String(resolved);
       if (text === '') {
-        log('[a2ui] ComponentView empty text', JSON.stringify(component.text));
         return null;
       }
       return (
@@ -92,7 +91,6 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
     case 'Image': {
       const url = context.resolveValue(component.url, scope);
       if (typeof url !== 'string' || url === '') {
-        log('[a2ui] ComponentView no image url', JSON.stringify(component.url));
         return null;
       }
       const size = imageSize(component.variant);

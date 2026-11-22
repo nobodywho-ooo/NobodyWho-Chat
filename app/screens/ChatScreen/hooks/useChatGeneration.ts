@@ -51,6 +51,8 @@ import {
   resolveMessageDocumentPath,
 } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
+import type { A2UiSurface } from '../../../services/a2ui/types';
+import { reportDev } from '../../../services/devHook';
 
 import { Attachments } from './useAttachments';
 
@@ -71,12 +73,6 @@ let optimisticMessages = Date.now();
 const nextUid = (): string => `new:${++optimisticMessages}`;
 
 const STREAM_RENDER_INTERVAL_MS = 50;
-
-// A safety valve on runaway tool calling: a small model that keeps getting the
-// same tool back with an error may retry indefinitely (seen as 50+ calls to
-// one tool). Cap per turn and stop generation when it is reached; the partial
-// answer is still persisted.
-const MAX_TOOL_CALLS_PER_TURN = 8;
 
 // Sends the user's turn to the model. Normally `ask` continues from the cached
 // prefix. A web search whose planner borrowed the chat left the planner's
@@ -330,6 +326,7 @@ export function useChatGeneration({
     // parsed) content renders live on the message. Once the block closes and
     // becomes a persisted render_ui invocation, the live preview stops.
     let a2uiSettled = false;
+    let settledUiSurface: A2UiSurface | undefined;
     const liveA2UiOf = (content: string) =>
       !a2uiSettled ? parseA2UiLive(findA2UiBlock(content)?.uiText ?? '') : null;
 
@@ -348,6 +345,7 @@ export function useChatGeneration({
       if (parsed.surface) {
         const validation = validateUi(parsed.surface);
         if (validation.valid && validation.surface) {
+          settledUiSurface = validation.surface;
           turnToolCalls.push({
             name: RENDER_UI_TOOL,
             arguments: { ui: validation.surface },
@@ -422,14 +420,6 @@ export function useChatGeneration({
       turnToolCalls.push(invocation);
       accumulated = thinkOpenWriter.write('toolResult', accumulated);
       renderAssistant();
-      if (turnToolCalls.length >= MAX_TOOL_CALLS_PER_TURN) {
-        log(
-          'ChatScreen tool-call loop guard: stopping after',
-          turnToolCalls.length,
-          'calls',
-        );
-        activeChat?.stopGeneration();
-      }
     });
 
     const persistAssistant = async (metrics?: {
@@ -625,6 +615,22 @@ export function useChatGeneration({
       settleA2Ui();
       renderAssistant(metrics);
       await persistAssistant(metrics);
+
+      // Dev-only: push the finished turn out so an external harness can read it.
+      if (__DEV__) {
+        reportDev('turn', {
+          content: stripA2UiBlocks(parseThinking(accumulated).rest ?? '').slice(0, 6000),
+          tools: turnToolCalls.map(call => call.name),
+          a2ui: turnToolCalls.some(call => call.name === RENDER_UI_TOOL),
+          ui: settledUiSurface
+            ? {
+                components: settledUiSurface.components.map(c => c.component),
+                dataModel: settledUiSurface.dataModel ?? null,
+              }
+            : null,
+          ...(webSearchMs !== undefined ? { webSearchMs } : {}),
+        });
+      }
 
       if (stoppedDuringAnswer) {
         await persistSystemMessage(t('screens.chat.generationStopped'));
