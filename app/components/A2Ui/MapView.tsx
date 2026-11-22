@@ -40,8 +40,25 @@ export const MapView: React.FC<MapViewProps> = ({ markers, route, variant }) => 
     if (route && route.length > 0) {
       return { marker, point: route[Math.min(i, route.length - 1)] };
     }
-    return { marker, point: { lat: region.latitude, lon: region.longitude } };
+    return {
+      marker,
+      point: { lat: Number(region.latitude), lon: Number(region.longitude) },
+    };
   });
+
+  // The native map's host functions throw ("Value is null, expected a
+  // number") when a coordinate is null/undefined/NaN — a streamed partial or
+  // a tiny model's `lon:null` slip gives exactly that. Sanitize hard: any
+  // marker or route point without a finite number coordinate is dropped (the
+  // live preview can render an empty map; it must never crash the chat).
+  const safeMarkers = positionedMarkers.filter(
+    ({ point }) =>
+      Number.isFinite(point.lat) && Number.isFinite(point.lon),
+  );
+  const safeRoute =
+    route === undefined
+      ? undefined
+      : route.filter(p => Number.isFinite(p.lat) && Number.isFinite(p.lon));
 
   return (
     <View
@@ -62,14 +79,17 @@ export const MapView: React.FC<MapViewProps> = ({ markers, route, variant }) => 
         moveOnMarkerPress={false}
         region={region}
       >
-        {route !== undefined && route.length > 1 ? (
+        {safeRoute !== undefined && safeRoute.length > 1 ? (
           <Polyline
-            coordinates={route.map(p => ({ latitude: p.lat, longitude: p.lon }))}
+            coordinates={safeRoute.map(p => ({
+              latitude: p.lat,
+              longitude: p.lon,
+            }))}
             strokeColor={colors.primary}
             strokeWidth={5}
           />
         ) : null}
-        {positionedMarkers.map(({ marker, point }, i) => (
+        {safeMarkers.map(({ marker, point }, i) => (
           <Marker
             key={i}
             coordinate={{ latitude: point.lat, longitude: point.lon }}
@@ -136,7 +156,7 @@ function useRegion(
       ...markers.flatMap(m =>
         m.lat !== undefined && m.lon !== undefined ? [{ lat: m.lat, lon: m.lon }] : [],
       ),
-    ];
+    ].filter(p => Number.isFinite(p.lat) && Number.isFinite(p.lon));
     if (points.length === 0) return null;
 
     const lats = points.map(p => p.lat);
