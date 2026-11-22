@@ -31,19 +31,28 @@ interface MapViewProps {
   markers: A2UiMapMarker[];
   route?: A2UiMapPoint[];
   variant?: 'small' | 'medium' | 'large';
+  onLayout?: (e: { nativeEvent: { layout: { width: number; height: number } } }) => void;
 }
 
-export const MapView: React.FC<MapViewProps> = ({ markers, route, variant }) => {
+export const MapView: React.FC<MapViewProps> = ({ markers, route, variant, onLayout }) => {
   const { colors } = useStyled();
   const height = HEIGHTS[variant ?? 'medium'] ?? HEIGHTS.medium;
+  const [measuredWidth, setMeasuredWidth] = React.useState<number | null>(null);
+  const width = measuredWidth ?? NOMINAL_WIDTH;
 
-  const positioned = positionMarkers(markers, route, NOMINAL_WIDTH, height);
+  const positioned = positionMarkers(markers, route, width, height);
 
   return (
     <View
+      onLayout={e => {
+        setMeasuredWidth(e.nativeEvent.layout.width);
+        if (onLayout) onLayout(e);
+      }}
       pointerEvents="none"
       style={{
         height,
+        width: '100%',
+        alignSelf: 'stretch',
         borderRadius: Spacings.md,
         overflow: 'hidden',
         borderWidth: StyleSheet.hairlineWidth,
@@ -60,7 +69,7 @@ export const MapView: React.FC<MapViewProps> = ({ markers, route, variant }) => 
             left: 0,
             right: 0,
             top: fraction * height,
-            height: StyleSheet.hairlineWidth,
+            height: 1,
             backgroundColor: colors.border,
           }}
         />
@@ -73,7 +82,7 @@ export const MapView: React.FC<MapViewProps> = ({ markers, route, variant }) => 
             top: 0,
             bottom: 0,
             left: fraction * NOMINAL_WIDTH,
-            width: StyleSheet.hairlineWidth,
+            width: 1,
             backgroundColor: colors.border,
           }}
         />
@@ -83,15 +92,15 @@ export const MapView: React.FC<MapViewProps> = ({ markers, route, variant }) => 
       {route !== undefined && route.length > 0 ? (
         <>
           {route.length > 1
-            ? segments(route, height).map(({ from, to }, i) => (
+            ? segments(route, width, height).map(({ from, to }, i) => (
                 <RouteSegment key={i} from={from} to={to} color={colors.primary} />
               ))
             : null}
           <View
             style={{
               position: 'absolute',
-              left: project(route[route.length - 1], height).x - 5,
-              top: project(route[route.length - 1], height).y - 5,
+              left: project(route[route.length - 1], width, height).x - 5,
+              top: project(route[route.length - 1], width, height).y - 5,
               width: 10,
               height: 10,
               borderRadius: 5,
@@ -105,25 +114,40 @@ export const MapView: React.FC<MapViewProps> = ({ markers, route, variant }) => 
       {positioned.map(({ marker, x, y }, i) => (
         <View
           key={i}
-          style={{ position: 'absolute', left: x - 11, top: y - 26, alignItems: 'center' }}
+          style={{ position: 'absolute', left: x - 16, top: y - 34, alignItems: 'center' }}
         >
-          <PlatformIcon
-            iosIconName="location"
-            androidIconName="location_on"
-            size={22}
-            color={colors.primary}
-          />
+          <View
+            style={{
+              width: 32,
+              height: 32,
+              borderRadius: 16,
+              backgroundColor: colors.primary,
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderWidth: 2,
+              borderColor: colors.surface,
+            }}
+          >
+            <PlatformIcon
+              iosIconName="location"
+              androidIconName="location_on"
+              size={17}
+              color="#ffffff"
+            />
+          </View>
           {typeof marker.label === 'string' ? (
             <View
               style={{
                 marginTop: 2,
-                paddingHorizontal: 5,
-                paddingVertical: 1,
+                paddingHorizontal: 6,
+                paddingVertical: 2,
                 borderRadius: 4,
                 backgroundColor: colors.surface,
+                borderWidth: StyleSheet.hairlineWidth,
+                borderColor: colors.border,
               }}
             >
-              <Text style={{ fontSize: 9, color: colors.onSurface }} numberOfLines={1}>
+              <Text style={{ fontSize: 9, fontWeight: '600', color: colors.onSurface }} numberOfLines={1}>
                 {marker.label}
               </Text>
             </View>
@@ -154,7 +178,7 @@ function positionMarkers(
 
   const anyCoords = markers.some(m => m.lat !== undefined || m.lon !== undefined);
   if (anyCoords) {
-    const projectFn = makeProjection(route && route.length > 0 ? route : [], height);
+    const projectFn = makeProjection(route && route.length > 0 ? route : [], width, height);
     return markers.map(m => {
       if (m.lat !== undefined && m.lon !== undefined) {
         const p = projectFn({ lat: m.lat, lon: m.lon });
@@ -174,10 +198,11 @@ function positionMarkers(
 
 function makeProjection(
   points: A2UiMapPoint[],
+  width: number,
   height: number,
 ): (p: { lat: number; lon: number }) => Positioned {
   if (points.length === 0) {
-    return () => ({ x: NOMINAL_WIDTH / 2, y: height / 2 });
+    return () => ({ x: width / 2, y: height / 2 });
   }
   const lats = points.map(p => p.lat);
   const lons = points.map(p => p.lon);
@@ -194,18 +219,18 @@ function makeProjection(
     maxLon += 0.001;
   }
   return p => ({
-    x: ((p.lon - minLon) / (maxLon - minLon)) * NOMINAL_WIDTH,
+    x: ((p.lon - minLon) / (maxLon - minLon)) * width,
     y: (1 - (p.lat - minLat) / (maxLat - minLat)) * height,
   });
 }
 
-function project(p: A2UiMapPoint, height: number): Positioned {
+function project(p: A2UiMapPoint, width: number, height: number): Positioned {
   // A single point spans the whole box after the padding in makeProjection.
-  return makeProjection([p], height)(p);
+  return makeProjection([p], width, height)(p);
 }
 
-function segments(points: A2UiMapPoint[], height: number): { from: Positioned; to: Positioned }[] {
-  const proj = makeProjection(points, height);
+function segments(points: A2UiMapPoint[], width: number, height: number): { from: Positioned; to: Positioned }[] {
+  const proj = makeProjection(points, width, height);
   const out: { from: Positioned; to: Positioned }[] = [];
   for (let i = 0; i < points.length - 1; i++) {
     out.push({ from: proj(points[i]), to: proj(points[i + 1]) });
@@ -230,10 +255,12 @@ const RouteSegment: React.FC<{ from: Positioned; to: Positioned; color: string }
       style={{
         position: 'absolute',
         left: (from.x + to.x) / 2 - length / 2,
-        top: (from.y + to.y) / 2 - 2,
+        top: (from.y + to.y) / 2 - 4,
         width: length,
-        height: 4,
-        borderRadius: 2,
+        height: 8,
+        borderRadius: 4,
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.35)',
         backgroundColor: color,
         transform: [{ rotate: `${angle}deg` }],
         opacity: 0.85,

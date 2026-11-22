@@ -143,7 +143,16 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
         <View style={containerStyle}>
           {component.children.map((child, index) => {
             const weight = weightOf(child);
-            const childStyle = weight !== undefined ? { flex: weight } : undefined;
+            const childStyle: ViewStyle | undefined =
+              weight !== undefined
+                ? { flex: weight }
+                : // The layout helper defaults to alignItems 'flex-start', which
+                  // collapses fixed-height children (Image, Map, …) to their
+                  // content width — a 1 px sliver measured in-app. Column
+                  // children stretch to the container like the Divider does.
+                  !isRow
+                  ? { alignSelf: 'stretch' }
+                  : undefined;
             return (
               <View key={index} style={childStyle}>
                 <ComponentView component={child} scope={scope} depth={depth + 1} />
