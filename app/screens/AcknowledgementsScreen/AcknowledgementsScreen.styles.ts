@@ -9,8 +9,11 @@ export default StyleSheet.create({
   content: {
     paddingTop: Spacings.lg,
   },
+  heading: {
+    paddingBottom: Spacings.sm,
+  },
   sectionHeader: {
-    paddingTop: Spacings.xl,
+    paddingTop: Spacings.xxl,
   },
   spinner: {
     alignSelf: 'center',

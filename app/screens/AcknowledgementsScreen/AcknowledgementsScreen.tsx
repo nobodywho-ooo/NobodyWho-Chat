@@ -82,9 +82,13 @@ export const AcknowledgementsScreen: React.FC = () => {
         { paddingBottom: insets.bottom + Spacings.xl },
       ]}
     >
-      <Text>{t('screens.acknowledgements.models')}</Text>
+      <Text variant="h3" style={styles.heading}>
+        {t('screens.acknowledgements.models')}
+      </Text>
       {renderModelLicences()}
-      <Text style={styles.sectionHeader}>{t('screens.acknowledgements.others')}</Text>
+      <Text variant="h3" style={[styles.heading, styles.sectionHeader]}>
+        {t('screens.acknowledgements.others')}
+      </Text>
       {APP_LICENCES.map(licence => (
         <ListItem
           key={licence.titleKey}
@@ -95,7 +99,7 @@ export const AcknowledgementsScreen: React.FC = () => {
           onPress={() => openExternalUrl(licence.url)}
         />
       ))}
-      <Text style={styles.sectionHeader}>
+      <Text variant="h3" style={[styles.heading, styles.sectionHeader]}>
         {t('screens.acknowledgements.searchProviders')}
       </Text>
       {WEB_SEARCH_PROVIDERS.map(provider => (

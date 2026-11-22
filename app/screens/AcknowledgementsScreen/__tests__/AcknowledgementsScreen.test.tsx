@@ -100,7 +100,9 @@ test('keeps the other licences and offers a retry when the models fail', async (
   const fetchMock = mockFetch(async () => ({ ok: false, status: 500 }));
   await render(<AcknowledgementsScreen />);
 
-  expect(await screen.findByText('screens.acknowledgements.loadFailed')).toBeTruthy();
+  expect(
+    await screen.findByText('screens.acknowledgements.loadFailed'),
+  ).toBeTruthy();
   expect(byTitle('screens.acknowledgements.webSearch')).toBeTruthy();
 
   fetchMock.mockImplementation(async () => ({
