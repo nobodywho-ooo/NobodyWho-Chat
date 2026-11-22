@@ -382,9 +382,12 @@ export function useChatGeneration({
       }
       const block =
         findA2UiBlock(accumulated) ?? findImplicitA2UiBlock(accumulated);
-      if (!block?.complete) {
+      if (block === null) {
         return;
       }
+      // A blocked turn that ended mid-<ui> (tiny models stop early) still
+      // renders when the partial parse yields a root — adopt the source and
+      // let the footnote explain. Only drops the card when nothing parses.
       const parsed = parseUiSource(block.uiText);
       if (parsed.root !== null) {
         turnToolCalls.push({
@@ -393,7 +396,7 @@ export function useChatGeneration({
           result: 'The UI card was rendered successfully.',
         });
         a2uiSettled = true;
-      } else if (!parsed.meta.incomplete) {
+      } else if (block.complete) {
         log('ChatScreen A2UI block parse failed', parsed.meta.errors);
       }
     };

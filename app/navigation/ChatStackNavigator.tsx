@@ -234,7 +234,11 @@ export const ChatStackNavigator = () => {
       // with this preset, Bonsai emits clean, valid Express (museum gallery
       // verified; default temperature 0.6 does not garble strings).
       sampler: A2UI_CONSTRAINED && assistantConfig.a2ui
-        ? SamplerPresets.constrainWithGrammar(A2UI_STREAM_GBNF)
+        ? // The stock constrained preset (top_k 20 + top_p 0.95 + temp 0.6 +
+          // dist). The tiny Q-quants' hard output budget (~60-120 tokens) is
+          // the real limit on card size — the prompt examples are sized to
+          // fit it; the sampler chain itself is server-verified.
+          SamplerPresets.constrainWithGrammar(A2UI_STREAM_GBNF)
         : SamplerPresets.temperature(assistantConfig.temperature),
       contextSize: assistantConfig.contextSize,
       thinking: assistantConfig.thinking,

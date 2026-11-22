@@ -44,11 +44,22 @@ block ::= stmt (nl stmt)*
 nl ::= "\n" ws
 stmt ::= ident ws "=" ws expr
 expr ::= call | array | object | string | number | boolean | null | reference
-call ::= name ws "(" ws args ws ")"
+# The Map call is special-cased: its route and variant are REQUIRED here even
+# though the schema marks them optional. Under llguidance, an optional tail
+# makes EOS a legal continuation at every object boundary, and the weak local
+# quants take it the moment a coordinate is "good enough" — truncating the
+# card (measured: 27B and 8B both stopped inside Map at lon:2.x). Forcing the
+# route/variant locks EOS out until the whole card is complete, so the model
+# is mechanically pushed through the remaining structure.
+call ::= map-call | call-generic
+map-call ::= "Map" ws "(" ws objarr ws "," ws objarr ws "," ws map-variant ws ")"
+objarr ::= "[" ws (object ("," ws object)*)? ws "]"
+map-variant ::= "small" | "medium" | "large"
+call-generic ::= name ws "(" ws args ws ")"
 # Only real components may be constructed; made-up names are not expressible.
 # [@Name] covers built-in functions/actions (ToAssistant, OpenUrl, Set,
 # Reset, Sum, Count, …) inside action slots and expressions.
-name ::= "Stack" | "TextContent" | "Icon" | "Image" | "Card" | "Divider" | "Button" | "Input" | "CheckBox" | "Slider" | "ChoicePicker" | "List" | "Tabs" | "Map" | "@" ident
+name ::= "Stack" | "TextContent" | "Icon" | "Image" | "Card" | "Divider" | "Button" | "Input" | "CheckBox" | "Slider" | "ChoicePicker" | "List" | "Tabs" | "@" ident
 args ::= (arg ("," ws arg)*)?
 arg ::= expr
 reference ::= "$"? ident ("." ident | "[" number "]")*
