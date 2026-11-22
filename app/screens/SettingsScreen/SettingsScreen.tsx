@@ -58,7 +58,7 @@ export const SettingsScreen: React.FC = () => {
       <ListItem
         title={t('screens.settings.rateApp')}
         subtitle={t('screens.settings.rateAppSubtitle')}
-        iosIconName="star.fill"
+        iosIconName="star"
         androidIconName="star"
         iconColor={colors.primary}
         onPress={() => openExternalUrl(RATE_APP_URL)}

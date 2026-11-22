@@ -65,7 +65,7 @@ exports[`renders correctly SettingsScreen 1`] = `
       <ListItem
         androidIconName="star"
         iconColor="#b44618"
-        iosIconName="star.fill"
+        iosIconName="star"
         onPress={[Function]}
         subtitle="screens.settings.rateAppSubtitle"
         title="screens.settings.rateApp"
