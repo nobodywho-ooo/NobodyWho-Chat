@@ -6,6 +6,7 @@ import {
   stripA2UiBlocks,
 } from '../stream';
 import { parseExpress } from '../express';
+import { A2UI_STREAM_GBNF } from '../grammar';
 
 const block = (expr: string) => `${A2UI_OPEN}${expr}${A2UI_CLOSE}`;
 
@@ -34,6 +35,25 @@ describe('stripA2UiBlocks', () => {
 
   test('removes an unterminated trailing block', () => {
     expect(stripA2UiBlocks('One. ' + `${A2UI_OPEN}Text("x`).trim()).toBe('One.');
+  });
+});
+
+describe('A2UI_STREAM_GBNF (whole-turn Express grammar)', () => {
+  test('keeps prose free and constrains Express inside <ui>', () => {
+    expect(A2UI_STREAM_GBNF).toContain('<ui>');
+    expect(A2UI_STREAM_GBNF).toContain('</ui>');
+    expect(A2UI_STREAM_GBNF).toMatch(/^prose ::=/m);
+    expect(A2UI_STREAM_GBNF).toMatch(/^uiblock ::=/m);
+    expect(A2UI_STREAM_GBNF).toMatch(/^call ::=/m);
+    expect(A2UI_STREAM_GBNF).toMatch(/^kwarg ::=/m);
+    expect(A2UI_STREAM_GBNF).not.toMatch(/<Icon/);
+  });
+
+  test('every rule body is single-line (nobodywho converter constraint)', () => {
+    const wrapped = A2UI_STREAM_GBNF.split('\n').some(
+      line => line.trim().length > 0 && /^\s/.test(line),
+    );
+    expect(wrapped).toBe(false);
   });
 });
 

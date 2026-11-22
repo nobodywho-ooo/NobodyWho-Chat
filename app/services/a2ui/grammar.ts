@@ -143,55 +143,50 @@ ws      ::= [ \\t\\n]*
 // --- Whole-turn streaming grammar -------------------------------------------
 // When A2UI is on, the chat's sampler is constrained with a whole-turn grammar
 // so the model can write normal prose (and think, and use other tools through
-// nobodywho's own tool-call path) BUT the moment it emits `<ui>`, the JSON
-// inside is forced to match the A2UI object grammar until `</ui>`. This is the
-// same "switch on a begin marker" idea nobodywho uses for tool calls, expressed
-// in GBNF: `prose` matches any text that does not contain the literal sequence
-// `<ui>`, so a `<ui>` routes to the constrained block instead.
+// nobodywho's own tool-call path) BUT the moment it emits `<ui>`, its contents
+// are forced to be valid A2UI "Express" DSL until `</ui>` — which
+// structurally forbids the JSX/HTML drift tiny models otherwise fall into. It
+// is the same "switch on a begin marker" idea nobodywho uses for tool calls.
+//
+// Rules are deliberately single-line (nobodywho's GBNF->Lark converter breaks
+// a top-level rule body at a newline). Validated against that converter.
 
-// Master switch. Currently OFF: A2UI streams Express (a compact DSL), and a
-// constrained-sampling grammar for Express is a follow-up. The JSON whole-turn
-// grammar below no longer matches the Express output format.
-export const A2UI_CONSTRAINED = false;
-
-// nobodywho's GBNF→Lark converter breaks a rule body at a newline (only rules
-// nested in `(...)` may wrap), so the object grammar must be single-line per
-// rule before it is embedded in the stream grammar. `A2UI_GBNF` above stays
-// hand-formatted for readability; this collapses it for the converter.
-const normalizeGbnf = (gbnf: string): string => {
-  const lines: string[] = [];
-  let buffer: string | null = null;
-  for (const raw of gbnf.split('\n')) {
-    const line = raw.trim();
-    if (line.length === 0) {
-      continue;
-    }
-    if (line.startsWith('#')) {
-      lines.push(line);
-    } else if (line.includes('::=')) {
-      if (buffer !== null) {
-        lines.push(buffer);
-      }
-      buffer = line;
-    } else {
-      buffer = buffer === null ? line : `${buffer} ${line}`;
-    }
-  }
-  if (buffer !== null) {
-    lines.push(buffer);
-  }
-  return lines.join('\n');
-};
-
-// The UI object grammar, promoted from its `root` rule to a reusable `ui` rule
-// so the wrapper can reference it.
-const UI_OBJECT_GBNF = normalizeGbnf(A2UI_GBNF).replace(/^root\s+::=/m, 'ui ::=');
+// Master switch: set to false to drop the sampler constraint entirely (the
+// tolerant Express parser + validator still render valid cards).
+export const A2UI_CONSTRAINED = true;
 
 // The whole-turn GBNF fed to `SamplerPresets.constrainWithGrammar`.
 export const A2UI_STREAM_GBNF = `root ::= segment*
 segment ::= prose | uiblock
 # prose: maximal text that does not contain the literal "<ui>"
 prose ::= ([^<] | "<" [^u] | "<u" [^i] | "<ui" [^>])+
-uiblock ::= "<ui>" ws ui ws "</ui>"
-${UI_OBJECT_GBNF}
+uiblock ::= "<ui>" ws block ws "</ui>"
+ws ::= [ \t\n]*
+block ::= data_lines root_expr
+data_lines ::= (data_line ws)*
+data_line ::= "$" path ws "=" ws value
+path ::= "/" [a-zA-Z0-9_/-]+
+root_expr ::= (ident ws "=" ws)? call
+call ::= ident ws "(" ws args ws ")"
+args ::= (arg ("," ws arg)*)?
+arg ::= kwarg | item
+kwarg ::= ident ws "=" ws item
+item ::= call | value
+value ::= string | number | boolean | null | binding | array | object
+binding ::= "$" path
+number ::= "-"? ("0" | [1-9] [0-9]*) ("." [0-9]+)?
+boolean ::= "true" | "false"
+null ::= "null"
+string ::= dquote | squote
+dquote ::= "\"" dchar* "\""
+squote ::= "'" schar* "'"
+dchar ::= [^"\\\\\\x00-\\x1F\\x7F] | "\\\\" ["\\\\/bfnrt]
+schar ::= [^'\\\\\\x00-\\x1F\\x7F] | "\\\\" ['\\\\/bfnrt]
+array ::= "[" ws items ws "]"
+items ::= (item ("," ws item)*)?
+object ::= "{" ws fields ws "}"
+fields ::= (field ("," ws field)*)?
+field ::= key ws ":" ws item
+key ::= ident | dquote | squote
+ident ::= [a-zA-Z_] [a-zA-Z0-9_]*
 `.trim();

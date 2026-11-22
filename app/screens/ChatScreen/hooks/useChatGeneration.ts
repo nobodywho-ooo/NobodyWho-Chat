@@ -72,6 +72,12 @@ const nextUid = (): string => `new:${++optimisticMessages}`;
 
 const STREAM_RENDER_INTERVAL_MS = 50;
 
+// A safety valve on runaway tool calling: a small model that keeps getting the
+// same tool back with an error may retry indefinitely (seen as 50+ calls to
+// one tool). Cap per turn and stop generation when it is reached; the partial
+// answer is still persisted.
+const MAX_TOOL_CALLS_PER_TURN = 8;
+
 // Sends the user's turn to the model. Normally `ask` continues from the cached
 // prefix. A web search whose planner borrowed the chat left the planner's
 // exchange as the history, so that turn is replayed over the snapshot with
@@ -416,6 +422,14 @@ export function useChatGeneration({
       turnToolCalls.push(invocation);
       accumulated = thinkOpenWriter.write('toolResult', accumulated);
       renderAssistant();
+      if (turnToolCalls.length >= MAX_TOOL_CALLS_PER_TURN) {
+        log(
+          'ChatScreen tool-call loop guard: stopping after',
+          turnToolCalls.length,
+          'calls',
+        );
+        activeChat?.stopGeneration();
+      }
     });
 
     const persistAssistant = async (metrics?: {
