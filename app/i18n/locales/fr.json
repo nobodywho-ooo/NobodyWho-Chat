@@ -143,7 +143,12 @@
       "microphoneDeniedTitle": "Accès au micro requis",
       "microphoneDeniedMessage": "Autorisez l'accès au micro dans les Réglages pour dicter vos messages.",
       "webSearch": "Rechercher sur le web",
-      "thinking": "Réfléchir avant de répondre"
+      "thinking": "Réfléchir avant de répondre",
+      "attachUnavailable": "Le modèle actuel ne peut pas lire d'images ni d'audio",
+      "imageUnavailable": "Le modèle actuel ne peut pas lire d'images",
+      "audioUnavailable": "Le modèle actuel ne peut pas écouter d'audio",
+      "dictationUnavailable": "Choisissez un modèle de reconnaissance vocale pour dicter",
+      "thinkingUnavailable": "Le modèle actuel ne peut pas réfléchir avant de répondre"
     },
     "cameraCapture": {
       "permission": "L'accès à l'appareil photo est nécessaire pour prendre une photo.",

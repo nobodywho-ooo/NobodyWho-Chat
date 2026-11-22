@@ -147,6 +147,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const {
     webSearch,
+    unavailableReason: webSearchUnavailableReason,
     toggle: toggleWebSearch,
     embeddingPrompt,
     chatModel: webChatModel,
@@ -225,17 +226,20 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     );
   }, [toggleThinking, showToggleNotice, t]);
 
-  const ingestsImage = pipelineIngestsImage(chatPipeline);
-  const ingestsAudio = pipelineIngestsAudio(chatPipeline);
+  const canAttachImage = pipelineIngestsImage(chatPipeline);
+  const canAttachAudio = pipelineIngestsAudio(chatPipeline);
 
-  const attachments = useAttachments({ ingestsImage, ingestsAudio });
+  const attachments = useAttachments({
+    ingestsImage: canAttachImage,
+    ingestsAudio: canAttachAudio,
+  });
   const { clearAllAttachments } = attachments;
 
   const { isStreaming, handleSend, stopStreaming } = useChatGeneration({
     chat: slots.chat.ref,
     thinking,
-    ingestsImage,
-    ingestsAudio,
+    ingestsImage: canAttachImage,
+    ingestsAudio: canAttachAudio,
     inputText,
     setInputText,
     setMessages,
@@ -313,7 +317,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   useEffect(() => {
     setAttachExpanded(false);
     clearAllAttachments();
-  }, [ingestsImage, ingestsAudio, clearAllAttachments]);
+  }, [canAttachImage, canAttachAudio, clearAllAttachments]);
 
   const messageKey = useCallback(
     (item: DisplayMessage, index: number) => item.uid ?? `at:${index}`,
@@ -485,24 +489,28 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           disabled={disabled}
           attachExpanded={attachExpanded}
           onAttachExpandedChange={setAttachExpanded}
-          showImageAttach={ingestsImage}
-          showAudioAttach={ingestsAudio}
+          canAttachImage={canAttachImage}
+          canAttachAudio={canAttachAudio}
           imageSource={attachments.attachedDocuments?.imageSource}
           hasAudio={!!attachments.attachedDocuments?.audioPath}
           onAttachImage={onAttachImage}
           onAttachCamera={onAttachCamera}
           onAttachAudio={onAttachAudio}
-          showDictation={canDictate}
+          canDictate={canDictate}
           isRecording={isRecording}
           isTranscribing={isTranscribing}
           onStartDictation={startRecording}
           onStopDictation={stopRecording}
-          showWebSearch
           webSearchEnabled={webSearch.enabled}
+          webSearchUnavailableMessage={
+            webSearchUnavailableReason &&
+            t(`screens.chat.webSearchNotice.${webSearchUnavailableReason}`)
+          }
           onToggleWebSearch={handleToggleWebSearch}
-          showThinking={canThink}
+          canThink={canThink}
           thinkingEnabled={thinking.enabled}
           onToggleThinking={handleToggleThinking}
+          onUnavailable={showToggleNotice}
           onChangeText={setInputText}
           onSend={onSend}
           onStop={onStop}
@@ -528,7 +536,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           onClose={embeddingPrompt.close}
         />
       )}
-      {ingestsImage && (
+      {canAttachImage && (
         <CameraCaptureModal
           visible={attachments.cameraVisible}
           onClose={() => attachments.setCameraVisible(false)}

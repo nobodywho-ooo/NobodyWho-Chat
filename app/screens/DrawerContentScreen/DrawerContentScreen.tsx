@@ -87,14 +87,12 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         <View style={styles.headerButtons}>
           <IconButton
             icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
-            glass
             accessibilityRole="button"
             accessibilityLabel={t('screens.drawerContent.settings')}
             onPress={handleSettingsPress}
           />
           <IconButton
             icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
-            glass
             accessibilityRole="button"
             onPress={closeDrawer}
           />

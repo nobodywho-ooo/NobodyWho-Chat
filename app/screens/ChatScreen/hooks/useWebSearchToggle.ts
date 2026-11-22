@@ -15,6 +15,8 @@ import { isEmbeddingPipeline, ModelSlot } from 'types';
 import type { EmbeddingPromptOutcome } from '../components';
 import type { ChatWebSearchOptions } from './useChatGeneration';
 
+export type WebSearchUnavailableReason = 'modelTooSmall' | 'notEnoughMemory';
+
 export interface EmbeddingPrompt {
   open: boolean;
   required: boolean;
@@ -54,23 +56,21 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
   const [promptRequired, setPromptRequired] = useState(false);
   const promptDismissedRef = useRef(false);
 
-  const usable =
-    isWebSearchReady(chatModel) && hasMemoryForWebSearch(chatModel, ramGB);
-  const enabled = toggledOn && usable;
+  let unavailableReason: WebSearchUnavailableReason | undefined;
+  if (!isWebSearchReady(chatModel)) {
+    unavailableReason = 'modelTooSmall';
+  } else if (!hasMemoryForWebSearch(chatModel, ramGB)) {
+    unavailableReason = 'notEnoughMemory';
+  }
+
+  const enabled = toggledOn && unavailableReason === undefined;
 
   const toggle = useCallback((): boolean | undefined => {
     const store = useWebSearchStore.getState();
 
-    if (!enabled) {
-      if (!isWebSearchReady(chatModel)) {
-        store.showNotice('modelTooSmall');
-        return undefined;
-      }
-
-      if (!hasMemoryForWebSearch(chatModel, ramGB)) {
-        store.showNotice('notEnoughMemory');
-        return undefined;
-      }
+    if (!enabled && unavailableReason) {
+      store.showNotice(unavailableReason);
+      return undefined;
     }
 
     store.setEnabled(conversationId, !enabled);
@@ -94,6 +94,7 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
     return true;
   }, [
     enabled,
+    unavailableReason,
     chatModel,
     embeddingModel,
     hasInstalledEmbedding,
@@ -135,5 +136,12 @@ export const useWebSearchToggle = (conversationId: number | undefined) => {
     [enabled, chatModel, embeddingModel, embeddingSlot],
   );
 
-  return { webSearch, toggle, embeddingPrompt, chatModel, ramGB };
+  return {
+    webSearch,
+    unavailableReason,
+    toggle,
+    embeddingPrompt,
+    chatModel,
+    ramGB,
+  };
 };

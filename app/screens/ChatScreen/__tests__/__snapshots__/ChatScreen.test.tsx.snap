@@ -342,6 +342,10 @@ exports[`renders ChatScreen with existing messages 1`] = `
   >
     <InputBar
       attachExpanded={false}
+      canAttachAudio={false}
+      canAttachImage={false}
+      canDictate={false}
+      canThink={false}
       composerRef={
         {
           "current": null,
@@ -364,11 +368,7 @@ exports[`renders ChatScreen with existing messages 1`] = `
       onStopDictation={[Function]}
       onToggleThinking={[Function]}
       onToggleWebSearch={[Function]}
-      showAudioAttach={false}
-      showDictation={false}
-      showImageAttach={false}
-      showThinking={false}
-      showWebSearch={true}
+      onUnavailable={[Function]}
       style={
         {
           "paddingBottom": 14,
@@ -626,6 +626,10 @@ exports[`renders correctly empty ChatScreen 1`] = `
   >
     <InputBar
       attachExpanded={false}
+      canAttachAudio={false}
+      canAttachImage={false}
+      canDictate={false}
+      canThink={false}
       composerRef={
         {
           "current": null,
@@ -648,11 +652,7 @@ exports[`renders correctly empty ChatScreen 1`] = `
       onStopDictation={[Function]}
       onToggleThinking={[Function]}
       onToggleWebSearch={[Function]}
-      showAudioAttach={false}
-      showDictation={false}
-      showImageAttach={false}
-      showThinking={false}
-      showWebSearch={true}
+      onUnavailable={[Function]}
       style={
         {
           "paddingBottom": 14,

@@ -376,6 +376,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
           <IconButton
             accessibilityLabel="screens.customizeAssistant.decreaseMaxTokens"
             color="#000000"
+            compact={true}
             disabled={false}
             icon={
               {
@@ -399,6 +400,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
           <IconButton
             accessibilityLabel="screens.customizeAssistant.increaseMaxTokens"
             color="#000000"
+            compact={true}
             disabled={false}
             icon={
               {

@@ -2,6 +2,8 @@ import React from 'react';
 import { Text } from 'react-native';
 import { render, act, within } from '@testing-library/react-native';
 
+import { lightColors } from 'style';
+
 import { InputBar } from '../InputBar';
 
 jest.unmock('../InputBar');
@@ -54,8 +56,8 @@ test('renders the collapsed + toggle when attachments are enabled', async () => 
   const tree = (
     await render(
       <StatefulInputBar
-        showImageAttach
-        showAudioAttach
+        canAttachImage
+        canAttachAudio
         onAttachImage={foo}
         onAttachAudio={foo}
       />,
@@ -67,8 +69,8 @@ test('renders the collapsed + toggle when attachments are enabled', async () => 
 test('pressing + lists the attach options and keeps the text input', async () => {
   const screen = await render(
     <StatefulInputBar
-      showImageAttach
-      showAudioAttach
+      canAttachImage
+      canAttachAudio
       onAttachImage={foo}
       onAttachAudio={foo}
     />,
@@ -105,9 +107,16 @@ test('pressing + lists the attach options and keeps the text input', async () =>
   ).toBeTruthy();
 });
 
-test('the camera button only appears for image-capable models', async () => {
+test('an audio-only model greys out photo and camera and explains why', async () => {
+  const onAttachImage = jest.fn();
+  const onUnavailable = jest.fn();
   const screen = await render(
-    <StatefulInputBar showAudioAttach onAttachAudio={foo} />,
+    <StatefulInputBar
+      canAttachAudio
+      onAttachAudio={foo}
+      onAttachImage={onAttachImage}
+      onUnavailable={onUnavailable}
+    />,
   );
 
   const toggle = screen.container
@@ -119,10 +128,58 @@ test('the camera button only appears for image-capable models', async () => {
     .queryAll(isIconButton)
     .map(node => node.props.icon.iosIconName);
 
-  // Audio-only model: the audio option is offered, but neither photo nor camera.
-  expect(iconNames).toContain('waveform');
-  expect(iconNames).not.toContain('photo');
-  expect(iconNames).not.toContain('camera');
+  // All three options are listed; only audio is usable.
+  expect(iconNames).toEqual(
+    expect.arrayContaining(['waveform', 'photo', 'camera']),
+  );
+
+  const photo = screen.container
+    .queryAll(isIconButton)
+    .find(node => node.props.icon.iosIconName === 'photo')!;
+  expect(photo.props.color).toBe(lightColors.onSurfaceDisabled);
+
+  await act(() => photo.props.onPress());
+  expect(onAttachImage).not.toHaveBeenCalled();
+  expect(onUnavailable).toHaveBeenCalledWith(
+    'components.inputBar.imageUnavailable',
+  );
+});
+
+test('every optional feature button is shown, greyed out, when unavailable', async () => {
+  const onUnavailable = jest.fn();
+  const onAttachExpandedChange = jest.fn();
+  const screen = await render(
+    <InputBar
+      value=""
+      isStreaming={false}
+      attachExpanded={false}
+      onAttachExpandedChange={onAttachExpandedChange}
+      onChangeText={foo}
+      onSend={foo}
+      onStop={foo}
+      onUnavailable={onUnavailable}
+    />,
+  );
+
+  const byIcon = (name: string) =>
+    screen.container
+      .queryAll(isIconButton)
+      .find(node => node.props.icon.iosIconName === name)!;
+
+  for (const [icon, message] of [
+    ['plus', 'components.inputBar.attachUnavailable'],
+    ['mic', 'components.inputBar.dictationUnavailable'],
+    ['lightbulb', 'components.inputBar.thinkingUnavailable'],
+  ]) {
+    const button = byIcon(icon);
+    expect(button.props.color).toBe(lightColors.onSurfaceDisabled);
+    expect(button.props.accessibilityState).toMatchObject({ disabled: true });
+    await act(() => button.props.onPress());
+    expect(onUnavailable).toHaveBeenLastCalledWith(message);
+  }
+
+  // The + never opens the tray when there's nothing to attach.
+  expect(onAttachExpandedChange).not.toHaveBeenCalled();
 });
 
 // Render an image-capable InputBar in its expanded state and report which attach
@@ -132,7 +189,7 @@ const expandedImageIcons = async (
 ): Promise<string[]> => {
   const screen = await render(
     <StatefulInputBar
-      showImageAttach
+      canAttachImage
       imageSource={imageSource}
       onAttachImage={foo}
       onAttachCamera={foo}
@@ -172,8 +229,8 @@ test('an image captured via Camera hides the Photo button', async () => {
 test('with an image attached, only the image option is listed', async () => {
   const screen = await render(
     <StatefulInputBar
-      showImageAttach
-      showAudioAttach
+      canAttachImage
+      canAttachAudio
       imageSource="photo"
       onAttachImage={foo}
       onAttachCamera={foo}
@@ -203,8 +260,8 @@ test('with an image attached, only the image option is listed', async () => {
 test('with audio attached, only the audio option is listed', async () => {
   const screen = await render(
     <StatefulInputBar
-      showImageAttach
-      showAudioAttach
+      canAttachImage
+      canAttachAudio
       hasAudio
       onAttachImage={foo}
       onAttachCamera={foo}
@@ -231,7 +288,7 @@ test('with audio attached, only the audio option is listed', async () => {
 test('the toggle shows a paperclip once an attachment is present', async () => {
   const screen = await render(
     <StatefulInputBar
-      showImageAttach
+      canAttachImage
       imageSource="photo"
       onAttachImage={foo}
       onAttachCamera={foo}
@@ -249,7 +306,7 @@ test('the toggle shows a paperclip once an attachment is present', async () => {
 
 test('selecting an attachment collapses the expanded tray', async () => {
   const props = {
-    showImageAttach: true,
+    canAttachImage: true,
     onAttachImage: foo,
     onAttachCamera: foo,
   };
@@ -274,7 +331,7 @@ test('sending closes the expanded tray', async () => {
   const screen = await render(
     <StatefulInputBar
       value={'hello'}
-      showImageAttach
+      canAttachImage
       onAttachImage={foo}
       onAttachCamera={foo}
       onSend={onSend}
@@ -373,29 +430,94 @@ const webSearchButton = (screen: Awaited<ReturnType<typeof render>>) =>
       node => node.props.accessibilityLabel === 'components.inputBar.webSearch',
     );
 
-test('the globe toggle only appears when web search is available', async () => {
-  const without = await render(<StatefulInputBar />);
-  expect(webSearchButton(without)).toBeUndefined();
-
-  const withToggle = await render(<StatefulInputBar showWebSearch />);
-  expect(webSearchButton(withToggle)).toBeDefined();
-});
-
 test('the globe toggle shows its state and reports presses', async () => {
   const onToggleWebSearch = jest.fn();
   const screen = await render(
+    <StatefulInputBar webSearchEnabled onToggleWebSearch={onToggleWebSearch} />,
+  );
+
+  const button = webSearchButton(screen)!;
+  expect(button.props.accessibilityState).toEqual({
+    selected: true,
+    disabled: false,
+  });
+
+  await act(() => button.props.onPress());
+  expect(onToggleWebSearch).toHaveBeenCalledTimes(1);
+});
+
+test('the globe is greyed out and explains why when the model cannot search', async () => {
+  const onToggleWebSearch = jest.fn();
+  const onUnavailable = jest.fn();
+  const screen = await render(
     <StatefulInputBar
-      showWebSearch
-      webSearchEnabled
+      webSearchUnavailableMessage="too small"
       onToggleWebSearch={onToggleWebSearch}
+      onUnavailable={onUnavailable}
     />,
   );
 
   const button = webSearchButton(screen)!;
-  expect(button.props.accessibilityState).toEqual({ selected: true });
+  expect(button.props.color).toBe(lightColors.onSurfaceDisabled);
 
   await act(() => button.props.onPress());
-  expect(onToggleWebSearch).toHaveBeenCalledTimes(1);
+  expect(onToggleWebSearch).not.toHaveBeenCalled();
+  expect(onUnavailable).toHaveBeenCalledWith('too small');
+});
+
+test('the mic stays visible but disabled while an answer streams in', async () => {
+  const screen = await render(<StatefulInputBar canDictate isStreaming />);
+
+  const mic = screen.container
+    .queryAll(isIconButton)
+    .find(node => node.props.icon.iosIconName === 'mic')!;
+  expect(mic.props.disabled).toBe(true);
+  expect(mic.props.color).toBe(lightColors.onSurfaceDisabled);
+});
+
+test('every feature button is greyed out and disabled while streaming', async () => {
+  const screen = await render(
+    <StatefulInputBar
+      isStreaming
+      canAttachImage
+      canDictate
+      canThink
+      thinkingEnabled
+      webSearchEnabled
+    />,
+  );
+
+  const icons = ['plus', 'mic', 'lightbulb', 'globe', 'waveform'];
+  for (const icon of icons) {
+    const button = screen.container
+      .queryAll(isIconButton)
+      .find(node => node.props.icon.iosIconName === icon)!;
+    expect(button.props.disabled).toBe(true);
+    expect(button.props.color).toBe(lightColors.onSurfaceDisabled);
+  }
+
+  // The send button turns into stop and stays usable.
+  const stop = screen.container
+    .queryAll(isIconButton)
+    .find(node => node.props.icon.iosIconName === 'stop')!;
+  expect(stop.props.disabled).toBe(false);
+});
+
+test.each([
+  ['recording', { isRecording: true }],
+  ['transcribing', { isTranscribing: true }],
+])('send is disabled while %s', async (_, dictation) => {
+  const screen = await render(
+    <StatefulInputBar value="hello" canDictate {...dictation} />,
+  );
+
+  const send = screen.container
+    .queryAll(isIconButton)
+    .find(node => node.props.icon.iosIconName === 'arrow.up')!;
+  expect(send.props.disabled).toBe(true);
+  expect(send.props.backgroundColor).toBe(
+    lightColors.ctaSurfacePrimaryDisabled,
+  );
 });
 
 // --- Text set from outside -------------------------------------------------

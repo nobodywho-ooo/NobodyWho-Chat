@@ -1,10 +1,13 @@
 import { StyleSheet } from 'react-native';
+import { iconButtonSize } from 'components';
 import { Spacings } from 'style';
 
 const TOP_GRADIENT_HEIGHT = 10;
 const BOTTOM_FADE_HEIGHT = 64;
 const CARD_RADIUS = 16;
 const MARGIN_RIGHT_ICON_BUTTON = Spacings.sm;
+
+export const BAR_BUTTON_SIZE = iconButtonSize(true);
 
 export const styles = StyleSheet.create({
   mainContainer: {
@@ -28,6 +31,9 @@ export const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     height: BOTTOM_FADE_HEIGHT,
+  },
+  opaqueCard: {
+    borderWidth: 1,
   },
   glassCard: {
     borderRadius: CARD_RADIUS,
@@ -58,8 +64,8 @@ export const styles = StyleSheet.create({
     marginRight: MARGIN_RIGHT_ICON_BUTTON,
   },
   transcriptionLoaderContainer: {
-    width: 36,
-    height: 36,
+    width: BAR_BUTTON_SIZE,
+    height: BAR_BUTTON_SIZE,
     marginRight: MARGIN_RIGHT_ICON_BUTTON,
     alignItems: 'center',
     justifyContent: 'center',

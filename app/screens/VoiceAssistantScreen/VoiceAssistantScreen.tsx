@@ -123,7 +123,6 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
       <View style={styles.headerContainer}>
         <IconButton
           icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
-          glass
           accessibilityLabel={t('screens.voiceAssistant.close')}
           onPress={
             showPreferences ? () => setShowPreferences(false) : onCloseDrawer
@@ -135,12 +134,11 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
         {canOpenPreferences && !showPreferences ? (
           <IconButton
             icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
-            glass
             accessibilityLabel={t('screens.voiceAssistant.preferences')}
             onPress={() => setShowPreferences(true)}
           />
         ) : (
-          <View style={{ width: iconButtonSize(true) }} />
+          <View style={{ width: iconButtonSize() }} />
         )}
       </View>
 

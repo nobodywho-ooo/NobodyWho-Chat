@@ -1364,7 +1364,7 @@ test('switching thinking off applies to the next turn without a reload', async (
     />,
   );
 
-  expect(inputBar(screen).props.showThinking).toBe(true);
+  expect(inputBar(screen).props.canThink).toBe(true);
   expect(inputBar(screen).props.thinkingEnabled).toBe(false);
 
   await send(screen, 'hi');
@@ -1420,7 +1420,7 @@ test('the thinking switch flips the saved preference', async () => {
   });
 });
 
-test('a model that cannot reason hides the switch and never thinks', async () => {
+test('a model that cannot reason greys out the switch and never thinks', async () => {
   mockChatCanThink = false;
 
   const screen = await render(
@@ -1431,7 +1431,7 @@ test('a model that cannot reason hides the switch and never thinks', async () =>
     />,
   );
 
-  expect(inputBar(screen).props.showThinking).toBe(false);
+  expect(inputBar(screen).props.canThink).toBe(false);
 
   await send(screen, 'hi');
 

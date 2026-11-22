@@ -101,7 +101,6 @@ const AvailableModelsView: React.FC<AvailableModelsProps> = ({
         {showFilters && (
           <IconButton
             icon={FILTER_ICON}
-            glass
             color={filter === ALL_PIPELINES ? undefined : colors.primary}
             onPress={() => setFilterSheetOpen(true)}
             accessibilityRole="button"

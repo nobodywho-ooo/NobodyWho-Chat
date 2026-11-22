@@ -143,7 +143,12 @@
       "microphoneDeniedTitle": "Microphone access needed",
       "microphoneDeniedMessage": "Allow microphone access in Settings to dictate your messages.",
       "webSearch": "Search the web",
-      "thinking": "Think before answering"
+      "thinking": "Think before answering",
+      "attachUnavailable": "The current model can't read images or audio",
+      "imageUnavailable": "The current model can't read images",
+      "audioUnavailable": "The current model can't listen to audio",
+      "dictationUnavailable": "Choose a speech-to-text model to dictate",
+      "thinkingUnavailable": "The current model can't think before answering"
     },
     "cameraCapture": {
       "permission": "Camera access is needed to take a photo.",

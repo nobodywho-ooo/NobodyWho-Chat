@@ -15,6 +15,9 @@ let mockInstalled: (typeof mockChatModel)[] = [];
 const mockIsHighMemoryDevice = jest.fn(() => false);
 const mockIsMemoryConstrained = jest.fn(() => false);
 
+const mockReady = jest.fn(() => true);
+const mockHasMemory = jest.fn(() => true);
+
 jest.mock('hooks', () => ({
   useSlotModel: (slot: string) =>
     slot === 'embedding' ? mockSlotEmbedding : mockChatModel,
@@ -34,8 +37,8 @@ jest.mock('services', () => {
     useAiService: () => ({ slots: { embedding: {} } }),
     useWebSearchStore,
     NEW_CHAT_KEY,
-    hasMemoryForWebSearch: () => true,
-    isWebSearchReady: () => true,
+    hasMemoryForWebSearch: () => mockHasMemory(),
+    isWebSearchReady: () => mockReady(),
     isHighMemoryDevice: () => mockIsHighMemoryDevice(),
     isMemoryConstrained: () => mockIsMemoryConstrained(),
   };
@@ -58,6 +61,8 @@ const renderToggle = async () => {
 };
 
 beforeEach(() => {
+  mockReady.mockReturnValue(true);
+  mockHasMemory.mockReturnValue(true);
   mockSlotEmbedding = undefined;
   mockInstalled = [mockChatModel];
   mockIsHighMemoryDevice.mockReturnValue(false);
@@ -143,4 +148,28 @@ test('a prompt that ends with the model ready keeps search on', async () => {
   await act(async () => result.current.embeddingPrompt.close('ready'));
 
   expect(isSearchOn()).toBe(true);
+});
+
+test('a model too small to search reports why and never turns on', async () => {
+  mockReady.mockReturnValue(false);
+  const { result } = await renderToggle();
+
+  expect(result.current.unavailableReason).toBe('modelTooSmall');
+  await act(async () => {
+    expect(result.current.toggle()).toBeUndefined();
+  });
+  expect(isSearchOn()).toBe(false);
+});
+
+test('a model that leaves no memory to search reports why', async () => {
+  mockHasMemory.mockReturnValue(false);
+  const { result } = await renderToggle();
+
+  expect(result.current.unavailableReason).toBe('notEnoughMemory');
+});
+
+test('a usable model has no unavailable reason', async () => {
+  const { result } = await renderToggle();
+
+  expect(result.current.unavailableReason).toBeUndefined();
 });

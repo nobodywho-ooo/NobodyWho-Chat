@@ -38,7 +38,6 @@ exports[`renders correctly DrawerContentScreen 1`] = `
       <IconButton
         accessibilityLabel="screens.drawerContent.settings"
         accessibilityRole="button"
-        glass={true}
         icon={
           {
             "androidIconName": "settings",
@@ -49,7 +48,6 @@ exports[`renders correctly DrawerContentScreen 1`] = `
       />
       <IconButton
         accessibilityRole="button"
-        glass={true}
         icon={
           {
             "androidIconName": "close",

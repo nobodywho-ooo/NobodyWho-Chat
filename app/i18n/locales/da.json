@@ -143,7 +143,12 @@
       "microphoneDeniedTitle": "Mikrofonadgang kræves",
       "microphoneDeniedMessage": "Tillad mikrofonadgang i Indstillinger for at diktere dine beskeder.",
       "webSearch": "Søg på nettet",
-      "thinking": "Tænk før du svarer"
+      "thinking": "Tænk før du svarer",
+      "attachUnavailable": "Den aktuelle model kan ikke læse billeder eller lyd",
+      "imageUnavailable": "Den aktuelle model kan ikke læse billeder",
+      "audioUnavailable": "Den aktuelle model kan ikke lytte til lyd",
+      "dictationUnavailable": "Vælg en tale-til-tekst-model for at diktere",
+      "thinkingUnavailable": "Den aktuelle model kan ikke tænke før den svarer"
     },
     "cameraCapture": {
       "permission": "Kameraadgang er nødvendig for at tage et billede.",

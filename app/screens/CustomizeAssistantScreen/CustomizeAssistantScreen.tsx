@@ -155,6 +155,7 @@ export const CustomizeAssistantScreen: React.FC = () => {
         <View style={styles.stepperContainer}>
           <IconButton
             icon={{ iosIconName: 'minus', androidIconName: 'remove' }}
+            compact
             accessibilityLabel={t(
               'screens.customizeAssistant.decreaseMaxTokens',
             )}
@@ -178,6 +179,7 @@ export const CustomizeAssistantScreen: React.FC = () => {
           </Text>
           <IconButton
             icon={{ iosIconName: 'plus', androidIconName: 'add' }}
+            compact
             accessibilityLabel={t(
               'screens.customizeAssistant.increaseMaxTokens',
             )}
