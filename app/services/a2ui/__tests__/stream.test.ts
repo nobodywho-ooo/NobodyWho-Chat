@@ -5,6 +5,7 @@ import {
   parseA2UiLive,
   stripA2UiBlocks,
 } from '../stream';
+import { A2UI_STREAM_GBNF } from '../grammar';
 
 const block = (ui: string) => `${A2UI_OPEN}${ui}${A2UI_CLOSE}`;
 
@@ -37,6 +38,21 @@ describe('stripA2UiBlocks', () => {
   test('removes an unterminated trailing block', () => {
     const text = 'One line. ' + `${A2UI_OPEN}{"components":[]`;
     expect(stripA2UiBlocks(text).trim()).toBe('One line.');
+  });
+});
+
+describe('A2UI_STREAM_GBNF (whole-turn grammar)', () => {
+  test('wraps the UI-object grammar inside the <ui> sentinels', () => {
+    expect(A2UI_STREAM_GBNF).toContain('<ui>');
+    expect(A2UI_STREAM_GBNF).toContain('</ui>');
+    // The UI object grammar promotes its root rule to a reusable `ui` rule.
+    expect(A2UI_STREAM_GBNF).toMatch(/^ui\s+::=/m);
+  });
+
+  test('lets prose be free while a <ui> routes to the constrained block', () => {
+    expect(A2UI_STREAM_GBNF).toMatch(/prose ::=/);
+    expect(A2UI_STREAM_GBNF).toMatch(/uiblock ::=/);
+    expect(A2UI_STREAM_GBNF).toMatch(/segment ::= prose | uiblock/);
   });
 });
 

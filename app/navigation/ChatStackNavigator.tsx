@@ -37,6 +37,8 @@ import { Toast } from 'components';
 import { Spacings } from 'style';
 import { useAppState, useModels } from 'hooks';
 import {
+  A2UI_CONSTRAINED,
+  A2UI_STREAM_GBNF,
   A2UI_SYSTEM_PROMPT_HINT,
   VOICE_SLOTS,
   VoiceSlot,
@@ -221,7 +223,14 @@ export const ChatStackNavigator = () => {
     const created = await slots.chat.create({
       model,
       systemPrompt: systemPrompt || undefined,
-      sampler: SamplerPresets.temperature(assistantConfig.temperature),
+      // With A2UI on, constrain sampling so the token stream is free prose
+      // (and free tool calls) until the model opens a <ui> block, after which
+      // the UI JSON is enforced by the grammar until </ui>. The temperature
+      // setting is deliberately dropped here: a constrained generation is
+      // their own quality trade beside grammar validity.
+      sampler: A2UI_CONSTRAINED && assistantConfig.a2ui
+        ? SamplerPresets.constrainWithGrammar(A2UI_STREAM_GBNF)
+        : SamplerPresets.temperature(assistantConfig.temperature),
       contextSize: assistantConfig.contextSize,
       thinking: assistantConfig.thinking,
       toolCalling: assistantConfig.toolCalling,

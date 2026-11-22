@@ -126,3 +126,29 @@ char    ::= [^"\\\\\\x00-\\x1F\\x7F] | "\\\\" (["\\\\/bfnrt] | "u" [0-9a-fA-F] [
 number  ::= "-"? ("0" | [1-9] [0-9]*) ("." [0-9]+)? (("e" | "E") ("+" | "-")? [0-9]+)?
 ws      ::= [ \\t\\n]*
 `.trim();
+
+// --- Whole-turn streaming grammar -------------------------------------------
+// When A2UI is on, the chat's sampler is constrained with a whole-turn grammar
+// so the model can write normal prose (and think, and use other tools through
+// nobodywho's own tool-call path) BUT the moment it emits `<ui>`, the JSON
+// inside is forced to match the A2UI object grammar until `</ui>`. This is the
+// same "switch on a begin marker" idea nobodywho uses for tool calls, expressed
+// in GBNF: `prose` matches any text that does not contain the literal sequence
+// `<ui>`, so a `<ui>` routes to the constrained block instead.
+
+// Master switch: set to false to fall back to unconstrained streaming
+// (the tolerant parser + validator still render valid cards).
+export const A2UI_CONSTRAINED = true;
+
+// The UI object grammar above, promoted from its `root` rule to a reusable
+// `ui` rule so the wrapper can reference it.
+const UI_OBJECT_GBNF = A2UI_GBNF.replace(/^root\s+::=/m, 'ui ::=');
+
+// The whole-turn GBNF fed to `SamplerPresets.constrainWithGrammar`.
+export const A2UI_STREAM_GBNF = `root ::= segment*
+segment ::= prose | uiblock
+# prose: maximal text that does not contain the literal "<ui>"
+prose ::= ([^<] | "<" [^u] | "<u" [^i] | "<ui" [^>])+
+uiblock ::= "<ui>" ws ui ws "</ui>"
+${UI_OBJECT_GBNF}
+`.trim();
