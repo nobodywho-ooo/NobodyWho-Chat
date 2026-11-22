@@ -2,10 +2,12 @@
 // same visual language as ToolCallBlock) above the live A2UiSurface.
 //
 // Two paths land here:
-//  - a settled `render_ui` invocation (persisted, survives reloads), and
-//  - the live preview of a `<ui>…</ui>` block mid-stream, which is
-//    re-validated on the way through (persisted messages travel the database
-//    and back, so validation is re-run rather than trusted).
+//  - a settled `render_ui` invocation (persisted, survives reloads), whose
+//    `arguments.lang` holds the OpenUI Lang source and is re-parsed on the
+//    way through (persisted messages travel the database and back, so
+//    validation is re-run rather than trusted), and
+//  - the live preview of a `<ui>…</ui>` block mid-stream, carrying the
+//    already-parsed streaming result.
 
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -13,18 +15,21 @@ import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
 import { log } from 'helpers';
 import { Spacings } from 'style';
-import { validateUi } from 'services';
 import { ToolInvocation } from 'types';
 
+import { parseUiSource, firstUiWarning } from '../../../services/a2ui/parse';
 import { A2UiSurface } from '../../A2Ui/A2UiSurface';
-import type { A2UiSurface as A2UiSurfaceData } from '../../../services/a2ui/types';
+import type { A2UiLive } from '../../../services/a2ui/types';
 import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
 import { Text } from '../../Text/Text';
 
 import { ToolCallBlock } from './ToolCallBlock';
 
 interface A2UiSurfaceCardProps {
-  surface: A2UiSurfaceData;
+  /** The parsed root element for the card. */
+  root: Parameters<typeof A2UiSurface>[0]['root'];
+  /** Optional data model exposed to the surface as `$` bindings. */
+  dataModel?: Record<string, unknown>;
   /** Whether this is a still-streaming preview rather than a settled card. */
   live?: boolean;
   /** A warning/footnote caption shown under the card (e.g. a skip). */
@@ -33,7 +38,8 @@ interface A2UiSurfaceCardProps {
 
 /** The header + surface used by both the settled invocation and the live preview. */
 export const A2UiSurfaceCard: React.FC<A2UiSurfaceCardProps> = ({
-  surface,
+  root,
+  dataModel,
   live = false,
   footnote,
 }) => {
@@ -59,7 +65,7 @@ export const A2UiSurfaceCard: React.FC<A2UiSurfaceCardProps> = ({
           </Text>
         )}
       </View>
-      <A2UiSurface surface={surface} />
+      <A2UiSurface root={root} dataModel={dataModel} />
       {footnote !== undefined && (
         <Text
           variant="caption"
@@ -78,16 +84,17 @@ interface A2UiToolCallProps {
 }
 
 export const A2UiToolCall: React.FC<A2UiToolCallProps> = ({ invocation }) => {
-  const render = useMemo(() => {
-    const validation = validateUi(invocation.arguments?.ui);
-    if (validation.valid && validation.surface) {
-      return { surface: validation.surface, warnings: validation.warnings };
+  const { t } = useTranslation();
+  const parsed = useMemo(() => {
+    const lang = (invocation.arguments as { lang?: unknown } | undefined)?.lang;
+    if (typeof lang !== 'string' || lang.trim() === '') {
+      log('[a2ui] A2UiToolCall without lang source');
+      return null;
     }
-    log('[a2ui] A2UiToolCall unrenderable', validation.warnings);
-    return null;
+    return parseUiSource(lang);
   }, [invocation]);
 
-  if (render === null) {
+  if (parsed === null) {
     return (
       <ToolCallBlock
         name={invocation.name}
@@ -97,12 +104,56 @@ export const A2UiToolCall: React.FC<A2UiToolCallProps> = ({ invocation }) => {
     );
   }
 
+  if (parsed.root === null) {
+    return (
+      <View>
+        <Text variant="caption" style={styles.failedText}>
+          {t('components.messageListItem.a2uiFailed', { error: firstUiWarning(parsed.meta) ?? '' })}
+        </Text>
+      </View>
+    );
+  }
+
   return (
     <A2UiSurfaceCard
-      surface={render.surface}
-      footnote={render.warnings[0]}
+      root={parsed.root}
+      dataModel={parseDataModel(invocation)}
+      footnote={firstUiWarning(parsed.meta)}
     />
   );
+};
+
+const parseDataModel = (
+  invocation: ToolInvocation,
+): Record<string, unknown> | undefined => {
+  const args = invocation.arguments as { dataModel?: unknown } | undefined;
+  if (
+    args?.dataModel !== null &&
+    typeof args?.dataModel === 'object' &&
+    !Array.isArray(args?.dataModel)
+  ) {
+    return args.dataModel as Record<string, unknown>;
+  }
+  return undefined;
+};
+
+/** Live preview card for an in-flight message. */
+export const A2UiLiveCard: React.FC<{ live: A2UiLive }> = ({ live }) => (
+  <A2UiSurfaceCard
+    root={live.render.root}
+    footnote={firstWarningOf(live)}
+    live
+  />
+);
+
+const firstWarningOf = (live: A2UiLive): string | undefined => {
+  const first = live.render.meta.errors?.[0];
+  if (!first) {
+    return undefined;
+  }
+  return typeof first === 'string'
+    ? first
+    : [first.code, first.message].filter(Boolean).join(' — ');
 };
 
 const styles = StyleSheet.create({
@@ -123,5 +174,8 @@ const styles = StyleSheet.create({
   },
   footnote: {
     includeFontPadding: false,
+  },
+  failedText: {
+    marginBottom: Spacings.md,
   },
 });

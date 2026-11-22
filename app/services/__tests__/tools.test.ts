@@ -78,10 +78,12 @@ describe('buildChatTools', () => {
     expect(result).toBe('The UI card was rendered successfully.');
   });
 
-  test('the render_ui tool reports a readable error for an unrenderable payload', async () => {
+  test('the render_ui tool acknowledges any payload (the app records the card)', async () => {
+    // The card's OpenUI Lang source is recorded by the chat turn itself, so
+    // the tool never validates a payload — it just acknowledges.
     const tool = (buildA2UiTool() as unknown as MockTool).opts;
     const result = await tool.call({ components: 'not-an-array' });
-    expect(result).toContain('Error: the UI could not be rendered.');
+    expect(result).toBe('The UI card was rendered successfully.');
   });
 
   test('the render_ui tool renders a sloppy payload instead of failing it', async () => {
@@ -104,12 +106,11 @@ describe('buildChatTools', () => {
       invocations.push(invocation),
     );
 
-    const ui = { components: [{ component: 'Text', id: 't', text: 'Hi' }] };
-    await (buildA2UiTool() as unknown as MockTool).opts.call(ui);
+    await (buildA2UiTool() as unknown as MockTool).opts.call();
 
     expect(invocations).toHaveLength(1);
     expect(invocations[0].name).toBe(RENDER_UI_TOOL);
-    expect(invocations[0].arguments).toEqual({ ui });
+    expect(invocations[0].arguments).toEqual({});
     unsubscribe();
   });
 

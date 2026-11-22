@@ -25,93 +25,119 @@ exports[`renders a binding-driven surface 1`] = `
   >
     <View
       style={
-        [
-          {
-            "borderRadius": 14,
-            "borderWidth": 0.5,
-            "padding": 12,
-          },
-          {
-            "backgroundColor": "#f7f7f7",
-            "borderColor": "#e1e1e1",
-          },
-        ]
+        {
+          "alignItems": "stretch",
+          "flexDirection": "column",
+          "rowGap": 8,
+        }
       }
     >
       <View
         style={
           {
-            "rowGap": 8,
+            "alignSelf": "stretch",
           }
         }
       >
-        <Text
-          variant="body2"
+        <View
+          style={
+            [
+              {
+                "borderRadius": 14,
+                "borderWidth": 0.5,
+                "padding": 12,
+              },
+              {
+                "backgroundColor": "#f7f7f7",
+                "borderColor": "#e1e1e1",
+              },
+            ]
+          }
         >
-          Hello, Ada
-        </Text>
+          <View
+            style={
+              {
+                "rowGap": 8,
+              }
+            }
+          >
+            <Text
+              variant="body2"
+            >
+              Hello, Ada
+            </Text>
+          </View>
+        </View>
       </View>
-    </View>
-    <View
-      accessibilityRole="button"
-      accessibilityState={
-        {
-          "busy": undefined,
-          "checked": undefined,
-          "disabled": undefined,
-          "expanded": undefined,
-          "selected": undefined,
-        }
-      }
-      accessibilityValue={
-        {
-          "max": undefined,
-          "min": undefined,
-          "now": undefined,
-          "text": undefined,
-        }
-      }
-      accessible={true}
-      collapsable={false}
-      focusable={true}
-      onBlur={[Function]}
-      onClick={[Function]}
-      onFocus={[Function]}
-      onResponderGrant={[Function]}
-      onResponderMove={[Function]}
-      onResponderRelease={[Function]}
-      onResponderTerminate={[Function]}
-      onResponderTerminationRequest={[Function]}
-      onStartShouldSetResponder={[Function]}
-      style={
-        [
-          [
-            {
-              "alignItems": "center",
-              "borderRadius": 10,
-              "justifyContent": "center",
-              "paddingHorizontal": 12,
-              "paddingVertical": 8,
-            },
-            {
-              "alignSelf": "stretch",
-              "backgroundColor": "#b44618",
-            },
-          ],
-          false,
-        ]
-      }
-    >
-      <Text
+      <View
         style={
           {
-            "color": "#FFFFFF",
+            "alignSelf": "stretch",
           }
         }
-        variant="body2"
       >
-        Flip it
-      </Text>
+        <View
+          accessibilityRole="button"
+          accessibilityState={
+            {
+              "busy": undefined,
+              "checked": undefined,
+              "disabled": undefined,
+              "expanded": undefined,
+              "selected": undefined,
+            }
+          }
+          accessibilityValue={
+            {
+              "max": undefined,
+              "min": undefined,
+              "now": undefined,
+              "text": undefined,
+            }
+          }
+          accessible={true}
+          collapsable={false}
+          focusable={true}
+          onBlur={[Function]}
+          onClick={[Function]}
+          onFocus={[Function]}
+          onResponderGrant={[Function]}
+          onResponderMove={[Function]}
+          onResponderRelease={[Function]}
+          onResponderTerminate={[Function]}
+          onResponderTerminationRequest={[Function]}
+          onStartShouldSetResponder={[Function]}
+          style={
+            [
+              [
+                {
+                  "alignItems": "center",
+                  "borderRadius": 10,
+                  "justifyContent": "center",
+                  "paddingHorizontal": 12,
+                  "paddingVertical": 8,
+                },
+                {
+                  "alignSelf": "stretch",
+                  "backgroundColor": "#b44618",
+                },
+              ],
+              false,
+            ]
+          }
+        >
+          <Text
+            style={
+              {
+                "fontWeight": "600",
+              }
+            }
+            variant="body2"
+          >
+            Flip it
+          </Text>
+        </View>
+      </View>
     </View>
   </View>
 </View>

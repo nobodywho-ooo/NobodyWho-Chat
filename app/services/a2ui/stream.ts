@@ -1,13 +1,11 @@
-// Streaming A2UI: the model writes its UI as an Express DSL inside
+// Streaming A2UI: the model writes its UI as OpenUI Lang inside
 // `<ui>...</ui>` sentinels in the normal assistant token stream — the one
 // place an app can see tokens as they arrive. This module finds the sentinel
-// block and hands its growing text to the Express parser, which is tolerant
-// and streamed naturally: it parses from the start and stops at the first
-// unclosed construct, so the live card fills in component-by-component as the
-// block streams in.
+// block; parse.ts then feeds its growing text to the OpenUI Lang streaming
+// parser, which is tolerant by design, so the live card fills in
+// component-by-component as the block streams in.
 
-import { parseExpress, parseExpressLive } from './express';
-import type { A2UiSurface } from './types';
+import { parseUiSource } from './parse';
 
 export const A2UI_OPEN = '<ui>';
 export const A2UI_CLOSE = '</ui>';
@@ -46,7 +44,7 @@ export const stripA2UiBlocks = (text: string): string =>
     .replace(new RegExp(`${A2UI_OPEN}[\\s\\S]*$`), '');
 
 // Tiny models sometimes copy the card faithfully but forget the sentinels,
-// so the whole answer comes back as one bare Express expression. That is
+// so the whole answer comes back as one bare OpenUI Lang program. That is
 // indistinguishable from prose until it parses, so this is only consulted at
 // settle time (never while streaming): if the ENTIRE turn is a single
 // renderable surface with no sentinels, adopt it as an implicit card.
@@ -57,12 +55,11 @@ export const findImplicitA2UiBlock = (
   if (trimmed === '' || trimmed.includes(A2UI_OPEN)) {
     return null;
   }
-  if (parseExpress(trimmed).surface === undefined) {
-    return null;
+  const { root, meta } = parseUiSource(trimmed);
+  if (root !== null && !meta.incomplete) {
+    return { complete: true, uiText: trimmed };
   }
-  return { complete: true, uiText: trimmed };
+  return null;
 };
 
-/** Tolerantly parse the streaming Express block into a renderable surface. */
-export const parseA2UiLive = (raw: string): A2UiSurface | null =>
-  parseExpressLive(raw);
+export const parseA2UiLive = (uiText: string) => parseUiSource(uiText);

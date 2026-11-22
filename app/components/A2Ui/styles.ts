@@ -46,6 +46,20 @@ export const styles = StyleSheet.create({
     overflow: 'hidden',
     backgroundColor: '#e3e3e3',
   },
+  imageContainer: {
+    alignItems: 'flex-start',
+    rowGap: Spacings.xs,
+  },
+  imageCaption: {
+    marginTop: 2,
+  },
+  cardTitle: {
+    fontWeight: '600',
+    marginBottom: Spacings.xs,
+  },
+  buttonLabel: {
+    fontWeight: '600',
+  },
   fieldContainer: {
     rowGap: Spacings.xs,
   },

@@ -214,7 +214,8 @@
         }
       },
       "a2ui": "UI",
-      "a2uiRendering": "Rendu…"
+      "a2uiRendering": "Rendu…",
+      "a2uiFailed": "Impossible d’afficher la carte : {{error}}"
     },
     "conversationsList": {
       "recent": "Récentes",

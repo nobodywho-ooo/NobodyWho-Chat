@@ -140,10 +140,13 @@ jest.mock('services', () => ({
   // A2UI streaming helpers (no sentinels appear in these tests).
   RENDER_UI_TOOL: 'render_ui',
   findA2UiBlock: jest.fn(() => null),
-  parseA2UiLive: jest.fn(() => null),
-  parseExpress: jest.fn(() => ({ error: 'test stub' })),
-  validateUi: jest.fn(() => ({ valid: false, reason: 'test stub' })),
-  stripA2UiBlocks: jest.fn((text: string) => text),
+  findImplicitA2UiBlock: jest.fn(() => null),
+  stripA2UiBlocks: (text: string) => text,
+  parseUiSource: jest.fn(() => ({ root: null, meta: {} })),
+  UiStreamParser: class {
+    set = () => ({ root: null, meta: {} });
+    finish = () => ({ root: null, meta: {} });
+  },
 }));
 
 // The starter selection is random; pin it so showEmptyChat can wait on a

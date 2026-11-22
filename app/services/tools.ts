@@ -1,7 +1,7 @@
 import { Tool } from 'react-native-nobodywho';
 import { ToolInvocation } from 'types';
 import { log } from 'helpers';
-import { A2UI_UI_SCHEMA, validateUi } from './a2ui';
+
 
 const API_TIMEOUT_MS = 5_000;
 
@@ -221,73 +221,21 @@ export const buildChatTools = (): Tool[] => [
 ];
 
 // --- A2UI ------------------------------------------------------------------
-// The `render_ui` tool. The description is the model's whole instruction sheet
-// for the feature (nobodywho puts tool descriptions in the prompt), so it
-// spells out when to call it, which components exist, and how to reference
-// data. The shape constraint on the `ui` argument comes from A2UI_UI_SCHEMA.
+// Legacy `render_ui` tool. The live A2UI flow does not go through a tool call
+// (a tool call's JSON is invisible until the whole call completes, which is
+// exactly what live card rendering must not wait for): the model writes
+// OpenUI Lang between <ui>…</ui> sentinels in the ordinary token stream —
+// see app/services/a2ui/stream.ts. The chat turn itself records the card as
+// a `render_ui` ToolInvocation for persistence and rendering; this stub only
+// acknowledges it.
 
-const A2UI_TOOL_DESCRIPTION = `Call this tool IMMEDIATELY — before writing any prose — whenever the user asks you to show, build, create, make, design, display, set up, fill in or put together ANY interactive UI: a form, a list, a menu, options to pick, a summary card, a panel, a calculator, a timer, a quiz, a survey or a control screen. If the user's request would be answered with a UI, call render_ui — do NOT describe the UI in text instead, do NOT ask clarifying questions first, and do NOT reason at length before calling. Provide the WHOLE UI in a single call, then add at most one short line mentioning what you rendered.
-
-"ui" is {"components": [...], "dataModel": {...}}. Components nest by value: Row/Column list full child objects in "children", Card/Button hold one full child object in "child", List holds a template object. NO ids, no references — write each child inline.
-
-"ui" is {"components": [...], "dataModel": {...}}. Components nest by value: Row/Column list full child objects in "children", Card/Button hold one full child object in "child", List holds a template object. NO ids, no references — write each child inline.
-
-Components (only these; nest them — a Row or Column always contains child objects):
-Text{text, variant?:"caption"|"body"}
-Row|Column{children:[<components>], justify?, align?}
-Card{child:<component>}
-List{children:{path,component:<component>}, direction?:"vertical"|"horizontal"}
-Button{child:<component>, variant?:"default"|"primary"|"borderless", action:{"event":{"name":"..."}}|{"openUrl":{"url":"https://..."}}}
-Divider{axis?:"horizontal"|"vertical"}
-Image{url, description?}
-TextField{label, value, placeholder?, variant?:"shortText"|"longText"|"number"|"obscured"}
-CheckBox{label, value:bool}
-Slider{min?, max, value, steps?}
-ChoicePicker{label?, options:[{"label","value"}], value:[...], variant?:"multipleSelection"|"mutuallyExclusive"}
-
-Rules:
-- To show text: write the literal string, or put the value in "dataModel" and refer to it with {"@path":"/a/b"}. ALWAYS include in "dataModel" every value you bind — never reference a path with no data. If there is no data, write a literal string instead of a binding.
-- Do NOT wrap simple layouts in extra Rows/Columns; nest directly.
-- Keep the JSON small.
-
-Example (a small form): {"components":[{"component":"Column","children":[{"component":"TextField","label":"Name","value":{"@path":"/form/name"},"placeholder":"Enter name"},{"component":"Slider","min":0,"max":100,"value":50},{"component":"Button","child":{"component":"Text","text":"Submit"},"variant":"primary","action":{"event":{"name":"submit"}}}]}],"dataModel":{"form":{"name":""}}}`;
-
-// The `call` receives the parsed, grammar-constrained `ui` object. It runs the
-// validator again so a malformed-but-parseable payload becomes a readable
-// error the model can immediately correct, then acknowledges.
 export const buildA2UiTool = (): Tool =>
   defineTool({
     name: RENDER_UI_TOOL,
-    description: A2UI_TOOL_DESCRIPTION,
-    parameters: [
-      {
-        name: 'ui',
-        ...A2UI_UI_SCHEMA,
-        description:
-          'The JSON object describing the UI to render: a flat "components" array plus an optional "dataModel".',
-      },
-    ],
-    call: (ui: unknown): string => {
-      try {
-        log('[a2ui] render_ui call received', JSON.stringify(ui));
-      } catch {
-        log('[a2ui] render_ui call received', ui);
-      }
-      const validation = validateUi(ui);
-      log('[a2ui] render_ui validation', {
-        valid: validation.valid,
-        warnings: validation.warnings,
-        ...('surface' in validation
-          ? { componentCount: validation.surface.components.length }
-          : {}),
-      });
-
-      if (!validation.valid) {
-        return `Error: the UI could not be rendered. ${validation.reason}`;
-      }
-
-      return 'The UI card was rendered successfully.';
-    },
+    description:
+      'Draw an interactive UI card in the chat. Called by the app itself after a <ui>…</ui> block renders.',
+    parameters: [],
+    call: () => 'The UI card was rendered successfully.',
   });
 
 // --- Unit conversions ------------------------------------------------------

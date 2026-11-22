@@ -1,8 +1,7 @@
-// The top-level renderer for one `render_ui` tool call: wraps the surface in
-// a card, wires up the shared context (value resolution/editing, action
-// dispatch), and renders each top-level component in order. Components nest by
-// value, so there is no id registry to resolve — each top-level element draws
-// its own subtree.
+// The top-level renderer for one A2UI surface: wires up the shared context
+// (reactive evaluation/editing, action dispatch) and renders the parsed
+// OpenUI Lang root element. Components nest by value, so there is no id
+// registry to resolve — the root element draws its own subtree.
 
 import React, { useMemo } from 'react';
 import { View } from 'react-native';
@@ -11,53 +10,113 @@ import { haptics, log, openExternalUrl } from 'helpers';
 import { Spacings } from 'style';
 
 import { emitA2UiEvent } from '../../services/a2ui/eventsClient';
-import { A2UiAction, A2UiSurface as A2UiSurfaceData } from '../../services/a2ui/types';
+import type { ElementNode } from '../../services/a2ui/types';
 import { A2UiContextProvider } from './A2UiContext';
-import { ComponentView } from './ComponentView';
+import { ElementView } from './ComponentView';
 import { useSurfaceState } from './state';
 import { styles } from './styles';
 
-interface A2UiSurfaceProps {
-  surface: A2UiSurfaceData;
+interface ExprAction {
+  k?: string;
+  name?: string;
+  args?: unknown[];
+  mappedProps?: Record<string, unknown>;
+  steps?: ExprAction[];
 }
 
-export const A2UiSurface: React.FC<A2UiSurfaceProps> = ({ surface }) => {
-  const { colors } = useStyled();
-  const state = useSurfaceState();
+interface A2UiSurfaceProps {
+  /** The parsed OpenUI Lang root element (null renders nothing). */
+  root: ElementNode | null;
+  /** Optional root data object exposed to the surface as `$` bindings. */
+  dataModel?: Record<string, unknown>;
+}
 
-  // Debug aid — runs once per mounted surface (re-renders are frequent, so
-  // logging every pass would flood the console).
+export const A2UiSurface: React.FC<A2UiSurfaceProps> = ({ root, dataModel }) => {
+  const { colors } = useStyled();
+  const state = useSurfaceState(dataModel);
+
+  // Debug aid — runs once per mounted surface.
   const mountLogged = React.useRef(false);
   if (!mountLogged.current) {
     mountLogged.current = true;
-    log('[a2ui] A2UiSurface mount', JSON.stringify({
-      components: surface.components.map(c => c.component),
-      dataModel: surface.dataModel ?? {},
-    }));
+    log('[a2ui] A2UiSurface mount', root?.typeName ?? 'no-root');
   }
 
   const context = useMemo(() => {
-    const onAction = (action: A2UiAction): void => {
-      if ('openUrl' in action) {
-        const url = state.resolveValue(action.openUrl.url);
-        if (typeof url === 'string') {
-          haptics.light();
-          openExternalUrl(url);
+    const evalArg = (arg: unknown): unknown => state.evalValue(arg);
+
+    const dispatchStep = (step: ExprAction | undefined): void => {
+      if (!step || step.k === undefined) {
+        return;
+      }
+      if (step.k === 'Action') {
+        for (const inner of step.steps ?? []) {
+          dispatchStep(inner);
         }
         return;
       }
-      // An `event` has no server to go to in an offline chat; surface it to
-      // the chat (feedback + a follow-up turn the model can act on).
-      haptics.medium();
-      emitA2UiEvent(action.event.name, action.event.context);
+      switch (step.name) {
+        case 'ToAssistant': {
+          const raw = evalArg((step.args ?? [])[0]);
+          if (typeof raw === 'string' && raw !== '') {
+            haptics.medium();
+            emitA2UiEvent(raw, undefined);
+          }
+          return;
+        }
+        case 'OpenUrl': {
+          const url = evalArg((step.args ?? [])[0]);
+          if (typeof url === 'string') {
+            haptics.light();
+            openExternalUrl(url);
+          }
+          return;
+        }
+        case 'Set': {
+          const target = step.mappedProps?.var;
+          const value = evalArg(step.mappedProps?.value ?? (step.args ?? [])[1]);
+          if (typeof target === 'string' && target.startsWith('$')) {
+            state.setField(target, value);
+          }
+          return;
+        }
+        case 'Reset': {
+          return;
+        }
+        default: {
+          // A custom action: surface it to the chat like any other event.
+          haptics.medium();
+          emitA2UiEvent(step.name ?? 'action', undefined);
+        }
+      }
+    };
+
+    const onAction = (action: unknown): void => {
+      const node = action as ExprAction | undefined;
+      if (node === undefined) {
+        return;
+      }
+      // A single step or an Action([...]) wrapper with steps.
+      if (node.steps !== undefined && Array.isArray(node.steps)) {
+        for (const inner of node.steps) {
+          dispatchStep(inner);
+        }
+        return;
+      }
+      dispatchStep(node);
     };
 
     return {
-      resolveValue: state.resolveValue,
-      setValue: state.setValue,
+      evalValue: state.evalValue,
+      getState: state.getState,
+      setField: state.setField,
       onAction,
     };
   }, [state]);
+
+  if (root === null) {
+    return null;
+  }
 
   return (
     <View
@@ -71,15 +130,7 @@ export const A2UiSurface: React.FC<A2UiSurfaceProps> = ({ surface }) => {
     >
       <A2UiContextProvider value={context}>
         <View style={{ rowGap: Spacings.sm }}>
-          {surface.components.map((component, index) => (
-            <ComponentView
-              key={index}
-              component={component}
-              // The data model is the binding scope for everything at the top
-              // of the tree; a List narrows it to each item.
-              scope={surface.dataModel ?? {}}
-            />
-          ))}
+          <ElementView node={root} depth={0} />
         </View>
       </A2UiContextProvider>
     </View>

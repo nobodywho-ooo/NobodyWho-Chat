@@ -1,5 +1,5 @@
 import { Message } from 'react-native-nobodywho';
-import type { A2UiSurface } from '../services/a2ui/types';
+import type { A2UiLive } from '../services/a2ui/types';
 
 export interface ToolInvocation {
   name: string;
@@ -45,5 +45,5 @@ export type DisplayMessage = WithTextContent<Message> & {
   refining?: boolean;
   uid?: string;
   /** Live A2UI card being streamed for the current turn (not persisted). */
-  a2uiLive?: A2UiSurface | null;
+  a2uiLive?: A2UiLive | null;
 };

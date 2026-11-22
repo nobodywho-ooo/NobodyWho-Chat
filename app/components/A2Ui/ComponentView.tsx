@@ -1,10 +1,9 @@
-// Renders one A2UI component against the surface's context — the switch that
-// turns the declarative component tree into React Native views. Components
-// nest by value (no id registry), so a Row just maps over its sibling
-// elements and a List re-renders its inline template once per data item with
-// the item as the binding scope. `depth` bounds the walk so a cyclic tree
-// (only possible via a malformed but schema-legal payload) degrades to a null
-// render instead of a stack overflow.
+// Renders one OpenUI Lang element against the surface's context — the switch
+// that turns the parsed component tree (ElementNode from @openuidev/lang-core)
+// into React Native views. Components nest by value (no id registry), so a
+// Stack just maps over its children and a List renders each item. `depth`
+// bounds the walk so a cyclic tree (only possible via a malformed but
+// schema-legal payload) degrades to a null render instead of a stack overflow.
 
 import React, { useState } from 'react';
 import {
@@ -22,31 +21,37 @@ import { SelectablePill } from '../SelectablePill/SelectablePill';
 import { Text } from '../Text/Text';
 import { platformIconFor } from './icons';
 
-import { bindingPath } from '../../services/a2ui/bindings';
-import {
-  A2UiCheckRule,
-  A2UiList,
-  A2UiMapPoint,
-  A2UiSlider,
-  A2UiTabs,
-  A2UiTextInput,
-  type A2UiComponent,
-} from '../../services/a2ui/types';
+import type { A2UiMapMarker, A2UiMapPoint } from '../../services/a2ui/types';
 import { MapView } from './MapView';
 import { useA2UiContext, A2UiContextProvider } from './A2UiContext';
 import { styles } from './styles';
 
 const MAX_DEPTH = 24;
 
-interface ComponentViewProps {
-  component: A2UiComponent;
-  /** Binding scope: the surface data model at the top, a List item inside a template. */
+type ElementNode = {
+  typeName: string;
+  props: Record<string, unknown>;
+  statementId?: string;
+  partial?: boolean;
+};
+
+const isElement = (value: unknown): value is ElementNode =>
+  value !== null &&
+  typeof value === 'object' &&
+  !Array.isArray(value) &&
+  typeof (value as { typeName?: unknown }).typeName === 'string';
+
+interface ElementViewProps {
+  node: unknown;
+  /** The stream is still writing; a live card may tolerate late fitness. */
+  live?: boolean;
   scope?: unknown;
   depth?: number;
 }
 
-export const ComponentView: React.FC<ComponentViewProps> = ({
-  component,
+export const ElementView: React.FC<ElementViewProps> = ({
+  node,
+  live,
   scope,
   depth = 0,
 }) => {
@@ -54,32 +59,76 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
   const context = useA2UiContext();
 
   if (depth >= MAX_DEPTH) {
-    log('[a2ui] ComponentView depth cap hit', component.component);
+    log('[a2ui] ElementView depth cap hit');
     return null;
   }
 
-  switch (component.component) {
-    case 'Text': {
-      const resolved = context.resolveValue(component.text, scope);
-      const text = resolved === null || resolved === undefined
-        ? ''
-        : String(resolved);
-      if (text === '') {
+  // A non-element child (text, number, array, reference) renders as text.
+  if (!isElement(node)) {
+    const value = context.evalValue(node);
+    if (value === null || value === undefined || value === '') {
+      return null;
+    }
+    return <Text variant="body2">{String(value)}</Text>;
+  }
+
+  const el = node;
+  const props = el.props;
+
+  switch (el.typeName) {
+    case 'TextContent': {
+      const text = context.evalValue(props.text);
+      if (text === null || text === undefined || text === '') {
         return null;
       }
       return (
         <Text
-          variant={component.variant === 'caption' ? 'caption' : 'body2'}
+          variant="body2"
           style={context.textColor ? { color: context.textColor } : undefined}
         >
-          {text}
+          {String(text)}
         </Text>
       );
     }
 
+    case 'Stack': {
+      const orientation = context.evalValue(props.orientation) as
+        | 'vertical'
+        | 'horizontal'
+        | undefined;
+      const gapName = context.evalValue(props.gap) as 'xs' | 'sm' | 'md' | undefined;
+      const gap = gapName === 'xs' ? Spacings.xs : gapName === 'md' ? Spacings.md : Spacings.sm;
+      const horizontal = orientation === 'horizontal';
+      return (
+        <View
+          style={{
+            flexDirection: horizontal ? 'row' : 'column',
+            ...(horizontal ? { columnGap: gap } : { rowGap: gap }),
+            alignItems: horizontal ? 'center' : 'stretch',
+          }}
+        >
+          {Array.isArray(props.children) && props.children.length === 1 && isElement(props.children[0])
+            ? <View key={0} style={horizontal ? undefined : { alignSelf: 'stretch' }}><ElementView node={props.children[0]} scope={scope} depth={depth + 1} /></View>
+            : Array.isArray(props.children)
+              ? props.children.map((child, index) => (
+                  <View
+                    key={index}
+                    // Stretch so fixed-height children (Image, Map, …) never
+                    // collapse to a 1px sliver in a vertical stack.
+                    style={horizontal ? undefined : { alignSelf: 'stretch' }}
+                  >
+                    <ElementView node={child} scope={scope} depth={depth + 1} />
+                  </View>
+                ))
+              : null}
+        </View>
+      );
+    }
+
     case 'Icon': {
-      const size = iconSize(component.variant);
-      const platform = platformIconFor(component.name);
+      const name = String(context.evalValue(props.name) ?? '');
+      const size = iconSize(context.evalValue(props.size) as string | undefined);
+      const platform = platformIconFor(name);
       return (
         <PlatformIcon
           iosIconName={platform.iosIconName}
@@ -90,207 +139,205 @@ export const ComponentView: React.FC<ComponentViewProps> = ({
       );
     }
 
-    case 'Map': {
-      const resolvedRoute = context.resolveValue(component.route, scope);
-      const routePoints = Array.isArray(resolvedRoute)
-        ? resolvedRoute.filter(
-            (p): p is A2UiMapPoint =>
-              p !== null &&
-              typeof p === 'object' &&
-              typeof (p as { lat?: unknown }).lat === 'number' &&
-              typeof (p as { lon?: unknown }).lon === 'number',
-          )
-        : undefined;
-      return (
-        <MapView
-          markers={component.markers}
-          route={routePoints}
-          variant={component.variant}
-        />
-      );
-    }
-
     case 'Image': {
-      const url = context.resolveValue(component.url, scope);
+      const url = context.evalValue(props.url);
       if (typeof url !== 'string' || url === '') {
         return null;
       }
-      const size = imageSize(component.variant);
-      const imageStyle = [
-        styles.image,
-        size,
-        component.variant === 'avatar' ? { borderRadius: size.width / 2 } : {},
-      ];
+      const variant = context.evalValue(props.variant) as string | undefined;
+      const caption = context.evalValue(props.caption);
+      const size = imageSize(variant);
       return (
-        <RNImage
-          source={{ uri: url }}
-          accessibilityLabel={
-            typeof component.description === 'string'
-              ? component.description
-              : undefined
-          }
-          resizeMode={component.fit === 'cover' ? 'cover' : 'contain'}
-          style={imageStyle}
-        />
-      );
-    }
-
-    case 'Row':
-    case 'Column': {
-      const isRow = component.component === 'Row';
-      const containerStyle = layoutStyle(isRow, component.justify, component.align);
-      return (
-        <View style={containerStyle}>
-          {component.children.map((child, index) => {
-            const weight = weightOf(child);
-            const childStyle: ViewStyle | undefined =
-              weight !== undefined
-                ? { flex: weight }
-                : // The layout helper defaults to alignItems 'flex-start', which
-                  // collapses fixed-height children (Image, Map, …) to their
-                  // content width — a 1 px sliver measured in-app. Column
-                  // children stretch to the container like the Divider does.
-                  !isRow
-                  ? { alignSelf: 'stretch' }
-                  : undefined;
-            return (
-              <View key={index} style={childStyle}>
-                <ComponentView component={child} scope={scope} depth={depth + 1} />
-              </View>
-            );
-          })}
+        <View style={styles.imageContainer}>
+          <RNImage
+            source={{ uri: url }}
+            resizeMode="cover"
+            style={[styles.image, size as { width: number; height: number }]}
+          />
+          {typeof caption === 'string' && caption !== '' && (
+            <Text variant="caption" style={styles.imageCaption}>
+              {caption}
+            </Text>
+          )}
         </View>
       );
     }
 
-    case 'List': {
-      return (
-        <ListView component={component} scope={scope} depth={depth} />
-      );
-    }
-
     case 'Card': {
-      const cardStyle = [
-        styles.card,
-        { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
-      ];
+      const title = context.evalValue(props.title);
       return (
-        <View style={cardStyle}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: colors.surfaceSecondary, borderColor: colors.border },
+          ]}
+        >
+          {typeof title === 'string' && title !== '' && (
+            <Text variant="body2" style={styles.cardTitle}>
+              {title}
+            </Text>
+          )}
           <View style={styles.cardChild}>
-            <ComponentView component={component.child} scope={scope} depth={depth + 1} />
+            {renderChildren(props.children, scope ?? undefined, depth, live)}
           </View>
         </View>
       );
     }
 
     case 'Divider': {
-      const horizontal = component.axis !== 'vertical';
-      const dividerStyle = [
-        styles.divider,
-        { backgroundColor: colors.border },
-        horizontal ? styles.dividerHorizontal : styles.dividerVertical,
-      ];
-      return <View style={dividerStyle} />;
+      return (
+        <View
+          style={[styles.divider, { backgroundColor: colors.border }, styles.dividerHorizontal]}
+        />
+      );
     }
 
     case 'Button': {
-      const primary = component.variant === 'primary';
-      const borderless = component.variant === 'borderless';
+      const label = String(context.evalValue(props.label) ?? '');
       const buttonStyle: ViewStyle[] = [
         styles.button,
-        {
-          backgroundColor: primary
-            ? colors.ctaSurfacePrimary
-            : borderless
-              ? 'transparent'
-              : colors.surfaceContainer,
-          alignSelf: borderless ? 'flex-start' : 'stretch',
-        },
+        { backgroundColor: colors.ctaSurfacePrimary, alignSelf: 'stretch' },
       ];
       return (
         <Pressable
           accessibilityRole="button"
-          onPress={() => context.onAction(component.action)}
-          style={({ pressed }) => [
-            buttonStyle,
-            pressed && styles.buttonPressed,
-          ]}
+          onPress={() => context.onAction(props.action)}
+          style={({ pressed }) => [buttonStyle, pressed && styles.buttonPressed]}
         >
           <A2UiContextProvider
-            value={{
-              ...context,
-              textColor: primary ? colors.ctaContentPrimary : undefined,
-            }}
+            value={{ ...context, textColor: colors.ctaContentPrimary }}
           >
-            <ComponentView component={component.child} scope={scope} depth={depth + 1} />
+            <Text variant="body2" style={styles.buttonLabel}>
+              {label}
+            </Text>
           </A2UiContextProvider>
         </Pressable>
       );
     }
 
-    case 'TextField': {
-      return <TextFieldView component={component} scope={scope} />;
-    }
+    case 'Input':
+      return <InputView props={props} />;
 
-    case 'CheckBox': {
-      return <CheckBoxView component={component} scope={scope} />;
-    }
+    case 'CheckBox':
+      return <CheckBoxView props={props} />;
 
-    case 'Slider': {
-      return <SliderView component={component} scope={scope} />;
-    }
+    case 'Slider':
+      return <SliderView props={props} />;
 
-    case 'ChoicePicker': {
-      return <ChoicePickerView component={component} scope={scope} />;
+    case 'ChoicePicker':
+      return <ChoicePickerView props={props} />;
+
+    case 'List': {
+      const items = context.evalValue(props.items);
+      const orientation = context.evalValue(props.orientation) as
+        | 'vertical'
+        | 'horizontal'
+        | undefined;
+      if (!Array.isArray(items)) {
+        log('[a2ui] List items not an array');
+        return null;
+      }
+      const horizontal = orientation === 'horizontal';
+      return (
+        <View
+          style={{
+            ...(horizontal
+              ? { flexDirection: 'row' as const, columnGap: Spacings.xs }
+              : { rowGap: Spacings.xs, alignSelf: 'stretch' as const }),
+          }}
+        >
+          {items.map((item, index) => (
+            <View key={index} style={horizontal ? undefined : { alignSelf: 'stretch' }}>
+              <ElementView node={item} scope={scope} depth={depth + 1} />
+            </View>
+          ))}
+        </View>
+      );
     }
 
     case 'Tabs': {
-      return <TabsView component={component} scope={scope} depth={depth} />;
+      return <TabsView props={props} scope={scope} depth={depth} />;
+    }
+
+    case 'Map': {
+      const markers = mapMarkersOf(context.evalValue(props.markers));
+      const routeRaw = context.evalValue(props.route);
+      const route = Array.isArray(routeRaw)
+        ? routeRaw.filter(isMapPoint)
+        : undefined;
+      return (
+        <MapView
+          markers={markers}
+          route={route}
+          variant={context.evalValue(props.variant) as 'small' | 'medium' | 'large' | undefined}
+        />
+      );
     }
 
     default:
+      log('[a2ui] unknown component', el.typeName);
       return null;
   }
 };
 
-// --- Shared view helpers ----------------------------------------------------
+export default ElementView;
 
-const layoutStyle = (
-  isRow: boolean,
-  justify: string | undefined,
-  align: string | undefined,
-): ViewStyle => ({
-  flexDirection: isRow ? 'row' : 'column',
-  justifyContent: justifyEdge(justify),
-  alignItems: alignEdge(align),
-  rowGap: Spacings.xs,
-  columnGap: Spacings.xs,
-});
+// --- helpers ----------------------------------------------------------------
 
-const justifyEdge = (justify: string | undefined): ViewStyle['justifyContent'] => {
-  switch (justify) {
-    case 'center': return 'center';
-    case 'end': return 'flex-end';
-    case 'spaceBetween': return 'space-between';
-    case 'spaceAround': return 'space-around';
-    case 'spaceEvenly': return 'space-evenly';
-    default: return 'flex-start';
+const renderChildren = (
+  children: unknown,
+  scope: unknown,
+  depth: number,
+  live?: boolean,
+): React.ReactNode => {
+  if (!Array.isArray(children)) {
+    return null;
   }
+  return children.map((child, index) => (
+    <ElementView key={index} node={child} scope={scope} depth={depth + 1} live={live} />
+  ));
 };
 
-const alignEdge = (align: string | undefined): ViewStyle['alignItems'] => {
-  switch (align) {
-    case 'center': return 'center';
-    case 'end': return 'flex-end';
-    case 'stretch': return 'stretch';
-    default: return 'flex-start';
+// A component whose value the user can edit (Input/CheckBox/Slider/Choice).
+// A reactive `$name` value writes through to the surface state; a literal
+// keeps its own local state.
+const useFieldState = (
+  valueProp: unknown,
+): [unknown, (next: unknown) => void] => {
+  const { evalValue, getState, setField } = useA2UiContext();
+  const refName =
+    isExprStateRef(valueProp) ? (valueProp as { n?: string }).n ?? null : null;
+  const [local, setLocal] = useState(() =>
+    refName !== null ? getState(refName) : evalValue(valueProp),
+  );
+
+  if (refName !== null) {
+    return [getState(refName), next => setField(refName, next)];
   }
+  return [local, setLocal];
 };
 
-const weightOf = (component: A2UiComponent): number | undefined =>
-  'weight' in component && typeof component.weight === 'number'
-    ? component.weight
-    : undefined;
+export const isExprStateRef = (value: unknown): boolean =>
+  value !== null &&
+  typeof value === 'object' &&
+  !Array.isArray(value) &&
+  (value as { k?: string }).k === 'StateRef';
+
+const mapMarkersOf = (value: unknown): A2UiMapMarker[] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.filter(
+    (marker): marker is A2UiMapMarker =>
+      marker !== null && typeof marker === 'object',
+  );
+};
+
+const isMapPoint = (value: unknown): value is A2UiMapPoint =>
+  value !== null &&
+  typeof value === 'object' &&
+  typeof (value as { lat?: unknown }).lat === 'number' &&
+  typeof (value as { lon?: unknown }).lon === 'number';
 
 const iconSize = (variant: string | undefined): number => {
   switch (variant) {
@@ -300,101 +347,57 @@ const iconSize = (variant: string | undefined): number => {
   }
 };
 
-const imageSize = (
-  variant: string | undefined,
-): { width: number; height: number } => {
+const imageSize = (variant: string | undefined): ViewStyle => {
   switch (variant) {
-    case 'avatar': return { width: 40, height: 40 };
-    case 'smallFeature': return { width: 88, height: 88 };
-    case 'mediumFeature': return { width: 140, height: 140 };
-    case 'largeFeature': return { width: 220, height: 220 };
+    case 'full': return { width: '100%', height: 180 };
     default: return { width: 96, height: 96 };
   }
 };
 
-// --- Bindable value state ---------------------------------------------------
-// A component whose value the user can edit (TextField/CheckBox/Slider/
-// ChoicePicker). Literals go to local state; bindings write through to the
-// surface's shadow map, so the wire path stays the source of truth.
+const clamp = (value: number, min: number, max: number): number =>
+  Math.min(Math.max(value, min), max);
 
-const useEditableValue = <T,>(
-  value: T | { '@path': string },
-): [T, (next: T) => void] => {
-  const { resolveValue, setValue } = useA2UiContext();
-  const path = bindingPath(value);
-  const [local, setLocal] = useState<T>(() => resolveValue(value) as T);
+const abbreviateNumber = (value: number): string =>
+  value >= 1000 ? `${Math.round(value / 1000)}k` : String(Math.round(value));
 
-  if (path !== null) {
-    return [resolveValue(value) as T, next => setValue(path, next)];
-  }
-  return [local as T, setLocal];
-};
-
-// --- Per-component views ----------------------------------------------------
-
-const ListView: React.FC<{
-  component: A2UiList;
-  scope?: unknown;
-  depth: number;
-}> = ({ component, scope, depth }) => {
-  const { resolveValue } = useA2UiContext();
-  const items = resolveValue({ '@path': component.children.path }, scope);
-
-  if (!Array.isArray(items)) {
-    log('[a2ui] ListView no array at', component.children.path, items);
-    return null;
-  }
-  const horizontal = component.direction === 'horizontal';
-  const containerStyle: ViewStyle[] = [
-    styles.parentChild,
-    { flexDirection: horizontal ? 'row' : 'column' },
-  ];
-
-  return (
-    <View style={containerStyle}>
-      {items.map((item, index) => (
-        <ComponentView
-          key={index}
-          component={component.children.component}
-          scope={item}
-          depth={depth + 1}
-        />
-      ))}
-    </View>
-  );
-};
+// --- Tabs -------------------------------------------------------------------
 
 const TabsView: React.FC<{
-  component: A2UiTabs;
+  props: Record<string, unknown>;
   scope?: unknown;
   depth: number;
-}> = ({ component, scope, depth }) => {
+}> = ({ props, depth }) => {
   const { colors } = useStyled();
-  const { resolveValue } = useA2UiContext();
+  const { evalValue } = useA2UiContext();
+  const tabs = evalValue(props.tabs);
   const [active, setActive] = useState(0);
-  const clampActive = Math.min(active, component.tabs.length - 1);
+  if (!Array.isArray(tabs) || tabs.length === 0) {
+    return null;
+  }
+  const clampActive = Math.min(active, tabs.length - 1);
+  const activeTab = tabs[clampActive] as { label?: unknown; content?: unknown };
 
   return (
     <View style={styles.tabsContainer}>
       <View style={styles.tabsBar}>
-        {component.tabs.map((tab, index) => {
-          const title = resolveValue(tab.title, scope);
+        {tabs.map((tab, index) => {
+          const title = evalValue((tab as { label?: unknown }).label);
           const selected = index === clampActive;
-          const tabStyle = [
-            styles.tabItem,
-            {
-              borderBottomColor: selected
-                ? colors.ctaSurfacePrimary
-                : colors.border,
-            },
-          ];
           return (
             <Pressable
               key={index}
               accessibilityRole="tab"
               accessibilityState={{ selected }}
               onPress={() => setActive(index)}
-              style={({ pressed }) => [tabStyle, pressed && styles.buttonPressed]}
+              style={({ pressed }) => [
+                styles.tabItem,
+                {
+                  borderBottomColor: selected
+                    ? colors.ctaSurfacePrimary
+                    : colors.border,
+                },
+                pressed && styles.buttonPressed,
+              ]}
             >
               <Text
                 variant="body2"
@@ -409,48 +412,36 @@ const TabsView: React.FC<{
           );
         })}
       </View>
-      {component.tabs[clampActive] && (
-        <ComponentView
-          component={component.tabs[clampActive].child}
-          scope={scope}
-          depth={depth + 1}
-        />
-      )}
+      <View style={{ rowGap: Spacings.xs, alignSelf: 'stretch' }}>
+        {renderChildren(activeTab.content, undefined, depth + 1)}
+      </View>
     </View>
   );
 };
 
-const TextFieldView: React.FC<{
-  component: A2UiTextInput;
-  scope?: unknown;
-}> = ({ component, scope }) => {
+// --- Field components (hooks live at the top: node types must not change
+// hook order between renders while streaming) ---------------------------------
+
+const InputView: React.FC<{ props: Record<string, unknown> }> = ({ props }) => {
   const { colors } = useStyled();
-  const { resolveValue } = useA2UiContext();
-  const [value, setValue] = useEditableValue(component.value);
-  const label = component.label === undefined ? undefined : resolveValue(component.label, scope);
-  const placeholder =
-    component.placeholder === undefined
-      ? undefined
-      : resolveValue(component.placeholder, scope);
-  const multiline = component.variant === 'longText';
-  const checks = component['@checks'] ?? [];
-  // Validate after the user has typed (not while untouched), so empty required
-  // fields don't nag before they are reached.
-  const text = String(value ?? '');
-  const [touched, setTouched] = useState(false);
-  const error = touched
-    ? firstCheckError(checks, text, value, resolveValue)
-    : null;
-  const hasError = error !== null;
+  const { evalValue } = useA2UiContext();
+  const [value, setValue] = useFieldState(props.value);
+  const label = evalValue(props.label);
+  const placeholder = evalValue(props.placeholder);
+  const inputType = evalValue(props.inputType) as
+    | 'text'
+    | 'number'
+    | 'email'
+    | 'password'
+    | undefined;
   const fieldStyle = [
     styles.field,
     {
       color: colors.onSurface,
       backgroundColor: colors.surface,
-      borderColor: hasError ? colors.dangerSurface : colors.border,
+      borderColor: colors.border,
     },
   ];
-
   return (
     <View style={styles.fieldContainer}>
       {label !== undefined && label !== null && label !== '' && (
@@ -459,81 +450,50 @@ const TextFieldView: React.FC<{
         </Text>
       )}
       <TextInput
-        multiline={multiline}
-        secureTextEntry={component.variant === 'obscured'}
-        keyboardType={component.variant === 'number' ? 'numeric' : 'default'}
-        value={text}
-        onFocus={() => setTouched(true)}
-        onChangeText={next => {
-          setValue(next);
-          setTouched(true);
-        }}
-        placeholder={placeholder === null || placeholder === undefined ? undefined : String(placeholder)}
+        secureTextEntry={inputType === 'password'}
+        keyboardType={
+          inputType === 'number'
+            ? 'numeric'
+            : inputType === 'email'
+              ? 'email-address'
+              : 'default'
+        }
+        value={String(value ?? '')}
+        onChangeText={setValue}
+        placeholder={
+          placeholder === null || placeholder === undefined
+            ? undefined
+            : String(placeholder)
+        }
         placeholderTextColor={colors.onSurfaceDisabled}
         style={fieldStyle}
       />
-      {hasError && (
-        <Text variant="caption" style={styles.errorText}>
-          {error}
-        </Text>
-      )}
     </View>
   );
 };
 
-// The first failing check's message, or null when the value passes.
-const firstCheckError = (
-  checks: A2UiCheckRule[],
-  text: string,
-  value: unknown,
-  resolveValue: (value: unknown, scope?: unknown) => unknown,
-): string | null => {
-  for (const check of checks) {
-    const passes = (() => {
-      switch (check.condition) {
-        case 'required':
-          return text.trim().length > 0;
-        case 'email':
-          return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(text.trim());
-        case 'numeric':
-          return text.trim() !== '' && !Number.isNaN(Number(text.trim()));
-      }
-    })();
-    if (passes) {
-      continue;
-    }
-    const message =
-      check.message === undefined ? undefined : resolveValue(check.message);
-    return message === undefined || message === null ? null : String(message);
-  }
-  return null;
-};
-
-const CheckBoxView: React.FC<{
-  component: A2UiComponent & { component: 'CheckBox' };
-  scope?: unknown;
-}> = ({ component, scope }) => {
+const CheckBoxView: React.FC<{ props: Record<string, unknown> }> = ({ props }) => {
   const { colors } = useStyled();
-  const { resolveValue } = useA2UiContext();
-  const [checked, setChecked] = useEditableValue(component.value);
-  const label = resolveValue(component.label, scope);
+  const { evalValue } = useA2UiContext();
+  const [checked, setChecked] = useFieldState(props.value);
+  const checkedValue = Boolean(checked);
+  const label = evalValue(props.label);
   const boxStyle = [
     styles.checkboxBox,
     {
-      borderColor: checked ? colors.ctaSurfacePrimary : colors.borderSecondary,
-      backgroundColor: checked ? colors.ctaSurfacePrimary : 'transparent',
+      borderColor: checkedValue ? colors.ctaSurfacePrimary : colors.borderSecondary,
+      backgroundColor: checkedValue ? colors.ctaSurfacePrimary : 'transparent',
     },
   ];
-
   return (
     <Pressable
       accessibilityRole="checkbox"
-      accessibilityState={{ checked }}
-      onPress={() => setChecked(!checked)}
+      accessibilityState={{ checked: checkedValue }}
+      onPress={() => setChecked(!checkedValue)}
       style={({ pressed }) => [styles.checkboxRow, pressed && styles.buttonPressed]}
     >
       <View style={boxStyle}>
-        {checked && (
+        {checkedValue && (
           <PlatformIcon
             iosIconName="checkmark"
             androidIconName="check"
@@ -547,19 +507,15 @@ const CheckBoxView: React.FC<{
   );
 };
 
-const SliderView: React.FC<{
-  component: A2UiSlider;
-  scope?: unknown;
-}> = ({ component, scope }) => {
+const SliderView: React.FC<{ props: Record<string, unknown> }> = ({ props }) => {
   const { colors } = useStyled();
-  const { resolveValue } = useA2UiContext();
-  const [value, setValue] = useEditableValue(component.value);
-  const label = component.label === undefined ? undefined : resolveValue(component.label, scope);
-  const min = typeof component.min === 'number' ? component.min : 0;
-  const max = component.max;
+  const { evalValue } = useA2UiContext();
+  const [value, setValue] = useFieldState(props.value);
+  const label = evalValue(props.label);
+  const min = Number(evalValue(props.min) ?? 0);
+  const max = Number(evalValue(props.max) ?? 100);
   const raw = clamp(Number(value ?? min), min, max);
   const captionStyle = { color: colors.onSurfaceVariant };
-
   return (
     <View style={styles.sliderRow}>
       {label !== undefined && label !== null && label !== '' && (
@@ -573,7 +529,7 @@ const SliderView: React.FC<{
             value={raw}
             min={min}
             max={max}
-            step={typeof component.steps === 'number' && component.steps > 0 ? component.steps : 1}
+            step={1}
             onValueChange={setValue}
           />
         </View>
@@ -585,15 +541,37 @@ const SliderView: React.FC<{
   );
 };
 
-const clamp = (value: number, min: number, max: number): number =>
-  Math.min(Math.max(value, min), max);
+const ChoicePickerView: React.FC<{ props: Record<string, unknown> }> = ({ props }) => {
+  const { colors } = useStyled();
+  const { evalValue } = useA2UiContext();
+  const [selected, setSelected] = useFieldState(props.selected);
+  const label = evalValue(props.label);
+  const options = evalValue(props.options);
+  const selectedValue = selected === null || selected === undefined ? null : String(selected);
+  const optionsList: string[] = Array.isArray(options) ? options.map(String) : [];
+  return (
+    <View style={styles.choiceContainer}>
+      {label !== undefined && label !== null && label !== '' && (
+        <Text variant="caption" style={{ color: colors.onSurfaceVariant }}>
+          {String(label)}
+        </Text>
+      )}
+      <View style={styles.chipsRow}>
+        {optionsList.map(option => (
+          <SelectablePill
+            key={option}
+            label={option}
+            selected={option === selectedValue}
+            onPress={() => setSelected(option)}
+          />
+        ))}
+      </View>
+    </View>
+  );
+};
 
-const abbreviateNumber = (value: number): string =>
-  value >= 1000 ? `${Math.round(value / 1000)}k` : String(Math.round(value));
+// --- Slider track (tap-to-set) ----------------------------------------------
 
-// A tiny horizontal slider. The chat list and the settings screen both scroll,
-// so this is intentionally PanResponder-free: a plain Pressable track that
-// snaps on tap rather than dragging.
 const SliderTrack: React.FC<{
   value: number;
   min: number;
@@ -611,7 +589,7 @@ const SliderTrack: React.FC<{
     height: '100%',
     backgroundColor: colors.ctaSurfacePrimary,
     borderRadius: 4,
-  };
+  } as const;
   const thumbStyle = [
     styles.sliderThumb,
     {
@@ -641,85 +619,5 @@ const SliderTrack: React.FC<{
       <View style={fillStyle} />
       <View style={thumbStyle} />
     </Pressable>
-  );
-};
-
-const ChoicePickerView: React.FC<{
-  component: A2UiComponent & { component: 'ChoicePicker' };
-  scope?: unknown;
-}> = ({ component, scope }) => {
-  const { colors } = useStyled();
-  const { resolveValue } = useA2UiContext();
-  const [selected, setSelected] = useEditableValue<string[]>(component.value);
-  const label = component.label === undefined ? undefined : resolveValue(component.label, scope);
-  const multi = component.variant === 'multipleSelection';
-  const chips = component.displayStyle === 'chips';
-  const values = Array.isArray(selected) ? selected : [];
-  const captionStyle = { color: colors.onSurfaceVariant };
-
-  const toggle = (value: string) => {
-    const next = multi
-      ? values.includes(value)
-        ? values.filter(v => v !== value)
-        : [...values, value]
-      : [value];
-    setSelected(next);
-  };
-
-  return (
-    <View style={styles.choiceContainer}>
-      {label !== undefined && label !== null && label !== '' && (
-        <Text variant="caption" style={captionStyle}>
-          {String(label)}
-        </Text>
-      )}
-      <View style={chips ? styles.chipsRow : undefined}>
-        {component.options.map(option => {
-          const optionValue = typeof option.value === 'string' ? option.value : String(option.value);
-          const resolvedLabel = resolveValue(option.label, scope);
-          const isSelected = values.includes(optionValue);
-
-          if (chips) {
-            return (
-              <SelectablePill
-                key={optionValue}
-                label={String(resolvedLabel ?? '')}
-                selected={isSelected}
-                onPress={() => toggle(optionValue)}
-              />
-            );
-          }
-
-          const boxStyle = [
-            styles.checkboxBox,
-            {
-              borderColor: isSelected ? colors.ctaSurfacePrimary : colors.borderSecondary,
-              backgroundColor: isSelected ? colors.ctaSurfacePrimary : 'transparent',
-            },
-          ];
-          return (
-            <Pressable
-              key={optionValue}
-              accessibilityRole="checkbox"
-              accessibilityState={{ checked: isSelected }}
-              onPress={() => toggle(optionValue)}
-              style={({ pressed }) => [styles.choiceRow, pressed && styles.buttonPressed]}
-            >
-              <View style={boxStyle}>
-                {isSelected && (
-                  <PlatformIcon
-                    iosIconName="checkmark"
-                    androidIconName="check"
-                    size={14}
-                    color={colors.ctaContentPrimary}
-                  />
-                )}
-              </View>
-              <Text variant="body2">{String(resolvedLabel ?? '')}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
   );
 };

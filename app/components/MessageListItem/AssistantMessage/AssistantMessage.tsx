@@ -20,7 +20,7 @@ import {
 import { DisplayMessage } from 'types';
 
 import { AnswerBody } from './AnswerBody';
-import { A2UiSurfaceCard, A2UiToolCall } from './A2UiToolCall';
+import { A2UiLiveCard, A2UiToolCall } from './A2UiToolCall';
 import { AudioSpeakerButton } from './AudioSpeakerButton';
 import { ThinkingBlock } from './ThinkingBlock';
 import { ThinkingModal } from './ThinkingModal';
@@ -210,7 +210,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
           )}
           {"a2uiLive" in message && message.a2uiLive &&
             toolInvocations.every(invocation => invocation.name !== RENDER_UI_TOOL) && (
-              <A2UiSurfaceCard surface={message.a2uiLive} live />
+              <A2UiLiveCard live={message.a2uiLive} />
             )}
           <AnswerBody
             text={rest}

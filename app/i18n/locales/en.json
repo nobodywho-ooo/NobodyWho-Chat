@@ -214,7 +214,8 @@
         }
       },
       "a2ui": "UI",
-      "a2uiRendering": "Rendering…"
+      "a2uiRendering": "Rendering…",
+      "a2uiFailed": "Could not render card: {{error}}"
     },
     "conversationsList": {
       "recent": "Recent",

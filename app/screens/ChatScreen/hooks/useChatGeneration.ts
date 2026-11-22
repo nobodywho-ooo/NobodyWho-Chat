@@ -25,8 +25,8 @@ import {
   WebSearchTurn,
   findA2UiBlock,
   findImplicitA2UiBlock,
-  parseA2UiLive,
-  parseExpress,
+  parseUiSource,
+  UiStreamParser,
   planAnswerRecheck,
   prepareWebSearchTurn,
   restoreChatForTurn,
@@ -39,7 +39,6 @@ import {
   updateConversationDigestInBackground,
   subscribeToolInvocations,
   useWebSearchStore,
-  validateUi,
 } from 'services';
 import {
   applyThinking,
@@ -52,7 +51,7 @@ import {
   resolveMessageDocumentPath,
 } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
-import type { A2UiSurface } from '../../../services/a2ui/types';
+import type { A2UiLive } from '../../../services/a2ui/types';
 import { reportDev } from '../../../services/devHook';
 
 import { Attachments } from './useAttachments';
@@ -356,16 +355,27 @@ export function useChatGeneration({
     };
 
     // While the model streams a `<ui>…</ui>` block, its (tolerantly
-    // parsed) content renders live on the message. Once the block closes and
-    // becomes a persisted render_ui invocation, the live preview stops.
+    // parsed) OpenUI Lang content renders live on the message. Once the block
+    // closes and becomes a persisted render_ui invocation, the live preview
+    // stops.
     let a2uiSettled = false;
-    let settledUiSurface: A2UiSurface | undefined;
-    const liveA2UiOf = (content: string) =>
-      !a2uiSettled ? parseA2UiLive(findA2UiBlock(content)?.uiText ?? '') : null;
+    const uiStream = new UiStreamParser();
+    const liveA2UiOf = (content: string): A2UiLive | null => {
+      if (a2uiSettled) {
+        return null;
+      }
+      const block = findA2UiBlock(content);
+      if (block === null) {
+        return null;
+      }
+      const render = uiStream.set(block.uiText);
+      return { render, live: !block.complete };
+    };
 
     // A complete UI block is recorded as a render_ui invocation — the same
     // shape a tool call used to have, so persistence, rendering and history
-    // reloads keep working unchanged.
+    // reloads keep working unchanged. `arguments.lang` holds the OpenUI Lang
+    // source, which A2UiToolCall re-parses when the card is drawn.
     const settleA2Ui = () => {
       if (a2uiSettled) {
         return;
@@ -375,20 +385,16 @@ export function useChatGeneration({
       if (!block?.complete) {
         return;
       }
-      const parsed = parseExpress(block.uiText);
-      if (parsed.surface) {
-        const validation = validateUi(parsed.surface);
-        if (validation.valid && validation.surface) {
-          settledUiSurface = validation.surface;
-          turnToolCalls.push({
-            name: RENDER_UI_TOOL,
-            arguments: { ui: validation.surface },
-            result: 'The UI card was rendered successfully.',
-          });
-          a2uiSettled = true;
-        }
-      } else {
-        log('ChatScreen A2UI block parse failed', parsed.error);
+      const parsed = parseUiSource(block.uiText);
+      if (parsed.root !== null) {
+        turnToolCalls.push({
+          name: RENDER_UI_TOOL,
+          arguments: { lang: block.uiText },
+          result: 'The UI card was rendered successfully.',
+        });
+        a2uiSettled = true;
+      } else if (!parsed.meta.incomplete) {
+        log('ChatScreen A2UI block parse failed', parsed.meta.errors);
       }
     };
 
@@ -681,12 +687,17 @@ export function useChatGeneration({
           raw: accumulated.slice(0, 2000),
           tools: turnToolCalls.map(call => call.name),
           a2ui: turnToolCalls.some(call => call.name === RENDER_UI_TOOL),
-          ui: settledUiSurface
-            ? {
-                components: settledUiSurface.components.map(c => c.component),
-                dataModel: settledUiSurface.dataModel ?? null,
-              }
-            : null,
+          ui: (() => {
+            const settledUi = turnToolCalls.find(
+              call => call.name === RENDER_UI_TOOL,
+            );
+            if (settledUi === undefined) {
+              return null;
+            }
+            const lang = (settledUi.arguments as { lang?: string } | undefined)
+              ?.lang;
+            return lang !== undefined ? { lang: lang.slice(0, 200) } : null;
+          })(),
           ...(webSearchMs !== undefined ? { webSearchMs } : {}),
         });
       }
@@ -717,12 +728,17 @@ export function useChatGeneration({
           raw: accumulated.slice(0, 2000),
           tools: turnToolCalls.map(call => call.name),
           a2ui: turnToolCalls.some(call => call.name === RENDER_UI_TOOL),
-          ui: settledUiSurface
-            ? {
-                components: settledUiSurface.components.map(c => c.component),
-                dataModel: settledUiSurface.dataModel ?? null,
-              }
-            : null,
+          ui: (() => {
+            const settledUi = turnToolCalls.find(
+              call => call.name === RENDER_UI_TOOL,
+            );
+            if (settledUi === undefined) {
+              return null;
+            }
+            const lang = (settledUi.arguments as { lang?: string } | undefined)
+              ?.lang;
+            return lang !== undefined ? { lang: lang.slice(0, 200) } : null;
+          })(),
         });
       }
     } finally {
