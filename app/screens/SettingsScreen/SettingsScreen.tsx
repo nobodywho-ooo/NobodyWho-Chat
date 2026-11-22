@@ -24,7 +24,7 @@ export const SettingsScreen: React.FC = () => {
     const version = getVersion();
     const buildNumber = getBuildNumber();
 
-    setAppInfo(`version ${version} - build ${buildNumber}`);
+    setAppInfo(`version ${version} • build ${buildNumber}`);
   }, []);
 
   return (
