@@ -229,15 +229,20 @@ export const ChatStackNavigator = () => {
       systemPrompt: systemPrompt || undefined,
       // With A2UI on, constrain sampling so the token stream is free prose
       // (and free tool calls) until the model opens a <ui> block, after which
-      // the block's contents are enforced by the grammar until </ui>.
-      // Temperature is kept via SamplerBuilder (dropping it — a plain
-      // constrainWithGrammar preset — measurably derails small models into
-      // low-probability fragments like "3 museums" rather than the gallery;
-      // see the A2UI dev-loop findings).
+      // its contents are enforced by the grammar until </ui>.
+      //
+      // Measured on Bonsai-4B against nobodywho's own server: the chain MUST
+      // include top_k/top_p (mirroring SamplerConfig::from_openai_parameters)
+      // or the model gets trapped under the grammar; and temperature must be
+      // low, because constrained decoding garbles free strings (Cyrillic
+      // lookalikes) on a tiny vocabulary at 0.8 — at ~0.2 it emits clean,
+      // correct Express.
       sampler:
         A2UI_CONSTRAINED && assistantConfig.a2ui
           ? (new SamplerBuilder()
-              .temperature(assistantConfig.temperature)
+              .topK(20)
+              .topP(0.95, 1)
+              .temperature(Math.min(assistantConfig.temperature, 0.2))
               .constrainWithGrammar(A2UI_STREAM_GBNF)
               .dist() as SamplerConfig)
           : SamplerPresets.temperature(assistantConfig.temperature),

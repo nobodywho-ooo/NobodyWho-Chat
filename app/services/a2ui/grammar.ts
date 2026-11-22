@@ -151,14 +151,15 @@ ws      ::= [ \\t\\n]*
 // Rules are deliberately single-line (nobodywho's GBNF->Lark converter breaks
 // a top-level rule body at a newline). Validated against that converter.
 
-// Master switch. Default OFF — measured, not guessed: with the whole-turn
-// grammar ON (llguidance), Bonsai-4B consistently derails on the museum
-// gallery prompt, committing to `$/title = 3 museums` then stalling in
-// whitespace until the app's stall guard ends it — no card, repeated across
-// default/temperature/name-restricted variants. With it OFF, the same model
-// follows the gallery example and renders the card. Keep the grammar and the
-// stall guard for models where it helps; flip true to try.
-export const A2UI_CONSTRAINED = false;
+// Master switch. ON — the earlier derail (Bonsai stalling into whitespace and
+// garbling strings) was traced to the sampler chain, not the grammar: it had
+// to mirror nobodywho's from_openai_parameters (top_k + top_p) or the model
+// got trapped, and temperature had to be low for clean strings under
+// constrained decoding on a tiny vocabulary. ChatStackNavigator now builds
+// topK(20).topP(0.95).temperature(<=0.2).grammar().dist(); with that, Bonsai
+// emits valid, clean Express for the museum gallery (server-verified). The
+// app's whitespace-stall guard stays as a safety net.
+export const A2UI_CONSTRAINED = true;
 
 // The whole-turn GBNF fed to `SamplerPresets.constrainWithGrammar`.
 export const A2UI_STREAM_GBNF = `root ::= segment*
