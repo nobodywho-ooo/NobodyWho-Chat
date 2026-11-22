@@ -19,8 +19,8 @@ exports[`renders correctly LogoLoadingScreen 1`] = `
     accessibilityRole="progressbar"
     style={
       {
-        "height": 137.25505493791044,
-        "width": 140,
+        "height": 109.80404395032834,
+        "width": 112,
       }
     }
     testID="logo-loading"
@@ -42,9 +42,9 @@ exports[`renders correctly LogoLoadingScreen 1`] = `
     >
       <SvgMock
         color="#000000"
-        height={137.25505493791044}
+        height={109.80404395032834}
         preserveAspectRatio="none"
-        width={140}
+        width={112}
       />
     </View>
     <View
@@ -82,10 +82,10 @@ exports[`renders correctly LogoLoadingScreen 1`] = `
       >
         <SvgMock
           color="#000000"
-          height={137.25505493791044}
+          height={109.80404395032834}
           preserveAspectRatio="none"
           viewBox="-107.667 -105.556 323.001 316.668"
-          width={140}
+          width={112}
         />
       </View>
       <View
@@ -108,10 +108,10 @@ exports[`renders correctly LogoLoadingScreen 1`] = `
       >
         <SvgMock
           color="#000000"
-          height={137.25505493791044}
+          height={109.80404395032834}
           preserveAspectRatio="none"
           viewBox="0 0 323.001 316.668"
-          width={140}
+          width={112}
         />
       </View>
       <View
@@ -134,10 +134,10 @@ exports[`renders correctly LogoLoadingScreen 1`] = `
       >
         <SvgMock
           color="#000000"
-          height={137.25505493791044}
+          height={109.80404395032834}
           preserveAspectRatio="none"
           viewBox="-215.334 0 323.001 316.668"
-          width={140}
+          width={112}
         />
       </View>
       <View
@@ -160,10 +160,10 @@ exports[`renders correctly LogoLoadingScreen 1`] = `
       >
         <SvgMock
           color="#000000"
-          height={137.25505493791044}
+          height={109.80404395032834}
           preserveAspectRatio="none"
           viewBox="-215.334 -211.112 323.001 316.668"
-          width={140}
+          width={112}
         />
       </View>
       <View
@@ -186,10 +186,10 @@ exports[`renders correctly LogoLoadingScreen 1`] = `
       >
         <SvgMock
           color="#000000"
-          height={137.25505493791044}
+          height={109.80404395032834}
           preserveAspectRatio="none"
           viewBox="0 -211.112 323.001 316.668"
-          width={140}
+          width={112}
         />
       </View>
     </View>
