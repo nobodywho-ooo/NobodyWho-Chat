@@ -35,10 +35,9 @@ interface MapViewProps {
   markers: A2UiMapMarker[];
   route?: A2UiMapPoint[];
   variant?: 'small' | 'medium' | 'large';
-  onLayout?: (e: { nativeEvent: { layout: { width: number; height: number } } }) => void;
 }
 
-export const MapView: React.FC<MapViewProps> = ({ markers, route, variant, onLayout }) => {
+export const MapView: React.FC<MapViewProps> = ({ markers, route, variant }) => {
   const { colors } = useStyled();
   const height = HEIGHTS[variant ?? 'medium'] ?? HEIGHTS.medium;
   const [measuredWidth, setMeasuredWidth] = React.useState<number | null>(null);
@@ -60,10 +59,7 @@ export const MapView: React.FC<MapViewProps> = ({ markers, route, variant, onLay
 
   return (
     <View
-      onLayout={e => {
-        setMeasuredWidth(e.nativeEvent.layout.width);
-        if (onLayout) onLayout(e);
-      }}
+      onLayout={e => setMeasuredWidth(e.nativeEvent.layout.width)}
       pointerEvents="none"
       style={{
         height,
