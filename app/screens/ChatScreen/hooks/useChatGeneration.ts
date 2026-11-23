@@ -611,7 +611,7 @@ export function useChatGeneration({
 
         const inOpenA2Ui =
           accumulated.includes('<ui>') && !accumulated.includes('</ui>');
-        wsRun = /^\s*$/.test(token) ? wsRun + token.length : 0;
+        wsRun = /^\s*$/.test(token) ? wsRun + 1 : 0;
         // A stalled block has no way to end itself: the only outcomes are a
         // closing </ui>, the EOS the model eventually samples, or this guard.
         // Consecutive-whitespace alone misses a mixed junk loop (whitespace
@@ -623,11 +623,11 @@ export function useChatGeneration({
           : 0;
         if (
           inOpenA2Ui &&
-          (wsRun > 200 || openBlockChars > 2000)
+          (wsRun > 40 || openBlockChars > 2000)
         ) {
           log(
             'ChatScreen A2UI stall guard: ending a stuck <ui> block',
-            { wsRun, openBlockChars },
+            { wsTokens: wsRun, openBlockChars },
           );
           activeChat.stopGeneration();
           break;
