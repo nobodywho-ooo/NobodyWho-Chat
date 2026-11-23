@@ -43,7 +43,7 @@ export const log = (...args: unknown[]): void => {
   if (__DEV__) {
     console.log(...args.map(expandErrors));
     // Dev-only mirror to the host: the harness reads /tmp/devreports.txt, so
-    // every diagnostic (parse failures, stall-guard fires, a2ui render logs)
+    // every diagnostic (tool failures, generation issues, render logs)
     // is visible there instead of dying in an unreachable console.
     try {
       fetch('http://127.0.0.1:8899/report', {

@@ -6,7 +6,5 @@ module.exports = {
     '\\.svg$': '<rootDir>/jest/mock/svg.mock.js',
     '^react-native-svg$':
       '<rootDir>/jest/mock/node-modules/react-native-svg.mock.js',
-    '^react-native-maps$':
-      '<rootDir>/jest/mock/node-modules/react-native-maps.mock.js',
   },
 };

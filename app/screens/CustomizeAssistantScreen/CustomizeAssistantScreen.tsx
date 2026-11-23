@@ -145,25 +145,6 @@ export const CustomizeAssistantScreen: React.FC = () => {
         </View>
       </View>
 
-      {/* A2UI needs tool calling (the render_ui tool rides the same roster),
-          so it is offered as a separate option that only makes sense with it. */}
-      <View style={styles.switchRowContainer}>
-        <View style={styles.switchLabel}>
-          <Text bold>{t('screens.customizeAssistant.a2ui')}</Text>
-          <Text variant="body2" style={{ color: colors.onSurfaceVariant }}>
-            {t('screens.customizeAssistant.a2uiSubtitle')}
-          </Text>
-        </View>
-        <View style={styles.switchContainer}>
-          <Switch
-            {...switchColors}
-            disabled={!config.toolCalling}
-            value={config.a2ui && config.toolCalling}
-            onValueChange={a2ui => savePreference({ a2ui })}
-          />
-        </View>
-      </View>
-
       <View style={styles.tokenRowContainer}>
         <View style={styles.tokenLabel}>
           <Text bold>{t('screens.customizeAssistant.maxTokens')}</Text>

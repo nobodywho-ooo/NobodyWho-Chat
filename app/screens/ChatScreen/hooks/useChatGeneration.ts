@@ -21,12 +21,7 @@ import {
   ANSWER_RECHECK_TIME_BUDGET_MS,
   EmbeddingSlotAccess,
   NEW_CHAT_KEY,
-  RENDER_UI_TOOL,
   WebSearchTurn,
-  findA2UiBlock,
-  findImplicitA2UiBlock,
-  parseUiSource,
-  UiStreamParser,
   planAnswerRecheck,
   prepareWebSearchTurn,
   restoreChatForTurn,
@@ -34,7 +29,6 @@ import {
   runAnswerRecheck,
   isWebSearchReady,
   settleConversationDigest,
-  stripA2UiBlocks,
   stripCitations,
   updateConversationDigestInBackground,
   subscribeToolInvocations,
@@ -51,7 +45,6 @@ import {
   resolveMessageDocumentPath,
 } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
-import type { A2UiLive } from '../../../services/a2ui/types';
 import { reportDev } from '../../../services/devHook';
 
 import { Attachments } from './useAttachments';
@@ -86,7 +79,7 @@ const logDevToken = (token: string, seq: number): void => {
   if (!__DEV__) {
     return;
   }
-  console.log(`[a2ui-tok #${seq}] ${JSON.stringify(token)}`);
+  console.log(`[tok #${seq}] ${JSON.stringify(token)}`);
   devTokenBuffer.push(token);
   devTokenBufferSize += 1;
   const now = Date.now();
@@ -354,53 +347,6 @@ export function useChatGeneration({
       }
     };
 
-    // While the model streams a `<ui>…</ui>` block, its (tolerantly
-    // parsed) OpenUI Lang content renders live on the message. Once the block
-    // closes and becomes a persisted render_ui invocation, the live preview
-    // stops.
-    let a2uiSettled = false;
-    const uiStream = new UiStreamParser();
-    const liveA2UiOf = (content: string): A2UiLive | null => {
-      if (a2uiSettled) {
-        return null;
-      }
-      const block = findA2UiBlock(content);
-      if (block === null) {
-        return null;
-      }
-      const render = uiStream.set(block.uiText);
-      return { render, live: !block.complete };
-    };
-
-    // A complete UI block is recorded as a render_ui invocation — the same
-    // shape a tool call used to have, so persistence, rendering and history
-    // reloads keep working unchanged. `arguments.lang` holds the OpenUI Lang
-    // source, which A2UiToolCall re-parses when the card is drawn.
-    const settleA2Ui = () => {
-      if (a2uiSettled) {
-        return;
-      }
-      const block =
-        findA2UiBlock(accumulated) ?? findImplicitA2UiBlock(accumulated);
-      if (block === null) {
-        return;
-      }
-      // A blocked turn that ended mid-<ui> (tiny models stop early) still
-      // renders when the partial parse yields a root — adopt the source and
-      // let the footnote explain. Only drops the card when nothing parses.
-      const parsed = parseUiSource(block.uiText);
-      if (parsed.root !== null) {
-        turnToolCalls.push({
-          name: RENDER_UI_TOOL,
-          arguments: { lang: block.uiText },
-          result: 'The UI card was rendered successfully.',
-        });
-        a2uiSettled = true;
-      } else if (block.complete) {
-        log('ChatScreen A2UI block parse failed', parsed.meta.errors);
-      }
-    };
-
     const renderAssistant = (extra?: {
       tokensPerSecond?: number;
       timeToFirstToken?: number;
@@ -412,7 +358,6 @@ export function useChatGeneration({
       const toolInvocations =
         turnToolCalls.length > 0 ? [...turnToolCalls] : undefined;
       const webSources = turnWebSources.length > 0 ? turnWebSources : undefined;
-      const a2uiLive = liveA2UiOf(content);
 
       setMessages(prev => {
         const at = prev.findIndex(message => message.uid === assistantUid);
@@ -429,7 +374,6 @@ export function useChatGeneration({
           ...(toolInvocations ? { toolInvocations } : {}),
           ...(webSources ? { webSources } : {}),
           ...(webSearchMs !== undefined ? { webSearchMs } : {}),
-          ...(a2uiLive ? { a2uiLive } : {}),
           ...extra,
         };
         return next;
@@ -470,7 +414,9 @@ export function useChatGeneration({
       timeToFirstToken?: number;
       webSearchMs?: number;
     }) => {
-      if (!hasMessageContent(accumulated)) {
+      // A turn may produce ONLY a tool call (e.g. present_choices): the
+      // bubble still carries the rendered buttons, so keep it then.
+      if (!hasMessageContent(accumulated) && turnToolCalls.length === 0) {
         setMessages(prev =>
           prev.filter(message => message.uid !== assistantUid),
         );
@@ -480,9 +426,7 @@ export function useChatGeneration({
 
       await persist({
         role: 'assistant',
-        // The UI block is persisted as a render_ui invocation, so the raw
-        // sentinel JSON is not kept in the prose content.
-        content: stripA2UiBlocks(accumulated),
+        content: accumulated,
         documentsPath: [],
         toolInvocations: turnToolCalls,
         webSources: turnWebSources,
@@ -592,11 +536,6 @@ export function useChatGeneration({
 
       const streamResult = await streamTurn(activeChat, askInput, webTurn);
 
-      // Grammar-stall guard: a whole-turn grammar can trap a weak model into
-      // emitting an endless run of whitespace inside an open `<ui>` block (the
-      // lenient ws* rule absorbs invalid tokens). Bound it so the turn ends
-      // instead of hanging.
-      let wsRun = 0;
       for await (const token of streamResult) {
         if (chat.current !== activeChat) {
           break;
@@ -608,30 +547,6 @@ export function useChatGeneration({
         tokenCount += 1;
         accumulated += token;
         logDevToken(token, tokenCount);
-
-        const inOpenA2Ui =
-          accumulated.includes('<ui>') && !accumulated.includes('</ui>');
-        wsRun = /^\s*$/.test(token) ? wsRun + 1 : 0;
-        // A stalled block has no way to end itself: the only outcomes are a
-        // closing </ui>, the EOS the model eventually samples, or this guard.
-        // Consecutive-whitespace alone misses a mixed junk loop (whitespace
-        // resetting the counter between other tokens), so also cap the TOTAL
-        // size of an open block — on the slow simulator the loop otherwise
-        // grinds forever behind a frozen live-preview map.
-        const openBlockChars = inOpenA2Ui
-          ? accumulated.length - accumulated.lastIndexOf('<ui>')
-          : 0;
-        if (
-          inOpenA2Ui &&
-          (wsRun > 40 || openBlockChars > 2000)
-        ) {
-          log(
-            'ChatScreen A2UI stall guard: ending a stuck <ui> block',
-            { wsTokens: wsRun, openBlockChars },
-          );
-          activeChat.stopGeneration();
-          break;
-        }
 
         scheduleRender();
       }
@@ -690,7 +605,6 @@ export function useChatGeneration({
         }
       }
 
-      settleA2Ui();
       // Dev-only: push the finished turn out BEFORE the async persist — a
       // hung database write must never swallow the report an external
       // harness is waiting on.
@@ -698,21 +612,9 @@ export function useChatGeneration({
         reportDev('turn', {
           failed: false,
           modelId: getAppState().modelIdInUse,
-          content: stripA2UiBlocks(parseThinking(accumulated).rest ?? '').slice(0, 6000),
+          content: (parseThinking(accumulated).rest ?? '').slice(0, 6000),
           raw: accumulated.slice(0, 3000),
           tools: turnToolCalls.map(call => call.name),
-          a2ui: turnToolCalls.some(call => call.name === RENDER_UI_TOOL),
-          ui: (() => {
-            const settledUi = turnToolCalls.find(
-              call => call.name === RENDER_UI_TOOL,
-            );
-            if (settledUi === undefined) {
-              return null;
-            }
-            const lang = (settledUi.arguments as { lang?: string } | undefined)
-              ?.lang;
-            return lang !== undefined ? { lang: lang.slice(0, 300) } : null;
-          })(),
         });
       }
       renderAssistant(metrics);
@@ -728,7 +630,6 @@ export function useChatGeneration({
     } catch (error) {
       log('ChatScreen generation failed', error);
 
-      settleA2Ui();
       renderAssistant();
       await persistAssistant(
         webSearchMs !== undefined ? { webSearchMs } : undefined,
@@ -740,21 +641,9 @@ export function useChatGeneration({
         reportDev('turn', {
           failed: true,
           modelId: getAppState().modelIdInUse,
-          content: stripA2UiBlocks(parseThinking(accumulated).rest ?? '').slice(0, 6000),
+          content: (parseThinking(accumulated).rest ?? '').slice(0, 6000),
           raw: accumulated.slice(0, 2000),
           tools: turnToolCalls.map(call => call.name),
-          a2ui: turnToolCalls.some(call => call.name === RENDER_UI_TOOL),
-          ui: (() => {
-            const settledUi = turnToolCalls.find(
-              call => call.name === RENDER_UI_TOOL,
-            );
-            if (settledUi === undefined) {
-              return null;
-            }
-            const lang = (settledUi.arguments as { lang?: string } | undefined)
-              ?.lang;
-            return lang !== undefined ? { lang: lang.slice(0, 200) } : null;
-          })(),
         });
       }
     } finally {
@@ -778,9 +667,7 @@ export function useChatGeneration({
 
       setIsStreaming(false);
 
-      const answer = stripA2UiBlocks(
-        stripCitations(parseThinking(accumulated).rest),
-      ).trim();
+      const answer = stripCitations(parseThinking(accumulated).rest).trim();
 
       if (
         answered &&

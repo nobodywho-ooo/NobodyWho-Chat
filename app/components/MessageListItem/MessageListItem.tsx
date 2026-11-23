@@ -14,6 +14,8 @@ interface MessageListItemProps {
   isAudioPlaying?: boolean;
   onPlayAudio?: (messageId: string, text: string) => void;
   onStopAudio?: () => void;
+  /** Sends a text as if the user had typed it (choice buttons). */
+  onSendText?: (text: string) => void;
 }
 
 export const MessageListItem: React.FC<MessageListItemProps> = ({
@@ -25,6 +27,7 @@ export const MessageListItem: React.FC<MessageListItemProps> = ({
   isAudioPlaying = false,
   onPlayAudio,
   onStopAudio,
+  onSendText,
 }) => {
   const { role, content } = message;
 
@@ -41,6 +44,7 @@ export const MessageListItem: React.FC<MessageListItemProps> = ({
         isAudioPlaying={isAudioPlaying}
         onPlayAudio={onPlayAudio}
         onStopAudio={onStopAudio}
+        onSendText={onSendText}
       />
     );
   } else if (role === 'system') {

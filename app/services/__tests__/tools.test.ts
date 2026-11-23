@@ -9,8 +9,7 @@ import {
   fetchWikipedia,
   fetchStockQuote,
   buildChatTools,
-  buildA2UiTool,
-  RENDER_UI_TOOL,
+  PRESENT_CHOICES_TOOL,
   subscribeToolInvocations,
 } from '../tools';
 
@@ -53,64 +52,36 @@ describe('buildChatTools', () => {
       'get_weather',
       'search_wikipedia',
       'get_stock_quote',
+      PRESENT_CHOICES_TOOL,
       'convert_length',
       'convert_temperature',
     ]);
   });
 
-  test('a2ui has no render_ui tool: it streams through the token stream', () => {
-    // The model must not be able to call render_ui — its UI flows through
-    // `<ui>…</ui>` sentinels in the ordinary text stream so the
-    // card can render live (see services/a2ui/stream.ts).
-    const names = (buildChatTools() as unknown as MockTool[]).map(
-      t => t.opts.name,
-    );
-    expect(names).not.toContain(RENDER_UI_TOOL);
-  });
-
-  test('the render_ui tool accepts a valid ui payload', async () => {
-    const tool = (buildA2UiTool() as unknown as MockTool).opts;
-    const result = await tool.call({
-      components: [
-        { component: 'Text', id: 't', text: 'Hello' },
-      ],
+  test('the present_choices tool reports the choices it showed', async () => {
+    const tool = (buildChatTools() as unknown as MockTool[]).find(
+      t => t.opts.name === PRESENT_CHOICES_TOOL,
+    )!;
+    const result = JSON.parse(await tool.opts.call(['Walk', 'Bus']));
+    expect(result).toMatchObject({
+      presented: ['Walk', 'Bus'],
     });
-    expect(result).toBe('The UI card was rendered successfully.');
   });
 
-  test('the render_ui tool acknowledges any payload (the app records the card)', async () => {
-    // The card's OpenUI Lang source is recorded by the chat turn itself, so
-    // the tool never validates a payload — it just acknowledges.
-    const tool = (buildA2UiTool() as unknown as MockTool).opts;
-    const result = await tool.call({ components: 'not-an-array' });
-    expect(result).toBe('The UI card was rendered successfully.');
-  });
-
-  test('the render_ui tool renders a sloppy payload instead of failing it', async () => {
-    // A dangling reference or a dropped component is recoverable — the model
-    // gets a success so the card renders (with a placeholder) rather than an
-    // error it would retry into.
-    const tool = (buildA2UiTool() as unknown as MockTool).opts;
-    const result = await tool.call({
-      components: [
-        { component: 'Column', id: 'root', children: ['missing'] },
-        { component: 'Text', id: 't', text: 'hi' },
-      ],
-    });
-    expect(result).toBe('The UI card was rendered successfully.');
-  });
-
-  test('a render_ui call reports a structured invocation', async () => {
+  test('a present_choices call reports a structured invocation', async () => {
     const invocations: ToolInvocation[] = [];
     const unsubscribe = subscribeToolInvocations(invocation =>
       invocations.push(invocation),
     );
 
-    await (buildA2UiTool() as unknown as MockTool).opts.call();
+    const tool = (buildChatTools() as unknown as MockTool[]).find(
+      t => t.opts.name === PRESENT_CHOICES_TOOL,
+    )!;
+    await tool.opts.call(['Walk', 'Bus']);
 
     expect(invocations).toHaveLength(1);
-    expect(invocations[0].name).toBe(RENDER_UI_TOOL);
-    expect(invocations[0].arguments).toEqual({});
+    expect(invocations[0].name).toBe(PRESENT_CHOICES_TOOL);
+    expect(invocations[0].arguments).toEqual({ choices: ['Walk', 'Bus'] });
     unsubscribe();
   });
 

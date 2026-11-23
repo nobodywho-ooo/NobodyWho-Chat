@@ -37,9 +37,6 @@ import { Toast } from 'components';
 import { Spacings } from 'style';
 import { useAppState, useModels } from 'hooks';
 import {
-  A2UI_CONSTRAINED,
-  A2UI_STREAM_GBNF,
-  A2UI_SYSTEM_PROMPT_HINT,
   VOICE_SLOTS,
   VoiceSlot,
   settleConversationDigest,
@@ -211,11 +208,14 @@ export const ChatStackNavigator = () => {
       );
     }
 
-    // When A2UI is on, the chat also carries a short directive telling the
-    // model to use render_ui for UI asks — tool descriptions alone don't make
-    // small local models reach for a tool mid-answer.
-    const systemPrompt = assistantConfig.a2ui
-      ? [assistantConfig.systemPrompt.trim(), A2UI_SYSTEM_PROMPT_HINT]
+    // One line keeps the model reaching for `present_choices` when it would
+    // otherwise end with a bullet list — the tool roster alone doesn't make
+    // small local models call tools mid-answer.
+    const systemPrompt = assistantConfig.toolCalling
+      ? [
+          assistantConfig.systemPrompt.trim(),
+          'When you end a reply with options, suggestions or next steps the user could pick from, offer them as tappable choice buttons with the present_choices tool instead of listing them as text. Keep each choice short.',
+        ]
           .filter(Boolean)
           .join('\n\n')
       : assistantConfig.systemPrompt.trim();
@@ -223,27 +223,10 @@ export const ChatStackNavigator = () => {
     const created = await slots.chat.create({
       model,
       systemPrompt: systemPrompt || undefined,
-      // With A2UI on, constrain sampling so the token stream is free prose
-      // (and free tool calls) until the model opens a <ui> block, after which
-      // its contents are enforced by the grammar until </ui>.
-      //
-      // SamplerPresets.constrainWithGrammar already builds the correct chain
-      // (top_k + top_p + default temperature + dist) — hand-rolling a
-      // SamplerBuilder chain without top_k/top_p is what originally trapped
-      // Bonsai into the whitespace stall. Measured against nobodywho's server:
-      // with this preset, Bonsai emits clean, valid Express (museum gallery
-      // verified; default temperature 0.6 does not garble strings).
-      sampler: A2UI_CONSTRAINED && assistantConfig.a2ui
-        ? // The stock constrained preset (top_k 20 + top_p 0.95 + temp 0.6 +
-          // dist). The tiny Q-quants' hard output budget (~60-120 tokens) is
-          // the real limit on card size — the prompt examples are sized to
-          // fit it; the sampler chain itself is server-verified.
-          SamplerPresets.constrainWithGrammar(A2UI_STREAM_GBNF)
-        : SamplerPresets.temperature(assistantConfig.temperature),
+      sampler: SamplerPresets.temperature(assistantConfig.temperature),
       contextSize: assistantConfig.contextSize,
       thinking: assistantConfig.thinking,
       toolCalling: assistantConfig.toolCalling,
-      a2ui: assistantConfig.a2ui,
     });
 
     return created && chat.current !== undefined;
@@ -508,7 +491,7 @@ export const ChatStackNavigator = () => {
         nextConfig.temperature !== prevConfig.temperature ||
         nextConfig.systemPrompt !== prevConfig.systemPrompt ||
         nextConfig.toolCalling !== prevConfig.toolCalling ||
-        nextConfig.a2ui !== prevConfig.a2ui ||
+
         nextConfig.contextSize !== prevConfig.contextSize;
 
       if (next.modelIdInUse !== prev.modelIdInUse || chatConfigChanged) {

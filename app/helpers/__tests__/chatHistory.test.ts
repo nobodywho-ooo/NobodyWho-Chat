@@ -101,27 +101,43 @@ describe('toModelHistory (nobodywho context)', () => {
     ]);
   });
 
-  test('does NOT replay render_ui into model history (avoids tool-call contamination)', () => {
-    const uiInvocation = {
-      name: 'render_ui',
-      arguments: { ui: { components: [] } },
-      result: 'The UI card was rendered successfully.',
-    };
+  test('replays present_choices as a tool call with its tool result', () => {
     expect(
       toModelHistory([
         {
           ...base,
           role: 'assistant',
-          content: 'Here is the form.',
-          toolInvocations: [uiInvocation],
+          content: 'Pick one:',
+          toolInvocations: [
+            {
+              name: 'present_choices',
+              arguments: { choices: ['Walk', 'Bus'] },
+              result: 'Presented the choices.',
+            },
+          ],
         },
       ]),
     ).toEqual([
-      { role: 'assistant', content: 'Here is the form.', toolCalls: [] },
+      {
+        role: 'assistant',
+        content: '',
+        toolCalls: [
+          {
+            name: 'present_choices',
+            argumentsJson: '{"choices":["Walk","Bus"]}',
+          },
+        ],
+      },
+      {
+        role: 'tool',
+        name: 'present_choices',
+        content: 'Presented the choices.',
+      },
+      { role: 'assistant', content: 'Pick one:', toolCalls: [] },
     ]);
   });
 
-  test('keeps genuine tool calls while only dropping render_ui', () => {
+  test('keeps genuine tool calls alongside choices', () => {
     expect(
       toModelHistory([
         {
@@ -129,7 +145,11 @@ describe('toModelHistory (nobodywho context)', () => {
           role: 'assistant',
           content: 'Submitted.',
           toolInvocations: [
-            { name: 'render_ui', arguments: { ui: {} }, result: 'ok' },
+            {
+              name: 'present_choices',
+              arguments: { choices: ['Yes'] },
+              result: 'Presented.',
+            },
             weatherInvocation,
           ],
         },
@@ -138,9 +158,24 @@ describe('toModelHistory (nobodywho context)', () => {
       {
         role: 'assistant',
         content: '',
-        toolCalls: [{ name: 'get_weather', argumentsJson: '{"city":"Paris"}' }],
+        toolCalls: [
+          {
+            name: 'present_choices',
+            argumentsJson: '{"choices":["Yes"]}',
+          },
+          { name: 'get_weather', argumentsJson: '{"city":"Paris"}' },
+        ],
       },
-      { role: 'tool', name: 'get_weather', content: '{"temperatureCelsius":12}' },
+      {
+        role: 'tool',
+        name: 'present_choices',
+        content: 'Presented.',
+      },
+      {
+        role: 'tool',
+        name: 'get_weather',
+        content: '{"temperatureCelsius":12}',
+      },
       { role: 'assistant', content: 'Submitted.', toolCalls: [] },
     ]);
   });

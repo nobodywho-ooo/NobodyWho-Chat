@@ -212,10 +212,7 @@
           "network": "site injoignable",
           "aborted": "arrêté"
         }
-      },
-      "a2ui": "UI",
-      "a2uiRendering": "Rendu…",
-      "a2uiFailed": "Impossible d’afficher la carte : {{error}}"
+      }
     },
     "conversationsList": {
       "recent": "Récentes",
@@ -421,9 +418,7 @@
       "speechToText": "Reconnaissance vocale",
       "sttLanguage": "Langue",
       "sttLanguageSubtitle": "La langue que vous parlez. En choisir une évite la détection et accélère la transcription.",
-      "sttLanguageAutomatic": "Automatique",
-      "a2ui": "Cartes UI",
-      "a2uiSubtitle": "Permettre au modèle de dessiner des cartes UI interactives (A2UI) dans la conversation — nécessite l’appel d’outils"
+      "sttLanguageAutomatic": "Automatique"
     },
     "chat": {
       "generationFailed": "Une erreur est survenue lors de la génération de la réponse.",
@@ -446,8 +441,7 @@
         "modelTooSmall": "Ce modèle ne peut pas utiliser les résultats web de façon fiable — choisissez-en un plus grand.",
         "notEnoughMemory": "Ce modèle occupe déjà toute la mémoire du téléphone — chercher en parallèle pourrait fermer l’app. Choisissez un modèle plus petit.",
         "attachment": "La recherche web est ignorée quand une photo ou un enregistrement est joint."
-      },
-      "a2uiAction": "Action : {{name}}"
+      }
     },
     "loadingScreen": {
       "loadingModel": "Chargement de {{model}}",

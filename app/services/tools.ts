@@ -5,11 +5,10 @@ import { log } from 'helpers';
 
 const API_TIMEOUT_MS = 5_000;
 
-// The tool the model calls to draw an interactive A2UI card in the chat. Its
-// `ui` argument is constrained by a JSON Schema — nobodywho compiles that
-// schema into the llguidance grammar that governs the model while it emits
-// the tool call (see schema.ts in app/services/a2ui).
-export const RENDER_UI_TOOL = 'render_ui';
+// The tool the model calls to offer the user a row of tappable choices. Each
+// choice is a short string; tapping one sends it to the chat as a user
+// message, exactly as if the user had typed it.
+export const PRESENT_CHOICES_TOOL = 'present_choices';
 
 export type ToolInvocationListener = (invocation: ToolInvocation) => void;
 
@@ -103,13 +102,6 @@ const defineTool = (opts: {
 // tool calling. AiService calls this when `model.toolCalling` is true.
 // defineTool wraps each `call` so its invocation is reported live via
 // subscribeToolInvocations as the model runs it during ask().
-//
-// A2UI deliberately has NO tool here. A tool call's JSON is invisible until
-// the whole call completes, which is exactly what live card rendering must
-// not wait for — so A2UI runs through the ordinary token stream
-// (see app/services/a2ui/stream.ts) and the system-prompt hint. The emitted
-// UI is turned into a `render_ui` ToolInvocation for persistence/rendering
-// by the chat turn itself.
 export const buildChatTools = (): Tool[] => [
   defineTool({
     name: 'get_inference_engine',
@@ -160,6 +152,7 @@ export const buildChatTools = (): Tool[] => [
     ],
     call: (query: string) => fetchStockQuote(query),
   }),
+  buildPresentChoicesTool(),
   defineTool({
     name: 'convert_length',
     description:
@@ -220,22 +213,32 @@ export const buildChatTools = (): Tool[] => [
   }),
 ];
 
-// --- A2UI ------------------------------------------------------------------
-// Legacy `render_ui` tool. The live A2UI flow does not go through a tool call
-// (a tool call's JSON is invisible until the whole call completes, which is
-// exactly what live card rendering must not wait for): the model writes
-// OpenUI Lang between <ui>…</ui> sentinels in the ordinary token stream —
-// see app/services/a2ui/stream.ts. The chat turn itself records the card as
-// a `render_ui` ToolInvocation for persistence and rendering; this stub only
-// acknowledges it.
+// --- User choices -----------------------------------------------------------
+// Tappable choices are the one "UI" the model can offer: the call completes,
+// the app renders a button per choice, and tapping a button sends its text as
+// a normal user message. The model should use this when a short reply from
+// the user would move the conversation forward (menu options, follow-ups,
+// yes/no, next steps).
 
-export const buildA2UiTool = (): Tool =>
+export const buildPresentChoicesTool = (): Tool =>
   defineTool({
-    name: RENDER_UI_TOOL,
+    name: PRESENT_CHOICES_TOOL,
     description:
-      'Draw an interactive UI card in the chat. Called by the app itself after a <ui>…</ui> block renders.',
-    parameters: [],
-    call: () => 'The UI card was rendered successfully.',
+      'Offer the user 2–4 tappable choice buttons instead of writing a list. Call it whenever you would otherwise end a message with options, suggestions or next steps the user could pick from — the user picks one and it is sent as their next message. Prefer this over listing choices as plain text.',
+    parameters: [
+      {
+        name: 'choices',
+        type: 'array',
+        items: { type: 'string' },
+        description:
+          'The choices to show, each a concise string the user could tap without typing.',
+      },
+    ],
+    call: (choices: string[]) =>
+      JSON.stringify({
+        presented: choices,
+        note: 'The user will reply by tapping one of these choices in their next message.',
+      }),
   });
 
 // --- Unit conversions ------------------------------------------------------

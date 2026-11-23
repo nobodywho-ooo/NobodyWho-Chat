@@ -137,16 +137,6 @@ jest.mock('services', () => ({
     mockConversationSyncListener = listener;
     return jest.fn();
   }),
-  // A2UI streaming helpers (no sentinels appear in these tests).
-  RENDER_UI_TOOL: 'render_ui',
-  findA2UiBlock: jest.fn(() => null),
-  findImplicitA2UiBlock: jest.fn(() => null),
-  stripA2UiBlocks: (text: string) => text,
-  parseUiSource: jest.fn(() => ({ root: null, meta: {} })),
-  UiStreamParser: class {
-    set = () => ({ root: null, meta: {} });
-    finish = () => ({ root: null, meta: {} });
-  },
 }));
 
 // The starter selection is random; pin it so showEmptyChat can wait on a
@@ -243,7 +233,6 @@ const defaultCreateChatOpts = {
   contextSize: DEFAULT_ASSISTANT_CONFIG.contextSize,
   thinking: true,
   toolCalling: false,
-  a2ui: false,
 };
 
 // InputBar is host-mocked ('InputBar'), so it's found by host type.
@@ -422,7 +411,6 @@ test('disposes and rebuilds the chat when the assistant config changes', async (
         systemPrompt: 'Talk like a pirate.',
         thinking: false,
         toolCalling: false,
-        a2ui: false,
         contextSize: 2000,
         ttsVoice: 'M1',
         ttsLanguage: 'en',
@@ -439,7 +427,6 @@ test('disposes and rebuilds the chat when the assistant config changes', async (
     contextSize: 2000,
     thinking: false,
     toolCalling: false,
-    a2ui: false,
   });
 });
 

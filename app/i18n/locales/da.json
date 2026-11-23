@@ -212,10 +212,7 @@
           "network": "kunne ikke nås",
           "aborted": "stoppet"
         }
-      },
-      "a2ui": "UI",
-      "a2uiRendering": "Tegnes…",
-      "a2uiFailed": "Kortet kunne ikke vises: {{error}}"
+      }
     },
     "conversationsList": {
       "recent": "Seneste",
@@ -421,9 +418,7 @@
       "speechToText": "Tale til tekst",
       "sttLanguage": "Sprog",
       "sttLanguageSubtitle": "Sproget du taler. Vælger du ét, springes registreringen over, og transskriberingen bliver hurtigere.",
-      "sttLanguageAutomatic": "Automatisk",
-      "a2ui": "UI-kort",
-      "a2uiSubtitle": "Lad modellen tegne interaktive UI-kort (A2UI) i chatten — kræver værktøjskald"
+      "sttLanguageAutomatic": "Automatisk"
     },
     "chat": {
       "generationFailed": "Noget gik galt under genereringen af et svar.",
@@ -446,8 +441,7 @@
         "modelTooSmall": "Denne model kan ikke bruge søgeresultater pålideligt — vælg en større.",
         "notEnoughMemory": "Denne model fylder allerede telefonens hukommelse — en søgning ved siden af kan lukke appen. Vælg en mindre model.",
         "attachment": "Websøgning springes over, når et billede eller en optagelse er vedhæftet."
-      },
-      "a2uiAction": "Handling: {{name}}"
+      }
     },
     "loadingScreen": {
       "loadingModel": "Indlæser {{model}}",

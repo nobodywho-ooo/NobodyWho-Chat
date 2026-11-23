@@ -11,8 +11,6 @@ export type AssistantConfig = {
   systemPrompt: string;
   thinking: boolean;
   toolCalling: boolean;
-  /** Let the model draw interactive A2UI cards (needs tool calling). */
-  a2ui: boolean;
   contextSize: number;
   ttsVoice?: string;
   ttsLanguage?: string;
@@ -24,7 +22,6 @@ export const DEFAULT_ASSISTANT_CONFIG: AssistantConfig = {
   systemPrompt: 'You are a helpful assistant running on a smartphone.',
   thinking: true,
   toolCalling: false,
-  a2ui: false,
   contextSize: 8000,
 };
 
@@ -54,7 +51,6 @@ function sameAssistantConfig(
     a.systemPrompt === b.systemPrompt &&
     a.thinking === b.thinking &&
     a.toolCalling === b.toolCalling &&
-    a.a2ui === b.a2ui &&
     a.contextSize === b.contextSize &&
     a.ttsVoice === b.ttsVoice &&
     a.ttsLanguage === b.ttsLanguage &&
@@ -82,9 +78,15 @@ export async function hydrateAppState(): Promise<void> {
     // parsed value: a malformed store must land on the empty default here, not
     // throw out of hydration and strand the app on the error screen.
     if (isAppStateShape(_state.assistantConfig)) {
+      // Strip the old A2UI flag (pre-tool-call-era cards) if the stored value
+      // still carries it.
+      const stored = _state.assistantConfig as AssistantConfig & {
+        a2ui?: unknown;
+      };
+      delete stored.a2ui;
       _state.assistantConfig = {
         ...DEFAULT_ASSISTANT_CONFIG,
-        ..._state.assistantConfig,
+        ...stored,
       };
     } else if (_state.assistantConfig !== undefined) {
       _state.assistantConfig = DEFAULT_ASSISTANT_CONFIG;

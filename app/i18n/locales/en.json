@@ -212,10 +212,7 @@
           "network": "could not be reached",
           "aborted": "stopped"
         }
-      },
-      "a2ui": "UI",
-      "a2uiRendering": "Rendering…",
-      "a2uiFailed": "Could not render card: {{error}}"
+      }
     },
     "conversationsList": {
       "recent": "Recent",
@@ -421,9 +418,7 @@
       "speechToText": "Speech To Text",
       "sttLanguage": "Language",
       "sttLanguageSubtitle": "The language you speak. Picking one skips detection and transcribes faster.",
-      "sttLanguageAutomatic": "Automatic",
-      "a2ui": "AI UI cards",
-      "a2uiSubtitle": "Let the model draw interactive UI cards (A2UI) in the chat — needs tool calling"
+      "sttLanguageAutomatic": "Automatic"
     },
     "chat": {
       "generationFailed": "Something went wrong while generating a response.",
@@ -446,8 +441,7 @@
         "modelTooSmall": "This model can’t use web results reliably — pick a larger one.",
         "notEnoughMemory": "This model already fills the phone’s memory — searching alongside it could close the app. Pick a smaller model.",
         "attachment": "Web search is skipped when a photo or recording is attached."
-      },
-      "a2uiAction": "Action: {{name}}"
+      }
     },
     "loadingScreen": {
       "loadingModel": "Loading {{model}}",

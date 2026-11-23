@@ -102,15 +102,7 @@ export const toModelHistory = (messages: ChatMessage[]): Message[] =>
   messages.flatMap((message): Message[] => {
     switch (message.role) {
       case 'assistant': {
-        // A2UI's `render_ui` invocation is an app-side artifact: the card is
-        // rendered by the UI and only persisted for display. Replaying it as a
-        // tool call into the model's context made the model think `render_ui`
-        // is a real tool again and echo `{"name":"render_ui",…}` instead of
-        // writing the Express `<ui>` block. Drop it from model history — the
-        // assistant's own prose (with any sentinels stripped) is what stays.
-        const invocations = (message.toolInvocations ?? []).filter(
-          invocation => invocation.name !== 'render_ui',
-        );
+        const invocations = message.toolInvocations ?? [];
         if (invocations.length === 0) {
           return [
             { role: 'assistant', content: message.content, toolCalls: [] },

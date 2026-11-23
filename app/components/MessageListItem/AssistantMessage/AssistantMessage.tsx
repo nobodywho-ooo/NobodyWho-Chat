@@ -11,17 +11,16 @@ import {
 } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
 import {
-  RENDER_UI_TOOL,
+  PRESENT_CHOICES_TOOL,
   attributeSourcesByBlock,
-  stripA2UiBlocks,
   stripCitations,
   useWebSearchStore,
 } from 'services';
 import { DisplayMessage } from 'types';
 
 import { AnswerBody } from './AnswerBody';
-import { A2UiLiveCard, A2UiToolCall } from './A2UiToolCall';
 import { AudioSpeakerButton } from './AudioSpeakerButton';
+import { ChoiceButtons } from './ChoiceButtons';
 import { ThinkingBlock } from './ThinkingBlock';
 import { ThinkingModal } from './ThinkingModal';
 import { ToolCallBlock } from './ToolCallBlock';
@@ -51,6 +50,7 @@ interface AssistantMessageProps {
   isAudioPlaying: boolean;
   onPlayAudio?: (messageId: string, text: string) => void;
   onStopAudio?: () => void;
+  onSendText?: (text: string) => void;
 }
 
 const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
@@ -62,6 +62,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
   isAudioPlaying,
   onPlayAudio,
   onStopAudio,
+  onSendText,
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
@@ -90,9 +91,8 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
   } = useMemo(() => parseThinking(content), [content]);
 
   const hasWebSources = webSources.length > 0;
-  // The `<ui>…</ui>` block is rendered as a card, not as text.
   const rest = useMemo(
-    () => stripA2UiBlocks(hasWebSources ? stripCitations(rawRest) : rawRest),
+    () => (hasWebSources ? stripCitations(rawRest) : rawRest),
     [hasWebSources, rawRest],
   );
 
@@ -194,10 +194,15 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
             />
           )}
           {toolInvocations.map((invocation, toolIndex) =>
-            invocation.name === RENDER_UI_TOOL ? (
-              <A2UiToolCall
+            invocation.name === PRESENT_CHOICES_TOOL ? (
+              <ChoiceButtons
                 key={`${invocation.name}-${toolIndex}`}
-                invocation={invocation}
+                choices={
+                  Array.isArray(invocation.arguments.choices)
+                    ? (invocation.arguments.choices as string[])
+                    : []
+                }
+                onSendText={text => onSendText?.(text)}
               />
             ) : (
               <ToolCallBlock
@@ -208,10 +213,6 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
               />
             ),
           )}
-          {"a2uiLive" in message && message.a2uiLive &&
-            toolInvocations.every(invocation => invocation.name !== RENDER_UI_TOOL) && (
-              <A2UiLiveCard live={message.a2uiLive} />
-            )}
           <AnswerBody
             text={rest}
             isStreaming={isStreaming}

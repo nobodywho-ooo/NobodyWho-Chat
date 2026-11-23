@@ -121,17 +121,6 @@ jest.mock('services', () => ({
   restoreWebSearchTurn: jest.fn(),
   settleConversationDigest: jest.fn(() => Promise.resolve()),
   updateConversationDigestInBackground: jest.fn(() => Promise.resolve()),
-  // A2UI streaming: harmless no-ops in these tests (no sentinel is ever
-  // emitted by the stubbed chat, so nothing is parsed or synthesized).
-  RENDER_UI_TOOL: 'render_ui',
-  findA2UiBlock: jest.fn(() => null),
-  findImplicitA2UiBlock: jest.fn(() => null),
-  stripA2UiBlocks: (text: string) => text,
-  parseUiSource: jest.fn(() => ({ root: null, meta: {} })),
-  UiStreamParser: class {
-    set = () => ({ root: null, meta: {} });
-    finish = () => ({ root: null, meta: {} });
-  },
 }));
 
 // Web search is off unless a test turns it on; the search itself is stubbed
