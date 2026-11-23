@@ -186,6 +186,11 @@ export const getModelCatalogue = async (): Promise<readonly Model[]> => {
   }
 };
 
+// The model as the catalogue held in memory or on disk has it now, whatever
+// its age; never goes to the network.
+export const cachedCatalogueModel = (id: number): Model | undefined =>
+  currentCatalogue()?.models.find(model => model.id === id);
+
 // The catalogue with the device RAM to judge what it can run against.
 export const getDeviceCatalogue = async (): Promise<DeviceCatalogue> => {
   const [models, ram] = await Promise.all([

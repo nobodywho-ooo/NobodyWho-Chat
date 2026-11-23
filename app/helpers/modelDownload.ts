@@ -56,6 +56,34 @@ export class NetworkError extends Error {
   }
 }
 
+// The server answered, with an error status: a wrong URL (404), a removed or
+// gated file (401/403/410). Unlike a NetworkError, trying again won't help.
+export class HttpStatusError extends Error {
+  readonly status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'HttpStatusError';
+    this.status = status;
+  }
+}
+
+// Whether a failed download can never succeed as it stands: the server refused
+// the URL itself. Timeouts and rate limits (408/429) and server errors (5xx)
+// may pass, so they don't count.
+export const isPermanentDownloadFailure = (error: unknown): boolean =>
+  error instanceof HttpStatusError &&
+  error.status >= 400 &&
+  error.status < 500 &&
+  error.status !== 408 &&
+  error.status !== 429;
+
+// How expo-file-system words an HTTP error status, on iOS ("response has
+// status 404", "server returned HTTP 404") and Android ("response has status:
+// 404", "HTTP 404").
+const HTTP_STATUS_FAILURE =
+  /Unable to download a file: (?:response has status:?|server returned HTTP|HTTP) (\d{3})/;
+
 const TRANSPORT_FAILURE =
   /java\.net\.|javax\.net\.ssl\.|java\.io\.(EOF|InterruptedIO)Exception|okhttp3\.|unexpected end of stream/;
 const IOS_TRANSPORT_FAILURE =
@@ -74,6 +102,13 @@ const downloadFile = async (
   try {
     await File.downloadFileAsync(url, destination, options);
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    const status = HTTP_STATUS_FAILURE.exec(message)?.[1];
+
+    if (!options.signal.aborted && status !== undefined) {
+      throw new HttpStatusError(message, Number(status));
+    }
+
     if (!options.signal.aborted && isTransportFailure(error)) {
       throw new NetworkError(
         `GET ${url} failed: ${error instanceof Error ? error.message : String(error)}`,
@@ -270,6 +305,18 @@ const fetchRemoteMeta = async (
         error,
       );
     }
+
+    if (res.status === 405 || res.status === 501) {
+      return { total: undefined, acceptsRanges: false, validator: undefined };
+    }
+
+    if (!res.ok) {
+      throw new HttpStatusError(
+        `HEAD ${url} returned ${res.status}`,
+        res.status,
+      );
+    }
+
     const length = Number(res.headers.get('content-length'));
     const acceptsRanges = (res.headers.get('accept-ranges') ?? '')
       .toLowerCase()

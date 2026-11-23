@@ -50,6 +50,8 @@ import {
   listModelFiles,
   listModelSubdirectories,
   NetworkError,
+  HttpStatusError,
+  isPermanentDownloadFailure,
 } from './modelDownload';
 import { toFileUri, toPlainPath } from './fileUri';
 import {
@@ -148,6 +150,8 @@ export {
   listModelFiles,
   listModelSubdirectories,
   NetworkError,
+  HttpStatusError,
+  isPermanentDownloadFailure,
   toFileUri,
   toPlainPath,
   deviceRamGB,

@@ -16,7 +16,8 @@ import {
   log,
 } from 'helpers';
 import { ModelPipeline } from 'types';
-import { subscribeChatModelArrival } from 'services';
+import { cachedCatalogueModel, subscribeChatModelArrival } from 'services';
+import { HttpStatusError } from '../../helpers/modelDownload';
 import { buildModel } from 'jest/factories/model';
 
 import {
@@ -40,8 +41,15 @@ jest.mock('database', () => ({
   setAppState: jest.fn(async () => {}),
 }));
 
+jest.mock('services', () => ({
+  ...jest.requireActual('services'),
+  cachedCatalogueModel: jest.fn(() => undefined),
+}));
+
 jest.mock('helpers', () => ({
   downloadModelPart: jest.fn(),
+  isPermanentDownloadFailure: jest.requireActual('../../helpers/modelDownload')
+    .isPermanentDownloadFailure,
   deleteModelDirectory: jest.fn(),
   log: jest.fn(),
   // Unit-tested in diskSpace.test.ts; here the default is a device with room,
@@ -65,6 +73,7 @@ const mockDeleteModelDirectory = deleteModelDirectory as jest.Mock;
 const mockCheckDiskSpaceForModel = checkDiskSpaceForModel as jest.Mock;
 const mockSetAppState = setAppState as jest.Mock;
 const mockLog = log as jest.Mock;
+const mockCachedCatalogueModel = cachedCatalogueModel as jest.Mock;
 
 // A pending download for a single-part model, keyed by a unique id per test so
 // the module-level `activeDownloads` map can't leak state between tests.
@@ -100,6 +109,7 @@ beforeEach(() => {
   (updateModelDownloadParts as jest.Mock).mockResolvedValue(undefined);
   (setAppState as jest.Mock).mockResolvedValue(undefined);
   (getAppState as jest.Mock).mockReturnValue({ modelIdInUse: 1 });
+  mockCachedCatalogueModel.mockReturnValue(undefined);
   mockCheckDiskSpaceForModel.mockReturnValue({
     fits: true,
     requiredGB: 1.5,
@@ -152,6 +162,70 @@ test('keeps the pending download on a transient error so it can resume later', a
   expect(mockDeleteModelDownload).not.toHaveBeenCalled();
   expect(mockDeleteModelDirectory).not.toHaveBeenCalled();
   expect(mockInsertModel).not.toHaveBeenCalled();
+});
+
+test('drops, after alerting, a download whose URL the server refuses', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  mockGetModelDownloads.mockResolvedValue([pendingDownload(124)]);
+  mockDownloadModelPart.mockRejectedValue(
+    new HttpStatusError('HEAD https://x/model-124.gguff returned 404', 404),
+  );
+
+  await renderHook(() => useResumeModelDownloads());
+
+  await waitFor(() =>
+    expect(mockDeleteModelDownload).toHaveBeenCalledWith(124),
+  );
+  expect(mockDeleteModelDirectory).toHaveBeenCalledWith(124);
+  expect(mockInsertModel).not.toHaveBeenCalled();
+  expect(alert).toHaveBeenCalledWith(
+    'screens.models.downloadFailedTitle',
+    'screens.models.downloadFailedModelMessage',
+  );
+  alert.mockRestore();
+});
+
+test('reports a refused URL again when the user starts it again', async () => {
+  const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  const { model } = pendingDownload(125);
+  mockDownloadModelPart.mockRejectedValue(
+    new HttpStatusError('HEAD https://x/model-125.gguff returned 404', 404),
+  );
+
+  const { result } = await renderHook(() => useModelDownloader());
+  await act(() => result.current.startDownload(model));
+  await act(() => result.current.startDownload(model));
+
+  expect(alert).toHaveBeenCalledTimes(2);
+  alert.mockRestore();
+});
+
+test('resumes from the URL the catalogue has now, not the one it started from', async () => {
+  const download = pendingDownload(126);
+  mockGetModelDownloads.mockResolvedValue([download]);
+  mockCachedCatalogueModel.mockImplementation((id: number) =>
+    id === 126
+      ? {
+          ...download.model,
+          parts: [{ ...download.model.parts[0], url: 'https://y/fixed.gguf' }],
+        }
+      : undefined,
+  );
+  mockDownloadModelPart.mockResolvedValue('/docs/models/126/model-126.gguf');
+
+  await renderHook(() => useResumeModelDownloads());
+
+  await waitFor(() => expect(mockInsertModel).toHaveBeenCalled());
+  expect(mockDownloadModelPart).toHaveBeenCalledWith(
+    126,
+    'https://y/fixed.gguf',
+    'model-126.gguf',
+    expect.anything(),
+    expect.any(Function),
+  );
+  expect(mockInsertModel.mock.calls[0][0].parts[0].url).toBe(
+    'https://y/fixed.gguf',
+  );
 });
 
 test('alerts the user when a download fails', async () => {
