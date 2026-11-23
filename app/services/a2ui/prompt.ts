@@ -34,7 +34,7 @@ Map(markers, route?, variant?)
 Rules:
 - NEST shapes: gallery -> Stack horizontal of Cards; trip -> Map + photos; form -> Inputs. Match the shape to the request.
 - Images only when you have a real https:// URL; NEVER invent URLs (they render blank). For Paris museums reuse: Louvre https://commons.wikimedia.org/wiki/Special:FilePath/Louvre_Museum_Wikimedia_Commons.jpg?width=320, Orsay .../MuseeDOrsay.jpg?width=320, Pompidou .../The_Centre_Pompidou_behind_Buildings.jpg?width=320.
-- Map coordinates are real lat/lon: Louvre 48.8606, 2.3376; Eiffel 48.8584, 2.2944; Orsay 48.86, 2.3266; Pompidou 48.8613, 2.3522; Versailles 48.8049, 2.1204; Vincennes 48.842, 2.4386.
+- Map coordinates are real lat/lon: Louvre 48.8606, 2.3376; Eiffel 48.8584, 2.2944; Orsay 48.86, 2.3266; Pompidou 48.8613, 2.3522; Versailles 48.8049, 2.1204; Vincennes 48.842, 2.4386; Nyhavn (Copenhagen) 55.6798, 12.5866; The Little Mermaid (Copenhagen) 55.6921, 12.5995; Tivoli 55.6736, 12.5683.
 
 Example (trip card — copy this shape; the WHOLE card is ONE root statement):
 <ui>root = Stack([TextContent("Paris museums"), Map([{label:"Louvre", lat:48.9, lon:2.3},{label:"Orsay", lat:48.9, lon:2.3}], [{lat:48.9, lon:2.3},{lat:48.9, lon:2.3}], "medium")])</ui>
