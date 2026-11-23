@@ -77,7 +77,12 @@ export const MapView: React.FC<MapViewProps> = ({ markers, route, variant }) => 
         style={StyleSheet.absoluteFill}
         toolbarEnabled={false}
         moveOnMarkerPress={false}
-        region={region}
+        // initialRegion (not region): the controlled `region` prop is ignored
+        // by react-native-maps on this RN/iOS-26 build — the camera snaps to a
+        // default whole-Europe zoom while munching the deltas, hiding both the
+        // route (1 px) and the pins' locality. initialRegion sets the camera
+        // once at mount; the live preview's re-renders no longer fight it.
+        initialRegion={region}
       >
         {safeRoute !== undefined && safeRoute.length > 1 ? (
           <Polyline
