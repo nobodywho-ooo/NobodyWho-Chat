@@ -10,8 +10,9 @@ import type { GlowLevels } from 'components';
 
 const STEPS = 10;
 
-const SWELL_MS = 260;
-const SETTLE_MS = 1100;
+const PULSE_PEAK = 0.4;
+const SWELL_MS = 420;
+const SETTLE_MS = 1400;
 
 const FADE_FROM = 0.95;
 const FADE_STEP_MS = 300;
@@ -43,7 +44,10 @@ export const useDownloadPulses = (progress: number): GlowLevels => {
 
     const pulse = () =>
       withSequence(
-        withTiming(1, { duration: SWELL_MS, easing: Easing.out(Easing.quad) }),
+        withTiming(PULSE_PEAK, {
+          duration: SWELL_MS,
+          easing: Easing.inOut(Easing.quad),
+        }),
         withTiming(0, {
           duration: SETTLE_MS,
           easing: Easing.inOut(Easing.quad),
