@@ -17,6 +17,7 @@ exports[`MarkdownDocument matches snapshot 1`] = `
         {
           "paddingTop": 20,
         },
+        false,
       ]
     }
     contentInset={

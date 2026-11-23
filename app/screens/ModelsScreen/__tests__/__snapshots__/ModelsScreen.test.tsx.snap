@@ -15,6 +15,7 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
         {
           "paddingTop": 0,
         },
+        false,
       ]
     }
     contentInset={
@@ -434,6 +435,7 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
         {
           "paddingTop": 0,
         },
+        false,
       ]
     }
     contentInset={
@@ -853,6 +855,7 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
         {
           "paddingTop": 0,
         },
+        false,
       ]
     }
     contentInset={

@@ -11,10 +11,13 @@ exports[`renders correctly SettingsScreen 1`] = `
   <RCTScrollView
     contentContainerStyle={
       [
-        undefined,
+        {
+          "paddingBottom": 20,
+        },
         {
           "paddingTop": 0,
         },
+        false,
       ]
     }
     contentInset={

@@ -142,7 +142,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     'mount',
   );
 
-  const list = useMessageListScroll(messages, headerInset);
+  const list = useMessageListScroll(messages, headerInset, insets.bottom);
   const { showConversation } = list;
 
   const {
@@ -432,6 +432,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             anchoredEndSpace={list.anchoredEndSpace}
             maintainVisibleContentPosition={list.maintainVisibleContentPosition}
             onScrollBeginDrag={list.onScrollBeginDrag}
+            onScroll={list.onScroll}
             contentInsetEndAdjustment={list.contentInsetEndAdjustment}
             keyboardLiftBehavior="whenAtEnd"
             keyboardOffset={insets.bottom}

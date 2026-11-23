@@ -1,5 +1,11 @@
 import React, { ComponentRef, Ref, useRef } from 'react';
-import { ScrollView, ScrollViewProps, StyleSheet, View } from 'react-native';
+import {
+  Platform,
+  ScrollView,
+  ScrollViewProps,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useHeaderHeight } from '@react-navigation/elements';
 import { BlurTargetView } from 'expo-blur';
@@ -10,10 +16,12 @@ interface HeaderScrollViewProps extends ScrollViewProps {
   ref?: Ref<ComponentRef<typeof ScrollView>>;
 }
 
-const paddingTopOf = (style: ScrollViewProps['contentContainerStyle']) => {
+type Style = ScrollViewProps['contentContainerStyle'];
+
+const paddingOf = (style: Style, side: 'paddingTop' | 'paddingBottom') => {
   const flat = StyleSheet.flatten(style) ?? {};
-  const top = flat.paddingTop ?? flat.paddingVertical ?? flat.padding ?? 0;
-  return typeof top === 'number' ? top : 0;
+  const value = flat[side] ?? flat.paddingVertical ?? flat.padding ?? 0;
+  return typeof value === 'number' ? value : 0;
 };
 
 export const HeaderScrollView: React.FC<HeaderScrollViewProps> = ({
@@ -36,7 +44,14 @@ export const HeaderScrollView: React.FC<HeaderScrollViewProps> = ({
           {...props}
           contentContainerStyle={[
             contentContainerStyle,
-            { paddingTop: paddingTopOf(contentContainerStyle) + headerHeight },
+            {
+              paddingTop:
+                paddingOf(contentContainerStyle, 'paddingTop') + headerHeight,
+            },
+            Platform.OS === 'android' && {
+              paddingBottom:
+                paddingOf(contentContainerStyle, 'paddingBottom') + bottom,
+            },
           ]}
         />
       </BlurTargetView>

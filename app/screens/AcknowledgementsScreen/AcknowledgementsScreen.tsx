@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   APP_LICENCES,
@@ -21,7 +20,6 @@ type ModelLicences = ModelLicence[] | 'loading' | 'failed';
 export const AcknowledgementsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const insets = useSafeAreaInsets();
   const [modelLicences, setModelLicences] = useState<ModelLicences>('loading');
 
   const load = useCallback(() => {
@@ -79,7 +77,7 @@ export const AcknowledgementsScreen: React.FC = () => {
       style={[styles.container, { backgroundColor: colors.surface }]}
       contentContainerStyle={[
         styles.content,
-        { paddingBottom: insets.bottom + Spacings.xl },
+        { paddingBottom: Spacings.xl },
       ]}
     >
       <Text variant="h3" style={styles.heading}>

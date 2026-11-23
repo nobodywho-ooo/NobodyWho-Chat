@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Switch, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   AssistantConfig,
@@ -31,7 +30,6 @@ export const TOKENS_STEP = 500;
 export const CustomizeAssistantScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const insets = useSafeAreaInsets();
 
   const [config, setConfig] = useState<AssistantConfig>(
     () => getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG,
@@ -70,7 +68,7 @@ export const CustomizeAssistantScreen: React.FC = () => {
       style={[styles.container, { backgroundColor: colors.surface }]}
       contentContainerStyle={[
         styles.content,
-        { paddingBottom: insets.bottom + Spacings.xl },
+        { paddingBottom: Spacings.xl },
       ]}
       keyboardShouldPersistTaps="handled"
     >

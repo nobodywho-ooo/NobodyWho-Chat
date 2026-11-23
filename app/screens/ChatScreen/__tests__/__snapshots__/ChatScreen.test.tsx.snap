@@ -183,6 +183,7 @@ exports[`renders ChatScreen with existing messages 1`] = `
         }
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
+        onScroll={[Function]}
         onScrollBeginDrag={[Function]}
         showsVerticalScrollIndicator={false}
         style={
@@ -565,6 +566,7 @@ exports[`renders correctly empty ChatScreen 1`] = `
         }
         keyboardDismissMode="interactive"
         keyboardShouldPersistTaps="handled"
+        onScroll={[Function]}
         onScrollBeginDrag={[Function]}
         showsVerticalScrollIndicator={false}
         style={

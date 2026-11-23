@@ -1146,6 +1146,69 @@ test('the chevron does not flash while the list is still settling', async () => 
   expect(chevron(screen)).toBeNull();
 });
 
+// Lays out two rows whose newest one ends `lastRowEnd` px into the content,
+// in a viewport of 780 px.
+const layOutRows = (lastRowEnd: number) => {
+  mockListState.data = [{}, {}];
+  mockListState.scrollLength = 780;
+  mockListState.rows = [
+    { top: 0, size: 60 },
+    { top: 60, size: lastRowEnd - 60 },
+  ];
+};
+
+test('the chevron waits for the answer to reach the bottom of the screen', async () => {
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  // The blank space parked under the sent message runs past the screen (a
+  // long message, or on Android an end inset reported a few frames late), so
+  // the list says "not at the end" while every word is still on screen.
+  layOutRows(400);
+  await act(() => mockListState.emitIsAtEnd(false));
+  expect(chevron(screen)).toBeNull();
+
+  // The answer grows past the bottom of the screen: now there is something to
+  // scroll down to.
+  layOutRows(900);
+  await act(() => mockListState.emitTotalSize(900));
+  expect(chevron(screen)).toBeTruthy();
+});
+
+test('scrolling the newest message out of view offers the chevron', async () => {
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  layOutRows(900);
+  mockListState.scroll = 120;
+  await act(() => mockListState.emitIsAtEnd(false));
+  expect(chevron(screen)).toBeNull();
+
+  // The list's own signal already said "not at the end"; it is the scroll
+  // that moves the newest message off the bottom.
+  mockListState.scroll = 0;
+  await act(() =>
+    screen.container
+      .queryAll(node => node.type === 'RCTScrollView')[0]
+      .props.onScroll(),
+  );
+  expect(chevron(screen)).toBeTruthy();
+});
+
 test('the chevron is never offered on an empty conversation', async () => {
   const screen = await render(
     <ChatScreen

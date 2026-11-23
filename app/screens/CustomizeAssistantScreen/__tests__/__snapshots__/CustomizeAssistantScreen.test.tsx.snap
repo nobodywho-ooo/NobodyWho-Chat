@@ -23,6 +23,7 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
         {
           "paddingTop": 16,
         },
+        false,
       ]
     }
     contentInset={

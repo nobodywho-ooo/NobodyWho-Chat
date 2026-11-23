@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, ScrollView, View } from 'react-native';
 import { HeaderScrollView } from 'components';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useKeepAwakeWhile, useModelDownloader, useStyled } from 'hooks';
 import { modelSizeLabel } from 'helpers';
@@ -22,7 +21,6 @@ import {
 export const ModelsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const insets = useSafeAreaInsets();
   const [tab, setTab] = useState<ModelsTab>('discover');
 
   const {
@@ -125,7 +123,7 @@ export const ModelsScreen: React.FC = () => {
 
       {tab === 'downloaded' && <DownloadedModelsSection />}
 
-      <View style={{ height: insets.bottom + Spacings.lg }} />
+      <View style={{ height: Spacings.lg }} />
     </HeaderScrollView>
   );
 };

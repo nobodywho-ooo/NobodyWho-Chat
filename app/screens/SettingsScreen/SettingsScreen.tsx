@@ -6,6 +6,7 @@ import { getVersion, getBuildNumber } from 'react-native-device-info';
 import { getIOSVersion, openExternalUrl } from 'helpers';
 import { useStyled } from 'hooks';
 import { ActionButton, HeaderScrollView, ListItem, Text } from 'components';
+import { Spacings } from 'style';
 
 import styles from './SettingsScreen.styles';
 
@@ -35,6 +36,7 @@ export const SettingsScreen: React.FC = () => {
   return (
     <HeaderScrollView
       style={[styles.container, { backgroundColor: colors.surface }]}
+      contentContainerStyle={{ paddingBottom: Spacings.xl }}
     >
       <Text>{t('screens.settings.app')}</Text>
       <ListItem

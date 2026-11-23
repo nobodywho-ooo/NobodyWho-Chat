@@ -1,6 +1,5 @@
 import React, { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   APP_LANGUAGES,
@@ -64,7 +63,6 @@ const LanguageRow: React.FC<LanguageRowProps> = ({
 export const LanguageScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const insets = useSafeAreaInsets();
 
   const [preference, setPreference] = useState<AppLanguage | undefined>(
     getLanguagePreference,
@@ -80,7 +78,7 @@ export const LanguageScreen: React.FC = () => {
       style={[styles.container, { backgroundColor: colors.surface }]}
       contentContainerStyle={[
         styles.content,
-        { paddingBottom: insets.bottom + Spacings.xl },
+        { paddingBottom: Spacings.xl },
       ]}
     >
       <LanguageRow

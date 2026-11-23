@@ -372,8 +372,17 @@ export const mockScrollToOffset = jest.fn();
 // Stand-in for the list's own state signals, kept per signal like the real one:
 // tests drive `emitIsAtEnd` to move the list away from (and back to) the end of
 // the conversation, and `emitTotalSize` to report content it has just measured.
+// The geometry fields (`data`, `scroll`, `scrollLength`, `rows`) are what the chat
+// screen reads to tell whether the newest message is on screen; `rows` holds
+// each row's measured { top, size }, and is empty until a test lays some out.
 export const mockListState = {
   isAtEnd: true,
+  data: [],
+  scroll: 0,
+  scrollLength: 0,
+  rows: [],
+  positionAtIndex: index => mockListState.rows[index]?.top,
+  sizeAtIndex: index => mockListState.rows[index]?.size,
   listeners: new Map(),
   listen(type, callback) {
     const forType = mockListState.listeners.get(type) ?? new Set();
@@ -394,6 +403,10 @@ export const mockListState = {
   },
   reset() {
     mockListState.isAtEnd = true;
+    mockListState.data = [];
+    mockListState.scroll = 0;
+    mockListState.scrollLength = 0;
+    mockListState.rows = [];
     mockListState.listeners.clear();
   },
 };
@@ -416,7 +429,10 @@ jest.mock('react-native-keyboard-controller', () => {
       mockReact.createElement(mockReact.Fragment, null, children),
     KeyboardStickyView: ({ children, style }) =>
       mockReact.createElement(View, { style }, children),
-    KeyboardController: { dismiss: () => mockKeyboardDismiss() },
+    KeyboardController: {
+      dismiss: () => mockKeyboardDismiss(),
+      state: () => ({ height: 0 }),
+    },
   };
 });
 
