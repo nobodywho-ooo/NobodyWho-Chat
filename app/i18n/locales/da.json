@@ -259,6 +259,10 @@
           "title": "Hurtig",
           "subtitle": "Kraftfulde sprog-, lyd- og billedmodeller, der kører gnidningsfrit på din enhed."
         },
+        "webSearch": {
+          "title": "Websøgning",
+          "subtitle": "Søg på nettet efter friske svar, direkte fra din enhed. Ingen server imellem."
+        },
         "continue": "Fortsæt"
       },
       "header": "Kom i gang",

@@ -19,8 +19,6 @@ import { OnboardingStep } from '../OnboardingStep/OnboardingStep';
 
 import styles from './OnboardingDownload.styles';
 
-// Downloads what the previous step picked, locked in place until it is done.
-// Cancel, or a download that doesn't fit, goes back to that step.
 export const OnboardingDownload: React.FC<
   OnboardingScreenProps<'OnboardingDownload'>
 > = ({ navigation, route }) => {
@@ -31,7 +29,6 @@ export const OnboardingDownload: React.FC<
   const { modelId, setup } = route.params;
 
   const [isDone, setIsDone] = useState(false);
-  // The lock blocks going back too, so it is lifted before leaving.
   const [isLeaving, setIsLeaving] = useState(false);
 
   const { isLoaded, progress, downloadCurated, cancel } = curatedModels;

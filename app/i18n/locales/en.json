@@ -259,6 +259,10 @@
           "title": "Fast",
           "subtitle": "Powerful language, audio and vision models running smoothly on your device."
         },
+        "webSearch": {
+          "title": "Web Search",
+          "subtitle": "Search the web for fresh answers, right from your device. No server in between."
+        },
         "continue": "Continue"
       },
       "header": "Get started",

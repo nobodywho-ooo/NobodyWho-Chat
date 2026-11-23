@@ -259,6 +259,10 @@
           "title": "Rapide",
           "subtitle": "De puissants modèles de langage, d’audio et de vision qui tournent sans accroc sur votre appareil."
         },
+        "webSearch": {
+          "title": "Recherche web",
+          "subtitle": "Cherchez sur le web des réponses à jour, directement depuis votre appareil. Aucun serveur intermédiaire."
+        },
         "continue": "Continuer"
       },
       "header": "Démarrer",

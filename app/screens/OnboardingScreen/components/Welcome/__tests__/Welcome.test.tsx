@@ -32,7 +32,7 @@ test('greets with the app name', async () => {
 test('presents each feature with its title and subtitle', async () => {
   await renderWelcome();
 
-  ['assistant', 'private', 'fast'].forEach(feature => {
+  ['assistant', 'private', 'fast', 'webSearch'].forEach(feature => {
     screen.getByText(`screens.onboarding.welcome.${feature}.title`);
     screen.getByText(`screens.onboarding.welcome.${feature}.subtitle`);
   });
