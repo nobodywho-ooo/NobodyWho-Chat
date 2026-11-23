@@ -23,8 +23,19 @@ export interface A2UiParseResult {
 
 /** One-shot parse of a complete source (used at settle time). */
 export const parseUiSource = (source: string): A2UiParseResult => {
-  const result = createUiParser().parse(source);
-  return { root: result.root ?? null, meta: result.meta };
+  try {
+    const result = createUiParser().parse(source);
+    return { root: result.root ?? null, meta: result.meta };
+  } catch (error) {
+    // The parser must never take the turn down with it: some streams (long
+    // whitespace tails after a stall, weird quoting) throw in the app
+    // runtime where they don't in Node. Report as a parse failure and let
+    // the caller degrade gracefully.
+    return {
+      root: null,
+      meta: { errors: [{ code: 'parse-threw', message: String(error) }] },
+    };
+  }
 };
 
 /** A streaming parser for one generation: feed it the growing `<ui>` text. */
@@ -34,15 +45,29 @@ export class UiStreamParser {
 
   /** Feed the full text so far; returns the current parse result. */
   set(fullText: string): A2UiParseResult {
-    const result = this.parser.set(fullText);
-    this.result = { root: result.root ?? null, meta: result.meta };
+    try {
+      const result = this.parser.set(fullText);
+      this.result = { root: result.root ?? null, meta: result.meta };
+    } catch (error) {
+      this.result = {
+        root: null,
+        meta: { errors: [{ code: 'parse-threw', message: String(error) }] },
+      };
+    }
     return this.result;
   }
 
   /** Mark the stream finished (no more text will arrive). */
   finish(fullText: string): A2UiParseResult {
-    const result = this.parser.set(fullText, true);
-    this.result = { root: result.root ?? null, meta: result.meta };
+    try {
+      const result = this.parser.set(fullText, true);
+      this.result = { root: result.root ?? null, meta: result.meta };
+    } catch (error) {
+      this.result = {
+        root: null,
+        meta: { errors: [{ code: 'parse-threw', message: String(error) }] },
+      };
+    }
     return this.result;
   }
 }

@@ -17,25 +17,36 @@ export const A2UI_SYSTEM_PROMPT_HINT = `You can draw interactive UI cards. When 
 OpenUI Lang is one statement per line: identifier = Expression. Put root = Stack([...]) FIRST so the card shell streams in early. Arguments are positional. Strings use "double quotes".
 
 Components (only these, all others fail to render):
-Stack(children, orientation? "vertical"|"horizontal", gap? "xs"|"sm"|"md")
+Stack(children, orientation?, gap?)
 TextContent(text)
-Icon(name, size? "small"|"medium"|"large")
-Image(url, variant? "thumb"|"full", caption?)
+Icon(name, size?)
+Image(url, variant?, caption?)
 Card(children, title?)
 Divider()
-Button(label, action?) — action: @ToAssistant("...") or @OpenUrl("...")
-Input(label?, value?, placeholder?, inputType? "text"|"number"|"email"|"password")
-CheckBox(label, value? false)
+Button(label, action?)
+Input(label?, value?, placeholder?, inputType?)
+CheckBox(label, value?)
 Slider(label, min, max, value?)
-ChoicePicker(label?, options=[...], selected?)
-List(items, orientation? "vertical"|"horizontal")
-Tabs(tabs=[{label, content: [components]}])
-Map(markers=[{label, lat?, lon?}], route?=[{lat, lon}], variant? "small"|"medium"|"large")
+ChoicePicker(label?, options?, selected?)
+List(items, orientation?)
+Map(markers, route?, variant?)
 
 Rules:
 - NEST shapes: gallery -> Stack horizontal of Cards; trip -> Map + photos; form -> Inputs. Match the shape to the request.
 - Images only when you have a real https:// URL; NEVER invent URLs (they render blank). For Paris museums reuse: Louvre https://commons.wikimedia.org/wiki/Special:FilePath/Louvre_Museum_Wikimedia_Commons.jpg?width=320, Orsay .../MuseeDOrsay.jpg?width=320, Pompidou .../The_Centre_Pompidou_behind_Buildings.jpg?width=320.
 - Map coordinates are real lat/lon: Louvre 48.8606, 2.3376; Eiffel 48.8584, 2.2944; Orsay 48.86, 2.3266; Pompidou 48.8613, 2.3522; Versailles 48.8049, 2.1204; Vincennes 48.842, 2.4386.
 
-Example (short trip card — copy this shape; the WHOLE card is ONE root statement):
-<ui>root = Stack([TextContent("Paris museums"), Map([{label:"Louvre", lat:48.9, lon:2.3},{label:"Orsay", lat:48.9, lon:2.3}], [{lat:48.9, lon:2.3},{lat:48.9, lon:2.3}], "medium")])</ui>`.trim();
+Example (trip card — copy this shape; the WHOLE card is ONE root statement):
+<ui>root = Stack([TextContent("Paris museums"), Map([{label:"Louvre", lat:48.9, lon:2.3},{label:"Orsay", lat:48.9, lon:2.3}], [{lat:48.9, lon:2.3},{lat:48.9, lon:2.3}], "medium")])</ui>
+
+Example (settings/controls — toggles are CheckBox, ranges are Slider):
+<ui>root = Stack([TextContent("Settings"), CheckBox("Dark mode", true), CheckBox("Notifications", false), Slider("Volume", 0, 100, 60)])</ui>
+
+Example (form — inputs are Input, action is a Button):
+<ui>root = Stack([Input("Name", "", "Your name", "text"), Button("Order", @ToAssistant("Ordered"))])</ui>
+
+Example (comparison — side-by-side Cards; series of facts under each name):
+<ui>root = Stack([TextContent("PhoneX vs PhoneY"), Stack([Card([TextContent("PhoneX"), TextContent("6.1 in")]), Card([TextContent("PhoneY"), TextContent("6.7 in")])], "horizontal")])</ui>
+
+Example (controls — a Button that switches local state uses @Set($name, value); display it with $name ? "…" : "…" — do NOT send a chat message for a plain start/reset):
+<ui>root = Stack([TextContent($running ? "Running" : "Ready"), Button("Start", @Set($running, true)), Button("Reset", @Set($running, false))])</ui>`.trim();

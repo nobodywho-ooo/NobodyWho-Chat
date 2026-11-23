@@ -17,7 +17,8 @@ import { log } from 'helpers';
 import { Spacings } from 'style';
 import { ToolInvocation } from 'types';
 
-import { parseUiSource, firstUiWarning } from '../../../services/a2ui/parse';
+import { parseUiSource } from '../../../services/a2ui/parse';
+import type { A2UiParseError } from '../../../services/a2ui/types';
 import { A2UiSurface } from '../../A2Ui/A2UiSurface';
 import type { A2UiLive } from '../../../services/a2ui/types';
 import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
@@ -108,19 +109,30 @@ export const A2UiToolCall: React.FC<A2UiToolCallProps> = ({ invocation }) => {
     return (
       <View>
         <Text variant="caption" style={styles.failedText}>
-          {t('components.messageListItem.a2uiFailed', { error: firstUiWarning(parsed.meta) ?? '' })}
+          {t('components.messageListItem.a2uiFailed', { error: metaErrorText(parsed.meta) ?? '' })}
         </Text>
       </View>
     );
   }
 
   return (
-    <A2UiSurfaceCard
-      root={parsed.root}
-      dataModel={parseDataModel(invocation)}
-      footnote={firstUiWarning(parsed.meta)}
-    />
+    // Prop-level parser warnings (a dropped variant, a bad marker) are model
+    // noise on every tiny-model card — the footnote is reserved for
+    // render-blocking problems, which is the root===null branch above.
+    <A2UiSurfaceCard root={parsed.root} dataModel={parseDataModel(invocation)} />
   );
+};
+
+const metaErrorText = (
+  meta: { errors?: A2UiParseError[] | string[] },
+): string | undefined => {
+  const first = meta.errors?.[0];
+  if (!first) {
+    return undefined;
+  }
+  return typeof first === 'string'
+    ? first
+    : [first.code, first.message].filter(Boolean).join(' — ');
 };
 
 const parseDataModel = (
@@ -139,22 +151,8 @@ const parseDataModel = (
 
 /** Live preview card for an in-flight message. */
 export const A2UiLiveCard: React.FC<{ live: A2UiLive }> = ({ live }) => (
-  <A2UiSurfaceCard
-    root={live.render.root}
-    footnote={firstWarningOf(live)}
-    live
-  />
+  <A2UiSurfaceCard root={live.render.root} live />
 );
-
-const firstWarningOf = (live: A2UiLive): string | undefined => {
-  const first = live.render.meta.errors?.[0];
-  if (!first) {
-    return undefined;
-  }
-  return typeof first === 'string'
-    ? first
-    : [first.code, first.message].filter(Boolean).join(' — ');
-};
 
 const styles = StyleSheet.create({
   container: {

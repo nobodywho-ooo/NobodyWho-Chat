@@ -349,7 +349,11 @@ const iconSize = (variant: string | undefined): number => {
 
 const imageSize = (variant: string | undefined): ViewStyle => {
   switch (variant) {
+    case 'large':
     case 'full': return { width: '100%', height: 180 };
+    case 'medium': return { width: 140, height: 140 };
+    case 'thumb':
+    case 'small':
     default: return { width: 96, height: 96 };
   }
 };

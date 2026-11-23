@@ -25,7 +25,7 @@ const fetchJson = async (path: string): Promise<unknown> => {
   }
 };
 
-/** Report an event to the dev server (best-effort, fire-and-forget). */
+/** Report an event to the dev server (best-effort, with one retry). */
 export const reportDev = (
   eventType: string,
   payload: Record<string, unknown>,
@@ -33,11 +33,20 @@ export const reportDev = (
   if (!__DEV__) {
     return;
   }
-  fetch(`${DEV_SERVER}/report`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ t: Date.now(), type: eventType, ...payload }),
-  }).catch(() => undefined);
+  const send = (): void => {
+    try {
+      fetch(`${DEV_SERVER}/report`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ t: Date.now(), type: eventType, ...payload }),
+      }).catch(() => undefined);
+    } catch {
+      // best-effort: never throw out of a report
+    }
+  };
+  send();
+  // One retry covers the app restarting the Metro connection around a turn.
+  setTimeout(send, 800);
 };
 
 /** Poll the dev server for a pending message to inject into the chat. */

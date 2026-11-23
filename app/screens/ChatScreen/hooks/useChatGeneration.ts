@@ -612,9 +612,22 @@ export function useChatGeneration({
         const inOpenA2Ui =
           accumulated.includes('<ui>') && !accumulated.includes('</ui>');
         wsRun = /^\s*$/.test(token) ? wsRun + token.length : 0;
-        if (inOpenA2Ui && wsRun > 200) {
+        // A stalled block has no way to end itself: the only outcomes are a
+        // closing </ui>, the EOS the model eventually samples, or this guard.
+        // Consecutive-whitespace alone misses a mixed junk loop (whitespace
+        // resetting the counter between other tokens), so also cap the TOTAL
+        // size of an open block — on the slow simulator the loop otherwise
+        // grinds forever behind a frozen live-preview map.
+        const openBlockChars = inOpenA2Ui
+          ? accumulated.length - accumulated.lastIndexOf('<ui>')
+          : 0;
+        if (
+          inOpenA2Ui &&
+          (wsRun > 200 || openBlockChars > 2000)
+        ) {
           log(
-            'ChatScreen A2UI whitespace-stall guard: ending a stuck <ui> block',
+            'ChatScreen A2UI stall guard: ending a stuck <ui> block',
+            { wsRun, openBlockChars },
           );
           activeChat.stopGeneration();
           break;
@@ -678,16 +691,15 @@ export function useChatGeneration({
       }
 
       settleA2Ui();
-      renderAssistant(metrics);
-      await persistAssistant(metrics);
-
-      // Dev-only: push the finished turn out so an external harness can read it.
+      // Dev-only: push the finished turn out BEFORE the async persist — a
+      // hung database write must never swallow the report an external
+      // harness is waiting on.
       if (__DEV__) {
         reportDev('turn', {
           failed: false,
           modelId: getAppState().modelIdInUse,
           content: stripA2UiBlocks(parseThinking(accumulated).rest ?? '').slice(0, 6000),
-          raw: accumulated.slice(0, 2000),
+          raw: accumulated.slice(0, 3000),
           tools: turnToolCalls.map(call => call.name),
           a2ui: turnToolCalls.some(call => call.name === RENDER_UI_TOOL),
           ui: (() => {
@@ -699,11 +711,12 @@ export function useChatGeneration({
             }
             const lang = (settledUi.arguments as { lang?: string } | undefined)
               ?.lang;
-            return lang !== undefined ? { lang: lang.slice(0, 200) } : null;
+            return lang !== undefined ? { lang: lang.slice(0, 300) } : null;
           })(),
-          ...(webSearchMs !== undefined ? { webSearchMs } : {}),
         });
       }
+      renderAssistant(metrics);
+      await persistAssistant(metrics);
 
       if (stoppedDuringAnswer) {
         await persistSystemMessage(t('screens.chat.generationStopped'));

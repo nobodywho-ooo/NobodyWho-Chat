@@ -5,7 +5,9 @@
 // Components nest by value; there is no id registry.
 
 import type { ElementNode } from '@openuidev/lang-core';
-import type { A2UiParseMeta } from './parse';
+import type { A2UiParseMeta, A2UiParseError } from './parse';
+
+export type { A2UiParseError };
 
 export type { ElementNode };
 

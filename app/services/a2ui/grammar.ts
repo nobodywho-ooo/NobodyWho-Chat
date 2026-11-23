@@ -43,7 +43,8 @@ ws ::= [ \t\n]*
 block ::= stmt (nl stmt)*
 nl ::= "\n" ws
 stmt ::= ident ws "=" ws expr
-expr ::= call | array | object | string | number | boolean | null | reference
+expr ::= call | array | object | string | number | boolean | null | reference | ternary
+ternary ::= expr ws "?" ws expr ws ":" ws expr
 # The Map call is special-cased: its route and variant are REQUIRED here even
 # though the schema marks them optional. Under llguidance, an optional tail
 # makes EOS a legal continuation at every object boundary, and the weak local
@@ -68,8 +69,11 @@ array ::= "[" ws items ws "]"
 items ::= (expr ("," ws expr)*)?
 object ::= "{" ws fields ws "}"
 fields ::= (field ("," ws field)*)?
+# Ident-only keys: string keys ("label:"…) let a weak model absorb junk into
+# an unterminated string and loop into the whitespace stall. Ident keys keep
+# markers/routes rigid; string VALUES are still everywhere (labels, urls).
 field ::= key ws ":" ws expr
-key ::= ident | string
+key ::= ident
 number ::= "-"? ("0" | [1-9] [0-9]*) ("." [0-9]+)?
 boolean ::= "true" | "false"
 null ::= "null"

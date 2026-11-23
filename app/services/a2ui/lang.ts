@@ -57,7 +57,7 @@ const Image = {
   description: 'A remote photo. Only use real, working image URLs (Wikimedia Special:FilePath URLs for landmarks); never invent URLs, never use placehold.co.',
   props: z.object({
     url: z.string(),
-    variant: z.enum(['thumb', 'full']).optional(),
+    variant: z.enum(['thumb', 'full', 'small', 'medium', 'large']).optional(),
     caption: z.string().optional(),
   }),
 };

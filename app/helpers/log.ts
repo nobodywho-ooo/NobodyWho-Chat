@@ -42,6 +42,22 @@ export const log = (...args: unknown[]): void => {
 
   if (__DEV__) {
     console.log(...args.map(expandErrors));
+    // Dev-only mirror to the host: the harness reads /tmp/devreports.txt, so
+    // every diagnostic (parse failures, stall-guard fires, a2ui render logs)
+    // is visible there instead of dying in an unreachable console.
+    try {
+      fetch('http://127.0.0.1:8899/report', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          t: Date.now(),
+          type: 'log',
+          msg: args.map(a => (a instanceof Error ? String(a) : a)),
+        }),
+      }).catch(() => undefined);
+    } catch {
+      // logging must never throw
+    }
   }
 
   if (options.capture) {
