@@ -54,7 +54,7 @@ const Icon = {
 };
 const Image = {
   name: 'Image',
-  description: 'A remote photo. Only use real, working image URLs (Wikimedia Special:FilePath URLs for landmarks); never invent URLs, never use placehold.co.',
+  description: 'A remote photo. Only use real, working image URLs when the conversation provides them; never invent URLs (they render blank).',
   props: z.object({
     url: z.string(),
     variant: z.enum(['thumb', 'full', 'small', 'medium', 'large']).optional(),
