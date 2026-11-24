@@ -1,6 +1,6 @@
 import React from 'react';
 import { Alert } from 'react-native';
-import { fireEvent, render, act } from '@testing-library/react-native';
+import { fireEvent, render, act, waitFor } from '@testing-library/react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { Prompt } from 'react-native-nobodywho';
 import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
@@ -115,7 +115,11 @@ jest.mock('services', () => ({
     Ready: 'ready',
     Error: 'error',
   },
-  subscribeToolInvocations: jest.fn(() => jest.fn()),
+  PRESENT_CHOICES_TOOL: 'present_choices',
+  subscribeToolInvocations: jest.fn((listener: (i: any) => void) => {
+    mockToolInvocationListener = listener;
+    return jest.fn();
+  }),
   prepareWebSearchTurn: jest.fn(),
   restoreChatForTurn: jest.fn(),
   restoreWebSearchTurn: jest.fn(),
@@ -153,6 +157,10 @@ jest.mock('repositories', () => ({
 jest.mock('../components/CameraCaptureModal/CameraCaptureModal', () => ({
   CameraCaptureModal: 'CameraCaptureModal',
 }));
+
+// The last listener subscribed via subscribeToolInvocations — the hook's
+// per-turn subscription — so a test can fake a model tool call mid-turn.
+let mockToolInvocationListener: ((invocation: any) => void) | undefined;
 
 const mockPrepareWebSearchTurn = prepareWebSearchTurn as jest.Mock;
 const mockRestoreChatForTurn = restoreChatForTurn as jest.Mock;
@@ -653,6 +661,84 @@ test('a plain text send carries no documents even when multimodal is ready', asy
     ([m]) => m.role === 'user',
   );
   expect(userCall?.[0].documentsPath).toEqual([]);
+});
+
+test('a tool-call-only turn keeps the assistant bubble with the choice buttons', async () => {
+  // The model answers with a present_choices call and no prose: an empty
+  // bubble carrying only the buttons is still a real answer, so it must be
+  // persisted (not dropped by the empty-content guard) and rendered.
+  mockChat.ask.mockImplementation(async function* () {
+    // The call lands mid-stream, BEFORE the turn ends.
+    yield '';
+    mockToolInvocationListener?.({
+      name: 'present_choices',
+      arguments: { choices: ['Walk', 'Bus'] },
+      result: '{"presented":["Walk","Bus"]}',
+    });
+  });
+
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'Give me options');
+
+  // The run ends; the bubble survives in the list and renders both chips.
+  expect(screen.getByText('Walk')).toBeTruthy();
+  expect(screen.getByText('Bus')).toBeTruthy();
+  const assistantCall = mockInsertMessage.mock.calls.find(
+    ([m]) => m.role === 'assistant',
+  );
+  expect(assistantCall?.[0]).toEqual(
+    expect.objectContaining({
+      content: '',
+      toolInvocations: [
+        expect.objectContaining({ name: 'present_choices' }),
+      ],
+    }),
+  );
+});
+
+test('tapping a choice sends it as the next user message', async () => {
+  mockChat.ask.mockImplementation(async function* () {
+    yield '';
+    mockToolInvocationListener?.({
+      name: 'present_choices',
+      arguments: { choices: ['Walk', 'Bus'] },
+      result: '{"presented":["Walk","Bus"]}',
+    });
+  });
+
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'Give me options');
+
+  // Tap the chip: it must reach the send path as a user message (the 150 ms
+  // input-populate delay is real-timer, so wait for the send to land).
+  await fireEvent.press(screen.getByText('Bus'));
+
+  // The input is populated and sent after a real 150 ms timer; wait for the
+  // send to land (generous timeout — the tap-to-send loop must not be
+  // load-dependent).
+  await waitFor(
+    () => {
+      const userMessages = mockInsertMessage.mock.calls
+        .filter(([m]) => m.role === 'user')
+        .map(([m]) => m.content);
+      expect(userMessages).toContain('Bus');
+    },
+    { timeout: 3000, interval: 50 },
+  );
 });
 
 test('a model swap mid-stream stops streaming without persisting the assistant', async () => {

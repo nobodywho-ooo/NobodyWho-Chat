@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
@@ -78,6 +78,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const [openToolIndex, setOpenToolIndex] = useState<number | null>(null);
   const [sourcesOpen, setSourcesOpen] = useState(false);
+  const seenChoiceKeys = useRef<Set<string>>(new Set());
 
   const markdownStyle = useMemo(
     () => getMarkdownStyle(isDarkMode, colors.onSurface),
@@ -193,26 +194,37 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
               onPress={() => setThinkingOpen(true)}
             />
           )}
-          {toolInvocations.map((invocation, toolIndex) =>
-            invocation.name === PRESENT_CHOICES_TOOL ? (
-              <ChoiceButtons
-                key={`${invocation.name}-${toolIndex}`}
-                choices={
-                  Array.isArray(invocation.arguments.choices)
-                    ? (invocation.arguments.choices as string[])
-                    : []
-                }
-                onSendText={text => onSendText?.(text)}
-              />
-            ) : (
+          {toolInvocations.map((invocation, toolIndex) => {
+            // Small local models sometimes emit the same choices twice in one
+            // turn; collapse the duplicate rows so the same tap doesn't look
+            // like two buttons.
+            if (invocation.name === PRESENT_CHOICES_TOOL) {
+              const choices = Array.isArray(invocation.arguments.choices)
+                ? (invocation.arguments.choices as string[])
+                : [];
+              const key = JSON.stringify(choices);
+              const alreadyShown = seenChoiceKeys.current.has(key);
+              seenChoiceKeys.current.add(key);
+              if (alreadyShown) {
+                return null;
+              }
+              return (
+                <ChoiceButtons
+                  key={`${invocation.name}-${toolIndex}`}
+                  choices={choices}
+                  onSendText={text => onSendText?.(text)}
+                />
+              );
+            }
+            return (
               <ToolCallBlock
                 key={`${invocation.name}-${toolIndex}`}
                 name={invocation.name}
                 arguments={invocation.arguments}
                 onPress={() => setOpenToolIndex(toolIndex)}
               />
-            ),
-          )}
+            );
+          })}
           <AnswerBody
             text={rest}
             isStreaming={isStreaming}
