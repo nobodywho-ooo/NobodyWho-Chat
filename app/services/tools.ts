@@ -224,7 +224,7 @@ export const buildPresentChoicesTool = (): Tool =>
   defineTool({
     name: PRESENT_CHOICES_TOOL,
     description:
-      'Offer the user 2–4 tappable choice buttons instead of writing a list. Call it whenever you would otherwise end a message with options, suggestions or next steps the user could pick from — the user picks one and it is sent as their next message. Prefer this over listing choices as plain text.',
+      'Offer the user 2–4 tappable choice buttons instead of writing a list. Call it whenever you would otherwise end a message with options, suggestions or next steps the user could pick from. The call ENDS your turn: write everything you want to say BEFORE it, never anything after. The user picks one and it is sent as their next message. Prefer this over listing choices as plain text.',
     parameters: [
       {
         name: 'choices',

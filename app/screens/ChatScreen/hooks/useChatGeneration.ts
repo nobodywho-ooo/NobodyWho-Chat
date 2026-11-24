@@ -21,6 +21,7 @@ import {
   ANSWER_RECHECK_TIME_BUDGET_MS,
   EmbeddingSlotAccess,
   NEW_CHAT_KEY,
+  PRESENT_CHOICES_TOOL,
   WebSearchTurn,
   planAnswerRecheck,
   prepareWebSearchTurn,
@@ -402,9 +403,22 @@ export function useChatGeneration({
       }, wait);
     };
 
+    // A present_choices call ends the turn: the buttons are a question to
+    // hand back to the user, so nothing is written after them. The length of
+    // the prose accumulated up to the call is the final cut point — tokens
+    // that race in after stopGeneration lands are dropped below.
+    let cutAccumulatedAt: number | undefined;
     const unsubscribe = subscribeToolInvocations(invocation => {
       log('ChatScreen tool invocation', invocation.name);
       turnToolCalls.push(invocation);
+      if (invocation.name === PRESENT_CHOICES_TOOL) {
+        cutAccumulatedAt = accumulated.length;
+        try {
+          activeChat.stopGeneration();
+        } catch (error) {
+          log('ChatScreen stopping after present_choices failed', error);
+        }
+      }
       accumulated = thinkOpenWriter.write('toolResult', accumulated);
       renderAssistant();
     });
@@ -557,6 +571,19 @@ export function useChatGeneration({
 
       if (chat.current !== activeChat) {
         return;
+      }
+
+      // The turn ended on the choice buttons: cut any prose the model raced
+      // in after the call (stopGeneration lands a beat after the invocation
+      // listener fires, so a few tokens can slip in).
+      if (
+        cutAccumulatedAt !== undefined &&
+        accumulated.length > cutAccumulatedAt
+      ) {
+        log('ChatScreen dropped prose after present_choices', {
+          droppedChars: accumulated.length - cutAccumulatedAt,
+        });
+        accumulated = accumulated.slice(0, cutAccumulatedAt);
       }
 
       const metrics = {

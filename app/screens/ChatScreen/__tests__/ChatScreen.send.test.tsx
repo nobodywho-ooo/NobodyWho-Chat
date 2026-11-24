@@ -703,6 +703,48 @@ test('a tool-call-only turn keeps the assistant bubble with the choice buttons',
   );
 });
 
+test('present_choices ends the turn: post-call prose is dropped and generation stops', async () => {
+  // The model wrote "Here are the options" THEN called present_choices and
+  // raced a little more prose after the call: only the pre-call text may
+  // survive, the turn ends with the buttons.
+  mockChat.ask.mockImplementation(async function* () {
+    yield 'Here are the options: ';
+    mockToolInvocationListener?.({
+      name: 'present_choices',
+      arguments: { choices: ['Walk', 'Bus'] },
+      result: '{"presented":["Walk","Bus"]}',
+    });
+    yield ' you will not see me';
+  });
+
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'Give me options');
+
+  const assistantCall = mockInsertMessage.mock.calls.find(
+    ([m]) => m.role === 'assistant',
+  );
+  expect(assistantCall?.[0].content).toBe('Here are the options: ');
+  expect(assistantCall?.[0].toolInvocations).toEqual([
+    expect.objectContaining({ name: 'present_choices' }),
+  ]);
+  // The turn was cut, not "stopped" — no stopped-system message.
+  expect(mockChat.stopGeneration).toHaveBeenCalled();
+  expect(
+    mockInsertMessage.mock.calls.some(([m]) => m.role === 'system'),
+  ).toBe(false);
+
+  // The buttons are the last thing on screen.
+  expect(screen.getByText('Walk')).toBeTruthy();
+  expect(screen.queryByText(/you will not see me/)).toBeNull();
+});
+
 test('tapping a choice sends it as the next user message', async () => {
   mockChat.ask.mockImplementation(async function* () {
     yield '';
