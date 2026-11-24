@@ -377,9 +377,11 @@ export const mockScrollToOffset = jest.fn();
 // each row's measured { top, size }, and is empty until a test lays some out.
 export const mockListState = {
   isAtEnd: true,
+  /** @type {unknown[]} */
   data: [],
   scroll: 0,
   scrollLength: 0,
+  /** @type {{ top: number, size: number }[]} */
   rows: [],
   positionAtIndex: index => mockListState.rows[index]?.top,
   sizeAtIndex: index => mockListState.rows[index]?.size,

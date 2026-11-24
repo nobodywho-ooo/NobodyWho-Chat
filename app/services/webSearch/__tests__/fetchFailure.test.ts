@@ -149,7 +149,7 @@ describe('summarizeFetchFailures — the line the user actually reads', () => {
 
   it('counts the pages and names the most common reason', () => {
     expect(summarizeFetchFailures([failure('a.example', 'blocked')], t)).toBe(
-      'Couldn’t read 1 page — blocked the reader',
+      'Couldn’t read 1 page, blocked the reader',
     );
     expect(
       summarizeFetchFailures(
@@ -160,7 +160,7 @@ describe('summarizeFetchFailures — the line the user actually reads', () => {
         ],
         t,
       ),
-    ).toBe('Couldn’t read 3 pages — blocked the reader');
+    ).toBe('Couldn’t read 3 pages, blocked the reader');
   });
 
   it('leaves an aborted fetch out of the count', () => {
@@ -169,7 +169,7 @@ describe('summarizeFetchFailures — the line the user actually reads', () => {
         [failure('a.example', 'blocked'), failure('b.example', 'aborted')],
         t,
       ),
-    ).toBe('Couldn’t read 1 page — blocked the reader');
+    ).toBe('Couldn’t read 1 page, blocked the reader');
   });
 
   it('has a label for every reason', () => {

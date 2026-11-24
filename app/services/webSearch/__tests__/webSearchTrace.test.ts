@@ -123,7 +123,7 @@ describe('buildRows — finished search', () => {
         type: 'note',
         key: 'skipped',
         tone: 'muted',
-        label: 'No search needed — answered right away',
+        label: 'No search needed, answered right away',
       },
     ]);
   });
@@ -205,7 +205,7 @@ describe('buildRows — the search ran out without an answer', () => {
     expect(last).toMatchObject({
       type: 'note',
       tone: 'warn',
-      label: 'Didn’t find much — the answer may be incomplete',
+      label: 'Didn’t find much, the answer may be incomplete',
     });
     expect(labelsOf(rows)).not.toContain('Done');
   });
@@ -574,7 +574,7 @@ describe('buildRows — pages that could not be read', () => {
       false,
     );
     expect(notesOf(rows)).toContain(
-      'Couldn’t read 2 pages — blocked the reader',
+      'Couldn’t read 2 pages, blocked the reader',
     );
   });
 
@@ -609,7 +609,7 @@ describe('buildRows — pages that could not be read', () => {
       false,
     );
     expect(labelsOf(rows)).toContain(
-      'Couldn’t read those — looking for another source',
+      'Couldn’t read those, looking for another source',
     );
     expect(hostsOf(rows)).toEqual(['shop.example', 'samsung.com']);
   });
