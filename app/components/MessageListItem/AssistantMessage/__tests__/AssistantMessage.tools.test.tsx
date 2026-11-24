@@ -32,6 +32,50 @@ test('a legacy render_ui invocation renders as a plain tool block', async () => 
   expect(view.queryByText('hi')).toBeNull();
 });
 
+test('the buttons render AFTER the answer text, last in the bubble', async () => {
+  const view = await render(
+    <AssistantMessage
+      message={{
+        role: 'assistant',
+        content: 'Here is the weather in Paris.',
+        toolInvocations: [
+          {
+            name: 'get_weather',
+            arguments: { city: 'Paris' },
+            result: '{"temperatureCelsius":7.5}',
+          },
+          {
+            name: 'present_choices',
+            arguments: { choices: ['Check another city'] },
+            result: 'Presented.',
+          },
+        ],
+      }}
+      isStreaming={false}
+      messageId="m1"
+      canPlayAudio={false}
+      isAudioLoading={false}
+      isAudioPlaying={false}
+    />,
+  );
+
+  const rowChildren = (view.toJSON() as { children?: unknown[] }).children ?? [];
+  // The AnswerBody renders an empty wrapper in jest (markdown text is not
+  // serialized children); find it by shape, then prove the chip row follows.
+  const answerRow = rowChildren.findIndex(
+    row =>
+      row !== null &&
+      typeof row === 'object' &&
+      (row as any).type === 'View' &&
+      Object.keys((row as any).props ?? {}).length === 0,
+  );
+  const chipRow = rowChildren.findIndex(row =>
+    JSON.stringify(row).includes('Check another city'),
+  );
+  expect(answerRow).toBeGreaterThan(-1);
+  expect(chipRow).toBeGreaterThan(answerRow);
+});
+
 test('re-rendering the same message keeps the buttons visible', async () => {
   const message = {
     role: 'assistant' as const,

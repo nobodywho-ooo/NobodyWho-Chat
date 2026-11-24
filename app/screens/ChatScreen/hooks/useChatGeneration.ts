@@ -23,6 +23,7 @@ import {
   NEW_CHAT_KEY,
   PRESENT_CHOICES_TOOL,
   WebSearchTurn,
+  extractWrittenChoices,
   planAnswerRecheck,
   prepareWebSearchTurn,
   restoreChatForTurn,
@@ -584,6 +585,23 @@ export function useChatGeneration({
           droppedChars: accumulated.length - cutAccumulatedAt,
         });
         accumulated = accumulated.slice(0, cutAccumulatedAt);
+      }
+
+      // A model that failed the native call may have written it as chat text
+      // ("present_choices:[\"A\",\"B\"]") instead; harvest that form so the
+      // buttons still render and the junk does not stay in the answer.
+      if (!turnToolCalls.some(call => call.name === PRESENT_CHOICES_TOOL)) {
+        const written = extractWrittenChoices(accumulated);
+        if (written !== null) {
+          log('ChatScreen harvested written present_choices', written.choices);
+          turnToolCalls.push({
+            name: PRESENT_CHOICES_TOOL,
+            arguments: { choices: written.choices },
+            result: 'Presented via chat text.',
+          });
+          accumulated = written.text;
+          renderAssistant();
+        }
       }
 
       const metrics = {

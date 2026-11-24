@@ -241,6 +241,49 @@ export const buildPresentChoicesTool = (): Tool =>
       }),
   });
 
+// --- Harvesting a prose-written call ---------------------------------------
+// A small local model sometimes writes its tool call as chat text
+// ("present_choices:[\"A\",\"B\"]") instead of invoking it through the native
+// channel; llama.cpp may even leak token artifacts like <|"|> around the
+// quotes. Harvest that form so the buttons still render, and strip the junk
+// from the answer text.
+
+const WRITTEN_CHOICES_BLOCK = /present_choices\s*:\s*\[[\s\S]*?\]/;
+
+export const extractWrittenChoices = (
+  content: string,
+): { text: string; choices: string[] } | null => {
+  const match = WRITTEN_CHOICES_BLOCK.exec(content);
+  if (match === null) {
+    return null;
+  }
+
+  // When the native call fails, llama.cpp's escaped-quote tokens (<|"|>)
+  // leak into the text around otherwise plain-quoted strings: drop them and
+  // recover the JSON array.
+  const inner = match[0]
+    .replace(/<\|[^>]*>/g, '')
+    .replace(/^present_choices\s*:\s*\[/, '')
+    .replace(/\]$/, '');
+
+  let choices: string[];
+  try {
+    const parsed = JSON.parse(`[${inner}]`);
+    choices = Array.isArray(parsed)
+      ? parsed.filter((c): c is string => typeof c === 'string')
+      : [];
+  } catch {
+    const quoted = inner.match(/"(?:[^"\\]|\\.)*"/g) ?? [];
+    choices = quoted.map(q => q.slice(1, -1)).filter(Boolean);
+  }
+
+  if (choices.length === 0) {
+    return null;
+  }
+
+  return { text: content.replace(match[0], '').trim(), choices };
+};
+
 // --- Unit conversions ------------------------------------------------------
 // Pure helpers, exported for testing. One foot is exactly 0.3048 metres.
 

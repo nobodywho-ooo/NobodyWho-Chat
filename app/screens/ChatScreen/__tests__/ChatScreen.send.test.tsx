@@ -116,6 +116,9 @@ jest.mock('services', () => ({
     Error: 'error',
   },
   PRESENT_CHOICES_TOOL: 'present_choices',
+  // The real harvester: the harvest test below depends on its behavior.
+  extractWrittenChoices: jest.requireActual('../../../services/tools')
+    .extractWrittenChoices,
   subscribeToolInvocations: jest.fn((listener: (i: any) => void) => {
     mockToolInvocationListener = listener;
     return jest.fn();
@@ -743,6 +746,38 @@ test('present_choices ends the turn: post-call prose is dropped and generation s
   // The buttons are the last thing on screen.
   expect(screen.getByText('Walk')).toBeTruthy();
   expect(screen.queryByText(/you will not see me/)).toBeNull();
+});
+
+test('a prose-written present_choices call is harvested into buttons', async () => {
+  // The model did NOT make a native tool call — it wrote the call as chat
+  // text. The turn must still render buttons and keep the answer clean.
+  mockChat.ask.mockImplementation(async function* () {
+    yield 'Here are the options:\n';
+    yield 'present_choices:[<|"|>"Walk"<|"|>,<|"|>"Bus"<|"|>]';
+  });
+
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'Give me options');
+
+  const assistantCall = mockInsertMessage.mock.calls.find(
+    ([m]) => m.role === 'assistant',
+  );
+  expect(assistantCall?.[0].content).toBe('Here are the options:');
+  expect(assistantCall?.[0].toolInvocations).toEqual([
+    expect.objectContaining({
+      name: 'present_choices',
+      arguments: { choices: ['Walk', 'Bus'] },
+    }),
+  ]);
+  expect(screen.getByText('Walk')).toBeTruthy();
+  expect(screen.getByText('Bus')).toBeTruthy();
 });
 
 test('tapping a choice sends it as the next user message', async () => {

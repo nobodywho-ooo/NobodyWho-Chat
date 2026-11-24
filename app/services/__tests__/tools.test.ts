@@ -10,6 +10,7 @@ import {
   fetchStockQuote,
   buildChatTools,
   PRESENT_CHOICES_TOOL,
+  extractWrittenChoices,
   subscribeToolInvocations,
 } from '../tools';
 
@@ -39,6 +40,32 @@ describe('unit conversions', () => {
     expect(celsiusToFahrenheit(0)).toBe(32);
     expect(fahrenheitToCelsius(32)).toBe(0);
     expect(fahrenheitToCelsius(celsiusToFahrenheit(37))).toBeCloseTo(37, 6);
+  });
+});
+
+describe('extractWrittenChoices', () => {
+  test('harvests a clean prose-written call and strips it from the text', () => {
+    const got = extractWrittenChoices(
+      'Here are the options:\npresent_choices:["Walk","Bus"]\nThanks',
+    );
+    expect(got).toEqual({ text: 'Here are the options:\n\nThanks', choices: ['Walk', 'Bus'] });
+  });
+
+  test('handles llama token artifacts around the quotes', () => {
+    // Observed on-device: model wrote the call as text and llama.cpp leaked
+    // <|"|> token fragments around otherwise plain-quoted strings.
+    const got = extractWrittenChoices(
+      'present_choices:[<|"|>"Check it"<|"|>]',
+    );
+    expect(got?.choices).toEqual(['Check it']);
+  });
+
+  test('returns null when no call was written', () => {
+    expect(extractWrittenChoices('Just a normal answer.')).toBeNull();
+  });
+
+  test('returns null when the written call carries no strings', () => {
+    expect(extractWrittenChoices('present_choices:[123]')).toBeNull();
   });
 });
 

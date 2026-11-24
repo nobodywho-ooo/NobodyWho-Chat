@@ -193,39 +193,16 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
               onPress={() => setThinkingOpen(true)}
             />
           )}
-          {(() => {
-            // Small local models sometimes emit the same choices twice in one
-            // turn; collapse the duplicate rows within THIS render pass (a
-            // ref would wrongly suppress re-renders of the same message).
-            const seenChoiceKeys = new Set<string>();
-            return toolInvocations.map((invocation, toolIndex) => {
-              if (invocation.name === PRESENT_CHOICES_TOOL) {
-                const choices = Array.isArray(invocation.arguments.choices)
-                  ? (invocation.arguments.choices as string[])
-                  : [];
-                const key = JSON.stringify(choices);
-                if (seenChoiceKeys.has(key)) {
-                  return null;
-                }
-                seenChoiceKeys.add(key);
-                return (
-                  <ChoiceButtons
-                    key={`${invocation.name}-${toolIndex}`}
-                    choices={choices}
-                    onSendText={text => onSendText?.(text)}
-                  />
-                );
-              }
-              return (
-                <ToolCallBlock
-                  key={`${invocation.name}-${toolIndex}`}
-                  name={invocation.name}
-                  arguments={invocation.arguments}
-                  onPress={() => setOpenToolIndex(toolIndex)}
-                />
-              );
-            });
-          })()}
+          {toolInvocations.map((invocation, toolIndex) =>
+            invocation.name === PRESENT_CHOICES_TOOL ? null : (
+              <ToolCallBlock
+                key={`${invocation.name}-${toolIndex}`}
+                name={invocation.name}
+                arguments={invocation.arguments}
+                onPress={() => setOpenToolIndex(toolIndex)}
+              />
+            ),
+          )}
           <AnswerBody
             text={rest}
             isStreaming={isStreaming}
@@ -233,6 +210,36 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
             markdownStyle={markdownStyle}
             onLinkPress={handleLinkPress}
           />
+          {(() => {
+            // The buttons are a question for the user, so they render AFTER
+            // the answer text — always the last thing in the bubble. Small
+            // local models sometimes emit the same choices twice in one turn;
+            // collapse those duplicates within THIS render pass (a ref would
+            // wrongly suppress re-renders of the same message).
+            const seenChoiceKeys = new Set<string>();
+            const rows: React.ReactNode[] = [];
+            toolInvocations.forEach((invocation, toolIndex) => {
+              if (invocation.name !== PRESENT_CHOICES_TOOL) {
+                return;
+              }
+              const choices = Array.isArray(invocation.arguments.choices)
+                ? (invocation.arguments.choices as string[])
+                : [];
+              const key = JSON.stringify(choices);
+              if (seenChoiceKeys.has(key)) {
+                return;
+              }
+              seenChoiceKeys.add(key);
+              rows.push(
+                <ChoiceButtons
+                  key={`${invocation.name}-${toolIndex}`}
+                  choices={choices}
+                  onSendText={text => onSendText?.(text)}
+                />,
+              );
+            });
+            return rows;
+          })()}
         </>
       )}
       {isStreaming && message.refining && (

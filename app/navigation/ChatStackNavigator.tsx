@@ -214,7 +214,7 @@ export const ChatStackNavigator = () => {
     const systemPrompt = assistantConfig.toolCalling
       ? [
           assistantConfig.systemPrompt.trim(),
-          'When you end a reply with options, suggestions or next steps the user could pick from, offer them as tappable choice buttons with the present_choices tool instead of listing them as text. Keep each choice short. present_choices ends your turn: write everything before calling it, never anything after.',
+          'When you end a reply with options, suggestions or next steps the user could pick from, offer them as tappable choice buttons instead of listing them as text. Keep each choice short. The call ends your turn: write everything before it, never anything after.',
         ]
           .filter(Boolean)
           .join('\n\n')
