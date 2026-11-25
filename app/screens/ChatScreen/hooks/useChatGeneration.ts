@@ -3,16 +3,45 @@ import { useTranslation } from 'react-i18next';
 import { Chat, Prompt } from 'react-native-nobodywho';
 import { KeyboardController } from 'react-native-keyboard-controller';
 
-import { ChatMessage, DisplayMessage, ToolInvocation } from 'types';
-import { getAppState } from 'database';
-import { insertConversation, insertMessage } from 'repositories';
-import { subscribeToolInvocations } from 'services';
 import {
+  ChatMessage,
+  DisplayMessage,
+  Model,
+  ToolInvocation,
+  WebSource,
+} from 'types';
+import { getAppState, subscribeAppState } from 'database';
+import {
+  getConversationDigest,
+  insertConversation,
+  insertMessage,
+  setConversationDigest,
+} from 'repositories';
+import {
+  ANSWER_RECHECK_TIME_BUDGET_MS,
+  EmbeddingSlotAccess,
+  NEW_CHAT_KEY,
+  WebSearchTurn,
+  planAnswerRecheck,
+  prepareWebSearchTurn,
+  restoreChatForTurn,
+  restoreWebSearchTurn,
+  runAnswerRecheck,
+  isWebSearchReady,
+  settleConversationDigest,
+  stripCitations,
+  updateConversationDigestInBackground,
+  subscribeToolInvocations,
+  useWebSearchStore,
+} from 'services';
+import {
+  applyThinking,
   computeGenerationMetrics,
   createThinkOpenWriter,
   hasMessageContent,
   haptics,
   log,
+  parseThinking,
   resolveMessageDocumentPath,
 } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
@@ -37,9 +66,47 @@ const nextUid = (): string => `new:${++optimisticMessages}`;
 
 const STREAM_RENDER_INTERVAL_MS = 50;
 
+// Sends the user's turn to the model. Normally `ask` continues from the cached
+// prefix. A web search whose planner borrowed the chat left the planner's
+// exchange as the history, so that turn is replayed over the snapshot with
+// `complete` instead.
+const streamTurn = async (
+  chat: Chat,
+  input: string | Prompt,
+  webTurn: WebSearchTurn | undefined,
+): Promise<ReturnType<Chat['ask']>> => {
+  if (!webTurn) {
+    return chat.ask(input);
+  }
+
+  if (!webTurn.chatWasBorrowed) {
+    return chat.ask(webTurn.prompt);
+  }
+
+  const { snapshot, prompt } = webTurn;
+  await restoreChatForTurn(chat, snapshot);
+
+  return chat.complete(
+    [...snapshot.history, { role: 'user', content: prompt }],
+    { templateVariables: snapshot.templateVariables },
+  );
+};
+
+export interface ChatThinkingOptions {
+  enabled: boolean;
+  open: ImplicitThinkOpen | undefined;
+}
+
+export interface ChatWebSearchOptions {
+  enabled: boolean;
+  chatModel: Model | undefined;
+  embeddingModel: Model | undefined;
+  embeddingSlot: EmbeddingSlotAccess;
+}
+
 interface UseChatGenerationOptions {
   chat: React.RefObject<Chat | undefined>;
-  thinkOpen: ImplicitThinkOpen | undefined;
+  thinking: ChatThinkingOptions;
   ingestsImage: boolean;
   ingestsAudio: boolean;
   inputText: string;
@@ -51,11 +118,12 @@ interface UseChatGenerationOptions {
   attachments: Attachments;
   messages: DisplayMessage[];
   onTurnStart: (anchorIndex: number) => void;
+  webSearch: ChatWebSearchOptions;
 }
 
 export function useChatGeneration({
   chat,
-  thinkOpen,
+  thinking,
   ingestsImage,
   ingestsAudio,
   inputText,
@@ -67,15 +135,21 @@ export function useChatGeneration({
   setMessages,
   messages,
   onTurnStart,
+  webSearch,
 }: UseChatGenerationOptions) {
   const { t } = useTranslation();
   const [isStreaming, setIsStreaming] = useState(false);
   const stopRequestedRef = useRef(false);
+  const searchAbortRef = useRef<AbortController | null>(null);
+
+  const turnConversationRef = useRef<number | undefined>(undefined);
+  const abandonedRef = useRef(false);
 
   // Halt native generation. Reads chat.current at call time (not capture time)
   // so it stops whichever chat instance is current — it may have been recreated
   // since this hook mounted.
   const haltGeneration = useCallback(() => {
+    searchAbortRef.current?.abort();
     try {
       chat.current?.stopGeneration();
     } catch (error) {
@@ -83,14 +157,42 @@ export function useChatGeneration({
     }
   }, [chat]);
 
-  // Don't let a generation keep streaming into a screen that is gone.
+  // Don't let a generation keep streaming into a screen that is gone. Flagged
   useEffect(() => {
-    return () => haltGeneration();
+    return () => {
+      stopRequestedRef.current = true;
+      haltGeneration();
+    };
   }, [haltGeneration]);
+
+  // Another conversation was opened (New chat, delete, a drawer pick) while a
+  // turn runs. The navigator stops the stream itself, but not the web search,
+  // which would otherwise go on to answer into the shared chat after the new
+  // conversation's history was loaded. Runs synchronously with that switch, so
+  // the planner can't start another completion after the reload lands.
+  useEffect(
+    () =>
+      subscribeAppState(next => {
+        const turnConversation = turnConversationRef.current;
+
+        if (
+          turnConversation === undefined ||
+          next.conversationIdInUse === turnConversation
+        ) {
+          return;
+        }
+
+        abandonedRef.current = true;
+        searchAbortRef.current?.abort();
+      }),
+    [],
+  );
 
   const handleSend = async () => {
     const userInput = inputText.trim();
-    if (!userInput || isStreaming) return;
+    if (!userInput || isStreaming) {
+      return;
+    }
 
     const activeChat = chat.current;
     if (activeChat === undefined) {
@@ -132,6 +234,8 @@ export function useChatGeneration({
 
     KeyboardController.dismiss();
     stopRequestedRef.current = false;
+    abandonedRef.current = false;
+    useWebSearchStore.getState().resetTrace();
     setIsStreaming(true);
 
     const dropOptimisticTurn = () =>
@@ -172,7 +276,10 @@ export function useChatGeneration({
       return;
     }
 
+    turnConversationRef.current = id;
+
     if (isNewConversation) {
+      useWebSearchStore.getState().transfer(NEW_CHAT_KEY, id);
       setConversationId(id);
       onConversationCreated(id);
     }
@@ -209,16 +316,21 @@ export function useChatGeneration({
     // into, and the screen is already showing another chat. A `failed` write
     // still generates — the answer on screen beats no answer at all.
     if (userOutcome === 'gone') {
+      turnConversationRef.current = undefined;
       setIsStreaming(false);
       return;
     }
 
-    const startedAt = Date.now();
+    let startedAt = Date.now();
+    let webSearchMs: number | undefined;
     let firstTokenAt: number | undefined;
     let tokenCount = 0;
     const turnToolCalls: ToolInvocation[] = [];
+    let turnWebSources: WebSource[] = [];
 
-    const thinkOpenWriter = createThinkOpenWriter(thinkOpen);
+    const thinkOpenWriter = createThinkOpenWriter(
+      thinking.enabled ? thinking.open : undefined,
+    );
     let accumulated = thinkOpenWriter.write('turn', '');
 
     // Written by uid, never by position: the screen may have switched to
@@ -238,12 +350,14 @@ export function useChatGeneration({
     const renderAssistant = (extra?: {
       tokensPerSecond?: number;
       timeToFirstToken?: number;
+      refining?: boolean;
     }) => {
       cancelScheduledRender();
       lastRenderAt = Date.now();
       const content = accumulated;
       const toolInvocations =
         turnToolCalls.length > 0 ? [...turnToolCalls] : undefined;
+      const webSources = turnWebSources.length > 0 ? turnWebSources : undefined;
 
       setMessages(prev => {
         const at = prev.findIndex(message => message.uid === assistantUid);
@@ -258,6 +372,8 @@ export function useChatGeneration({
           role: 'assistant',
           content,
           ...(toolInvocations ? { toolInvocations } : {}),
+          ...(webSources ? { webSources } : {}),
+          ...(webSearchMs !== undefined ? { webSearchMs } : {}),
           ...extra,
         };
         return next;
@@ -295,18 +411,22 @@ export function useChatGeneration({
     const persistAssistant = async (metrics?: {
       tokensPerSecond?: number;
       timeToFirstToken?: number;
+      webSearchMs?: number;
     }) => {
       if (!hasMessageContent(accumulated)) {
         setMessages(prev =>
           prev.filter(message => message.uid !== assistantUid),
         );
+
         return;
       }
+
       await persist({
         role: 'assistant',
         content: accumulated,
         documentsPath: [],
         toolInvocations: turnToolCalls,
+        webSources: turnWebSources,
         ...metrics,
       });
     };
@@ -318,7 +438,9 @@ export function useChatGeneration({
         documentsPath: [],
       });
 
-      if (outcome === 'gone') {
+      // Gone, or the screen shows another conversation now: the row is stored
+      // under this turn's conversation but doesn't belong on screen.
+      if (outcome === 'gone' || abandonedRef.current) {
         return;
       }
 
@@ -328,7 +450,87 @@ export function useChatGeneration({
       ]);
     };
 
+    let webTurn: WebSearchTurn | undefined;
+    let acceptedAnswer: string | undefined;
+
+    // Set once the answer is complete and kept: the digest then learns from it.
+    let answered = false;
+    let digest: string | null = null;
+
+    // The chat may still be writing the previous turn's digest on this chat.
+    await settleConversationDigest();
+
+    if (chat.current !== activeChat || abandonedRef.current) {
+      turnConversationRef.current = undefined;
+      unsubscribe();
+      setIsStreaming(false);
+      return;
+    }
+
+    await applyThinking(activeChat, thinking.enabled);
+
+    digest = await getConversationDigest(id).catch(error => {
+      log('ChatScreen reading the conversation digest failed', error);
+      return null;
+    });
+
     try {
+      const hasMedia = !!imagePath || !!audioPath;
+
+      if (webSearch.enabled && hasMedia) {
+        useWebSearchStore.getState().showNotice('attachment');
+      }
+
+      if (webSearch.enabled && !hasMedia && webSearch.chatModel) {
+        const searchAbort = new AbortController();
+        searchAbortRef.current = searchAbort;
+        try {
+          webTurn = await prepareWebSearchTurn({
+            chat: activeChat,
+            question: userInput,
+            chatModel: webSearch.chatModel,
+            embeddingModel: webSearch.embeddingModel,
+            embeddingSlot: webSearch.embeddingSlot,
+            signal: searchAbort.signal,
+            ...(digest ? { digest } : {}),
+          });
+        } finally {
+          searchAbortRef.current = null;
+        }
+
+        if (chat.current !== activeChat) {
+          return;
+        }
+
+        // Moved to another conversation mid-search: nothing to answer here.
+        if (abandonedRef.current) {
+          if (webTurn?.chatWasBorrowed) {
+            await restoreChatForTurn(activeChat, webTurn.snapshot);
+          }
+
+          return;
+        }
+
+        if (stopRequestedRef.current) {
+          if (webTurn?.chatWasBorrowed) {
+            await restoreChatForTurn(activeChat, webTurn.snapshot);
+            await activeChat.setChatHistory(webTurn.snapshot.history);
+          }
+
+          setMessages(prev =>
+            prev.filter(message => message.uid !== assistantUid),
+          );
+          await persistSystemMessage(t('screens.chat.generationStopped'));
+
+          return;
+        }
+
+        turnWebSources = webTurn?.sources ?? [];
+        webSearchMs = webTurn?.searchMs;
+        startedAt = Date.now();
+        renderAssistant();
+      }
+
       const askInput =
         imagePath || audioPath
           ? new Prompt([
@@ -342,7 +544,7 @@ export function useChatGeneration({
             ])
           : userInput;
 
-      const streamResult = activeChat.ask(askInput);
+      const streamResult = await streamTurn(activeChat, askInput, webTurn);
 
       for await (const token of streamResult) {
         if (chat.current !== activeChat) {
@@ -361,17 +563,72 @@ export function useChatGeneration({
         return;
       }
 
-      const metrics = computeGenerationMetrics(
-        startedAt,
-        firstTokenAt,
-        tokenCount,
-      );
+      const metrics = {
+        ...computeGenerationMetrics(startedAt, firstTokenAt, tokenCount),
+        ...(webSearchMs !== undefined ? { webSearchMs } : {}),
+      };
+
+      const stoppedDuringAnswer = stopRequestedRef.current;
+
+      if (abandonedRef.current) {
+        await persistAssistant(metrics);
+        return;
+      }
+
+      const recheck =
+        webTurn?.grounding &&
+        !stoppedDuringAnswer &&
+        Date.now() - startedAt <= ANSWER_RECHECK_TIME_BUDGET_MS
+          ? planAnswerRecheck(accumulated, {
+              question: userInput,
+              ...webTurn.grounding,
+            })
+          : null;
+
+      if (recheck) {
+        log('ChatScreen re-checking the answer:', recheck.reason);
+
+        renderAssistant({ refining: true });
+        let retried = '';
+
+        try {
+          retried = await runAnswerRecheck(
+            activeChat,
+            recheck,
+            () =>
+              stopRequestedRef.current ||
+              abandonedRef.current ||
+              chat.current !== activeChat,
+            () => abandonedRef.current,
+          );
+        } catch (error) {
+          log('ChatScreen answer re-check failed', error);
+        }
+
+        if (chat.current !== activeChat) {
+          return;
+        }
+
+        const accepted =
+          !stopRequestedRef.current &&
+          !abandonedRef.current &&
+          recheck.accepts(retried);
+
+        log('ChatScreen answer re-check', accepted ? 'accepted' : 'rejected');
+
+        if (accepted) {
+          accumulated = retried;
+          acceptedAnswer = retried;
+        }
+      }
 
       renderAssistant(metrics);
       await persistAssistant(metrics);
 
-      if (stopRequestedRef.current) {
+      if (stoppedDuringAnswer) {
         await persistSystemMessage(t('screens.chat.generationStopped'));
+      } else {
+        answered = true;
       }
 
       haptics.medium();
@@ -379,12 +636,55 @@ export function useChatGeneration({
       log('ChatScreen generation failed', error);
 
       renderAssistant();
-      await persistAssistant();
+      await persistAssistant(
+        webSearchMs !== undefined ? { webSearchMs } : undefined,
+      );
       await persistSystemMessage(t('screens.chat.generationFailed'));
     } finally {
       cancelScheduledRender();
       unsubscribe();
+
+      const abandoned = abandonedRef.current;
+      turnConversationRef.current = undefined;
+
+      if (webTurn && chat.current === activeChat && !abandoned) {
+        try {
+          await restoreWebSearchTurn(
+            activeChat,
+            webTurn.prompt,
+            userInput,
+            acceptedAnswer,
+          );
+        } catch (error) {
+          log('ChatScreen restoring the plain question failed', error, {
+            capture: true,
+          });
+        }
+      }
+
       setIsStreaming(false);
+
+      const answer = stripCitations(parseThinking(accumulated).rest).trim();
+
+      if (
+        answered &&
+        !abandoned &&
+        answer &&
+        isWebSearchReady(webSearch.chatModel) &&
+        chat.current === activeChat
+      ) {
+        const conversationIdForDigest = id;
+        updateConversationDigestInBackground({
+          chat: activeChat,
+          previousDigest: digest,
+          question: userInput,
+          answer,
+          onDigest: next =>
+            setConversationDigest(conversationIdForDigest, next).catch(error =>
+              log('ChatScreen saving the conversation digest failed', error),
+            ),
+        });
+      }
     }
   };
 

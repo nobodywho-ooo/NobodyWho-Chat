@@ -12,9 +12,11 @@
     "models": "Models",
     "settings": "Settings",
     "customizeAssistant": "Customize",
+    "language": "Language",
     "downloadModels": "Downloaded Models",
     "terms": "Terms & Conditions",
     "privacyPolicy": "Privacy Policy",
+    "acknowledgements": "Acknowledgements",
     "close": "Close",
     "chatMenu": {
       "newChat": "New Chat",
@@ -139,7 +141,14 @@
       "dictate": "Dictate",
       "stopDictation": "Stop dictation",
       "microphoneDeniedTitle": "Microphone access needed",
-      "microphoneDeniedMessage": "Allow microphone access in Settings to dictate your messages."
+      "microphoneDeniedMessage": "Allow microphone access in Settings to dictate your messages.",
+      "webSearch": "Search the web",
+      "thinking": "Think before answering",
+      "attachUnavailable": "The current model can't read images or audio",
+      "imageUnavailable": "The current model can't read images",
+      "audioUnavailable": "The current model can't listen to audio",
+      "dictationUnavailable": "Choose a speech-to-text model to dictate",
+      "thinkingUnavailable": "The current model can't think before answering"
     },
     "cameraCapture": {
       "permission": "Camera access is needed to take a photo.",
@@ -166,7 +175,49 @@
       "closeToolCalls": "Close",
       "toolArguments": "Arguments",
       "toolResult": "Result",
-      "system": "System"
+      "system": "System",
+      "showSources": "Show sources",
+      "closeSources": "Close sources",
+      "sourcesTitle_one": "{{count}} source",
+      "sourcesTitle_other": "{{count}} sources",
+      "snippetOnly": "Search result only",
+      "sourceBadge": "Source: {{name}}",
+      "searchTime": "Search {{time}}",
+      "elapsed": "{{seconds}}s",
+      "searching": "Searching the web…",
+      "planning": "Checking whether to search…",
+      "offline": "No internet connection",
+      "skipped": "Answered without searching",
+      "searched": "Searched the web",
+      "challengeRow": "Tap to confirm you’re not a robot",
+      "challengeRowLabel": "The site wants to check you are not a robot, tap to continue",
+      "refining": "Checking the answer against the sources…",
+      "searchTrace": {
+        "objectives": "Deciding what to search for",
+        "recovering": "Couldn’t read those, looking for another source",
+        "query": "Searching “{{query}}”",
+        "web": "Searching the web",
+        "reading": "Reading the pages",
+        "done": "Done",
+        "nothingFound": "Nothing found",
+        "offline": "No internet, answered without the web",
+        "timeout": "Search took too long, stopped early",
+        "skipped": "No search needed, answered right away",
+        "weak": "Didn’t find much, the answer may be incomplete",
+        "failures_one": "Couldn’t read {{count}} page, {{reason}}",
+        "failures_other": "Couldn’t read {{count}} pages, {{reason}}",
+        "fetchFailure": {
+          "blocked": "blocked the reader",
+          "notFound": "page is gone",
+          "serverError": "site is down",
+          "timeout": "took too long",
+          "unsupported": "not readable text",
+          "tooLarge": "page too big",
+          "empty": "no readable text",
+          "network": "could not be reached",
+          "aborted": "stopped"
+        }
+      }
     },
     "conversationsList": {
       "recent": "Recent",
@@ -177,6 +228,19 @@
       "languageCount_other": "{{count}} languages",
       "thinking": "Thinking",
       "heavyProcessing": "Heavy processing"
+    },
+    "webScrapeHost": {
+      "title": "Searching the web for you",
+      "hint": "Confirm you’re human to continue",
+      "skip": "Skip search",
+      "done": "Done"
+    },
+    "webChallenge": {
+      "title": "A quick check before searching",
+      "why": "This app searches the web straight from your phone, with no server in between. Because of that, a search engine sometimes asks to make sure a real person is searching.",
+      "privacy": "On the next screen, complete the search engine's check. Your search then continues automatically.",
+      "continue": "Continue",
+      "skip": "Skip this search engine"
     }
   },
   "screens": {
@@ -195,6 +259,10 @@
           "title": "Fast",
           "subtitle": "Powerful language, audio and vision models running smoothly on your device."
         },
+        "webSearch": {
+          "title": "Web Search",
+          "subtitle": "Search the web for fresh answers, right from your device. No server in between."
+        },
         "continue": "Continue"
       },
       "header": "Get started",
@@ -203,8 +271,12 @@
       "subtitle": "Pick a text model to chat with. You can download more anytime later.",
       "modalityTitle": "Add voice?",
       "modalitySubtitle": "Voice models let you talk to the assistant and hear its replies out loud.",
+      "modalityWithSearchTitle": "Add voice and web search?",
+      "modalityWithSearchSubtitle": "Voice models let you talk to the assistant and hear its replies out loud. The search model helps the assistant pick the most relevant parts of web pages when you search the web.",
       "textOnly": "Text model only",
       "textAndVoice": "Text & Voice models",
+      "textAndSearch": "Text & Search models",
+      "allModels": "All models",
       "skip": "Skip",
       "downloadingHeader": "Please wait",
       "downloadingTitle": "Downloading your models",
@@ -237,6 +309,7 @@
     "drawerContent": {
       "newChat": "New Chat",
       "settings": "Settings",
+      "models": "Models",
       "changeModel": "Change model"
     },
     "voiceAssistant": {
@@ -252,7 +325,7 @@
         "thinking": "Thinking",
         "synthesizing": "Generating speech…",
         "speaking": "Speaking…",
-        "error": "Something went wrong — tap to try again"
+        "error": "Something went wrong, tap to try again"
       },
       "setup": {
         "title": "Set up voice chat",
@@ -270,31 +343,51 @@
         "downloadProgress": "{{percent}}%"
       }
     },
+    "acknowledgements": {
+      "models": "Models",
+      "others": "Others",
+      "searchProviders": "Web search providers",
+      "searchResults": "Search results",
+      "searchResultsAndIcons": "Search results and website icons",
+      "webSearch": "Web search (Private Mind)",
+      "loadFailed": "Model licences could not be loaded."
+    },
     "settings": {
       "app": "App",
-      "models": "Models",
-      "manageYourModels": "Manage your models",
       "customize": "Customize",
       "customizeSubtitle": "Configure your assistant",
+      "language": "Language",
+      "languageSubtitle": "The language of the app",
       "about": "About",
       "terms": "Terms & Conditions",
       "termsSubtitle": "Read our terms of use",
       "privacyPolicy": "Privacy Policy",
       "privacyPolicySubtitle": "How we handle your data",
+      "acknowledgements": "Acknowledgements",
+      "acknowledgementsSubtitle": "Models, code and web search",
+      "rateApp": "Rate the app",
+      "rateAppSubtitle": "Leave a review on the store",
       "website": "Website",
-      "github": "Github"
+      "github": "Github",
+      "x": "X"
+    },
+    "language": {
+      "system": "Device language",
+      "systemSubtitle": "Currently: {{language}}"
     },
     "models": {
-      "inUse": "In use",
-      "readyToUse": "Ready to use",
+      "recommended": "Recommended",
+      "discover": "Discover",
+      "inUse": "In Use",
+      "noModelInUse": "No model in use",
       "downloaded": "Downloaded",
-      "modelCount_one": "{{count}} model",
-      "modelCount_other": "{{count}} models",
       "downloading": "Downloading...",
       "availableToDownload": "Available to download",
+      "filterModels": "Filter models",
       "allPipelines": "All models",
       "errorCannotGetModelsAtTheMoment": "Cannot get the models at the moment",
       "youHaveDownloadedAllTheModels": "You have downloaded all the models.",
+      "modelInfo": "Model info",
       "chooseModelTitle": "Choosing the Right Model",
       "chooseModelMessage": "Model sizes are defined by their parameter count (e.g., 0.6B, 1,2B...). While bigger models are often smarter, they demand more resources and slow down performance. Therefore, if you don’t have a recent phone, start with a smaller model to ensure smooth performance.",
       "stopDownloadTitle_one": "Stop this download?",
@@ -308,7 +401,10 @@
       "downloadFailedModelMessage": "{{name}} could not be downloaded. Check your connection and try again.",
       "notEnoughSpaceTitle": "Not enough storage",
       "notEnoughSpaceMessage_one": "{{name}} needs {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again.",
-      "notEnoughSpaceMessage_other": "The models you're trying to download need {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again."
+      "notEnoughSpaceMessage_other": "The models you're trying to download need {{required}} of free space, but only {{available}} is available on this device. Free up some space and try again.",
+      "confirmDownloadTitle": "Download {{name}}?",
+      "confirmDownloadMessage": "{{name}} needs {{size}} of free space on your device. Downloading over Wi-Fi is recommended.",
+      "confirmDownload": "Download"
     },
     "downloadedModels": {
       "noModelDownloaded": "No model downloaded",
@@ -345,7 +441,29 @@
     "chat": {
       "generationFailed": "Something went wrong while generating a response.",
       "generationStopped": "Generation stopped.",
-      "attachmentFailedMessage": "The attachment couldn’t be added. {{error}}"
+      "attachmentFailedMessage": "The attachment couldn’t be added. {{error}}",
+      "embeddingDownload": {
+        "title": "Download the search model",
+        "optional": "Web search gives better answers with the on-device search model (~{{size}}): it ranks pages by what they mean instead of matching keywords alone. It's downloaded once.",
+        "required": "Your phone can comfortably run the on-device search model (~{{size}}), so web search uses it to pick the pages that really answer you. It's downloaded once.",
+        "downloading": "You can close this, the download keeps going in the background.",
+        "failed": "The search model couldn't be downloaded. Check your connection and try again.",
+        "download": "Download",
+        "retry": "Try again",
+        "cancel": "Not now"
+      },
+      "webSearchOn": "Web search on",
+      "webSearchOff": "Web search off",
+      "thinkingOn": "Thinking on",
+      "thinkingOff": "Thinking off",
+      "webSearchNotice": {
+        "nothingFound": "Couldn’t find anything useful online, answering without the web.",
+        "noRoom": "This chat is too long to add web results, start a new chat to search.",
+        "unavailable": "Web search isn’t ready yet, answering without the web.",
+        "modelTooSmall": "This model can’t use web results reliably, pick a larger one.",
+        "notEnoughMemory": "This model already fills the phone’s memory, searching alongside it could close the app. Pick a smaller model.",
+        "attachment": "Web search is skipped when a photo or recording is attached."
+      }
     },
     "loadingScreen": {
       "loadingModel": "Loading {{model}}",

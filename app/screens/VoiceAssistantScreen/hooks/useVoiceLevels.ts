@@ -3,24 +3,9 @@ import {
   useFrameCallback,
   useSharedValue,
   type FrameInfo,
-  type SharedValue,
 } from 'react-native-reanimated';
+import type { GlowLevels } from 'components';
 import { AudioEnvelope, micBands } from 'helpers';
-
-// The voice glow's per-frame drivers, all 0–1 and all smoothed on the UI thread
-// — read them from its animated styles without a JS hop. There is no mid band:
-// nothing renders it, and carrying it cost an accumulator per captured sample
-// plus a follow() per frame.
-export interface VoiceLevels {
-  /** Overall loudness. */
-  level: SharedValue<number>;
-  /** Sub-250 Hz energy — the body of a vowel. */
-  low: SharedValue<number>;
-  /** Above 2 kHz — consonants and sibilance. */
-  high: SharedValue<number>;
-  /** Voice-activity envelope: 1 while sound is flowing, 0 in silence. */
-  active: SharedValue<number>;
-}
 
 // Which source is currently writing the raw drivers.
 const REST = 0;
@@ -37,7 +22,7 @@ const VAD_ON = 0.2;
 const VAD_OFF = 0.09;
 
 export interface VoiceLevelsController {
-  levels: VoiceLevels;
+  levels: GlowLevels;
   /** Feed one window of mic PCM while listening (call per captured buffer). */
   feedPcm: (samples: Int16Array, sampleRate: number) => void;
   /** Switch to microphone drive and clear any stale energy. */
@@ -74,7 +59,7 @@ export const useVoiceLevels = ({
   const playheadMs = useSharedValue(0);
   const envelope = useSharedValue<AudioEnvelope | null>(null);
 
-  const levels = useMemo<VoiceLevels>(
+  const levels = useMemo<GlowLevels>(
     () => ({ level, low, high, active }),
     [level, low, high, active],
   );

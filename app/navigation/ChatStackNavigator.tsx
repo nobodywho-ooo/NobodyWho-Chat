@@ -9,11 +9,8 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import {
-  createNativeStackNavigator,
-  type NativeStackHeaderItem,
-} from '@react-navigation/native-stack';
 import { BlurTargetView } from 'expo-blur';
+import { useHeaderHeight } from '@react-navigation/elements';
 import { AppState, AppStateStatus, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SamplerPresets } from 'react-native-nobodywho';
@@ -37,28 +34,22 @@ import {
 } from 'repositories';
 import { log, isForegroundHeld, toChatHistory, toModelHistory } from 'helpers';
 import { Toast } from 'components';
-import { useAppState, useModels, useStyled } from 'hooks';
+import { Spacings } from 'style';
+import { useAppState, useModels } from 'hooks';
 import {
   VOICE_SLOTS,
   VoiceSlot,
+  settleConversationDigest,
   subscribeConversationSync,
   useAiService,
 } from 'services';
 import {
   ChatScreen,
-  CustomizeAssistantScreen,
-  DownloadedModelsScreen,
   ErrorScreen,
   LoadingScreen,
-  ModelsScreen,
   NoModelDownloadedScreen,
   NoModelSelectedScreen,
-  PrivacyPolicyScreen,
-  SettingsScreen,
-  TermsScreen,
 } from 'screens';
-
-const Stack = createNativeStackNavigator();
 
 enum SessionStatus {
   Loading = 'loading',
@@ -77,6 +68,7 @@ interface ChatRootContextValue {
   status: SessionStatus;
   chatHistory: DisplayMessage[];
   conversationId: LoadedConversationId;
+  historyPending: boolean;
   loadingMessage: string;
   onConversationCreated: (id: number) => void;
   onRetry: () => void;
@@ -89,6 +81,7 @@ const defaultChatRootValue: ChatRootContextValue = {
   status: SessionStatus.Loading,
   chatHistory: [],
   conversationId: undefined,
+  historyPending: true,
   loadingMessage: '',
   onConversationCreated: () => undefined,
   onRetry: () => undefined,
@@ -99,8 +92,19 @@ const ChatRootContext =
 
 type ViewRef = ComponentRef<typeof View>;
 
+const BelowHeader: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const headerHeight = useHeaderHeight();
+
+  return (
+    <View style={[styles.chatRoot, { paddingTop: headerHeight }]}>
+      {children}
+    </View>
+  );
+};
+
 const ChatRootScreen = () => {
   const ctx = useContext(ChatRootContext);
+  const headerHeight = useHeaderHeight();
   const [blurTargetNode, setBlurTargetNode] = useState<ViewRef | null>(null);
   const blurTarget = useMemo(
     () => ({ current: blurTargetNode }),
@@ -108,18 +112,34 @@ const ChatRootScreen = () => {
   );
 
   if (ctx.modelsLoading) {
-    return <LoadingScreen />;
+    return (
+      <BelowHeader>
+        <LoadingScreen />
+      </BelowHeader>
+    );
   }
 
   if (!ctx.hasModels) {
-    return <NoModelDownloadedScreen />;
+    return (
+      <BelowHeader>
+        <NoModelDownloadedScreen />
+      </BelowHeader>
+    );
   }
   if (ctx.modelIdInUse === undefined) {
-    return <NoModelSelectedScreen />;
+    return (
+      <BelowHeader>
+        <NoModelSelectedScreen />
+      </BelowHeader>
+    );
   }
 
   if (ctx.status === SessionStatus.Error) {
-    return <ErrorScreen onRetry={ctx.onRetry} />;
+    return (
+      <BelowHeader>
+        <ErrorScreen onRetry={ctx.onRetry} />
+      </BelowHeader>
+    );
   }
 
   const loading = ctx.status === SessionStatus.Loading;
@@ -133,6 +153,7 @@ const ChatRootScreen = () => {
         <ChatScreen
           conversationId={ctx.conversationId}
           messages={ctx.chatHistory}
+          historyPending={ctx.historyPending}
           onConversationCreated={ctx.onConversationCreated}
           disabled={loading}
         />
@@ -142,6 +163,7 @@ const ChatRootScreen = () => {
         message={ctx.loadingMessage}
         loading
         blurTarget={blurTarget}
+        style={{ top: headerHeight + Spacings.md }}
       />
     </View>
   );
@@ -149,9 +171,9 @@ const ChatRootScreen = () => {
 
 export const ChatStackNavigator = () => {
   const { t } = useTranslation();
-  const { colors } = useStyled();
   const { models, loading: modelsLoading } = useModels();
-  const { modelIdInUse } = useAppState();
+  const { modelIdInUse, conversationIdInUse: inUseConversationId } =
+    useAppState();
   const { slots, ensureVoiceEngine } = useAiService();
   const chat = slots.chat.ref;
 
@@ -211,6 +233,14 @@ export const ChatStackNavigator = () => {
 
     if (chat.current === undefined) {
       throw new Error('ChatStackNavigator: current chat is undefined');
+    }
+
+    // A background digest run restores the previous conversation's history
+    // when it ends: let it finish first so it can't overwrite this load.
+    await settleConversationDigest();
+
+    if (!isCurrent()) {
+      return;
     }
 
     const { modelIdInUse: modelId, conversationIdInUse } = getAppState();
@@ -447,11 +477,11 @@ export const ChatStackNavigator = () => {
       });
 
       // Only model changes or chat-affecting config rebuild the chat — a
-      // voice/language edit must not tear down the loaded chat model.
+      // voice/language edit must not tear down the loaded chat model. Thinking
+      // isn't one: each turn sets `enable_thinking` on the loaded chat.
       const chatConfigChanged =
         nextConfig.temperature !== prevConfig.temperature ||
         nextConfig.systemPrompt !== prevConfig.systemPrompt ||
-        nextConfig.thinking !== prevConfig.thinking ||
         nextConfig.toolCalling !== prevConfig.toolCalling ||
         nextConfig.contextSize !== prevConfig.contextSize;
 
@@ -538,6 +568,7 @@ export const ChatStackNavigator = () => {
       status,
       chatHistory,
       conversationId: loadedConversationId,
+      historyPending: inUseConversationId !== loadedConversationId,
       loadingMessage,
       onConversationCreated: handleConversationCreated,
       onRetry: startSession,
@@ -549,94 +580,16 @@ export const ChatStackNavigator = () => {
       status,
       chatHistory,
       loadedConversationId,
+      inUseConversationId,
       loadingMessage,
       handleConversationCreated,
       startSession,
     ],
   );
 
-  const closeHeaderItems = useCallback(
-    (navigation: { goBack: () => void }) => (): NativeStackHeaderItem[] => [
-      {
-        type: 'button',
-        label: t('navigation.close'),
-        icon: { type: 'sfSymbol', name: 'xmark' },
-        tintColor: colors.onSurface,
-        onPress: navigation.goBack,
-      },
-    ],
-    [colors.onSurface, t],
-  );
-
   return (
     <ChatRootContext.Provider value={chatRootValue}>
-      <Stack.Navigator
-        screenOptions={{
-          headerStyle: { backgroundColor: colors.surface },
-          headerTintColor: colors.onSurface,
-          headerTitleStyle: { color: colors.onSurface },
-        }}
-      >
-        <Stack.Screen
-          name="ChatScreen"
-          component={ChatRootScreen}
-          // inactiveBehavior prevents expo-audio from crashing
-          options={{ headerShown: false, inactiveBehavior: 'none' }}
-        />
-        <Stack.Screen
-          name="SettingsScreen"
-          component={SettingsScreen}
-          options={({ navigation }) => ({
-            title: t('navigation.settings'),
-            presentation: 'modal',
-            unstable_headerRightItems: closeHeaderItems(navigation),
-          })}
-        />
-        <Stack.Screen
-          name="ModelsScreen"
-          component={ModelsScreen}
-          options={({ navigation }) => ({
-            title: t('navigation.models'),
-            presentation: 'modal',
-            unstable_headerRightItems: closeHeaderItems(navigation),
-          })}
-        />
-        <Stack.Screen
-          name="CustomizeAssistantScreen"
-          component={CustomizeAssistantScreen}
-          options={({ navigation }) => ({
-            title: t('navigation.customizeAssistant'),
-            presentation: 'modal',
-            unstable_headerRightItems: closeHeaderItems(navigation),
-          })}
-        />
-        <Stack.Screen
-          name="DownloadedModelsScreen"
-          component={DownloadedModelsScreen}
-          options={{
-            title: '',
-            presentation: 'modal',
-          }}
-        />
-        <Stack.Screen
-          name="TermsScreen"
-          component={TermsScreen}
-          options={({ navigation }) => ({
-            title: t('navigation.terms'),
-            presentation: 'modal',
-            unstable_headerRightItems: closeHeaderItems(navigation),
-          })}
-        />
-        <Stack.Screen
-          name="PrivacyPolicyScreen"
-          component={PrivacyPolicyScreen}
-          options={({ navigation }) => ({
-            title: t('navigation.privacyPolicy'),
-            presentation: 'modal',
-            unstable_headerRightItems: closeHeaderItems(navigation),
-          })}
-        />
-      </Stack.Navigator>
+      <ChatRootScreen />
     </ChatRootContext.Provider>
   );
 };

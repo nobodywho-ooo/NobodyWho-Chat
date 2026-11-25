@@ -1,12 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import {
-  Linking,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import {
   GestureDetector,
   GestureHandlerRootView,
@@ -23,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { StreamdownText } from 'react-native-streamdown';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
-import { getMarkdownStyle, log } from 'helpers';
+import { getMarkdownStyle, openExternalUrl } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
 import { Spacings } from 'style';
 
@@ -90,9 +83,7 @@ export const ThinkingModal: React.FC<ThinkingModalProps> = ({
   const Renderer = active ? StreamdownText : EnrichedMarkdownText;
 
   const handleLinkPress = useCallback(({ url }: { url: string }) => {
-    Linking.openURL(url).catch(error =>
-      log(`Failed to open URL ${url}`, error),
-    );
+    openExternalUrl(url);
   }, []);
 
   return (

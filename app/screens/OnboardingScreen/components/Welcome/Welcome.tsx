@@ -29,6 +29,11 @@ const FEATURES = [
     iosIconName: 'bolt.fill',
     androidIconName: 'bolt',
   },
+  {
+    key: 'webSearch',
+    iosIconName: 'globe',
+    androidIconName: 'language',
+  },
 ] as const;
 
 export const Welcome: React.FC<OnboardingScreenProps<'Welcome'>> = ({

@@ -12,9 +12,11 @@
     "models": "Modeller",
     "settings": "Indstillinger",
     "customizeAssistant": "Tilpas",
+    "language": "Sprog",
     "downloadModels": "Downloadede modeller",
     "terms": "Vilkår og betingelser",
     "privacyPolicy": "Privatlivspolitik",
+    "acknowledgements": "Anerkendelser",
     "close": "Luk",
     "chatMenu": {
       "newChat": "Ny chat",
@@ -139,7 +141,14 @@
       "dictate": "Dikter",
       "stopDictation": "Stop diktering",
       "microphoneDeniedTitle": "Mikrofonadgang kræves",
-      "microphoneDeniedMessage": "Tillad mikrofonadgang i Indstillinger for at diktere dine beskeder."
+      "microphoneDeniedMessage": "Tillad mikrofonadgang i Indstillinger for at diktere dine beskeder.",
+      "webSearch": "Søg på nettet",
+      "thinking": "Tænk før du svarer",
+      "attachUnavailable": "Den aktuelle model kan ikke læse billeder eller lyd",
+      "imageUnavailable": "Den aktuelle model kan ikke læse billeder",
+      "audioUnavailable": "Den aktuelle model kan ikke lytte til lyd",
+      "dictationUnavailable": "Vælg en tale-til-tekst-model for at diktere",
+      "thinkingUnavailable": "Den aktuelle model kan ikke tænke før den svarer"
     },
     "cameraCapture": {
       "permission": "Kameraadgang er nødvendig for at tage et billede.",
@@ -166,7 +175,49 @@
       "closeToolCalls": "Luk",
       "toolArguments": "Argumenter",
       "toolResult": "Resultat",
-      "system": "System"
+      "system": "System",
+      "showSources": "Vis kilder",
+      "closeSources": "Luk kilder",
+      "sourcesTitle_one": "{{count}} kilde",
+      "sourcesTitle_other": "{{count}} kilder",
+      "snippetOnly": "Kun søgeresultat",
+      "sourceBadge": "Kilde: {{name}}",
+      "searchTime": "Søgning {{time}}",
+      "elapsed": "{{seconds}} s",
+      "searching": "Søger på nettet…",
+      "planning": "Vurderer, om der skal søges…",
+      "offline": "Ingen internetforbindelse",
+      "skipped": "Besvaret uden søgning",
+      "searched": "Søgte på nettet",
+      "challengeRow": "Tryk for at bekræfte, at du ikke er en robot",
+      "challengeRowLabel": "Siden vil tjekke, at du ikke er en robot, tryk for at fortsætte",
+      "refining": "Tjekker svaret mod kilderne…",
+      "searchTrace": {
+        "objectives": "Finder ud af, hvad der skal søges efter",
+        "recovering": "Kunne ikke læse dem, leder efter en anden kilde",
+        "query": "Søger efter “{{query}}”",
+        "web": "Søger på nettet",
+        "reading": "Læser siderne",
+        "done": "Færdig",
+        "nothingFound": "Intet fundet",
+        "offline": "Intet internet, svarede uden nettet",
+        "timeout": "Søgningen tog for lang tid, stoppede tidligt",
+        "skipped": "Ingen søgning nødvendig, svarede med det samme",
+        "weak": "Fandt ikke meget, svaret kan være ufuldstændigt",
+        "failures_one": "Kunne ikke læse {{count}} side, {{reason}}",
+        "failures_other": "Kunne ikke læse {{count}} sider, {{reason}}",
+        "fetchFailure": {
+          "blocked": "blokerede læseren",
+          "notFound": "siden findes ikke længere",
+          "serverError": "siden er nede",
+          "timeout": "tog for lang tid",
+          "unsupported": "ikke læsbar tekst",
+          "tooLarge": "siden er for stor",
+          "empty": "ingen læsbar tekst",
+          "network": "kunne ikke nås",
+          "aborted": "stoppet"
+        }
+      }
     },
     "conversationsList": {
       "recent": "Seneste",
@@ -177,6 +228,19 @@
       "languageCount_other": "{{count}} sprog",
       "thinking": "Ræsonnement",
       "heavyProcessing": "Krævende"
+    },
+    "webScrapeHost": {
+      "title": "Søger på nettet for dig",
+      "hint": "Bekræft, at du er et menneske, for at fortsætte",
+      "skip": "Spring søgning over",
+      "done": "Færdig"
+    },
+    "webChallenge": {
+      "title": "En hurtig kontrol før søgningen",
+      "why": "Denne app søger på nettet direkte fra din telefon, uden en server imellem. Derfor beder en søgemaskine nogle gange om at bekræfte, at det er et rigtigt menneske, der søger.",
+      "privacy": "Gennemfør søgemaskinens kontrol på næste skærm. Derefter fortsætter din søgning automatisk.",
+      "continue": "Fortsæt",
+      "skip": "Spring denne søgemaskine over"
     }
   },
   "screens": {
@@ -195,6 +259,10 @@
           "title": "Hurtig",
           "subtitle": "Kraftfulde sprog-, lyd- og billedmodeller, der kører gnidningsfrit på din enhed."
         },
+        "webSearch": {
+          "title": "Websøgning",
+          "subtitle": "Søg på nettet efter friske svar, direkte fra din enhed. Ingen server imellem."
+        },
         "continue": "Fortsæt"
       },
       "header": "Kom i gang",
@@ -203,8 +271,12 @@
       "subtitle": "Vælg en tekstmodel at chatte med. Du kan altid downloade flere senere.",
       "modalityTitle": "Tilføj stemme?",
       "modalitySubtitle": "Med stemmemodeller kan du tale med assistenten og høre dens svar læst højt.",
+      "modalityWithSearchTitle": "Tilføj stemme og websøgning?",
+      "modalityWithSearchSubtitle": "Med stemmemodeller kan du tale med assistenten og høre dens svar læst højt. Søgemodellen hjælper assistenten med at finde de mest relevante dele af websider, når du søger på nettet.",
       "textOnly": "Kun tekstmodel",
       "textAndVoice": "Tekst- og stemmemodeller",
+      "textAndSearch": "Tekst- og søgemodeller",
+      "allModels": "Alle modeller",
       "skip": "Spring over",
       "downloadingHeader": "Vent venligst",
       "downloadingTitle": "Downloader dine modeller",
@@ -237,6 +309,7 @@
     "drawerContent": {
       "newChat": "Ny chat",
       "settings": "Indstillinger",
+      "models": "Modeller",
       "changeModel": "Skift model"
     },
     "voiceAssistant": {
@@ -252,7 +325,7 @@
         "thinking": "Tænker…",
         "synthesizing": "Genererer tale…",
         "speaking": "Taler…",
-        "error": "Noget gik galt — tryk for at prøve igen"
+        "error": "Noget gik galt, tryk for at prøve igen"
       },
       "setup": {
         "title": "Konfigurer stemmechat",
@@ -270,31 +343,51 @@
         "downloadProgress": "{{percent}}%"
       }
     },
+    "acknowledgements": {
+      "models": "Modeller",
+      "others": "Andre",
+      "searchProviders": "Udbydere af websøgning",
+      "searchResults": "Søgeresultater",
+      "searchResultsAndIcons": "Søgeresultater og webstedsikoner",
+      "webSearch": "Websøgning (Private Mind)",
+      "loadFailed": "Modellernes licenser kunne ikke indlæses."
+    },
     "settings": {
       "app": "App",
-      "models": "Modeller",
-      "manageYourModels": "Administrer dine modeller",
       "customize": "Tilpas",
       "customizeSubtitle": "Konfigurer din assistent",
+      "language": "Sprog",
+      "languageSubtitle": "Appens sprog",
       "about": "Om",
       "terms": "Vilkår og betingelser",
       "termsSubtitle": "Læs vores brugervilkår",
       "privacyPolicy": "Privatlivspolitik",
       "privacyPolicySubtitle": "Sådan håndterer vi dine data",
+      "acknowledgements": "Anerkendelser",
+      "acknowledgementsSubtitle": "Modeller, kode og websøgning",
+      "rateApp": "Bedøm appen",
+      "rateAppSubtitle": "Skriv en anmeldelse i butikken",
       "website": "Hjemmeside",
-      "github": "Github"
+      "github": "Github",
+      "x": "X"
+    },
+    "language": {
+      "system": "Enhedens sprog",
+      "systemSubtitle": "Lige nu: {{language}}"
     },
     "models": {
+      "recommended": "Anbefalet",
+      "discover": "Opdag",
       "inUse": "I brug",
-      "readyToUse": "Klar til brug",
+      "noModelInUse": "Ingen model i brug",
       "downloaded": "Downloadet",
-      "modelCount_one": "{{count}} model",
-      "modelCount_other": "{{count}} modeller",
       "downloading": "Downloader...",
       "availableToDownload": "Tilgængelig til download",
+      "filterModels": "Filtrer modeller",
       "allPipelines": "Alle modeller",
       "errorCannotGetModelsAtTheMoment": "Kan ikke hente modellerne i øjeblikket",
       "youHaveDownloadedAllTheModels": "Du har downloadet alle modellerne.",
+      "modelInfo": "Modelinfo",
       "chooseModelTitle": "Vælg den rigtige model",
       "chooseModelMessage": "Modellers størrelse defineres ud fra deres antal parametre (f.eks. 0,6B, 1,2B ...). Større modeller er ofte klogere, men de kræver flere ressourcer og gør ydelsen langsommere. Hvis du ikke har en ny telefon, bør du derfor starte med en mindre model for at sikre en jævn ydelse.",
       "stopDownloadTitle_one": "Stop denne download?",
@@ -308,7 +401,10 @@
       "downloadFailedModelMessage": "{{name}} kunne ikke downloades. Tjek din forbindelse og prøv igen.",
       "notEnoughSpaceTitle": "Ikke nok lagerplads",
       "notEnoughSpaceMessage_one": "{{name}} kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen.",
-      "notEnoughSpaceMessage_other": "Modellerne, du prøver at downloade, kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen."
+      "notEnoughSpaceMessage_other": "Modellerne, du prøver at downloade, kræver {{required}} ledig plads, men der er kun {{available}} tilgængelig på denne enhed. Frigør noget plads og prøv igen.",
+      "confirmDownloadTitle": "Download {{name}}?",
+      "confirmDownloadMessage": "{{name}} kræver {{size}} ledig plads på din enhed. Vi anbefaler at downloade via Wi-Fi.",
+      "confirmDownload": "Download"
     },
     "downloadedModels": {
       "noModelDownloaded": "Ingen model downloadet",
@@ -345,7 +441,29 @@
     "chat": {
       "generationFailed": "Noget gik galt under genereringen af et svar.",
       "generationStopped": "Generering stoppet.",
-      "attachmentFailedMessage": "Vedhæftningen kunne ikke tilføjes. {{error}}"
+      "attachmentFailedMessage": "Vedhæftningen kunne ikke tilføjes. {{error}}",
+      "embeddingDownload": {
+        "title": "Download søgemodellen",
+        "optional": "Websøgning giver bedre svar med søgemodellen på enheden (~{{size}}): den rangerer sider efter, hvad de betyder, i stedet for kun at matche nøgleord. Den downloades én gang.",
+        "required": "Din telefon kan sagtens køre søgemodellen på enheden (~{{size}}), så websøgning bruger den til at finde de sider, der virkelig besvarer dig. Den downloades én gang.",
+        "downloading": "Du kan lukke dette, downloadet fortsætter i baggrunden.",
+        "failed": "Søgemodellen kunne ikke downloades. Tjek din forbindelse, og prøv igen.",
+        "download": "Download",
+        "retry": "Prøv igen",
+        "cancel": "Ikke nu"
+      },
+      "webSearchOn": "Websøgning slået til",
+      "webSearchOff": "Websøgning slået fra",
+      "thinkingOn": "Tænkning slået til",
+      "thinkingOff": "Tænkning slået fra",
+      "webSearchNotice": {
+        "nothingFound": "Fandt ikke noget brugbart på nettet, svarer uden nettet.",
+        "noRoom": "Denne chat er for lang til at tilføje søgeresultater, start en ny chat for at søge.",
+        "unavailable": "Websøgning er ikke klar endnu, svarer uden nettet.",
+        "modelTooSmall": "Denne model kan ikke bruge søgeresultater pålideligt, vælg en større.",
+        "notEnoughMemory": "Denne model fylder allerede telefonens hukommelse, en søgning ved siden af kan lukke appen. Vælg en mindre model.",
+        "attachment": "Websøgning springes over, når et billede eller en optagelse er vedhæftet."
+      }
     },
     "loadingScreen": {
       "loadingModel": "Indlæser {{model}}",

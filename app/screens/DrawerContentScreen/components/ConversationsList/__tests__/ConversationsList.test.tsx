@@ -20,7 +20,7 @@ test('renders the conversations', async () => {
     conversations: [buildConversation(1), buildConversation(2)],
   });
 
-  const screen = await render(<ConversationsList onCloseDrawer={jest.fn()} />);
+  const screen = await render(<ConversationsList onSelect={jest.fn()} />);
 
   expect(screen.getByText('Conversation 1')).toBeTruthy();
   expect(screen.getByText('Conversation 2')).toBeTruthy();
@@ -32,14 +32,27 @@ test('renders the conversation in use in bold', async () => {
     conversations: [buildConversation(1), buildConversation(2)],
   });
 
-  const screen = await render(<ConversationsList onCloseDrawer={jest.fn()} />);
+  const screen = await render(<ConversationsList onSelect={jest.fn()} />);
 
   expect(screen.getByText('Conversation 2').props.bold).toBe(true);
   expect(screen.getByText('Conversation 1').props.bold).toBe(false);
 });
 
+test('marks no conversation as selected when the chat is not shown', async () => {
+  mockUseAppState.mockReturnValue({ conversationIdInUse: 2 });
+  mockUseConversations.mockReturnValue({
+    conversations: [buildConversation(1), buildConversation(2)],
+  });
+
+  const screen = await render(
+    <ConversationsList onSelect={jest.fn()} showSelection={false} />,
+  );
+
+  expect(screen.getByText('Conversation 2').props.bold).toBe(false);
+});
+
 test('renders the empty state when there are no conversations', async () => {
-  const screen = await render(<ConversationsList onCloseDrawer={jest.fn()} />);
+  const screen = await render(<ConversationsList onSelect={jest.fn()} />);
 
   expect(
     screen.getByText('components.conversationsList.noConversations'),
@@ -47,21 +60,19 @@ test('renders the empty state when there are no conversations', async () => {
 });
 
 test('pressing a conversation opens it and closes the drawer', async () => {
-  const onCloseDrawer = jest.fn();
+  const onSelect = jest.fn();
   // Belongs to a different model than any in use, so both ids must be set.
   const conversation = buildConversation(2, { modelId: 7 });
   mockUseConversations.mockReturnValue({
     conversations: [buildConversation(1), conversation],
   });
 
-  const screen = await render(
-    <ConversationsList onCloseDrawer={onCloseDrawer} />,
-  );
+  const screen = await render(<ConversationsList onSelect={onSelect} />);
   await fireEvent.press(screen.getByText('Conversation 2'));
 
   expect(mockSetAppState).toHaveBeenCalledWith({
     modelIdInUse: 7,
     conversationIdInUse: 2,
   });
-  expect(onCloseDrawer).toHaveBeenCalled();
+  expect(onSelect).toHaveBeenCalled();
 });

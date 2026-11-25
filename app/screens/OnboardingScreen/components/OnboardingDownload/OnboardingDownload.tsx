@@ -2,21 +2,23 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Button, PlatformIcon, ProgressBar, Text } from 'components';
 import { curatedOnboardingModels, log, progressPercent } from 'helpers';
-import { useStyled } from 'hooks';
+import { useKeepAwakeWhile, useStyled } from 'hooks';
 import { getModelById } from 'repositories';
 import { Spacings } from 'style';
+import { Button, PlatformIcon, ProgressBar, Text, EdgeGlow } from 'components';
 
 import { OnboardingScreenProps } from '../../Onboarding.types';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { useOnboardingHeader } from '../../hooks/useOnboardingHeader';
+import {
+  useDownloadGlowOpacity,
+  useDownloadPulses,
+} from '../../hooks/useDownloadPulses';
 import { OnboardingStep } from '../OnboardingStep/OnboardingStep';
 
 import styles from './OnboardingDownload.styles';
 
-// Downloads what the previous step picked, locked in place until it is done.
-// Cancel, or a download that doesn't fit, goes back to that step.
 export const OnboardingDownload: React.FC<
   OnboardingScreenProps<'OnboardingDownload'>
 > = ({ navigation, route }) => {
@@ -27,10 +29,12 @@ export const OnboardingDownload: React.FC<
   const { modelId, setup } = route.params;
 
   const [isDone, setIsDone] = useState(false);
-  // The lock blocks going back too, so it is lifted before leaving.
   const [isLeaving, setIsLeaving] = useState(false);
 
   const { isLoaded, progress, downloadCurated, cancel } = curatedModels;
+  const glowLevels = useDownloadPulses(progress);
+  const glowOpacity = useDownloadGlowOpacity(progress);
+  useKeepAwakeWhile(!isDone && !isLeaving);
 
   useOnboardingHeader(navigation, !isLeaving);
 
@@ -138,6 +142,9 @@ export const OnboardingDownload: React.FC<
       header={t('screens.onboarding.downloadingHeader')}
       title={t('screens.onboarding.downloadingTitle')}
       subtitle={t('screens.onboarding.downloadingSubtitle')}
+      background={
+        <EdgeGlow edge="top" levels={glowLevels} opacity={glowOpacity} />
+      }
       footer={
         <Button
           title={t('common.cancel')}

@@ -14,7 +14,7 @@ test('renders correctly NoModelSelectedScreen', async () => {
   expect(tree).toMatchSnapshot();
 });
 
-test('pressing the button opens the ModelsScreen', async () => {
+test('pressing the button opens Models', async () => {
   const screen = await render(<NoModelSelectedScreen />);
 
   const [button] = screen.container.queryAll(
@@ -22,5 +22,5 @@ test('pressing the button opens the ModelsScreen', async () => {
   );
   await fireEvent.press(button);
 
-  expect(mockNavigate).toHaveBeenCalledWith('ModelsScreen');
+  expect(mockNavigate).toHaveBeenCalledWith('Models');
 });

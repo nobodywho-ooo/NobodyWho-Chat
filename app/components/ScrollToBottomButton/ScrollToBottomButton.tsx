@@ -2,6 +2,10 @@ import React, { ComponentRef, RefObject } from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { BlurView } from 'expo-blur';
+import {
+  LiquidGlassView,
+  isLiquidGlassSupported,
+} from '@callstack/liquid-glass';
 import { useTheme } from 'context';
 import { useStyled } from 'hooks';
 
@@ -43,23 +47,41 @@ export const ScrollToBottomButton: React.FC<ScrollToBottomButtonProps> = ({
         accessibilityLabel={t('components.scrollToBottomButton.label')}
         hitSlop={8}
         onPress={onPress}
-        style={({ pressed }) => [
-          styles.button,
-          { borderColor: colors.borderSecondary },
-          pressed && styles.buttonPressed,
-        ]}
+        style={({ pressed }) =>
+          isLiquidGlassSupported
+            ? styles.button
+            : [
+                styles.button,
+                styles.blurButton,
+                { borderColor: colors.borderSecondary },
+                pressed && styles.buttonPressed,
+              ]
+        }
       >
-        <BlurView
-          style={styles.blurFill}
-          intensity={BLUR_INTENSITY}
-          tint={theme}
-          blurMethod="dimezisBlurViewSdk31Plus"
-          blurReductionFactor={BLUR_REDUCTION_FACTOR}
-          blurTarget={blurTarget}
-        />
-        <View
-          style={[styles.tint, { backgroundColor: colors.surfaceContainer }]}
-        />
+        {isLiquidGlassSupported ? (
+          <LiquidGlassView
+            interactive
+            colorScheme={theme}
+            style={styles.glass}
+          />
+        ) : (
+          <>
+            <BlurView
+              style={styles.blurFill}
+              intensity={BLUR_INTENSITY}
+              tint={theme}
+              blurMethod="dimezisBlurViewSdk31Plus"
+              blurReductionFactor={BLUR_REDUCTION_FACTOR}
+              blurTarget={blurTarget}
+            />
+            <View
+              style={[
+                styles.tint,
+                { backgroundColor: colors.surfaceContainer },
+              ]}
+            />
+          </>
+        )}
         <PlatformIcon
           iosIconName="chevron.down"
           androidIconName="keyboard_arrow_down"

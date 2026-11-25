@@ -1,7 +1,13 @@
 import { StyleSheet } from 'react-native';
+import { iconButtonSize } from 'components';
 import { Spacings } from 'style';
 
 const TOP_GRADIENT_HEIGHT = 10;
+const BOTTOM_FADE_HEIGHT = 64;
+const CARD_RADIUS = 16;
+const MARGIN_RIGHT_ICON_BUTTON = Spacings.sm;
+
+export const BAR_BUTTON_SIZE = iconButtonSize(true);
 
 export const styles = StyleSheet.create({
   mainContainer: {
@@ -19,9 +25,23 @@ export const styles = StyleSheet.create({
     top: -TOP_GRADIENT_HEIGHT,
     height: TOP_GRADIENT_HEIGHT,
   },
+  bottomFade: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: BOTTOM_FADE_HEIGHT,
+  },
+  opaqueCard: {
+    borderWidth: 1,
+  },
+  glassCard: {
+    borderRadius: CARD_RADIUS,
+    borderCurve: 'continuous',
+  },
   inputBarContainer: {
     flexDirection: 'column',
-    borderRadius: 16,
+    borderRadius: CARD_RADIUS,
     paddingHorizontal: Spacings.lg,
     paddingVertical: Spacings.sm,
   },
@@ -34,22 +54,19 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   textInput: {
-    flex: 1,
     paddingTop: Spacings.sm,
     paddingVertical: Spacings.lg,
     fontSize: 16,
     maxHeight: 100,
     paddingRight: 6,
   },
-  attachContainer: {
-    marginRight: Spacings.sm,
-  },
-  transcriptionContainer: {
-    marginRight: Spacings.sm,
+  iconButtonSpacing: {
+    marginRight: MARGIN_RIGHT_ICON_BUTTON,
   },
   transcriptionLoaderContainer: {
-    width: 36,
-    height: 36,
+    width: BAR_BUTTON_SIZE,
+    height: BAR_BUTTON_SIZE,
+    marginRight: MARGIN_RIGHT_ICON_BUTTON,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -59,7 +76,7 @@ export const styles = StyleSheet.create({
   },
   attachOptionsList: {
     alignSelf: 'flex-start',
-    borderRadius: 16,
+    borderRadius: CARD_RADIUS,
     paddingHorizontal: Spacings.lg,
     paddingVertical: Spacings.md,
     rowGap: Spacings.md,

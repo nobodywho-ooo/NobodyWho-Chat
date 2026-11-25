@@ -8,6 +8,7 @@ import {
   useKeyboardChatComposerInset,
   useKeyboardScrollToEnd,
 } from '@legendapp/list/keyboard';
+import { KeyboardController } from 'react-native-keyboard-controller';
 import { Spacings } from 'style';
 import { DisplayMessage } from 'types';
 
@@ -24,7 +25,47 @@ const ANCHOR_MAX_SIZE =
 
 const BOTTOM_OFFSET = 10_000_000; // Further than any conversation is tall; the list clamps it to however far it can actually go
 
-export const useMessageListScroll = (messages: DisplayMessage[]) => {
+const EDGE_EPSILON = 1; // Sub-pixel rounding between measured rows and the scroll offset
+
+type ListState = ReturnType<LegendListRef['getState']>;
+
+// Whether the bottom of the newest message is visible above whatever covers the end of the list (composer, keyboard).
+// This is a different question from the list's own isAtEnd, which also counts the blank space reserved under a parked message:
+// - with a sent message longer than the anchor cap, that space reaches past the screen, so the list reads "not at end" while the whole conversation is on screen.
+// - on Android the end inset it uses comes back from the native scroll view a few frames late, so every time the space shrinks under a new line of the answer
+//   the list reads "not at end" for those frames, and the chevron flashes.
+const isLastRowInView = (
+  state: ListState,
+  topInset: number,
+  coveredEnd: number,
+) => {
+  const lastIndex = state.data.length - 1;
+
+  if (lastIndex < 0) {
+    return false;
+  }
+
+  const top = state.positionAtIndex(lastIndex);
+  const size = state.sizeAtIndex(lastIndex);
+
+  if (top === undefined || size === undefined) {
+    return false;
+  }
+
+  const visibleEnd = state.scroll + state.scrollLength - coveredEnd;
+
+  return topInset + top + size <= visibleEnd + EDGE_EPSILON;
+};
+
+// topInset: how much of the list sits under a transparent header, so the parked message lands below it rather than behind it.
+// keyboardOffset: how much of the keyboard's height the composer does not rise by (the bottom safe area it already sits above).
+export const useMessageListScroll = (
+  messages: DisplayMessage[],
+  topInset = 0,
+  keyboardOffset = 0,
+) => {
+  const anchorOffset = ANCHOR_OFFSET + topInset;
+
   const listRef = useRef<LegendListRef>(null);
   const composerRef = useRef<React.ComponentRef<typeof View>>(null);
 
@@ -49,13 +90,58 @@ export const useMessageListScroll = (messages: DisplayMessage[]) => {
       .scrollToIndex({
         index: anchorIndex,
         viewPosition: 0,
-        viewOffset: ANCHOR_OFFSET,
+        viewOffset: anchorOffset,
         animated: anchorIndex > 0,
       })
       .then(release, release);
-  }, [anchorIndex, freeze]);
+  }, [anchorIndex, anchorOffset, freeze]);
 
-  useEffect(() => listRef.current?.getState().listen('isAtEnd', setAtEnd), []);
+  // Only the list's signal is trusted for "at end": a reading taken before it has laid out says "not at end".
+  // When it says "not at end", the chevron is still held back while the newest message is fully in view.
+  const listAtEndRef = useRef(true);
+
+  const refreshAtEnd = useCallback(() => {
+    const list = listRef.current;
+
+    if (listAtEndRef.current || list === null) {
+      setAtEnd(true);
+
+      return;
+    }
+
+    const keyboardLift = Math.max(
+      0,
+      KeyboardController.state().height - keyboardOffset,
+    );
+
+    const coveredEnd = contentInsetEndAdjustment.value + keyboardLift;
+    setAtEnd(isLastRowInView(list.getState(), topInset, coveredEnd));
+  }, [contentInsetEndAdjustment, keyboardOffset, topInset]);
+
+  useEffect(() => {
+    const state = listRef.current?.getState();
+
+    if (!state) {
+      return;
+    }
+
+    const unsubscribes = [
+      state.listen('isAtEnd', isAtEnd => {
+        listAtEndRef.current = isAtEnd;
+        refreshAtEnd();
+      }),
+      state.listen('totalSize', refreshAtEnd),
+    ];
+
+    return () => unsubscribes.forEach(unsubscribe => unsubscribe());
+  }, [refreshAtEnd]);
+
+  // Scrolling away from the end only flips the list's signal once; the newest message leaving the screen is seen here.
+  const onScroll = useCallback(() => {
+    if (!listAtEndRef.current) {
+      refreshAtEnd();
+    }
+  }, [refreshAtEnd]);
 
   const scrollingToBottomRef = useRef(false);
   const missedScrollToBottomRef = useRef(false);
@@ -129,6 +215,7 @@ export const useMessageListScroll = (messages: DisplayMessage[]) => {
   const showConversation = useCallback(() => {
     setAnchorIndex(undefined);
     setFollowing(false);
+    listAtEndRef.current = true;
     setAtEnd(true);
     listRef.current?.clearCaches({ mode: 'sizes' });
     scrollToBottomNow(false);
@@ -144,7 +231,7 @@ export const useMessageListScroll = (messages: DisplayMessage[]) => {
       : {
           anchorIndex,
           anchorMaxSize: anchorHasAttachment ? undefined : ANCHOR_MAX_SIZE,
-          anchorOffset: ANCHOR_OFFSET,
+          anchorOffset,
         };
 
   return {
@@ -156,6 +243,7 @@ export const useMessageListScroll = (messages: DisplayMessage[]) => {
     anchoredEndSpace,
     maintainVisibleContentPosition: anchorIndex !== undefined,
     onScrollBeginDrag,
+    onScroll,
     canScrollToBottom: !atEnd && !following,
     anchorSentMessage,
     scrollToBottom,

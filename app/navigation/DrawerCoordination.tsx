@@ -19,8 +19,7 @@ import type {
   PanGestureConfig,
 } from 'react-native-gesture-handler';
 import { haptics } from 'helpers';
-
-import { scrollGestureStore } from '../screens/ChatScreen/components/MessageStarters/MessageStarters';
+import { drawerScrollGestureStore } from 'hooks';
 
 type Side = 'left' | 'right';
 
@@ -29,9 +28,10 @@ interface CoordinationValue {
   reportStatus: (side: Side, open: boolean) => void;
   registerOpener: (side: Side, open: (() => void) | null) => void;
   open: (side: Side) => void;
-  // The MessageStarters horizontal scroll gesture, when mounted, so the drawer
-  // pan can require it to fail before activating (Android scroll coordination).
-  scrollGesture: NativeGesture | null;
+  // The mounted horizontal scroll gestures (MessageStarters, the models tabs),
+  // so the drawer pans can require them to fail before activating (Android
+  // scroll coordination).
+  scrollGestures: NativeGesture[];
   // Height of the bottom strip the drawer swipes must keep their hands off, so
   // a drag inside the input bar never pulls a drawer in with it. Reported by
   // the input bar, which measures itself.
@@ -44,7 +44,7 @@ const DrawerCoordinationContext = createContext<CoordinationValue>({
   reportStatus: () => undefined,
   registerOpener: () => undefined,
   open: () => undefined,
-  scrollGesture: null,
+  scrollGestures: [],
   swipeExclusion: 0,
   reportSwipeExclusion: () => undefined,
 });
@@ -93,9 +93,9 @@ export const DrawerCoordinationProvider: FC<{ children: ReactNode }> = ({
     setSwipeExclusion(prev => (prev === rounded ? prev : rounded));
   }, []);
 
-  const scrollGesture = useSyncExternalStore(
-    scrollGestureStore.subscribe,
-    scrollGestureStore.getSnapshot,
+  const scrollGestures = useSyncExternalStore(
+    drawerScrollGestureStore.subscribe,
+    drawerScrollGestureStore.getSnapshot,
   );
 
   const value = useMemo(
@@ -104,7 +104,7 @@ export const DrawerCoordinationProvider: FC<{ children: ReactNode }> = ({
       reportStatus,
       registerOpener,
       open,
-      scrollGesture,
+      scrollGestures,
       swipeExclusion,
       reportSwipeExclusion,
     }),
@@ -113,7 +113,7 @@ export const DrawerCoordinationProvider: FC<{ children: ReactNode }> = ({
       reportStatus,
       registerOpener,
       open,
-      scrollGesture,
+      scrollGestures,
       swipeExclusion,
       reportSwipeExclusion,
     ],
@@ -225,18 +225,14 @@ const excludeBottom = (
 
 // Left drawer: right-ward drag opens; when open, a left-ward drag closes it.
 export const buildLeftDrawerGesture =
-  (
-    isOpen: boolean,
-    scrollGesture: NativeGesture | null,
-    swipeExclusion: number,
-  ) =>
+  (isOpen: boolean, scrollGestures: NativeGesture[], swipeExclusion: number) =>
   (gesture: PanGestureConfig): PanGestureConfig => ({
     ...gesture,
     onBegin: skipPeek,
     activeOffsetX: isOpen
       ? [-OPEN_THRESHOLD, OPEN_THRESHOLD]
       : [-NEVER, OPEN_THRESHOLD],
-    requireToFail: scrollGesture ?? undefined,
+    requireToFail: scrollGestures.length > 0 ? scrollGestures : undefined,
     hitSlop: isOpen
       ? gesture.hitSlop
       : excludeBottom(gesture.hitSlop, swipeExclusion),
@@ -244,18 +240,14 @@ export const buildLeftDrawerGesture =
 
 // Right drawer: left-ward drag opens; when open, a right-ward drag closes it.
 export const buildRightDrawerGesture =
-  (
-    isOpen: boolean,
-    scrollGesture: NativeGesture | null,
-    swipeExclusion: number,
-  ) =>
+  (isOpen: boolean, scrollGestures: NativeGesture[], swipeExclusion: number) =>
   (gesture: PanGestureConfig): PanGestureConfig => ({
     ...gesture,
     onBegin: skipPeek,
     activeOffsetX: isOpen
       ? [-OPEN_THRESHOLD, OPEN_THRESHOLD]
       : [-OPEN_THRESHOLD, NEVER],
-    requireToFail: scrollGesture ?? undefined,
+    requireToFail: scrollGestures.length > 0 ? scrollGestures : undefined,
     hitSlop: isOpen
       ? gesture.hitSlop
       : excludeBottom(gesture.hitSlop, swipeExclusion),

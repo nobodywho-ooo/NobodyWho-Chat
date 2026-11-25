@@ -1,21 +1,17 @@
 import { StyleSheet } from 'react-native';
+import { Spacings } from 'style';
 
 export default StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: Spacings.md,
   },
   content: {
     flex: 1,
-    marginLeft: 12,
+  },
+  contentAfterIcon: {
+    marginLeft: Spacings.md,
   },
   title: {
     fontSize: 16,

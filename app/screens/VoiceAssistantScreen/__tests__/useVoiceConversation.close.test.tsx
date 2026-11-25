@@ -18,6 +18,7 @@ import { useVoiceConversation } from '../hooks/useVoiceConversation';
 const mockChat = {
   ask: jest.fn(),
   stopGeneration: jest.fn(),
+  setTemplateVariable: jest.fn(() => Promise.resolve()),
 };
 const mockChatRef: { current: typeof mockChat | undefined } = {
   current: mockChat,
@@ -61,6 +62,7 @@ jest.mock('services', () => ({
   useAiService: () => ({
     slots: mockSlots,
     chatState: 'ready',
+    chatCanThink: true,
     chatThinkOpen: mockChatThinkOpen,
     sttState: 'ready',
     ttsState: 'ready',
@@ -74,6 +76,7 @@ jest.mock('services', () => ({
   },
   subscribeToolInvocations: jest.fn(() => jest.fn()),
   notifyConversationSync: jest.fn(),
+  settleConversationDigest: jest.fn(async () => undefined),
   VAD_SAMPLE_RATE: 16000,
 }));
 
@@ -99,6 +102,7 @@ jest.mock('repositories', () => ({
 jest.mock('database', () => ({
   getAppState: () => ({ modelIdInUse: 0, conversationIdInUse: 5 }),
   subscribeAppState: () => () => {},
+  DEFAULT_ASSISTANT_CONFIG: { thinking: true },
 }));
 
 // Synthesis and the playback envelope are stubbed so a test can assert that the

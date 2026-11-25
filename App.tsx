@@ -25,10 +25,10 @@ import {
 import { log } from 'helpers';
 import { isChatPipeline, MODEL_SLOTS } from 'types';
 import { useResumeModelDownloads, useStyled } from 'hooks';
-import { ErrorScreen, LoadingScreen, OnboardingScreen } from 'screens';
-import { AiServiceProvider } from 'services';
-import { RootDrawerNavigator } from 'navigation';
-import { useTranslation } from 'react-i18next';
+import { ErrorScreen, LogoLoadingScreen, OnboardingScreen } from 'screens';
+import { WebScrapeHost } from 'components';
+import { AiServiceProvider, prefetchModelCatalogue } from 'services';
+import { RootNavigator } from 'navigation';
 
 const unWantedError =
   'Cannot create devtools websocket connections in embedded environments.';
@@ -103,9 +103,10 @@ function AppContent({ showOnboarding, onOnboardingFinish }: AppContentProps) {
         {showOnboarding ? (
           <OnboardingScreen onFinish={onOnboardingFinish} />
         ) : (
-          <RootDrawerNavigator />
+          <RootNavigator />
         )}
       </Sentry.NavigationContainer>
+      {!showOnboarding && <WebScrapeHost />}
     </>
   );
 }
@@ -177,9 +178,11 @@ function AppLoader() {
   const [dbReady, setDbReady] = useState(false);
   const [dbError, setDbError] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { t } = useTranslation();
+  const [introDone, setIntroDone] = useState(false);
 
   const running = useRef(false);
+
+  const finishIntro = useCallback(() => setIntroDone(true), []);
 
   const finishOnboarding = useCallback(() => setShowOnboarding(false), []);
 
@@ -195,6 +198,8 @@ function AppLoader() {
     setAudioModeAsync({ playsInSilentMode: true }).catch(error =>
       log('AppLoader setAudioModeAsync failed', error),
     );
+
+    prefetchModelCatalogue();
 
     try {
       await initDatabase();
@@ -238,8 +243,8 @@ function AppLoader() {
     return <ErrorScreen onRetry={init} onReset={reset} />;
   }
 
-  if (!dbReady) {
-    return <LoadingScreen message={t('screens.loadingScreen.loadingApp')} />;
+  if (!dbReady || !introDone) {
+    return <LogoLoadingScreen onAnimationEnd={finishIntro} />;
   }
 
   return (

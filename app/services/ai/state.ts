@@ -19,10 +19,13 @@ export interface AiServiceState {
   ttsState: AiModelState;
   sttState: AiModelState;
   vadState: AiModelState;
+  embeddingState: AiModelState;
 
   /** What the loaded chat model can ingest — text, images, audio. */
   chatPipeline: ChatPipeline;
-  /** The reasoning delimiter its chat template prefills, if any. */
+  /** Whether the loaded chat model can reason. It's switched per turn via the `enable_thinking` template variable. */
+  chatCanThink: boolean;
+  /** The reasoning delimiter its chat template prefills while thinking is on, if any. */
   chatThinkOpen?: ImplicitThinkOpen;
   /** Which TTS engine backs the loaded voice, for callers that chunk text. */
   ttsArchitecture?: TextToSpeechArchitecture;
@@ -33,7 +36,9 @@ export const INITIAL_STATE: AiServiceState = {
   ttsState: AiModelState.NotLoaded,
   sttState: AiModelState.NotLoaded,
   vadState: AiModelState.NotLoaded,
+  embeddingState: AiModelState.NotLoaded,
   chatPipeline: ModelPipeline.textGeneration,
+  chatCanThink: false,
   chatThinkOpen: undefined,
   ttsArchitecture: undefined,
 };

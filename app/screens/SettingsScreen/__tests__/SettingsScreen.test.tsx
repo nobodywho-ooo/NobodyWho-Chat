@@ -23,12 +23,11 @@ test('renders correctly SettingsScreen', async () => {
   expect((await render(<SettingsScreen />)).toJSON()).toMatchSnapshot();
 });
 
-test('pressing models navigates to the ModelsScreen', async () => {
+// Models moved to the drawer, next to the conversations.
+test('does not list models', async () => {
   const screen = await render(<SettingsScreen />);
 
-  await fireEvent.press(getRow(screen, 'screens.settings.models'));
-
-  expect(mockNavigate).toHaveBeenCalledWith('ModelsScreen');
+  expect(screen.queryByText('screens.settings.models')).toBeNull();
 });
 
 test('pressing customize navigates to the CustomizeAssistantScreen', async () => {
@@ -37,6 +36,14 @@ test('pressing customize navigates to the CustomizeAssistantScreen', async () =>
   await fireEvent.press(getRow(screen, 'screens.settings.customize'));
 
   expect(mockNavigate).toHaveBeenCalledWith('CustomizeAssistantScreen');
+});
+
+test('pressing language navigates to the LanguageScreen', async () => {
+  const screen = await render(<SettingsScreen />);
+
+  await fireEvent.press(getRow(screen, 'screens.settings.language'));
+
+  expect(mockNavigate).toHaveBeenCalledWith('LanguageScreen');
 });
 
 test('pressing terms & conditions navigates to the TermsScreen', async () => {
@@ -55,13 +62,32 @@ test('pressing privacy policy navigates to the PrivacyPolicyScreen', async () =>
   expect(mockNavigate).toHaveBeenCalledWith('PrivacyPolicyScreen');
 });
 
+test('pressing acknowledgements navigates to the AcknowledgementsScreen', async () => {
+  const screen = await render(<SettingsScreen />);
+
+  await fireEvent.press(getRow(screen, 'screens.settings.acknowledgements'));
+
+  expect(mockNavigate).toHaveBeenCalledWith('AcknowledgementsScreen');
+});
+
 test('pressing website opens the NobodyWho site', async () => {
   const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   const screen = await render(<SettingsScreen />);
 
-  await fireEvent.press(getRow(screen, 'screens.settings.website'));
+  await fireEvent.press(screen.getByText('screens.settings.website'));
 
   expect(openURL).toHaveBeenCalledWith('https://www.nobodywho.ai/');
+
+  openURL.mockRestore();
+});
+
+test('pressing X opens the NobodyWho X profile', async () => {
+  const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  const screen = await render(<SettingsScreen />);
+
+  await fireEvent.press(screen.getByText('screens.settings.x'));
+
+  expect(openURL).toHaveBeenCalledWith('https://x.com/nobodywho_ai');
 
   openURL.mockRestore();
 });

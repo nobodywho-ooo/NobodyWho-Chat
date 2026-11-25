@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react-native';
 
-import { fetchDeviceCatalogue } from 'helpers';
 import { buildModel } from 'jest/factories/model';
+import { getDeviceCatalogue } from 'services';
 import { ModelPipeline } from 'types';
 
 import { OnboardingScreen } from '../OnboardingScreen';
@@ -17,11 +17,14 @@ jest.mock('../../LoadingScreen/LoadingScreen', () => ({
 
 jest.mock('helpers', () => ({
   ...jest.requireActual('helpers'),
-  fetchDeviceCatalogue: jest.fn(),
   log: jest.fn(),
 }));
 
-const mockFetchDeviceCatalogue = fetchDeviceCatalogue as jest.Mock;
+jest.mock('services', () => ({
+  getDeviceCatalogue: jest.fn(),
+}));
+
+const mockGetDeviceCatalogue = getDeviceCatalogue as jest.Mock;
 
 const part = (sizeGB: number) => ({
   url: 'https://example.com/model.gguf',
@@ -44,11 +47,11 @@ const loaders = () =>
 
 beforeEach(() => {
   jest.clearAllMocks();
-  mockFetchDeviceCatalogue.mockResolvedValue(catalogue);
+  mockGetDeviceCatalogue.mockResolvedValue(catalogue);
 });
 
 test('shows a plain loader while the catalogue is fetched', async () => {
-  mockFetchDeviceCatalogue.mockReturnValue(new Promise(() => {}));
+  mockGetDeviceCatalogue.mockReturnValue(new Promise(() => {}));
   await render(<OnboardingScreen onFinish={jest.fn()} />);
 
   const [loader] = loaders();
@@ -58,7 +61,7 @@ test('shows a plain loader while the catalogue is fetched', async () => {
 });
 
 test('leaves for the app when the catalogue cannot be fetched', async () => {
-  mockFetchDeviceCatalogue.mockRejectedValue(new Error('offline'));
+  mockGetDeviceCatalogue.mockRejectedValue(new Error('offline'));
   const onFinish = jest.fn();
   await render(<OnboardingScreen onFinish={onFinish} />);
 
@@ -67,7 +70,7 @@ test('leaves for the app when the catalogue cannot be fetched', async () => {
 });
 
 test('leaves for the app when there is no suggested text model', async () => {
-  mockFetchDeviceCatalogue.mockResolvedValue({
+  mockGetDeviceCatalogue.mockResolvedValue({
     models: [
       buildModel(2),
       buildModel(3, { pipeline: ModelPipeline.speechToText }),
@@ -83,7 +86,7 @@ test('leaves for the app when there is no suggested text model', async () => {
 
 test('leaves for the app when no suggested text model fits the device', async () => {
   // 2.5 GB on iOS leaves 0.5 GB, short of the 1 GB model.
-  mockFetchDeviceCatalogue.mockResolvedValue({
+  mockGetDeviceCatalogue.mockResolvedValue({
     models: [firstPick],
     ramGB: 2.5,
   });
@@ -101,7 +104,7 @@ test('fetches once and hands the catalogue to the choices', async () => {
   const nextOnFinish = jest.fn();
   await rerender(<OnboardingScreen onFinish={nextOnFinish} />);
 
-  expect(mockFetchDeviceCatalogue).toHaveBeenCalledTimes(1);
+  expect(mockGetDeviceCatalogue).toHaveBeenCalledTimes(1);
   const [onboardingChoices] = choices();
   expect(onboardingChoices.props.catalogue).toBe(catalogue);
   expect(onboardingChoices.props.onFinish).toBe(nextOnFinish);

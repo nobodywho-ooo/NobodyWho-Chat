@@ -1,23 +1,29 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Linking, Pressable, View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
-import { StreamdownText } from 'react-native-streamdown';
 import {
   copyToClipboard,
   log,
   getMarkdownStyle,
   haptics,
+  openExternalUrl,
   parseThinking,
 } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
+import {
+  attributeSourcesByBlock,
+  stripCitations,
+  useWebSearchStore,
+} from 'services';
 import { DisplayMessage } from 'types';
 
+import { AnswerBody } from './AnswerBody';
 import { AudioSpeakerButton } from './AudioSpeakerButton';
 import { ThinkingBlock } from './ThinkingBlock';
 import { ThinkingModal } from './ThinkingModal';
 import { ToolCallBlock } from './ToolCallBlock';
 import { ToolCallModal } from './ToolCallModal';
+import { WebSearchBlock, WebSourcesSheet } from './WebSearch';
 
 import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
 import { ShimmerText } from '../../ShimmerText/ShimmerText';
@@ -28,7 +34,9 @@ import styles from './AssistantMessage.styles';
 const COPIED_RESET_MS = 1000;
 const THINKING_FONT_SIZE = 14;
 
-const formatTimeToFirstToken = (ms: number): string =>
+const EMPTY_WEB_SOURCES: NonNullable<DisplayMessage['webSources']> = [];
+
+const formatDuration = (ms: number): string =>
   ms >= 1000 ? `${(ms / 1000).toFixed(1)} s` : `${Math.round(ms)} ms`;
 
 interface AssistantMessageProps {
@@ -55,22 +63,44 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { isDarkMode } = useThemeMode();
-  const { content, tokensPerSecond, timeToFirstToken } = message;
+  const { content, tokensPerSecond, timeToFirstToken, webSearchMs } = message;
   const toolInvocations = message.toolInvocations ?? [];
+  const webSources = message.webSources ?? EMPTY_WEB_SOURCES;
+  const isSearchingWeb = useWebSearchStore(
+    state => isStreaming && state.isSearchingWeb,
+  );
 
   const [copied, setCopied] = useState(false);
   const [thinkingOpen, setThinkingOpen] = useState(false);
   const [openToolIndex, setOpenToolIndex] = useState<number | null>(null);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
 
   const markdownStyle = useMemo(
     () => getMarkdownStyle(isDarkMode, colors.onSurface),
     [isDarkMode, colors.onSurface],
   );
 
-  const { thinking, rest, isThinkingComplete } = useMemo(
-    () => parseThinking(content),
-    [content],
+  const {
+    thinking,
+    rest: rawRest,
+    isThinkingComplete,
+  } = useMemo(() => parseThinking(content), [content]);
+
+  const hasWebSources = webSources.length > 0;
+  const rest = useMemo(
+    () => (hasWebSources ? stripCitations(rawRest) : rawRest),
+    [hasWebSources, rawRest],
   );
+
+  const attributedBlocks = useMemo(() => {
+    if (isStreaming || !hasWebSources) {
+      return null;
+    }
+
+    const blocks = attributeSourcesByBlock(rawRest, webSources);
+
+    return blocks.some(block => block.source !== null) ? blocks : null;
+  }, [isStreaming, hasWebSources, rawRest, webSources]);
 
   useEffect(() => {
     if (!copied) {
@@ -94,32 +124,49 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
   }, [rest]);
 
   const handleLinkPress = useCallback(({ url }: { url: string }) => {
-    Linking.openURL(url).catch(error =>
-      log(`Failed to open URL ${url}`, error),
-    );
+    openExternalUrl(url);
   }, []);
 
   const metrics: string[] = [];
+
+  if (!isStreaming && typeof webSearchMs === 'number') {
+    metrics.push(
+      t('components.messageListItem.searchTime', {
+        time: formatDuration(webSearchMs),
+      }),
+    );
+  }
+
   if (typeof tokensPerSecond === 'number') {
     metrics.push(`${tokensPerSecond.toFixed(1)} tok/s`);
   }
+
   if (typeof timeToFirstToken === 'number') {
-    metrics.push(formatTimeToFirstToken(timeToFirstToken));
+    metrics.push(formatDuration(timeToFirstToken));
   }
 
   const accentColor = copied ? colors.primary : colors.onSurfaceVariant;
   const isAwaitingResponse =
-    isStreaming && content.length === 0 && toolInvocations.length === 0;
+    isStreaming &&
+    !isSearchingWeb &&
+    content.length === 0 &&
+    toolInvocations.length === 0;
   const isThinkingActive = isStreaming && !isThinkingComplete;
   const canCopyAssistantText = !isStreaming && rest !== '';
 
   const showAudioSpeaker = canPlayAudio && !isStreaming && rest.length > 0;
 
+  const showSourcesButton = !isStreaming && hasWebSources;
+
   const showFooter =
-    canCopyAssistantText || showAudioSpeaker || metrics.length > 0;
+    canCopyAssistantText ||
+    showSourcesButton ||
+    showAudioSpeaker ||
+    metrics.length > 0;
 
   return (
     <View style={styles.assistantContainer}>
+      <WebSearchBlock live={isStreaming} sources={webSources} />
       {isAwaitingResponse ? (
         <View style={styles.thinkingContainer}>
           <PlatformIcon
@@ -150,25 +197,28 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
               onPress={() => setOpenToolIndex(toolIndex)}
             />
           ))}
-          {rest.length > 0 &&
-            (isStreaming ? (
-              <StreamdownText
-                containerStyle={styles.streamdownContainer}
-                flavor="github"
-                markdown={rest}
-                markdownStyle={markdownStyle}
-                onLinkPress={handleLinkPress}
-              />
-            ) : (
-              <EnrichedMarkdownText
-                containerStyle={styles.streamdownContainer}
-                flavor="github"
-                markdown={rest}
-                markdownStyle={markdownStyle}
-                onLinkPress={handleLinkPress}
-              />
-            ))}
+          <AnswerBody
+            text={rest}
+            isStreaming={isStreaming}
+            blocks={attributedBlocks}
+            markdownStyle={markdownStyle}
+            onLinkPress={handleLinkPress}
+          />
         </>
+      )}
+      {isStreaming && message.refining && (
+        <View style={styles.refiningContainer}>
+          <PlatformIcon
+            iosIconName="text.magnifyingglass"
+            androidIconName="manage_search"
+            size={THINKING_FONT_SIZE}
+            color={colors.onSurfaceVariant}
+          />
+          <ShimmerText
+            text={t('components.messageListItem.refining')}
+            fontSize={THINKING_FONT_SIZE}
+          />
+        </View>
       )}
       {showFooter && (
         <View style={styles.footerContainer}>
@@ -185,6 +235,26 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
                 androidIconName={copied ? 'check' : 'content_copy'}
                 size={16}
                 color={accentColor}
+              />
+            </Pressable>
+          )}
+          {showSourcesButton && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('components.messageListItem.showSources')}
+              hitSlop={8}
+              onPress={() => {
+                haptics.light();
+                setSourcesOpen(true);
+              }}
+              style={({ pressed }) => [pressed && styles.buttonPressed]}
+              testID="web-sources-button"
+            >
+              <PlatformIcon
+                iosIconName="book"
+                androidIconName="menu_book"
+                size={16}
+                color={colors.onSurfaceVariant}
               />
             </Pressable>
           )}
@@ -213,6 +283,13 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
           thinking={thinkingOpen ? thinking : null}
           active={isThinkingActive}
           onClose={() => setThinkingOpen(false)}
+        />
+      )}
+      {showSourcesButton && (
+        <WebSourcesSheet
+          sources={webSources}
+          visible={sourcesOpen}
+          onClose={() => setSourcesOpen(false)}
         />
       )}
       {openToolIndex !== null && toolInvocations[openToolIndex] && (

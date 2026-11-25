@@ -12,30 +12,54 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareLegendList } from '@legendapp/list/keyboard';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { BlurTargetView, BlurView } from 'expo-blur';
+import { useHeaderHeight } from '@react-navigation/elements';
+import { useIsFocused } from '@react-navigation/native';
 import LinearGradient from 'react-native-linear-gradient';
-import { MessageListItem, ScrollToBottomButton } from 'components';
+import {
+  AmbientGlow,
+  GlassScrollEdge,
+  MessageListItem,
+  ScrollToBottomButton,
+  Toast,
+} from 'components';
 import { useTheme } from 'context';
-import { useAppState, useStableCallback, useStyled } from 'hooks';
+import {
+  useAppState,
+  useKeepAwakeWhile,
+  useStableCallback,
+  useStyled,
+} from 'hooks';
 import {
   DisplayMessage,
   pipelineIngestsAudio,
   pipelineIngestsImage,
 } from 'types';
-import { useAiService } from 'services';
+import { useAiService, useWebSearchStore } from 'services';
 import { isAndroid } from 'helpers';
+import { Spacings } from 'style';
 import { Theme } from 'types';
 
-import { CameraCaptureModal, InputBar, MessageStarters } from './components';
+import {
+  CameraCaptureModal,
+  EmbeddingDownloadSheet,
+  InputBar,
+  MessageStarters,
+} from './components';
 import {
   useAttachments,
   useChatGeneration,
   useMessageListScroll,
   useSttTranscription,
+  useThinkingToggle,
   useTtsPlayback,
+  useWebSearchToggle,
 } from './hooks';
 import styles from './ChatScreen.styles';
 
 const INPUT_BAR_PADDING = 14;
+
+const WEB_NOTICE_VISIBLE_MS = 3500;
+const TOGGLE_NOTICE_VISIBLE_MS = 2000;
 
 const BLUR_INTENSITY = isAndroid ? 40 : 16;
 const BLUR_REDUCTION_FACTOR = 5;
@@ -52,6 +76,7 @@ const EmptyArea: React.FC = () => (
 interface ChatScreenProps {
   conversationId: number | undefined;
   messages: DisplayMessage[];
+  historyPending?: boolean;
   onConversationCreated: (conversationId: number) => void;
   disabled?: boolean;
 }
@@ -59,6 +84,7 @@ interface ChatScreenProps {
 export const ChatScreen: React.FC<ChatScreenProps> = ({
   conversationId: initialConversationId,
   messages: initialMessages,
+  historyPending = false,
   onConversationCreated,
   disabled = false,
 }) => {
@@ -66,7 +92,8 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const { colors } = useStyled();
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const { slots, chatPipeline, chatThinkOpen } = useAiService();
+  const headerInset = useHeaderHeight();
+  const { slots, chatPipeline } = useAiService();
   const { ttsModelIdInUse, sttModelIdInUse } = useAppState();
 
   const canPlayAudio = ttsModelIdInUse !== undefined;
@@ -115,20 +142,104 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     'mount',
   );
 
-  const list = useMessageListScroll(messages);
+  const list = useMessageListScroll(messages, headerInset, insets.bottom);
   const { showConversation } = list;
 
-  const ingestsImage = pipelineIngestsImage(chatPipeline);
-  const ingestsAudio = pipelineIngestsAudio(chatPipeline);
+  const {
+    webSearch,
+    unavailableReason: webSearchUnavailableReason,
+    toggle: toggleWebSearch,
+    embeddingPrompt,
+    chatModel: webChatModel,
+    ramGB,
+  } = useWebSearchToggle(conversationId);
 
-  const attachments = useAttachments({ ingestsImage, ingestsAudio });
+  const { thinking, canThink, toggle: toggleThinking } = useThinkingToggle();
+
+  const [toggleNotice, setToggleNotice] = useState<{
+    id: number;
+    message: string;
+  } | null>(null);
+
+  const webNotice = useWebSearchStore(state => state.notice);
+  const clearWebNotice = useWebSearchStore(state => state.clearNotice);
+
+  useEffect(() => {
+    if (!webNotice) {
+      return;
+    }
+
+    setToggleNotice(null);
+
+    const timeout = setTimeout(
+      () => clearWebNotice(webNotice.id),
+      WEB_NOTICE_VISIBLE_MS,
+    );
+
+    return () => clearTimeout(timeout);
+  }, [webNotice, clearWebNotice]);
+
+  const showToggleNotice = useCallback(
+    (message: string) => {
+      const current = useWebSearchStore.getState().notice;
+
+      if (current) {
+        clearWebNotice(current.id);
+      }
+
+      setToggleNotice(previous => ({
+        id: (previous?.id ?? 0) + 1,
+        message,
+      }));
+    },
+    [clearWebNotice],
+  );
+
+  useEffect(() => {
+    if (!toggleNotice) {
+      return;
+    }
+
+    const timeout = setTimeout(
+      () => setToggleNotice(null),
+      TOGGLE_NOTICE_VISIBLE_MS,
+    );
+
+    return () => clearTimeout(timeout);
+  }, [toggleNotice]);
+
+  const handleToggleWebSearch = useCallback(() => {
+    const enabled = toggleWebSearch();
+
+    if (enabled !== undefined) {
+      showToggleNotice(
+        t(enabled ? 'screens.chat.webSearchOn' : 'screens.chat.webSearchOff'),
+      );
+    }
+  }, [toggleWebSearch, showToggleNotice, t]);
+
+  const handleToggleThinking = useCallback(() => {
+    const enabled = toggleThinking();
+
+    showToggleNotice(
+      t(enabled ? 'screens.chat.thinkingOn' : 'screens.chat.thinkingOff'),
+    );
+  }, [toggleThinking, showToggleNotice, t]);
+
+  const canAttachImage = pipelineIngestsImage(chatPipeline);
+  const canAttachAudio = pipelineIngestsAudio(chatPipeline);
+
+  const attachments = useAttachments({
+    ingestsImage: canAttachImage,
+    ingestsAudio: canAttachAudio,
+  });
   const { clearAllAttachments } = attachments;
 
   const { isStreaming, handleSend, stopStreaming } = useChatGeneration({
     chat: slots.chat.ref,
-    thinkOpen: chatThinkOpen,
-    ingestsImage,
-    ingestsAudio,
+    thinking,
+    ingestsImage: canAttachImage,
+    ingestsAudio: canAttachAudio,
     inputText,
     setInputText,
     setMessages,
@@ -138,11 +249,41 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
     attachments,
     messages,
     onTurnStart: list.anchorSentMessage,
+    webSearch,
   });
+
+  useKeepAwakeWhile(isStreaming, { requireFocus: false });
 
   useEffect(() => {
     setMessages(initialMessages);
   }, [initialMessages]);
+
+  // A history reload of the conversation already on screen (an assistant
+  // setting changed, a voice turn landed) re-keys every row (new:N -> row:<id>),
+  // usually while a pushed screen covers this one. The list then drops all its
+  // measured sizes and keeps the stale parked-message anchor, so rows end up
+  // stacked on top of each other. Reset its layout once we're visible again.
+  const isFocused = useIsFocused();
+  const [relayoutPending, setRelayoutPending] = useState(false);
+  const shownInitialMessagesRef = useRef(initialMessages);
+
+  useEffect(() => {
+    if (shownInitialMessagesRef.current === initialMessages) {
+      return;
+    }
+    shownInitialMessagesRef.current = initialMessages;
+    if (initialMessages.length > 0) {
+      setRelayoutPending(true);
+    }
+  }, [initialMessages]);
+
+  useEffect(() => {
+    if (!relayoutPending || !isFocused) {
+      return;
+    }
+    setRelayoutPending(false);
+    showConversation();
+  }, [relayoutPending, isFocused, showConversation]);
 
   useEffect(() => {
     const previous = previousConversationIdRef.current;
@@ -176,7 +317,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   useEffect(() => {
     setAttachExpanded(false);
     clearAllAttachments();
-  }, [ingestsImage, ingestsAudio, clearAllAttachments]);
+  }, [canAttachImage, canAttachAudio, clearAllAttachments]);
 
   const messageKey = useCallback(
     (item: DisplayMessage, index: number) => item.uid ?? `at:${index}`,
@@ -231,7 +372,9 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const hasMessages = messages.length > 0;
 
-  const showStarters = !hasMessages && !attachExpanded;
+  const isEmptyChat = !hasMessages && !historyPending;
+
+  const showStarters = isEmptyChat && !attachExpanded;
   const messageStarters = useMemo(
     () =>
       showStarters && (
@@ -242,6 +385,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         />
       ),
     [showStarters, chatPipeline, disabled],
+  );
+
+  const listContentStyle = useMemo(
+    () => [styles.listContent, { paddingTop: headerInset }],
+    [headerInset],
   );
 
   const inputBarStyle = useMemo(
@@ -269,11 +417,12 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             { backgroundColor: colors.surface },
           ]}
         >
+          <AmbientGlow visible={isEmptyChat} />
           <KeyboardAwareLegendList
             ref={list.listRef}
             data={messages}
             style={styles.listContainer}
-            contentContainerStyle={styles.listContent}
+            contentContainerStyle={listContentStyle}
             keyExtractor={messageKey}
             showsVerticalScrollIndicator={false}
             renderItem={renderMessage}
@@ -283,6 +432,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
             anchoredEndSpace={list.anchoredEndSpace}
             maintainVisibleContentPosition={list.maintainVisibleContentPosition}
             onScrollBeginDrag={list.onScrollBeginDrag}
+            onScroll={list.onScroll}
             contentInsetEndAdjustment={list.contentInsetEndAdjustment}
             keyboardLiftBehavior="whenAtEnd"
             keyboardOffset={insets.bottom}
@@ -293,6 +443,11 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           />
         </View>
       </BlurTargetView>
+      <GlassScrollEdge
+        anchor={headerInset}
+        blurTarget={blurTargetRef}
+        visible={!isEmptyChat}
+      />
       {attachExpanded && (
         <Pressable
           style={styles.blurOverlay}
@@ -335,18 +490,28 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           disabled={disabled}
           attachExpanded={attachExpanded}
           onAttachExpandedChange={setAttachExpanded}
-          showImageAttach={ingestsImage}
-          showAudioAttach={ingestsAudio}
+          canAttachImage={canAttachImage}
+          canAttachAudio={canAttachAudio}
           imageSource={attachments.attachedDocuments?.imageSource}
           hasAudio={!!attachments.attachedDocuments?.audioPath}
           onAttachImage={onAttachImage}
           onAttachCamera={onAttachCamera}
           onAttachAudio={onAttachAudio}
-          showDictation={canDictate}
+          canDictate={canDictate}
           isRecording={isRecording}
           isTranscribing={isTranscribing}
           onStartDictation={startRecording}
           onStopDictation={stopRecording}
+          webSearchEnabled={webSearch.enabled}
+          webSearchUnavailableMessage={
+            webSearchUnavailableReason &&
+            t(`screens.chat.webSearchNotice.${webSearchUnavailableReason}`)
+          }
+          onToggleWebSearch={handleToggleWebSearch}
+          canThink={canThink}
+          thinkingEnabled={thinking.enabled}
+          onToggleThinking={handleToggleThinking}
+          onUnavailable={showToggleNotice}
           onChangeText={setInputText}
           onSend={onSend}
           onStop={onStop}
@@ -354,7 +519,25 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           messageStarters={messageStarters}
         />
       </KeyboardStickyView>
-      {ingestsImage && (
+      <Toast
+        visible={webNotice !== null || toggleNotice !== null}
+        message={
+          webNotice
+            ? t(`screens.chat.webSearchNotice.${webNotice.kind}`)
+            : (toggleNotice?.message ?? '')
+        }
+        blurTarget={blurTargetRef}
+        style={{ top: headerInset + Spacings.md }}
+      />
+      {embeddingPrompt.open && (
+        <EmbeddingDownloadSheet
+          chatModel={webChatModel}
+          ramGB={ramGB}
+          required={embeddingPrompt.required}
+          onClose={embeddingPrompt.close}
+        />
+      )}
+      {canAttachImage && (
         <CameraCaptureModal
           visible={attachments.cameraVisible}
           onClose={() => attachments.setCameraVisible(false)}

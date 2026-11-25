@@ -14,4 +14,22 @@ import { AppRegistry } from 'react-native';
 import App from './App';
 import { name as appName } from './app.json';
 
+// Reanimated 4.7 warns when a hook gets a dependency array (ignored on
+// native). The offenders are react-native-drawer-layout and
+// react-native-keyboard-controller, not our code, so drop that one message.
+// Filtering console.warn (not just LogBox.ignoreLogs) hides it from the
+// DevTools console too; every other warning goes through untouched.
+if (__DEV__) {
+  const warn = console.warn;
+  console.warn = (...args) => {
+    if (
+      typeof args[0] === 'string' &&
+      args[0].includes('Dependencies should only be used on the web')
+    ) {
+      return;
+    }
+    warn(...args);
+  };
+}
+
 AppRegistry.registerComponent(appName, () => App);

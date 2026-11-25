@@ -8,16 +8,28 @@ import {
   updateModelDownloadParts,
   insertModel,
 } from 'repositories';
-import { Model, ModelDownload, ModelPart } from 'types';
+import {
+  Model,
+  ModelDownload,
+  ModelDownloadPart,
+  ModelPart,
+  ModelSlot,
+  slotForPipeline,
+} from 'types';
 import type { DiskSpaceCheck } from 'helpers';
 import {
   checkDiskSpaceForModel,
   deleteModelDirectory,
   downloadModelPart,
+  isPermanentDownloadFailure,
   log,
   modelSizeLabel,
 } from 'helpers';
-import { selectModelIfSlotFree } from 'services';
+import {
+  cachedCatalogueModel,
+  notifyChatModelArrival,
+  selectModelIfSlotFree,
+} from 'services';
 
 const DOWNLOAD_THROTTLE = 0.01; // 1% step
 
@@ -122,6 +134,24 @@ interface DownloadOptions {
   skipSpaceCheck?: boolean;
 }
 
+// A pending download keeps the parts of the catalogue it started from. A URL
+// fixed in the catalogue since then is taken up, matched by file name, so
+// a resume doesn't keep going back to the old one.
+const withCatalogueUrls = (
+  modelId: number,
+  partsProgress: readonly ModelDownloadPart[],
+): ModelDownloadPart[] => {
+  const catalogueParts = cachedCatalogueModel(modelId)?.parts ?? [];
+
+  return partsProgress.map(part => {
+    const url = catalogueParts.find(
+      candidate => candidate.fileName === part.fileName,
+    )?.url;
+
+    return url === undefined ? { ...part } : { ...part, url };
+  });
+};
+
 // The download loop shared by a fresh start and a resume.
 const useRunDownload = () => {
   const { t } = useTranslation();
@@ -150,7 +180,7 @@ const useRunDownload = () => {
       let isTransferring = true;
       let restartAfterBackgroundCut = false;
       const tripsAtStart = backgroundTrips;
-      const partsProgress = download.partsProgress.map(part => ({ ...part }));
+      const partsProgress = withCatalogueUrls(model.id, download.partsProgress);
 
       try {
         for (let i = 0; i < partsProgress.length; i++) {
@@ -217,13 +247,27 @@ const useRunDownload = () => {
         // installed model looking like a pending download to resume.
         await deleteModelDownload(model.id);
 
-        await selectModelIfSlotFree(model);
+        const tookFreeSlot = await selectModelIfSlotFree(model);
+
+        // The user had no chat model in use and now has one: show them the
+        // chat, on a new conversation.
+        if (
+          tookFreeSlot &&
+          slotForPipeline(model.pipeline) === ModelSlot.chat
+        ) {
+          notifyChatModelArrival();
+        }
       } catch (error) {
+        // The server refused the URL (404...): retrying is useless, so the download is dropped
+        const isPermanent =
+          !controller.signal.aborted && isPermanentDownloadFailure(error);
+
         // Cut by a trip to the background: not reported, but restarted by this
         // loop once the app is back. Only once: the restart reports a failure
         // of its own.
         const wasCutInBackground =
           isTransferring &&
+          !isPermanent &&
           !controller.signal.aborted &&
           backgroundTrips !== tripsAtStart;
         restartAfterBackgroundCut = wasCutInBackground;
@@ -243,6 +287,14 @@ const useRunDownload = () => {
               name: model.name,
             }),
           );
+        }
+
+        if (isPermanent) {
+          reportedFailures.delete(model.id);
+          await deleteModelDownload(model.id).catch(deleteError =>
+            log('runDownload deleteModelDownload', deleteError),
+          );
+          deleteModelDirectory(model.id);
         }
 
         // Still registered as running while it waits, so the resume on return

@@ -134,6 +134,8 @@ import {
   assertSafeRelativePath,
   locatePart,
   NetworkError,
+  HttpStatusError,
+  isPermanentDownloadFailure,
 } from '../modelDownload';
 
 const efs = jest.requireMock('expo-file-system') as any;
@@ -168,6 +170,8 @@ const setupRemote = ({
     ]);
     if (etag) headers.set('etag', etag);
     return {
+      ok: true,
+      status: 200,
       headers: { get: (k: string) => headers.get(k.toLowerCase()) ?? null },
     };
   });
@@ -669,4 +673,89 @@ describe('locatePart', () => {
       /unsafe part fileName/,
     );
   });
+});
+
+// A wrong URL: the HEAD answers 404 with a tiny error page that still claims
+// `Accept-Ranges: bytes` (Hugging Face does). Its headers must not be read as
+// the file's, or those few bytes "download" to 100%.
+const setupMissingRemote = (status: number) => {
+  (globalThis as any).fetch = jest.fn(async () => {
+    const headers = new Map<string, string>([
+      ['content-length', '15'],
+      ['accept-ranges', 'bytes'],
+    ]);
+    return {
+      ok: false,
+      status,
+      headers: { get: (k: string) => headers.get(k.toLowerCase()) ?? null },
+    };
+  });
+};
+
+test('fails a URL the server refuses before writing or reporting any byte', async () => {
+  setupMissingRemote(404);
+  const onProgress = jest.fn();
+
+  const error = await downloadModelPart(
+    MODEL_ID,
+    'https://x/model.gguff',
+    'model.gguf',
+    noSignal(),
+    onProgress,
+  ).catch(e => e);
+
+  expect(error).toBeInstanceOf(HttpStatusError);
+  expect(error.status).toBe(404);
+  expect(isPermanentDownloadFailure(error)).toBe(true);
+  expect(onProgress).not.toHaveBeenCalled();
+  expect(downloadFileAsync).not.toHaveBeenCalled();
+});
+
+test('falls back to a plain GET when the server does not do HEAD', async () => {
+  setupMissingRemote(405);
+  downloadFileAsync.mockImplementation(async (_url: string, dest: any) => {
+    sizes.set(dest.uri, 3 * MB);
+    return dest;
+  });
+
+  const path = await downloadModelPart(
+    MODEL_ID,
+    'https://x/model.gguf',
+    'model.gguf',
+    noSignal(),
+    () => {},
+  );
+
+  expect(path).toBe('/docs/models/7/model.gguf');
+  expect(downloadFileAsync.mock.calls[0][2]?.headers?.Range).toBeUndefined();
+});
+
+test.each([
+  ['iOS', 'Unable to download a file: response has status 404', 404],
+  ['iOS task', 'Unable to download a file: server returned HTTP 403', 403],
+  ['Android', 'Unable to download a file: response has status: 410', 410],
+  ['Android task', 'Unable to download a file: HTTP 401', 401],
+])(
+  'turns an error status from the %s GET into an HttpStatusError',
+  async (_platform, message, status) => {
+    setupRemote({ total: 3 * MB, advertisesRanges: false });
+    downloadFileAsync.mockRejectedValue(new Error(message));
+
+    const error = await downloadModelPart(
+      MODEL_ID,
+      'https://x/model.gguf',
+      'model.gguf',
+      noSignal(),
+      () => {},
+    ).catch(e => e);
+
+    expect(error).toBeInstanceOf(HttpStatusError);
+    expect(error.status).toBe(status);
+  },
+);
+
+test.each([408, 429, 500, 503])('keeps a %i retryable', status => {
+  expect(isPermanentDownloadFailure(new HttpStatusError('x', status))).toBe(
+    false,
+  );
 });

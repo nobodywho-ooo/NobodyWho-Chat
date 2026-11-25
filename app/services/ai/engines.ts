@@ -1,5 +1,6 @@
 import {
   Chat,
+  Encoder,
   Model as NobodyWhoModel,
   SamplerConfig,
   SpeechToText,
@@ -46,6 +47,8 @@ export interface SttOptions {
 }
 
 export type VadOptions = Record<never, never>;
+
+export type EmbeddingOptions = Record<never, never>;
 
 const missingPart = (model: Model, type: string) =>
   new Error(
@@ -101,6 +104,7 @@ export const CHAT_ENGINE: EngineSpec<Chat, ChatOptions> = {
   slot: ModelSlot.chat,
   cleared: {
     chatPipeline: ModelPipeline.textGeneration,
+    chatCanThink: false,
     chatThinkOpen: undefined,
   },
   stop: instance => instance.stopGeneration(),
@@ -173,7 +177,8 @@ export const CHAT_ENGINE: EngineSpec<Chat, ChatOptions> = {
       instance,
       state: {
         chatPipeline: toChatPipeline(model.pipeline),
-        chatThinkOpen: implicitThinkOpen(model, enableThinking),
+        chatCanThink: model.thinking,
+        chatThinkOpen: implicitThinkOpen(model, model.thinking),
       },
     };
   },
@@ -228,4 +233,31 @@ export const VAD_ENGINE: EngineSpec<VoiceActivityDetection, VadOptions> = {
       minSilenceDurationMs: VAD_MIN_SILENCE_MS,
     }),
   }),
+};
+
+// Encoders only ever see one search chunk at a time (≤ 256 estimated tokens,
+// see EMBEDDING_CHUNK_TOKEN_BUDGET), so a small context keeps the KV buffer —
+// which sits next to the chat model's for the length of a search — small.
+const EMBEDDING_CONTEXT_SIZE = 512;
+
+export const EMBEDDING_ENGINE: EngineSpec<Encoder, EmbeddingOptions> = {
+  slot: ModelSlot.embedding,
+
+  open: async model => {
+    const part = model.parts[0];
+    const modelPath = part ? downloadedPartPath(model.id, part.fileName) : null;
+
+    if (!modelPath) {
+      throw missingPart(model, part?.type ?? 'embedding-model');
+    }
+
+    const loaded = await NobodyWhoModel.load({ modelPath, useGpu: true });
+
+    return {
+      instance: new Encoder({
+        model: loaded,
+        contextSize: EMBEDDING_CONTEXT_SIZE,
+      }),
+    };
+  },
 };

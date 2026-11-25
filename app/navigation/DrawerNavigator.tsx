@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import {
   Platform,
   Pressable,
@@ -11,10 +11,7 @@ import {
   createDrawerNavigator,
   type DrawerContentComponentProps,
 } from '@react-navigation/drawer';
-import {
-  getFocusedRouteNameFromRoute,
-  useNavigation,
-} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import {
   MenuView,
   type MenuAction,
@@ -26,7 +23,7 @@ import {
   deleteConversation,
   getDocumentPathsByConversationId,
 } from 'repositories';
-import { DrawerContentScreen } from 'screens';
+import { DrawerContentScreen, ModelsScreen, SettingsScreen } from 'screens';
 import { PlatformIcon, Text, fontSizes } from 'components';
 import {
   log,
@@ -36,7 +33,7 @@ import {
   parameterCountLabel,
 } from 'helpers';
 import { useAppState, useModels, useStyled } from 'hooks';
-import { useAiService } from 'services';
+import { subscribeChatModelArrival, useAiService } from 'services';
 import { Spacings } from 'style';
 import { isChatPipeline } from 'types';
 
@@ -60,17 +57,17 @@ const ChatHeaderRight = () => {
   const { conversationIdInUse } = useAppState();
   const { slots } = useAiService();
 
-  const handleMenuAction = React.useCallback(
-    async ({ nativeEvent }: NativeActionEvent) => {
+  const runMenuAction = useCallback(
+    async (event: string) => {
       slots.chat.ref.current?.stopGeneration();
 
-      if (nativeEvent.event === MENU_ACTION_NEW_CHAT) {
+      if (event === MENU_ACTION_NEW_CHAT) {
         setAppState({ conversationIdInUse: undefined });
         return;
       }
 
       if (
-        nativeEvent.event === MENU_ACTION_DELETE_CHAT &&
+        event === MENU_ACTION_DELETE_CHAT &&
         conversationIdInUse !== undefined
       ) {
         setAppState({ conversationIdInUse: undefined });
@@ -88,6 +85,11 @@ const ChatHeaderRight = () => {
       }
     },
     [conversationIdInUse, slots],
+  );
+
+  const handleMenuAction = useCallback(
+    ({ nativeEvent }: NativeActionEvent) => runMenuAction(nativeEvent.event),
+    [runMenuAction],
   );
 
   const newChatAction: MenuAction = {
@@ -132,19 +134,29 @@ const ChatHeaderRight = () => {
       ]
     : [newChatAction, deleteChatAction];
 
+  const hasConversation = conversationIdInUse !== undefined;
+
   return (
-    <MenuView
-      style={styles.menuButton}
-      onPressAction={handleMenuAction}
-      actions={actions}
+    <View
+      pointerEvents={hasConversation ? 'auto' : 'none'}
+      accessibilityElementsHidden={!hasConversation}
+      importantForAccessibility={
+        hasConversation ? 'auto' : 'no-hide-descendants'
+      }
     >
-      <PlatformIcon
-        iosIconName="ellipsis.circle"
-        androidIconName="more_horiz"
-        size={ICON_SIZE}
-        color={colors.onSurface}
-      />
-    </MenuView>
+      <MenuView
+        style={styles.menuButton}
+        onPressAction={handleMenuAction}
+        actions={actions}
+      >
+        <PlatformIcon
+          iosIconName="ellipsis.circle"
+          androidIconName="more_horiz"
+          size={ICON_SIZE}
+          color={hasConversation ? colors.onSurface : colors.onSurfaceDisabled}
+        />
+      </MenuView>
+    </View>
   );
 };
 
@@ -165,13 +177,10 @@ const ChatHeaderTitle = () => {
   const canChangeModel =
     models.filter(({ pipeline }) => isChatPipeline(pipeline)).length >= 2;
 
-  const handlePress = React.useCallback(() => {
+  const handlePress = useCallback(() => {
     slots.chat.ref.current?.stopGeneration();
     // @ts-ignore
-    navigation.navigate('Chat', {
-      screen: 'DownloadedModelsScreen',
-      params: { canDelete: false },
-    });
+    navigation.navigate('DownloadedModelsScreen', { canDelete: false });
   }, [navigation, slots]);
 
   if (!model?.name) {
@@ -222,20 +231,42 @@ const ChatHeaderTitle = () => {
 
 const renderChatHeaderTitle = () => <ChatHeaderTitle />;
 
-const renderDrawerContent = ({ navigation }: DrawerContentComponentProps) => (
+const OpenChatOnModelArrival = ({
+  navigation,
+}: Pick<DrawerContentComponentProps, 'navigation'>) => {
+  const navigationRef = useRef(navigation);
+  navigationRef.current = navigation;
+
+  useEffect(
+    () =>
+      subscribeChatModelArrival(() => {
+        navigationRef.current.navigate('Chat');
+      }),
+    [],
+  );
+
+  return null;
+};
+
+const renderDrawerContent = ({
+  navigation,
+  state,
+}: DrawerContentComponentProps) => (
   <>
     <DrawerStatusReporter side="left" />
+    <OpenChatOnModelArrival navigation={navigation} />
     <DrawerContentScreen
       navigation={navigation}
       onCloseDrawer={() => navigation.closeDrawer()}
+      isChatFocused={state.routes[state.index]?.name === 'Chat'}
     />
   </>
 );
 
 export const DrawerNavigator = () => {
+  const { t } = useTranslation();
   const { colors } = useStyled();
-  const { conversationIdInUse } = useAppState();
-  const { openSide, scrollGesture, swipeExclusion } = useDrawerCoordination();
+  const { openSide, scrollGestures, swipeExclusion } = useDrawerCoordination();
 
   const insets = useSafeAreaInsets();
   const { width: windowWidth } = useWindowDimensions();
@@ -244,7 +275,7 @@ export const DrawerNavigator = () => {
     <Drawer.Navigator
       drawerContent={renderDrawerContent}
       screenOptions={{
-        headerStyle: { backgroundColor: colors.surface },
+        headerTransparent: true,
         headerTintColor: colors.onSurface,
         headerTitleStyle: { color: colors.onSurface },
         drawerStyle: {
@@ -260,7 +291,7 @@ export const DrawerNavigator = () => {
         swipeEdgeWidth: windowWidth,
         configureGestureHandler: buildLeftDrawerGesture(
           openSide === 'left',
-          scrollGesture,
+          scrollGestures,
           swipeExclusion,
         ),
       }}
@@ -268,21 +299,29 @@ export const DrawerNavigator = () => {
       <Drawer.Screen
         name="Chat"
         component={ChatStackNavigator}
-        options={({ route }) => {
-          const routeName = getFocusedRouteNameFromRoute(route) ?? 'ChatScreen';
-          const isAtRoot = routeName === 'ChatScreen';
-
-          return {
-            headerShown: isIOS || isAtRoot,
-            // Disabled while the right drawer is open so its close gesture wins.
-            swipeEnabled: (isIOS || isAtRoot) && openSide !== 'right',
-            headerTitle: renderChatHeaderTitle,
-            headerTitleContainerStyle: { marginHorizontal: 8 },
-            headerRight:
-              conversationIdInUse !== undefined
-                ? renderChatHeaderRight
-                : undefined,
-          };
+        options={{
+          // Disabled while the right drawer is open so its close gesture wins.
+          swipeEnabled: openSide !== 'right',
+          headerTitle: renderChatHeaderTitle,
+          headerTitleContainerStyle: { marginHorizontal: 8 },
+          headerRight: renderChatHeaderRight,
+          inactiveBehavior: 'none',
+        }}
+      />
+      <Drawer.Screen
+        name="Models"
+        component={ModelsScreen}
+        options={{
+          title: t('navigation.models'),
+          swipeEnabled: openSide !== 'right',
+        }}
+      />
+      <Drawer.Screen
+        name="Settings"
+        component={SettingsScreen}
+        options={{
+          title: t('navigation.settings'),
+          swipeEnabled: openSide !== 'right',
         }}
       />
     </Drawer.Navigator>

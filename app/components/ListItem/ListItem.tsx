@@ -10,20 +10,31 @@ import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 
 import styles from './ListItem.styles';
 
-interface ListItemProps extends Omit<PressableProps, 'children'> {
-  title: string;
-  subtitle: string;
+interface ListItemIconProps {
   iosIconName: SFSymbolProps['name'];
   androidIconName: MaterialSymbolProps['name'];
-  iconBackgroundColor: string;
+  iconColor: string;
 }
+
+interface ListItemNoIconProps {
+  iosIconName?: never;
+  androidIconName?: never;
+  iconColor?: never;
+}
+
+type ListItemProps = Omit<PressableProps, 'children'> & {
+  title: string;
+  subtitle: string;
+  external?: boolean;
+} & (ListItemIconProps | ListItemNoIconProps);
 
 export const ListItem: React.FC<ListItemProps> = ({
   title,
   subtitle,
   iosIconName,
   androidIconName,
-  iconBackgroundColor,
+  iconColor,
+  external = false,
   disabled,
   ...props
 }) => {
@@ -35,16 +46,14 @@ export const ListItem: React.FC<ListItemProps> = ({
       disabled={disabled}
       {...props}
     >
-      <View
-        style={[styles.iconContainer, { backgroundColor: iconBackgroundColor }]}
-      >
+      {iosIconName && androidIconName && (
         <PlatformIcon
           iosIconName={iosIconName}
           androidIconName={androidIconName}
-          color="#FFFFFF"
+          color={iconColor}
         />
-      </View>
-      <View style={styles.content}>
+      )}
+      <View style={[styles.content, iosIconName && styles.contentAfterIcon]}>
         <Text style={styles.title}>{title}</Text>
         <Text style={[styles.subtitle, { color: colors.onSurfaceVariant }]}>
           {subtitle}
@@ -52,8 +61,8 @@ export const ListItem: React.FC<ListItemProps> = ({
       </View>
       <View style={styles.chevron}>
         <PlatformIcon
-          iosIconName="chevron.right"
-          androidIconName="chevron_right"
+          iosIconName={external ? 'arrow.up.right' : 'chevron.right'}
+          androidIconName={external ? 'arrow_outward' : 'chevron_right'}
           size={16}
           color={colors.onSurfaceVariant}
         />

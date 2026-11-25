@@ -1,5 +1,11 @@
 import React from 'react';
-import { Pressable, PressableProps } from 'react-native';
+import {
+  ColorValue,
+  Pressable,
+  PressableProps,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 import {
   type SFSymbolProps,
   type MaterialSymbolProps,
@@ -10,8 +16,9 @@ import {
 } from '@callstack/liquid-glass';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { useStyled } from 'hooks';
+import { useTheme } from 'context';
 
-import styles from './IconButton.styles';
+import styles, { iconButtonSize } from './IconButton.styles';
 
 export interface IconButtonIconProps {
   iosIconName: SFSymbolProps['name'];
@@ -23,7 +30,9 @@ interface IconButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   size?: number;
   color?: string;
   backgroundColor?: string;
-  glass?: boolean;
+  glassTint?: ColorValue;
+  compact?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 export const IconButton: React.FC<IconButtonProps> = ({
@@ -31,25 +40,42 @@ export const IconButton: React.FC<IconButtonProps> = ({
   size = 20,
   color,
   backgroundColor,
-  glass = false,
+  glassTint,
+  compact = false,
+  style,
   ...props
 }) => {
   const { colors } = useStyled();
-  const isGlass = glass && isLiquidGlassSupported;
+  const theme = useTheme();
+  const buttonSize = iconButtonSize(compact);
+  const shape = {
+    width: buttonSize,
+    height: buttonSize,
+    borderRadius: buttonSize / 2,
+  };
 
   return (
     <Pressable
       hitSlop={8}
       style={({ pressed }) => [
         styles.button,
-        isGlass
-          ? styles.glassButton
-          : { backgroundColor: backgroundColor ?? colors.surfaceContainer },
-        pressed && !isGlass && { opacity: 0.6 },
+        shape,
+        !isLiquidGlassSupported && {
+          backgroundColor: backgroundColor ?? colors.surfaceContainer,
+        },
+        pressed && !isLiquidGlassSupported && { opacity: 0.6 },
+        style,
       ]}
       {...props}
     >
-      {isGlass && <LiquidGlassView interactive style={styles.glass} />}
+      {isLiquidGlassSupported && (
+        <LiquidGlassView
+          interactive
+          colorScheme={theme}
+          tintColor={glassTint}
+          style={[styles.glass, { borderRadius: shape.borderRadius }]}
+        />
+      )}
       <PlatformIcon
         iosIconName={icon.iosIconName}
         androidIconName={icon.androidIconName}

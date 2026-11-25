@@ -63,15 +63,20 @@ exports[`renders correctly InputBar 1`] = `
             "paddingHorizontal": 16,
             "paddingVertical": 8,
           },
-          {
-            "backgroundColor": "#FFFFFF",
-            "borderColor": "#e1e1e1",
-            "borderWidth": 1,
-          },
+          [
+            {
+              "borderWidth": 1,
+            },
+            {
+              "backgroundColor": "#FFFFFF",
+              "borderColor": "#e1e1e1",
+            },
+          ],
         ]
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -82,7 +87,6 @@ exports[`renders correctly InputBar 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
@@ -119,11 +123,122 @@ exports[`renders correctly InputBar 1`] = `
                 "flexDirection": "row",
               }
             }
+          >
+            <IconButton
+              accessibilityLabel="components.inputBar.attach"
+              accessibilityState={
+                {
+                  "disabled": true,
+                }
+              }
+              backgroundColor="#ebebeb"
+              color="#c1c1c1"
+              compact={true}
+              disabled={false}
+              icon={
+                {
+                  "androidIconName": "add",
+                  "iosIconName": "plus",
+                }
+              }
+              onPress={[Function]}
+              size={20}
+              style={
+                {
+                  "marginRight": 8,
+                }
+              }
+            />
+          </View>
+          <IconButton
+            accessibilityLabel="components.inputBar.dictate"
+            accessibilityState={
+              {
+                "disabled": true,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#c1c1c1"
+            compact={true}
+            disabled={false}
+            icon={
+              {
+                "androidIconName": "mic",
+                "iosIconName": "mic",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.thinking"
+            accessibilityState={
+              {
+                "disabled": true,
+                "selected": false,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#c1c1c1"
+            compact={true}
+            disabled={false}
+            icon={
+              {
+                "androidIconName": "lightbulb",
+                "iosIconName": "lightbulb",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+            testID="thinking-toggle"
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.webSearch"
+            accessibilityState={
+              {
+                "disabled": false,
+                "selected": false,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#000000"
+            compact={true}
+            disabled={false}
+            icon={
+              {
+                "androidIconName": "language",
+                "iosIconName": "globe",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+            testID="web-search-toggle"
           />
           <IconButton
             accessibilityLabel="components.inputBar.voiceAssistant"
+            accessibilityState={
+              {
+                "disabled": false,
+              }
+            }
             backgroundColor="#ebebeb"
             color="#000000"
+            compact={true}
             disabled={false}
             icon={
               {
@@ -138,7 +253,9 @@ exports[`renders correctly InputBar 1`] = `
         <IconButton
           backgroundColor="#e5bdaf"
           color="#FFFFFF"
+          compact={true}
           disabled={false}
+          glassTint="#e5bdaf"
           icon={
             {
               "androidIconName": "arrow_upward",
@@ -217,15 +334,20 @@ exports[`renders correctly InputBar when streaming 1`] = `
             "paddingHorizontal": 16,
             "paddingVertical": 8,
           },
-          {
-            "backgroundColor": "#FFFFFF",
-            "borderColor": "#e1e1e1",
-            "borderWidth": 1,
-          },
+          [
+            {
+              "borderWidth": 1,
+            },
+            {
+              "backgroundColor": "#FFFFFF",
+              "borderColor": "#e1e1e1",
+            },
+          ],
         ]
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -236,7 +358,6 @@ exports[`renders correctly InputBar when streaming 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
@@ -273,12 +394,123 @@ exports[`renders correctly InputBar when streaming 1`] = `
                 "flexDirection": "row",
               }
             }
+          >
+            <IconButton
+              accessibilityLabel="components.inputBar.attach"
+              accessibilityState={
+                {
+                  "disabled": true,
+                }
+              }
+              backgroundColor="#ebebeb"
+              color="#c1c1c1"
+              compact={true}
+              disabled={true}
+              icon={
+                {
+                  "androidIconName": "add",
+                  "iosIconName": "plus",
+                }
+              }
+              onPress={[Function]}
+              size={20}
+              style={
+                {
+                  "marginRight": 8,
+                }
+              }
+            />
+          </View>
+          <IconButton
+            accessibilityLabel="components.inputBar.dictate"
+            accessibilityState={
+              {
+                "disabled": true,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#c1c1c1"
+            compact={true}
+            disabled={true}
+            icon={
+              {
+                "androidIconName": "mic",
+                "iosIconName": "mic",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.thinking"
+            accessibilityState={
+              {
+                "disabled": true,
+                "selected": false,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#c1c1c1"
+            compact={true}
+            disabled={true}
+            icon={
+              {
+                "androidIconName": "lightbulb",
+                "iosIconName": "lightbulb",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+            testID="thinking-toggle"
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.webSearch"
+            accessibilityState={
+              {
+                "disabled": true,
+                "selected": false,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#c1c1c1"
+            compact={true}
+            disabled={true}
+            icon={
+              {
+                "androidIconName": "language",
+                "iosIconName": "globe",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+            testID="web-search-toggle"
           />
           <IconButton
             accessibilityLabel="components.inputBar.voiceAssistant"
+            accessibilityState={
+              {
+                "disabled": true,
+              }
+            }
             backgroundColor="#ebebeb"
-            color="#000000"
-            disabled={false}
+            color="#c1c1c1"
+            compact={true}
+            disabled={true}
             icon={
               {
                 "androidIconName": "graphic_eq",
@@ -292,6 +524,7 @@ exports[`renders correctly InputBar when streaming 1`] = `
         <IconButton
           backgroundColor="#ebebeb"
           color="#000000"
+          compact={true}
           disabled={false}
           icon={
             {
@@ -371,15 +604,20 @@ exports[`renders correctly InputBar with value 1`] = `
             "paddingHorizontal": 16,
             "paddingVertical": 8,
           },
-          {
-            "backgroundColor": "#FFFFFF",
-            "borderColor": "#e1e1e1",
-            "borderWidth": 1,
-          },
+          [
+            {
+              "borderWidth": 1,
+            },
+            {
+              "backgroundColor": "#FFFFFF",
+              "borderColor": "#e1e1e1",
+            },
+          ],
         ]
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -390,7 +628,6 @@ exports[`renders correctly InputBar with value 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
@@ -427,11 +664,122 @@ exports[`renders correctly InputBar with value 1`] = `
                 "flexDirection": "row",
               }
             }
+          >
+            <IconButton
+              accessibilityLabel="components.inputBar.attach"
+              accessibilityState={
+                {
+                  "disabled": true,
+                }
+              }
+              backgroundColor="#ebebeb"
+              color="#c1c1c1"
+              compact={true}
+              disabled={false}
+              icon={
+                {
+                  "androidIconName": "add",
+                  "iosIconName": "plus",
+                }
+              }
+              onPress={[Function]}
+              size={20}
+              style={
+                {
+                  "marginRight": 8,
+                }
+              }
+            />
+          </View>
+          <IconButton
+            accessibilityLabel="components.inputBar.dictate"
+            accessibilityState={
+              {
+                "disabled": true,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#c1c1c1"
+            compact={true}
+            disabled={false}
+            icon={
+              {
+                "androidIconName": "mic",
+                "iosIconName": "mic",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.thinking"
+            accessibilityState={
+              {
+                "disabled": true,
+                "selected": false,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#c1c1c1"
+            compact={true}
+            disabled={false}
+            icon={
+              {
+                "androidIconName": "lightbulb",
+                "iosIconName": "lightbulb",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+            testID="thinking-toggle"
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.webSearch"
+            accessibilityState={
+              {
+                "disabled": false,
+                "selected": false,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#000000"
+            compact={true}
+            disabled={false}
+            icon={
+              {
+                "androidIconName": "language",
+                "iosIconName": "globe",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+            testID="web-search-toggle"
           />
           <IconButton
             accessibilityLabel="components.inputBar.voiceAssistant"
+            accessibilityState={
+              {
+                "disabled": false,
+              }
+            }
             backgroundColor="#ebebeb"
             color="#000000"
+            compact={true}
             disabled={false}
             icon={
               {
@@ -446,7 +794,9 @@ exports[`renders correctly InputBar with value 1`] = `
         <IconButton
           backgroundColor="#b44618"
           color="#FFFFFF"
+          compact={true}
           disabled={false}
+          glassTint="#b44618"
           icon={
             {
               "androidIconName": "arrow_upward",
@@ -525,15 +875,20 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
             "paddingHorizontal": 16,
             "paddingVertical": 8,
           },
-          {
-            "backgroundColor": "#FFFFFF",
-            "borderColor": "#e1e1e1",
-            "borderWidth": 1,
-          },
+          [
+            {
+              "borderWidth": 1,
+            },
+            {
+              "backgroundColor": "#FFFFFF",
+              "borderColor": "#e1e1e1",
+            },
+          ],
         ]
       }
     >
       <TextInput
+        autoFocus={false}
         editable={true}
         multiline={true}
         onBlur={[Function]}
@@ -544,7 +899,6 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
         style={
           [
             {
-              "flex": 1,
               "fontSize": 16,
               "maxHeight": 100,
               "paddingRight": 6,
@@ -582,33 +936,121 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
               }
             }
           >
-            <View
+            <IconButton
+              accessibilityLabel="components.inputBar.attach"
+              accessibilityState={
+                {
+                  "disabled": false,
+                }
+              }
+              backgroundColor="#ebebeb"
+              color="#000000"
+              compact={true}
+              disabled={false}
+              icon={
+                {
+                  "androidIconName": "add",
+                  "iosIconName": "plus",
+                }
+              }
+              onPress={[Function]}
+              size={20}
               style={
                 {
                   "marginRight": 8,
                 }
               }
-            >
-              <IconButton
-                accessibilityLabel="components.inputBar.attach"
-                backgroundColor="#ebebeb"
-                color="#000000"
-                disabled={false}
-                icon={
-                  {
-                    "androidIconName": "add",
-                    "iosIconName": "plus",
-                  }
-                }
-                onPress={[Function]}
-                size={20}
-              />
-            </View>
+            />
           </View>
           <IconButton
-            accessibilityLabel="components.inputBar.voiceAssistant"
+            accessibilityLabel="components.inputBar.dictate"
+            accessibilityState={
+              {
+                "disabled": true,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#c1c1c1"
+            compact={true}
+            disabled={false}
+            icon={
+              {
+                "androidIconName": "mic",
+                "iosIconName": "mic",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.thinking"
+            accessibilityState={
+              {
+                "disabled": true,
+                "selected": false,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#c1c1c1"
+            compact={true}
+            disabled={false}
+            icon={
+              {
+                "androidIconName": "lightbulb",
+                "iosIconName": "lightbulb",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+            testID="thinking-toggle"
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.webSearch"
+            accessibilityState={
+              {
+                "disabled": false,
+                "selected": false,
+              }
+            }
             backgroundColor="#ebebeb"
             color="#000000"
+            compact={true}
+            disabled={false}
+            icon={
+              {
+                "androidIconName": "language",
+                "iosIconName": "globe",
+              }
+            }
+            onPress={[Function]}
+            size={20}
+            style={
+              {
+                "marginRight": 8,
+              }
+            }
+            testID="web-search-toggle"
+          />
+          <IconButton
+            accessibilityLabel="components.inputBar.voiceAssistant"
+            accessibilityState={
+              {
+                "disabled": false,
+              }
+            }
+            backgroundColor="#ebebeb"
+            color="#000000"
+            compact={true}
             disabled={false}
             icon={
               {
@@ -623,7 +1065,9 @@ exports[`renders the collapsed + toggle when attachments are enabled 1`] = `
         <IconButton
           backgroundColor="#e5bdaf"
           color="#FFFFFF"
+          compact={true}
           disabled={false}
+          glassTint="#e5bdaf"
           icon={
             {
               "androidIconName": "arrow_upward",

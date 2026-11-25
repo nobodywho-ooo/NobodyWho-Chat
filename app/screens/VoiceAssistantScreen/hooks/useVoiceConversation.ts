@@ -8,6 +8,7 @@ import {
 import { File, Paths } from 'expo-file-system';
 import {
   acquireRecordingMode,
+  applyThinking,
   cleanTranscript,
   computeGenerationMetrics,
   concatPcm,
@@ -22,11 +23,12 @@ import {
 } from 'helpers';
 import { useSpeechService } from 'hooks';
 import { ModelSlot, ToolInvocation } from 'types';
-import { getAppState } from 'database';
+import { DEFAULT_ASSISTANT_CONFIG, getAppState } from 'database';
 import { insertConversation, insertMessage } from 'repositories';
 import {
   AiModelState,
   notifyConversationSync,
+  settleConversationDigest,
   subscribeToolInvocations,
   useAiService,
   VAD_SAMPLE_RATE,
@@ -96,6 +98,7 @@ export const useVoiceConversation = ({
   const {
     slots,
     chatState,
+    chatCanThink,
     chatThinkOpen,
     sttState,
     ttsState,
@@ -455,7 +458,26 @@ export const useVoiceConversation = ({
     // Mirrors the typed path: templates that spend the opening reasoning
     // delimiter in the prompt need it written back, or the reasoning reads as
     // part of the answer — and gets spoken aloud below.
-    const thinkOpenWriter = createThinkOpenWriter(chatThinkOpen);
+    // Read at turn time: the input bar's switch may have flipped it since the
+    // chat loaded, and it applies without a reload.
+    // A typed turn may have left the conversation digest running on this same
+    // chat. It restores the history it captured when it ends, so let it finish
+    // first or it would wipe this turn (and answer under its system prompt).
+    await settleConversationDigest();
+
+    if (!isCurrent()) {
+      setStatus('idle');
+      return;
+    }
+
+    const thinkingOn =
+      chatCanThink &&
+      (getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG).thinking;
+    await applyThinking(chatInstance, thinkingOn);
+
+    const thinkOpenWriter = createThinkOpenWriter(
+      thinkingOn ? chatThinkOpen : undefined,
+    );
     let answer = thinkOpenWriter.write('turn', '');
 
     const startedAt = Date.now();
@@ -578,6 +600,7 @@ export const useVoiceConversation = ({
     }
   }, [
     chat,
+    chatCanThink,
     chatThinkOpen,
     borrowStt,
     borrowTts,

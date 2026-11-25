@@ -1,0 +1,198 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`renders correctly LogoLoadingScreen 1`] = `
+<View
+  style={
+    [
+      {
+        "alignItems": "center",
+        "flex": 1,
+        "justifyContent": "center",
+      },
+      {
+        "backgroundColor": "#FFFFFF",
+      },
+    ]
+  }
+>
+  <View
+    accessibilityRole="progressbar"
+    style={
+      {
+        "height": 109.80404395032834,
+        "width": 112,
+      }
+    }
+    testID="logo-loading"
+  >
+    <View
+      pointerEvents="none"
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+          {},
+        ]
+      }
+    >
+      <SvgMock
+        color="#000000"
+        height={109.80404395032834}
+        preserveAspectRatio="none"
+        width={112}
+      />
+    </View>
+    <View
+      pointerEvents="none"
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+            "top": 0,
+          },
+          {},
+        ]
+      }
+    >
+      <View
+        pointerEvents="none"
+        style={
+          [
+            {
+              "bottom": 0,
+              "left": 0,
+              "position": "absolute",
+              "right": 0,
+              "top": 0,
+            },
+            {
+              "transformOrigin": "50% 50%",
+            },
+            {},
+          ]
+        }
+      >
+        <SvgMock
+          color="#000000"
+          height={109.80404395032834}
+          preserveAspectRatio="none"
+          viewBox="-107.667 -105.556 323.001 316.668"
+          width={112}
+        />
+      </View>
+      <View
+        pointerEvents="none"
+        style={
+          [
+            {
+              "bottom": 0,
+              "left": 0,
+              "position": "absolute",
+              "right": 0,
+              "top": 0,
+            },
+            {
+              "transformOrigin": "16.666666666666664% 16.666666666666664%",
+            },
+            {},
+          ]
+        }
+      >
+        <SvgMock
+          color="#000000"
+          height={109.80404395032834}
+          preserveAspectRatio="none"
+          viewBox="0 0 323.001 316.668"
+          width={112}
+        />
+      </View>
+      <View
+        pointerEvents="none"
+        style={
+          [
+            {
+              "bottom": 0,
+              "left": 0,
+              "position": "absolute",
+              "right": 0,
+              "top": 0,
+            },
+            {
+              "transformOrigin": "83.33333333333334% 16.666666666666664%",
+            },
+            {},
+          ]
+        }
+      >
+        <SvgMock
+          color="#000000"
+          height={109.80404395032834}
+          preserveAspectRatio="none"
+          viewBox="-215.334 0 323.001 316.668"
+          width={112}
+        />
+      </View>
+      <View
+        pointerEvents="none"
+        style={
+          [
+            {
+              "bottom": 0,
+              "left": 0,
+              "position": "absolute",
+              "right": 0,
+              "top": 0,
+            },
+            {
+              "transformOrigin": "83.33333333333334% 83.33333333333334%",
+            },
+            {},
+          ]
+        }
+      >
+        <SvgMock
+          color="#000000"
+          height={109.80404395032834}
+          preserveAspectRatio="none"
+          viewBox="-215.334 -211.112 323.001 316.668"
+          width={112}
+        />
+      </View>
+      <View
+        pointerEvents="none"
+        style={
+          [
+            {
+              "bottom": 0,
+              "left": 0,
+              "position": "absolute",
+              "right": 0,
+              "top": 0,
+            },
+            {
+              "transformOrigin": "16.666666666666664% 83.33333333333334%",
+            },
+            {},
+          ]
+        }
+      >
+        <SvgMock
+          color="#000000"
+          height={109.80404395032834}
+          preserveAspectRatio="none"
+          viewBox="0 -211.112 323.001 316.668"
+          width={112}
+        />
+      </View>
+    </View>
+  </View>
+</View>
+`;

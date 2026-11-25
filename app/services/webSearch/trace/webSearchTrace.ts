@@ -1,0 +1,476 @@
+import { type TFunction } from 'i18next';
+
+import { type SourceDocument } from '../types';
+import { type WebSearchTraceEntry } from '../webSearchStore';
+import { hostname } from '../hostname';
+import {
+  describeFetchFailure,
+  summarizeFetchFailures,
+  type FetchFailureReason,
+} from '../fetchFailure';
+
+export type StepRow = {
+  type: 'step';
+  key: string;
+  label: string;
+  done?: boolean;
+  active?: boolean;
+};
+export type PageRow = {
+  type: 'page';
+  key: string;
+  url?: string;
+  host: string;
+  name: string;
+  failed?: boolean;
+  note?: string;
+};
+export type ChallengeRow = { type: 'challenge'; key: string };
+export type NoteRow = {
+  type: 'note';
+  key: string;
+  label: string;
+  tone: 'warn' | 'muted';
+};
+export type Row = StepRow | PageRow | ChallengeRow | NoteRow;
+
+const isUnopenedAndUnused = (source: SourceDocument): boolean =>
+  source.read === false && source.used !== true;
+
+export const deriveTitle = (
+  isSearching: boolean,
+  trace: WebSearchTraceEntry[],
+  t: TFunction,
+): string => {
+  if (isSearching) {
+    return trace.some(entry => entry.type === 'searching')
+      ? t('components.messageListItem.searching')
+      : t('components.messageListItem.planning');
+  }
+
+  if (trace.some(entry => entry.type === 'offline')) {
+    return t('components.messageListItem.offline');
+  }
+
+  if (trace.some(entry => entry.type === 'skipped')) {
+    return t('components.messageListItem.skipped');
+  }
+
+  return t('components.messageListItem.searched');
+};
+
+export const buildRows = (
+  isSearching: boolean,
+  trace: WebSearchTraceEntry[],
+  results: SourceDocument[],
+  challengeActive: boolean,
+  t: TFunction,
+): Row[] => {
+  const label = (key: string, options: Record<string, unknown> = {}): string =>
+    t(`components.messageListItem.searchTrace.${key}`, options);
+
+  const takenStepKeys = new Set<string>();
+  const stepKey = (base: string) => {
+    let key = base;
+    let dup = 1;
+
+    while (takenStepKeys.has(key)) {
+      key = `${base}-${dup}`;
+      dup += 1;
+    }
+
+    takenStepKeys.add(key);
+
+    return key;
+  };
+
+  const takenKeys = new Set<string>();
+  const pageKey = (base: string) => {
+    let key = `p-${base}`;
+    let dup = 1;
+
+    while (takenKeys.has(key)) {
+      key = `p-${base}#${dup}`;
+      dup += 1;
+    }
+
+    takenKeys.add(key);
+
+    return key;
+  };
+
+  const has = (type: WebSearchTraceEntry['type']): boolean =>
+    trace.some(entry => entry.type === type);
+  const countOf = (type: WebSearchTraceEntry['type']): number =>
+    trace.filter(entry => entry.type === type).length;
+
+  const offlineNote: NoteRow = {
+    type: 'note',
+    key: 'offline',
+    tone: 'warn',
+    label: label('offline'),
+  };
+
+  const timeoutNote: NoteRow = {
+    type: 'note',
+    key: 'timeout',
+    tone: 'warn',
+    label: label('timeout'),
+  };
+
+  if (has('offline')) {
+    return [offlineNote];
+  }
+
+  if (has('skipped')) {
+    return [
+      {
+        type: 'note',
+        key: 'skipped',
+        tone: 'muted',
+        label: label('skipped'),
+      },
+    ];
+  }
+  const timedOut = has('timeout');
+
+  const doneRow: StepRow = {
+    type: 'step',
+    key: 'done',
+    label: label('done'),
+    done: true,
+  };
+
+  const weakNote: NoteRow = {
+    type: 'note',
+    key: 'weak',
+    tone: 'warn',
+    label: label('weak'),
+  };
+  const closingRow: Row = has('weak') ? weakNote : doneRow;
+
+  const failureSummary = summarizeFetchFailures(
+    trace
+      .filter(entry => entry.type === 'failed' && entry.reason)
+      .map(entry => ({
+        url: entry.url ?? '',
+        host: entry.host ?? '',
+        reason: entry.reason as FetchFailureReason,
+      })),
+    t,
+  );
+
+  const failureNote: NoteRow | null = failureSummary
+    ? {
+        type: 'note',
+        key: 'fetch-failures',
+        tone: 'muted',
+        label: failureSummary,
+      }
+    : null;
+
+  const withFailureNote = (rows: Row[]): Row[] =>
+    failureNote ? [...rows, failureNote] : rows;
+
+  const phaseRows: StepRow[] =
+    has('reading') || has('ranking')
+      ? [{ type: 'step', key: 'phase-reading', label: label('reading') }]
+      : [];
+
+  const phaseRunning = isSearching && !has('done');
+
+  const finalizeSteps = (rows: Row[]): Row[] => {
+    if (!phaseRunning) {
+      return rows.map(row =>
+        row.type === 'step' && !row.done ? { ...row, done: true } : row,
+      );
+    }
+
+    let activeIndex = -1;
+
+    for (let i = rows.length - 1; i >= 0; i -= 1) {
+      const row = rows[i]!;
+
+      if (row.type === 'step' && !row.done) {
+        activeIndex = i;
+        break;
+      }
+    }
+
+    if (activeIndex === -1) {
+      return rows;
+    }
+
+    return rows.map((row, i) => {
+      if (row.type !== 'step') {
+        return row;
+      }
+
+      if (i === activeIndex) {
+        return { ...row, active: true };
+      }
+
+      return i < activeIndex ? { ...row, done: true } : row;
+    });
+  };
+
+  const isPageEntry = (entry: WebSearchTraceEntry): boolean =>
+    entry.type === 'found' ||
+    entry.type === 'fetched' ||
+    entry.type === 'failed';
+  const keyOf = (url: string | undefined, host: string) => url ?? host;
+
+  const collectPages = (): Map<string, PageRow> => {
+    const byKey = new Map<string, PageRow>();
+    const remember = (
+      key: string,
+      next: {
+        url?: string;
+        host: string;
+        title?: string;
+        failed?: boolean;
+        note?: string;
+      },
+    ) => {
+      const current = byKey.get(key);
+
+      if (!current) {
+        byKey.set(key, {
+          type: 'page',
+          key: pageKey(key),
+          url: next.url,
+          host: next.host,
+          name: next.title || next.host,
+          ...(next.failed ? { failed: true } : {}),
+          ...(next.note ? { note: next.note } : {}),
+        });
+
+        return;
+      }
+
+      const failed = next.failed ?? current.failed;
+      const note =
+        next.failed === false ? undefined : (next.note ?? current.note);
+
+      byKey.set(key, {
+        ...current,
+        url: next.url ?? current.url,
+        name: next.title || current.name,
+        ...(failed ? { failed: true } : { failed: undefined }),
+        ...(note ? { note } : { note: undefined }),
+      });
+    };
+
+    for (const entry of trace) {
+      if (!isPageEntry(entry) || !entry.host) {
+        continue;
+      }
+
+      const failed = entry.type === 'failed';
+
+      remember(keyOf(entry.url, entry.host), {
+        url: entry.url,
+        host: entry.host,
+        title: entry.title,
+        ...(entry.type === 'fetched' ? { failed: false } : {}),
+        ...(failed ? { failed: true } : {}),
+        ...(failed && entry.reason
+          ? { note: describeFetchFailure(entry.reason, t) }
+          : {}),
+      });
+    }
+
+    for (const result of results) {
+      if (isUnopenedAndUnused(result)) {
+        continue;
+      }
+
+      const host = result.url ? hostname(result.url) : result.name;
+
+      remember(keyOf(result.url, host), {
+        url: result.url,
+        host,
+        title: result.name,
+      });
+    }
+
+    return byKey;
+  };
+
+  const pageState = collectPages();
+  const pages = [...pageState.values()];
+
+  const stepLabel = (entry: WebSearchTraceEntry): string => {
+    if (entry.type === 'objectives') {
+      return label('objectives');
+    }
+
+    if (entry.type === 'recovering') {
+      return label('recovering');
+    }
+
+    if (entry.query) {
+      return label('query', { query: entry.query });
+    }
+
+    return label('web');
+  };
+
+  const stepBase = (entry: WebSearchTraceEntry): string => {
+    if (entry.type === 'objectives') {
+      return 'objectives';
+    }
+
+    if (entry.type === 'recovering') {
+      return 'recovering';
+    }
+
+    return 'query';
+  };
+
+  const stepFor = (entry: WebSearchTraceEntry): StepRow => ({
+    type: 'step',
+    key: stepKey(stepBase(entry)),
+    label: stepLabel(entry),
+  });
+
+  if (countOf('searching') >= 2) {
+    const rows: Row[] = [];
+    const placed = new Set<string>();
+
+    for (const entry of trace) {
+      if (
+        entry.type === 'objectives' ||
+        entry.type === 'searching' ||
+        entry.type === 'recovering'
+      ) {
+        rows.push(stepFor(entry));
+      } else if (isPageEntry(entry) && entry.host) {
+        const key = keyOf(entry.url, entry.host);
+
+        if (placed.has(key)) {
+          continue;
+        }
+
+        placed.add(key);
+        const page = pageState.get(key);
+
+        if (page) {
+          rows.push(page);
+        }
+      }
+    }
+
+    for (const [key, page] of pageState) {
+      if (placed.has(key)) {
+        continue;
+      }
+      rows.push(page);
+    }
+
+    rows.push(...phaseRows);
+
+    if (isSearching && challengeActive) {
+      rows.push({ type: 'challenge', key: 'challenge' });
+    }
+
+    if (timedOut) {
+      rows.push(timeoutNote);
+    } else if (!isSearching || has('done')) {
+      if (failureNote) {
+        rows.push(failureNote);
+      }
+
+      rows.push(
+        pages.length > 0
+          ? closingRow
+          : {
+              type: 'step',
+              key: 'no-results',
+              label: label('nothingFound'),
+              done: true,
+            },
+      );
+    }
+
+    return finalizeSteps(rows);
+  }
+
+  const steps: StepRow[] = trace
+    .filter(
+      entry =>
+        entry.type === 'objectives' ||
+        entry.type === 'searching' ||
+        entry.type === 'recovering',
+    )
+    .map(stepFor);
+
+  const savedSteps = (): StepRow[] => {
+    const searched = [
+      ...new Set(
+        results
+          .map(result => result.sourceQuery)
+          .filter((query): query is string => !!query),
+      ),
+    ];
+    const recorded = results.find(result => result.query)?.query;
+    const queries = searched.length > 0 ? searched : recorded ? [recorded] : [];
+
+    return [
+      {
+        type: 'step',
+        key: stepKey('objectives'),
+        label: label('objectives'),
+      },
+      ...queries.map(query => ({
+        type: 'step' as const,
+        key: stepKey('query'),
+        label: label('query', { query }),
+      })),
+    ];
+  };
+
+  const openingSteps = steps.length > 0 ? steps : savedSteps();
+
+  if (!isSearching) {
+    if (pages.length > 0) {
+      return finalizeSteps([
+        ...openingSteps,
+        ...pages,
+        ...phaseRows,
+        ...withFailureNote([]),
+        closingRow,
+      ]);
+    }
+
+    if (timedOut) {
+      return finalizeSteps([...steps, timeoutNote]);
+    }
+
+    if (has('searching')) {
+      return finalizeSteps([
+        ...steps,
+        {
+          type: 'step',
+          key: 'no-results',
+          label: label('nothingFound'),
+          done: true,
+        },
+      ]);
+    }
+
+    return [];
+  }
+
+  return finalizeSteps([
+    ...steps,
+    ...pages,
+    ...phaseRows,
+    ...(challengeActive
+      ? [{ type: 'challenge', key: 'challenge' } as ChallengeRow]
+      : []),
+    ...(timedOut ? [timeoutNote] : []),
+    ...(has('done') ? withFailureNote([]) : []),
+    ...(has('done') ? [closingRow] : []),
+  ]);
+};

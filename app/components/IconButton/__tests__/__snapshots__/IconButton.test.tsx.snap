@@ -36,15 +36,18 @@ exports[`IconButton renders with custom size 1`] = `
     [
       {
         "alignItems": "center",
+        "justifyContent": "center",
+      },
+      {
         "borderRadius": 18,
         "height": 36,
-        "justifyContent": "center",
         "width": 36,
       },
       {
         "backgroundColor": "#ebebeb",
       },
       false,
+      undefined,
     ]
   }
 >
@@ -93,15 +96,18 @@ exports[`IconButton renders with icon 1`] = `
     [
       {
         "alignItems": "center",
+        "justifyContent": "center",
+      },
+      {
         "borderRadius": 18,
         "height": 36,
-        "justifyContent": "center",
         "width": 36,
       },
       {
         "backgroundColor": "#ebebeb",
       },
       false,
+      undefined,
     ]
   }
 >

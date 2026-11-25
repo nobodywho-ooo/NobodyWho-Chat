@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, Switch, TextInput, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Switch, TextInput, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import {
   AssistantConfig,
@@ -10,6 +9,7 @@ import {
 } from 'database';
 import { useStyled } from 'hooks';
 import {
+  HeaderScrollView,
   IconButton,
   Slider,
   SpeechToTextPreferences,
@@ -30,7 +30,6 @@ export const TOKENS_STEP = 500;
 export const CustomizeAssistantScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const insets = useSafeAreaInsets();
 
   const [config, setConfig] = useState<AssistantConfig>(
     () => getAppState().assistantConfig ?? DEFAULT_ASSISTANT_CONFIG,
@@ -65,12 +64,11 @@ export const CustomizeAssistantScreen: React.FC = () => {
   };
 
   return (
-    <ScrollView
-      contentInsetAdjustmentBehavior="automatic"
+    <HeaderScrollView
       style={[styles.container, { backgroundColor: colors.surface }]}
       contentContainerStyle={[
         styles.content,
-        { paddingBottom: insets.bottom + Spacings.xl },
+        { paddingBottom: Spacings.xl },
       ]}
       keyboardShouldPersistTaps="handled"
     >
@@ -155,6 +153,7 @@ export const CustomizeAssistantScreen: React.FC = () => {
         <View style={styles.stepperContainer}>
           <IconButton
             icon={{ iosIconName: 'minus', androidIconName: 'remove' }}
+            compact
             accessibilityLabel={t(
               'screens.customizeAssistant.decreaseMaxTokens',
             )}
@@ -178,6 +177,7 @@ export const CustomizeAssistantScreen: React.FC = () => {
           </Text>
           <IconButton
             icon={{ iosIconName: 'plus', androidIconName: 'add' }}
+            compact
             accessibilityLabel={t(
               'screens.customizeAssistant.increaseMaxTokens',
             )}
@@ -209,6 +209,6 @@ export const CustomizeAssistantScreen: React.FC = () => {
         language={config.sttLanguage}
         onChange={savePreference}
       />
-    </ScrollView>
+    </HeaderScrollView>
   );
 };

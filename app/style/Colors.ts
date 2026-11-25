@@ -16,6 +16,8 @@ export type NWColors = {
   onSurfaceDisabled: string;
   surfaceContainer: string;
   primary: string;
+  secondary: string;
+  tertiary: string;
   dangerSurface: string;
   dangerContent: string;
   successSurface: string;
@@ -28,9 +30,9 @@ export type NWColors = {
   shadow: string;
   tabBarActive: string;
   tabBarInactive: string;
-  voiceGlowBody: string;
-  voiceGlowHaze: string;
-  voiceGlowCore: string;
+  edgeGlowBody: string;
+  edgeGlowHaze: string;
+  edgeGlowCore: string;
   brandGradientStart: string;
   brandGradientEnd: string;
 };
@@ -51,6 +53,8 @@ export const lightColors: NWColors = {
   onSurfaceDisabled: '#c1c1c1',
   surfaceContainer: '#ebebeb',
   primary: '#b44618',
+  secondary: '#e27426',
+  tertiary: '#f2a02e',
   dangerSurface: '#f9342a',
   dangerContent: '#FFFFFF',
   successSurface: '#2ec728',
@@ -63,9 +67,9 @@ export const lightColors: NWColors = {
   shadow: 'rgba(44, 44, 44, 0.24)',
   tabBarActive: '#b44618',
   tabBarInactive: '#828282',
-  voiceGlowBody: '#DFB8A4',
-  voiceGlowHaze: '#EDDED4',
-  voiceGlowCore: '#CF8B6E',
+  edgeGlowBody: '#DFB8A4',
+  edgeGlowHaze: '#EDDED4',
+  edgeGlowCore: '#CF8B6E',
   brandGradientStart: '#843616',
   brandGradientEnd: '#3D0F11',
 };
@@ -86,6 +90,8 @@ export const darkColors: NWColors = {
   onSurfaceDisabled: '#8d8d8d',
   surfaceContainer: '#3c3c3c',
   primary: '#b44618',
+  secondary: '#e27426',
+  tertiary: '#f2a02e',
   dangerSurface: '#f9342a',
   dangerContent: '#FFFFFF',
   successSurface: '#2ec728',
@@ -98,9 +104,9 @@ export const darkColors: NWColors = {
   shadow: 'rgba(43, 43, 43, 0.48)',
   tabBarActive: '#b44618',
   tabBarInactive: '#9e9e9e',
-  voiceGlowBody: '#643C2B',
-  voiceGlowHaze: '#775440',
-  voiceGlowCore: '#BF6640',
+  edgeGlowBody: '#643C2B',
+  edgeGlowHaze: '#775440',
+  edgeGlowCore: '#BF6640',
   brandGradientStart: '#b44618',
   brandGradientEnd: '#F5E1D9',
 };

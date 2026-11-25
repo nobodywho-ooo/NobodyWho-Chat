@@ -79,6 +79,32 @@ export async function updateConversation(
   });
 }
 
+// The running topic line of a conversation (see services/webSearch/
+// conversationDigest). Kept out of Conversation and updateConversation so a
+// rename or a last-used bump can never write a stale digest back.
+export async function getConversationDigest(
+  id: number,
+): Promise<string | null> {
+  const db = getDatabase();
+  const result = await db.execute(
+    'SELECT digest FROM conversations WHERE id = ?',
+    [id],
+  );
+  const digest = result.rows[0]?.digest;
+  return typeof digest === 'string' && digest.trim() ? digest : null;
+}
+
+export async function setConversationDigest(
+  id: number,
+  digest: string,
+): Promise<void> {
+  const db = getDatabase();
+  await db.execute('UPDATE conversations SET digest = ? WHERE id = ?', [
+    digest,
+    id,
+  ]);
+}
+
 export async function deleteConversation(id: number): Promise<void> {
   const db = getDatabase();
   await db.transaction(async tx => {

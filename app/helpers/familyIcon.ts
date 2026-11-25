@@ -2,6 +2,7 @@ import type { FC } from 'react';
 import type { SvgProps } from 'react-native-svg';
 import {
   qwen,
+  qwen4,
   bonsai,
   liquid,
   gemma4,
@@ -18,11 +19,13 @@ import {
 } from 'svg';
 
 const familyIcons: Record<string, FC<SvgProps>> = {
+  qwen4: qwen4,
   qwen: qwen,
   bonsai: bonsai,
   LFM2: liquid,
   LFM3: liquid,
   'Gemma 4': gemma4,
+  'EmbeddingGemma 2': gemma4,
   supertonic: supertonic,
   ministral: mistral,
   Granite: ibm,
@@ -36,8 +39,9 @@ const familyIcons: Record<string, FC<SvgProps>> = {
 };
 
 export const getFamilyIcon = (family: string): FC<SvgProps> | undefined => {
-  const normalized = family.toLowerCase();
+  const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, '');
+  const normalized = normalize(family);
   return Object.entries(familyIcons).find(([name]) =>
-    normalized.includes(name.toLowerCase()),
+    normalized.includes(normalize(name)),
   )?.[1];
 };

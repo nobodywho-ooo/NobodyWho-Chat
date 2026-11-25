@@ -15,6 +15,7 @@ import {
   SpeechToTextPreferences,
   Text,
   TextToSpeechPreferences,
+  EdgeGlow,
 } from 'components';
 import {
   AssistantConfig,
@@ -25,8 +26,9 @@ import {
 import { useAppState, useStyled } from 'hooks';
 import { haptics } from 'helpers';
 
-import { VoiceGlow, VoiceSetup } from './components';
+import { VoiceSetup } from './components';
 import {
+  useDrawerRevealOpacity,
   useVoiceConversation,
   useVoiceLevels,
   type VoiceStatus,
@@ -55,6 +57,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   const { colors } = useStyled();
 
   const isDrawerOpen = useDrawerStatus() === 'open';
+  const glowOpacity = useDrawerRevealOpacity();
 
   const [showPreferences, setShowPreferences] = useState(false);
 
@@ -110,16 +113,16 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   return (
     <View style={styles.container}>
       {!showPreferences && (
-        <VoiceGlow
+        <EdgeGlow
           levels={voiceLevels.levels}
           paused={!isReady || !isDrawerOpen}
+          opacity={glowOpacity}
         />
       )}
 
       <View style={styles.headerContainer}>
         <IconButton
           icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
-          glass
           accessibilityLabel={t('screens.voiceAssistant.close')}
           onPress={
             showPreferences ? () => setShowPreferences(false) : onCloseDrawer
@@ -131,12 +134,11 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
         {canOpenPreferences && !showPreferences ? (
           <IconButton
             icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
-            glass
             accessibilityLabel={t('screens.voiceAssistant.preferences')}
             onPress={() => setShowPreferences(true)}
           />
         ) : (
-          <View style={{ width: iconButtonSize(true) }} />
+          <View style={{ width: iconButtonSize() }} />
         )}
       </View>
 

@@ -4,8 +4,21 @@ import { fireEvent, render, act } from '@testing-library/react-native';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { Prompt } from 'react-native-nobodywho';
 import { deleteAsync, getInfoAsync } from 'expo-file-system/legacy';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 
-import { insertConversation, insertMessage } from 'repositories';
+import {
+  getConversationDigest,
+  insertConversation,
+  insertMessage,
+  setConversationDigest,
+} from 'repositories';
+import {
+  prepareWebSearchTurn,
+  restoreChatForTurn,
+  restoreWebSearchTurn,
+  updateConversationDigestInBackground,
+} from 'services';
+import { setAppState, subscribeAppState } from 'database';
 import { implicitThinkOpen } from 'helpers';
 import type { ImplicitThinkOpen } from 'helpers';
 import { Model, ModelPipeline } from 'types';
@@ -29,19 +42,26 @@ const mockUnlink = deleteAsync as jest.Mock;
 // from the service; mock both so handleSend can run without the real model/db.
 // getAppState must return a stable reference — useAppState() feeds it to
 // useSyncExternalStore, which loops if the snapshot identity changes each call.
-jest.mock('database', () => {
-  const appState = { modelIdInUse: 0 };
-  return {
-    getAppState: jest.fn(() => appState),
-    subscribeAppState: jest.fn(() => () => {}),
-  };
-});
+// Mutable so a test can switch thinking off; read lazily by the mock below.
+const mockAppState: {
+  modelIdInUse: number;
+  assistantConfig?: { thinking: boolean };
+} = { modelIdInUse: 0 };
+jest.mock('database', () => ({
+  getAppState: jest.fn(() => mockAppState),
+  subscribeAppState: jest.fn(() => () => {}),
+  setAppState: jest.fn(() => Promise.resolve()),
+  DEFAULT_ASSISTANT_CONFIG: { thinking: true },
+}));
 
 const mockChat = {
   ask: jest.fn(),
+  complete: jest.fn(),
   stopGeneration: jest.fn(),
   setChatHistory: jest.fn(),
   getChatHistory: jest.fn().mockResolvedValue([]),
+  getTemplateVariables: jest.fn().mockResolvedValue({ enable_thinking: true }),
+  setTemplateVariable: jest.fn(),
 };
 // Stable ref (like the real AiService) so a test can swap chat.current mid-stream.
 const mockChatRef: { current: typeof mockChat | undefined } = {
@@ -51,6 +71,8 @@ const mockChatRef: { current: typeof mockChat | undefined } = {
 let mockChatPipeline: ModelPipeline = ModelPipeline.textGeneration;
 // Set when the loaded model's template prefills the opening reasoning tag.
 let mockChatThinkOpen: ImplicitThinkOpen | undefined;
+// Whether the loaded model can reason at all (offers the thinking switch).
+let mockChatCanThink = true;
 // Built once, not per useAiService() call: the real provider hands down slots
 // whose identity is stable.
 const mockSlots = {
@@ -80,9 +102,11 @@ const mockSlots = {
   },
 };
 jest.mock('services', () => ({
+  ...jest.requireActual('services/webSearch'),
   useAiService: () => ({
     slots: mockSlots,
     chatPipeline: mockChatPipeline,
+    chatCanThink: mockChatCanThink,
     chatThinkOpen: mockChatThinkOpen,
     ttsState: 'notLoaded',
   }),
@@ -93,11 +117,36 @@ jest.mock('services', () => ({
     Error: 'error',
   },
   subscribeToolInvocations: jest.fn(() => jest.fn()),
+  prepareWebSearchTurn: jest.fn(),
+  restoreChatForTurn: jest.fn(),
+  restoreWebSearchTurn: jest.fn(),
+  settleConversationDigest: jest.fn(() => Promise.resolve()),
+  updateConversationDigestInBackground: jest.fn(() => Promise.resolve()),
+}));
+
+// Web search is off unless a test turns it on; the search itself is stubbed
+// (its pipeline has its own suite under services/webSearch).
+let mockWebSearchEnabled = false;
+jest.mock('../hooks/useWebSearchToggle', () => ({
+  useWebSearchToggle: () => ({
+    webSearch: {
+      enabled: mockWebSearchEnabled,
+      chatModel: { id: 0, name: 'Chat model', family: 'qwen', parts: [] },
+      embeddingModel: undefined,
+      embeddingSlot: {},
+    },
+    toggle: jest.fn(),
+    embeddingPrompt: { open: false, required: false, close: jest.fn() },
+    chatModel: undefined,
+    ramGB: undefined,
+  }),
 }));
 
 jest.mock('repositories', () => ({
   insertConversation: jest.fn(),
   insertMessage: jest.fn(),
+  getConversationDigest: jest.fn(() => Promise.resolve(null)),
+  setConversationDigest: jest.fn(() => Promise.resolve()),
 }));
 
 // Host stub for the camera sheet, so a test can hand ChatScreen a captured photo
@@ -106,6 +155,9 @@ jest.mock('../components/CameraCaptureModal/CameraCaptureModal', () => ({
   CameraCaptureModal: 'CameraCaptureModal',
 }));
 
+const mockPrepareWebSearchTurn = prepareWebSearchTurn as jest.Mock;
+const mockRestoreChatForTurn = restoreChatForTurn as jest.Mock;
+const mockRestoreWebSearchTurn = restoreWebSearchTurn as jest.Mock;
 const mockInsertConversation = insertConversation as jest.Mock;
 const mockInsertMessage = insertMessage as jest.Mock;
 
@@ -116,7 +168,15 @@ const stream = async function* () {
 };
 
 beforeEach(() => {
+  mockWebSearchEnabled = false;
+  mockPrepareWebSearchTurn.mockReset();
+  mockRestoreChatForTurn.mockReset().mockResolvedValue(undefined);
+  mockRestoreWebSearchTurn.mockReset().mockResolvedValue(undefined);
+  mockChat.complete.mockReset().mockImplementation(() => stream());
   mockChatThinkOpen = undefined;
+  mockChatCanThink = true;
+  delete mockAppState.assistantConfig;
+  mockChat.setTemplateVariable.mockClear();
   mockChatRef.current = mockChat;
   mockChat.ask.mockReset().mockImplementation(() => stream());
   mockChatPipeline = ModelPipeline.textGeneration;
@@ -1005,6 +1065,42 @@ test('switching conversation drops the anchor and jumps to the latest message', 
   expect(mockClearCaches).toHaveBeenCalledWith({ mode: 'sizes' });
 });
 
+test('reloading the shown conversation resets the list layout', async () => {
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+  expect(listProps(screen).anchoredEndSpace).toBeDefined();
+  mockScrollToOffset.mockClear();
+  mockClearCaches.mockClear();
+
+  // An assistant setting changed while Customize covered the chat: the
+  // navigator rebuilt the chat and handed back the same conversation from the
+  // database, every row re-keyed. Keeping the old sizes and anchor stacks the
+  // rows on top of each other.
+  await screen.rerender(
+    <ChatScreen
+      conversationId={7}
+      messages={[
+        { uid: 'row:1', role: 'user', content: 'hi' },
+        { uid: 'row:2', role: 'assistant', content: 'hello' },
+      ]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  expect(listProps(screen).anchoredEndSpace).toBeUndefined();
+  expect(mockClearCaches).toHaveBeenCalledWith({ mode: 'sizes' });
+  expect(mockScrollToOffset).toHaveBeenCalledWith(
+    expect.objectContaining({ animated: false }),
+  );
+});
+
 // --- Scroll-to-bottom chevron ----------------------------------------------
 
 const chevron = (screen: Screen) =>
@@ -1048,6 +1144,69 @@ test('the chevron does not flash while the list is still settling', async () => 
   await send(screen, 'hi');
 
   expect(chevron(screen)).toBeNull();
+});
+
+// Lays out two rows whose newest one ends `lastRowEnd` px into the content,
+// in a viewport of 780 px.
+const layOutRows = (lastRowEnd: number) => {
+  mockListState.data = [{}, {}];
+  mockListState.scrollLength = 780;
+  mockListState.rows = [
+    { top: 0, size: 60 },
+    { top: 60, size: lastRowEnd - 60 },
+  ];
+};
+
+test('the chevron waits for the answer to reach the bottom of the screen', async () => {
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  // The blank space parked under the sent message runs past the screen (a
+  // long message, or on Android an end inset reported a few frames late), so
+  // the list says "not at the end" while every word is still on screen.
+  layOutRows(400);
+  await act(() => mockListState.emitIsAtEnd(false));
+  expect(chevron(screen)).toBeNull();
+
+  // The answer grows past the bottom of the screen: now there is something to
+  // scroll down to.
+  layOutRows(900);
+  await act(() => mockListState.emitTotalSize(900));
+  expect(chevron(screen)).toBeTruthy();
+});
+
+test('scrolling the newest message out of view offers the chevron', async () => {
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await send(screen, 'hi');
+
+  layOutRows(900);
+  mockListState.scroll = 120;
+  await act(() => mockListState.emitIsAtEnd(false));
+  expect(chevron(screen)).toBeNull();
+
+  // The list's own signal already said "not at the end"; it is the scroll
+  // that moves the newest message off the bottom.
+  mockListState.scroll = 0;
+  await act(() =>
+    screen.container
+      .queryAll(node => node.type === 'RCTScrollView')[0]
+      .props.onScroll(),
+  );
+  expect(chevron(screen)).toBeTruthy();
 });
 
 test('the chevron is never offered on an empty conversation', async () => {
@@ -1253,6 +1412,98 @@ test('stopping mid-thinking keeps the block open for a template-opened model', a
   });
 });
 
+test('switching thinking off applies to the next turn without a reload', async () => {
+  mockChatThinkOpen = implicitThinkOpen(
+    { family: 'NeoHorse 1', parameterCountBillions: 4 } as Model,
+    true,
+  );
+  mockAppState.assistantConfig = { thinking: false };
+
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  expect(inputBar(screen).props.canThink).toBe(true);
+  expect(inputBar(screen).props.thinkingEnabled).toBe(false);
+
+  await send(screen, 'hi');
+
+  expect(mockChat.setTemplateVariable).toHaveBeenCalledWith(
+    'enable_thinking',
+    false,
+  );
+  expect(mockChat.setTemplateVariable.mock.invocationCallOrder[0]).toBeLessThan(
+    mockChat.ask.mock.invocationCallOrder[0]!,
+  );
+  expect(mockSlots.chat.dispose).not.toHaveBeenCalled();
+
+  // No opener written back: with thinking off the template prefills none.
+  const assistant = mockInsertMessage.mock.calls
+    .map(([message]) => message)
+    .find(message => message.role === 'assistant');
+  expect(assistant.content).toBe('Hello world');
+});
+
+test('thinking on sets enable_thinking before asking', async () => {
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  expect(inputBar(screen).props.thinkingEnabled).toBe(true);
+
+  await send(screen, 'hi');
+
+  expect(mockChat.setTemplateVariable).toHaveBeenCalledWith(
+    'enable_thinking',
+    true,
+  );
+});
+
+test('the thinking switch flips the saved preference', async () => {
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(() => inputBar(screen).props.onToggleThinking());
+
+  expect(setAppState).toHaveBeenCalledWith({
+    assistantConfig: { thinking: false },
+  });
+});
+
+test('a model that cannot reason greys out the switch and never thinks', async () => {
+  mockChatCanThink = false;
+
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  expect(inputBar(screen).props.canThink).toBe(false);
+
+  await send(screen, 'hi');
+
+  expect(mockChat.setTemplateVariable).toHaveBeenCalledWith(
+    'enable_thinking',
+    false,
+  );
+});
+
 test('a conversation restored while the model loaded is adopted for the next send', async () => {
   // The chat root mounts the screen with no conversation while the model
   // loads, then hands it the one restored from the last launch.
@@ -1302,4 +1553,605 @@ test('a failure creating the conversation settles the screen', async () => {
   mockInsertConversation.mockResolvedValue(42);
   await send(screen, 'again');
   expect(mockInsertConversation).toHaveBeenCalledTimes(2);
+});
+
+test('keeps the screen awake while an answer streams, and lets it sleep after', async () => {
+  const activate = activateKeepAwakeAsync as jest.Mock;
+  const deactivate = deactivateKeepAwake as jest.Mock;
+  activate.mockClear();
+  deactivate.mockClear();
+  let releaseAnswer: () => void = () => {};
+  const answerGate = new Promise<void>(resolve => {
+    releaseAnswer = resolve;
+  });
+  mockChat.ask.mockImplementation(async function* () {
+    await answerGate;
+    yield 'Hello';
+  });
+  const screen = await render(
+    <ChatScreen
+      conversationId={7}
+      messages={[]}
+      onConversationCreated={jest.fn()}
+    />,
+  );
+
+  await act(() => inputBar(screen).props.onChangeText('Hi'));
+  let sending: Promise<void> = Promise.resolve();
+  await act(async () => {
+    sending = inputBar(screen).props.onSend();
+  });
+
+  expect(activate).toHaveBeenCalledTimes(1);
+  expect(deactivate).not.toHaveBeenCalled();
+
+  await act(async () => {
+    releaseAnswer();
+    await sending;
+  });
+
+  expect(deactivate).toHaveBeenCalledWith(activate.mock.calls[0][0]);
+});
+
+describe('web search', () => {
+  const sources = [
+    {
+      name: 'Paris weather',
+      url: 'https://weather.example/paris',
+      used: true,
+      read: true,
+    },
+  ];
+  const snapshot = {
+    history: [
+      { role: 'user', content: 'Hi' },
+      { role: 'assistant', content: 'Hello' },
+    ],
+    systemPrompt: 'You are helpful.',
+    templateVariables: { enable_thinking: true },
+  };
+
+  beforeEach(() => {
+    mockWebSearchEnabled = true;
+  });
+
+  test('sends the grounded prompt, persists the sources and restores the plain question', async () => {
+    mockPrepareWebSearchTurn.mockResolvedValue({
+      prompt: 'SOURCES… weather in Paris?',
+      sources,
+      snapshot,
+      chatWasBorrowed: false,
+    });
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    expect(mockPrepareWebSearchTurn).toHaveBeenCalledWith(
+      expect.objectContaining({
+        chat: mockChat,
+        question: 'weather in Paris?',
+        signal: expect.any(Object),
+      }),
+    );
+    expect(mockChat.ask).toHaveBeenCalledWith('SOURCES… weather in Paris?');
+    expect(mockChat.complete).not.toHaveBeenCalled();
+    expect(mockInsertMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        role: 'assistant',
+        content: 'Hello world',
+        webSources: sources,
+      }),
+    );
+    expect(mockRestoreWebSearchTurn).toHaveBeenCalledWith(
+      mockChat,
+      'SOURCES… weather in Paris?',
+      'weather in Paris?',
+      undefined,
+    );
+  });
+
+  test('opening another conversation mid-search abandons the turn without touching the history', async () => {
+    const listeners: ((next: { conversationIdInUse?: number }) => void)[] =
+      [];
+    (subscribeAppState as jest.Mock).mockImplementation(listener => {
+      listeners.push(listener);
+      return () => undefined;
+    });
+    let searchSignal: AbortSignal | undefined;
+    mockPrepareWebSearchTurn.mockImplementation(async ({ signal }) => {
+      searchSignal = signal;
+      listeners.forEach(listener => listener({ conversationIdInUse: 99 }));
+      return {
+        prompt: 'SOURCES… weather in Paris?',
+        sources,
+        snapshot,
+        chatWasBorrowed: true,
+      };
+    });
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    expect(searchSignal?.aborted).toBe(true);
+    expect(mockChat.ask).not.toHaveBeenCalled();
+    expect(mockChat.complete).not.toHaveBeenCalled();
+    expect(mockChat.setChatHistory).not.toHaveBeenCalled();
+    expect(mockRestoreChatForTurn).toHaveBeenCalledWith(mockChat, snapshot);
+    expect(mockRestoreWebSearchTurn).not.toHaveBeenCalled();
+    expect(mockInsertMessage).toHaveBeenCalledTimes(1);
+    expect(inputBar(screen).props.isStreaming).toBe(false);
+
+    (subscribeAppState as jest.Mock).mockImplementation(() => () => {});
+  });
+
+  test('a screen unmounted mid-search stops the turn instead of answering', async () => {
+    let finishSearch: (turn: unknown) => void = () => undefined;
+    mockPrepareWebSearchTurn.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finishSearch = resolve;
+        }),
+    );
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await act(() => inputBar(screen).props.onChangeText('weather in Paris?'));
+    let sending: Promise<void> = Promise.resolve();
+    await act(async () => {
+      sending = inputBar(screen).props.onSend();
+    });
+    await act(async () => screen.unmount());
+    finishSearch({
+      prompt: 'weather in Paris?',
+      sources: [],
+      snapshot,
+      chatWasBorrowed: false,
+    });
+    await act(async () => {
+      await sending;
+    });
+
+    expect(mockChat.ask).not.toHaveBeenCalled();
+    expect(mockChat.complete).not.toHaveBeenCalled();
+  });
+
+  describe('conversation digest', () => {
+    const mockUpdateDigest = updateConversationDigestInBackground as jest.Mock;
+    const mockGetDigest = getConversationDigest as jest.Mock;
+    const mockSetDigest = setConversationDigest as jest.Mock;
+
+    beforeEach(() => {
+      mockUpdateDigest.mockClear();
+      mockSetDigest.mockClear();
+      mockGetDigest.mockReset().mockResolvedValue('moka pot coffee');
+      mockPrepareWebSearchTurn.mockResolvedValue({
+        prompt: 'SOURCES… how much?',
+        sources,
+        snapshot,
+        chatWasBorrowed: false,
+      });
+    });
+
+    test('hands the stored digest to the search and updates it after the answer', async () => {
+      const screen = await render(
+        <ChatScreen
+          conversationId={7}
+          messages={[]}
+          onConversationCreated={jest.fn()}
+        />,
+      );
+
+      await send(screen, 'and how much does a decent one cost?');
+
+      expect(mockGetDigest).toHaveBeenCalledWith(7);
+      expect(mockPrepareWebSearchTurn).toHaveBeenCalledWith(
+        expect.objectContaining({ digest: 'moka pot coffee' }),
+      );
+      expect(mockUpdateDigest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          chat: mockChat,
+          previousDigest: 'moka pot coffee',
+          question: 'and how much does a decent one cost?',
+          answer: 'Hello world',
+        }),
+      );
+
+      const { onDigest } = mockUpdateDigest.mock.calls[0][0];
+      await onDigest('moka pot prices');
+      expect(mockSetDigest).toHaveBeenCalledWith(7, 'moka pot prices');
+    });
+
+    test('a chat without web search still keeps its digest up to date', async () => {
+      mockWebSearchEnabled = false;
+      const screen = await render(
+        <ChatScreen
+          conversationId={7}
+          messages={[]}
+          onConversationCreated={jest.fn()}
+        />,
+      );
+
+      await send(screen, 'tell me about moka pots');
+
+      expect(mockPrepareWebSearchTurn).not.toHaveBeenCalled();
+      expect(mockUpdateDigest).toHaveBeenCalledWith(
+        expect.objectContaining({
+          previousDigest: 'moka pot coffee',
+          question: 'tell me about moka pots',
+          answer: 'Hello world',
+        }),
+      );
+    });
+
+    test('a turn stopped mid-answer leaves the digest alone', async () => {
+      mockWebSearchEnabled = false;
+      const screen = await render(
+        <ChatScreen
+          conversationId={7}
+          messages={[]}
+          onConversationCreated={jest.fn()}
+        />,
+      );
+
+      mockChat.ask.mockImplementation(() =>
+        (async function* () {
+          yield 'partial';
+          inputBar(screen).props.onStop();
+        })(),
+      );
+
+      await send(screen, 'tell me about moka pots');
+
+      expect(mockUpdateDigest).not.toHaveBeenCalled();
+    });
+  });
+
+  test('persists how long the search took and times the answer from after it', async () => {
+    const realNow = Date.now.bind(Date);
+    let searchClock = 0;
+    const now = jest
+      .spyOn(Date, 'now')
+      .mockImplementation(() => realNow() + searchClock);
+    mockPrepareWebSearchTurn.mockImplementation(async () => {
+      searchClock += 4200;
+      return {
+        prompt: 'SOURCES… weather in Paris?',
+        sources,
+        snapshot,
+        chatWasBorrowed: false,
+        searchMs: 4200,
+      };
+    });
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    const assistant = mockInsertMessage.mock.calls.at(-1)![0];
+    expect(assistant).toEqual(
+      expect.objectContaining({ role: 'assistant', webSearchMs: 4200 }),
+    );
+    expect(assistant.timeToFirstToken).toBeLessThan(4200);
+    now.mockRestore();
+  });
+
+  test('replays the turn over the snapshot when the planner borrowed the chat', async () => {
+    mockPrepareWebSearchTurn.mockResolvedValue({
+      prompt: 'SOURCES… weather in Paris?',
+      sources,
+      snapshot,
+      chatWasBorrowed: true,
+    });
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    expect(mockRestoreChatForTurn).toHaveBeenCalledWith(mockChat, snapshot);
+    expect(mockChat.ask).not.toHaveBeenCalled();
+    expect(mockChat.complete).toHaveBeenCalledWith(
+      [
+        ...snapshot.history,
+        { role: 'user', content: 'SOURCES… weather in Paris?' },
+      ],
+      { templateVariables: snapshot.templateVariables },
+    );
+  });
+
+  test('a search that found nothing still answers, with the bare question', async () => {
+    mockPrepareWebSearchTurn.mockResolvedValue(undefined);
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await send(screen, 'weather in Paris?');
+
+    expect(mockChat.ask).toHaveBeenCalledWith('weather in Paris?');
+    expect(mockRestoreWebSearchTurn).not.toHaveBeenCalled();
+  });
+
+  test('stopping during the search answers nothing and records the stop', async () => {
+    let finishSearch: (turn: unknown) => void = () => {};
+    mockPrepareWebSearchTurn.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finishSearch = resolve;
+        }),
+    );
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await act(() => inputBar(screen).props.onChangeText('weather in Paris?'));
+    let sending: Promise<void> = Promise.resolve();
+    await act(async () => {
+      sending = inputBar(screen).props.onSend();
+    });
+    await act(async () => {
+      inputBar(screen).props.onStop();
+    });
+    const signal = mockPrepareWebSearchTurn.mock.calls[0][0].signal;
+    expect(signal.aborted).toBe(true);
+
+    await act(async () => {
+      finishSearch({
+        prompt: 'weather in Paris?',
+        sources: [],
+        snapshot,
+        chatWasBorrowed: false,
+      });
+      await sending;
+    });
+
+    expect(mockChat.ask).not.toHaveBeenCalled();
+    expect(mockInsertMessage).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        role: 'system',
+        content: 'screens.chat.generationStopped',
+      }),
+    );
+  });
+
+  describe('answer re-check', () => {
+    const question = 'How much does a day pass in Zermatt cost?';
+    const prompt = `SOURCES… ${question}`;
+    const grounding = {
+      context:
+        '\n --- Source 1: Zermatt ski passes 2026 --- \n ' +
+        'Adult day pass 150.00 EUR, two-day pass 285.00 EUR. \n' +
+        ' --- End of Source 1 ---',
+      intentKind: 'price',
+    };
+    const draft = 'The sources contain no information about the price.';
+    const tokens = (...parts: string[]) =>
+      async function* () {
+        yield* parts;
+      };
+
+    beforeEach(() => {
+      mockPrepareWebSearchTurn.mockResolvedValue({
+        prompt,
+        sources,
+        snapshot,
+        chatWasBorrowed: false,
+        grounding,
+      });
+      mockChat.ask.mockImplementation(tokens(draft));
+      mockChat.setChatHistory.mockClear();
+      mockChat.setTemplateVariable.mockClear();
+    });
+
+    const isRefining = (screen: Screen) =>
+      screen.container.queryAll(
+        node =>
+          node.type === 'ShimmerText' &&
+          node.props.text === 'components.messageListItem.refining',
+      ).length > 0;
+
+    const renderChat = () =>
+      render(
+        <ChatScreen
+          conversationId={7}
+          messages={[]}
+          onConversationCreated={jest.fn()}
+        />,
+      );
+
+    test('keeps the draft on screen while refining, then persists the accepted retry', async () => {
+      let releaseRetry: () => void = () => {};
+      const retryGate = new Promise<void>(resolve => {
+        releaseRetry = resolve;
+      });
+      mockChat.complete.mockImplementation(async function* () {
+        await retryGate;
+        yield 'An adult day pass costs ';
+        yield '150.00 EUR.';
+      });
+      const screen = await renderChat();
+
+      await act(() => inputBar(screen).props.onChangeText(question));
+      let sending: Promise<void> = Promise.resolve();
+      await act(async () => {
+        sending = inputBar(screen).props.onSend();
+      });
+
+      expect(isRefining(screen)).toBe(true);
+      expect(mockChat.complete).toHaveBeenCalledWith(
+        [{ role: 'user', content: expect.stringContaining('"Adult day pass') }],
+        { templateVariables: { enable_thinking: false } },
+      );
+
+      await act(async () => {
+        releaseRetry();
+        await sending;
+      });
+
+      expect(isRefining(screen)).toBe(false);
+      expect(mockInsertMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          role: 'assistant',
+          content: 'An adult day pass costs 150.00 EUR.',
+          webSources: sources,
+        }),
+      );
+      expect(mockChat.setChatHistory).toHaveBeenCalledWith([]);
+      expect(mockChat.setTemplateVariable).toHaveBeenCalledWith(
+        'enable_thinking',
+        true,
+      );
+      expect(mockRestoreWebSearchTurn).toHaveBeenCalledWith(
+        mockChat,
+        prompt,
+        question,
+        'An adult day pass costs 150.00 EUR.',
+      );
+    });
+
+    test('opening another conversation mid-re-check leaves the newly loaded history alone', async () => {
+      const listeners: ((next: { conversationIdInUse?: number }) => void)[] =
+        [];
+      (subscribeAppState as jest.Mock).mockImplementation(listener => {
+        listeners.push(listener);
+        return () => undefined;
+      });
+      mockChat.complete.mockImplementation(async function* () {
+        yield 'An adult day pass ';
+        listeners.forEach(listener => listener({ conversationIdInUse: 99 }));
+        yield 'costs 150.00 EUR.';
+      });
+      const screen = await renderChat();
+
+      await send(screen, question);
+
+      expect(mockChat.complete).toHaveBeenCalled();
+      expect(mockChat.setChatHistory).not.toHaveBeenCalled();
+      expect(mockChat.setTemplateVariable).toHaveBeenCalledWith(
+        'enable_thinking',
+        true,
+      );
+      expect(mockRestoreWebSearchTurn).not.toHaveBeenCalled();
+      expect(mockInsertMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({ role: 'assistant', content: draft }),
+      );
+
+      (subscribeAppState as jest.Mock).mockImplementation(() => () => {});
+    });
+
+    test('keeps the first answer when the retry is still broken', async () => {
+      mockChat.complete.mockImplementation(
+        tokens('The sources do not state a price.'),
+      );
+      const screen = await renderChat();
+
+      await send(screen, question);
+
+      expect(mockChat.complete).toHaveBeenCalledTimes(1);
+      expect(mockInsertMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({ role: 'assistant', content: draft }),
+      );
+      expect(mockRestoreWebSearchTurn).toHaveBeenCalledWith(
+        mockChat,
+        prompt,
+        question,
+        undefined,
+      );
+    });
+
+    test('stopping during the re-check keeps the first answer and records no stop', async () => {
+      let releaseRetry: () => void = () => {};
+      const retryGate = new Promise<void>(resolve => {
+        releaseRetry = resolve;
+      });
+      mockChat.complete.mockImplementation(async function* () {
+        await retryGate;
+        yield 'An adult day pass costs 150.00 EUR.';
+      });
+      const screen = await renderChat();
+
+      await act(() => inputBar(screen).props.onChangeText(question));
+      let sending: Promise<void> = Promise.resolve();
+      await act(async () => {
+        sending = inputBar(screen).props.onSend();
+      });
+      await act(async () => {
+        inputBar(screen).props.onStop();
+        releaseRetry();
+        await sending;
+      });
+
+      expect(mockInsertMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({ role: 'assistant', content: draft }),
+      );
+    });
+
+    test('a grounded answer is not re-checked', async () => {
+      mockChat.ask.mockImplementation(tokens('A day pass costs 150.00 EUR.'));
+      const screen = await renderChat();
+
+      await send(screen, question);
+
+      expect(mockChat.complete).not.toHaveBeenCalled();
+      expect(mockInsertMessage).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          role: 'assistant',
+          content: 'A day pass costs 150.00 EUR.',
+        }),
+      );
+    });
+  });
+
+  test('a photo turn skips the search', async () => {
+    mockWebSearchEnabled = true;
+    mockChatPipeline = ModelPipeline.imageTextToText;
+    const screen = await render(
+      <ChatScreen
+        conversationId={7}
+        messages={[]}
+        onConversationCreated={jest.fn()}
+      />,
+    );
+
+    await act(async () => {
+      await inputBar(screen).props.onAttachImage();
+    });
+    await send(screen, 'what is this?');
+
+    expect(mockPrepareWebSearchTurn).not.toHaveBeenCalled();
+    expect(mockChat.ask).toHaveBeenCalled();
+  });
 });
