@@ -1,7 +1,7 @@
 import { Model } from 'types';
 
 export const MODELS_URL =
-  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.4.0.json';
+  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.4.1.json';
 
 export const TIMEOUT_MS = 10000;
 

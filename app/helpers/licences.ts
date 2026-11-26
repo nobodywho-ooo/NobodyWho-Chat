@@ -2,7 +2,7 @@ import { AppLicence, ModelLicence, ServiceCredit } from 'types';
 import { TIMEOUT_MS } from './modelCatalogue';
 
 export const LICENCES_URL =
-  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.4.0.licences.json';
+  'https://raw.githubusercontent.com/pielouNW/mobile-backend/refs/heads/main/v1/v1.4.1.licences.json';
 
 export const APP_LICENCES: readonly AppLicence[] = [
   {
