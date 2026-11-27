@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { Pressable, StyleProp, View, ViewStyle } from 'react-native';
-import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
+import type { AndroidIconName, IosIconName } from 'types';
 import { useTranslation } from 'react-i18next';
 import { useStyled } from 'hooks';
 import {
@@ -55,10 +55,10 @@ const ModelCardView: React.FC<ModelCardProps> = ({
     onPress?.(model);
   }, [onPress, model]);
 
-  const downloadIosIcon: SFSymbolProps['name'] = isDownloading
+  const downloadIosIcon: IosIconName = isDownloading
     ? 'arrow.down.circle.dotted'
     : 'arrow.down.circle';
-  const downloadAndroidIcon: MaterialSymbolProps['name'] = isDownloading
+  const downloadAndroidIcon: AndroidIconName = isDownloading
     ? 'downloading'
     : 'download';
 

@@ -20,8 +20,12 @@
     "close": "Luk",
     "chatMenu": {
       "newChat": "Ny chat",
-      "deleteChat": "Slet chat"
-    }
+      "deleteChat": "Slet chat",
+      "more": "Mere"
+    },
+    "openMenu": "Menu",
+    "showSidebar": "Vis sidepanel",
+    "hideSidebar": "Skjul sidepanel"
   },
   "components": {
     "messageStarters": {
@@ -359,16 +363,23 @@
       "language": "Sprog",
       "languageSubtitle": "Appens sprog",
       "about": "Om",
+      "links": "Links",
+      "linksSubtitle": "Hjemmeside, kildekode og X",
       "terms": "Vilkår og betingelser",
       "termsSubtitle": "Læs vores brugervilkår",
       "privacyPolicy": "Privatlivspolitik",
       "privacyPolicySubtitle": "Sådan håndterer vi dine data",
       "acknowledgements": "Anerkendelser",
       "acknowledgementsSubtitle": "Modeller, kode og websøgning",
+      "feedback": "Feedback",
+      "feedbackSubtitle": "Rapportér en fejl eller foreslå en forbedring",
+      "feedbackUnavailableTitle": "Ingen e-mail-app",
+      "feedbackUnavailableMessage": "Skriv til os på {{email}}",
       "rateApp": "Bedøm appen",
       "rateAppSubtitle": "Skriv en anmeldelse i butikken",
       "website": "Hjemmeside",
-      "github": "Github",
+      "nobodywhoGithub": "NobodyWho GitHub",
+      "appRepository": "Appens kildekode",
       "x": "X"
     },
     "language": {

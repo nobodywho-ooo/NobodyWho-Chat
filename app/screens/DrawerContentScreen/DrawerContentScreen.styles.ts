@@ -3,6 +3,13 @@ import { Spacings } from 'style';
 
 export const FLOATING_BUTTON_BOTTOM = Spacings.xxl;
 
+// Where UIKit puts bar buttons in the closed iPhone Duo's rail (the chat's menu
+// and more buttons), measured on the simulator: centred 48 pt from the right
+// edge, the first 198 pt from the top, the next 60 pt below.
+const RAIL_BUTTON_CENTER_FROM_RIGHT = 48;
+export const RAIL_FIRST_BUTTON_CENTER = 198;
+export const RAIL_BUTTON_PITCH = 60;
+
 export default StyleSheet.create({
   container: {
     flex: 1,
@@ -14,6 +21,10 @@ export default StyleSheet.create({
     paddingHorizontal: Spacings.xl,
     paddingTop: Spacings.lg,
     paddingBottom: Spacings.md,
+  },
+  centeredTitle: {
+    flex: 1,
+    textAlign: 'center',
   },
   headerButtons: {
     flexDirection: 'row',
@@ -27,6 +38,12 @@ export default StyleSheet.create({
     gap: Spacings.sm,
     paddingTop: Spacings.lg,
     paddingBottom: Spacings.xxl,
+  },
+  railButtons: {
+    position: 'absolute',
+    right: 0,
+    width: RAIL_BUTTON_CENTER_FROM_RIGHT * 2,
+    alignItems: 'center',
   },
   bottomGradient: {
     position: 'absolute',

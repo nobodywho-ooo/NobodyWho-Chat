@@ -6,10 +6,7 @@ import {
   StyleProp,
   ViewStyle,
 } from 'react-native';
-import {
-  type SFSymbolProps,
-  type MaterialSymbolProps,
-} from '@react-navigation/native';
+import type { AndroidIconName, IosIconName } from 'types';
 import {
   LiquidGlassView,
   isLiquidGlassSupported,
@@ -21,8 +18,8 @@ import { useTheme } from 'context';
 import styles, { iconButtonSize } from './IconButton.styles';
 
 export interface IconButtonIconProps {
-  iosIconName: SFSymbolProps['name'];
-  androidIconName: MaterialSymbolProps['name'];
+  iosIconName: IosIconName;
+  androidIconName: AndroidIconName;
 }
 
 interface IconButtonProps extends Omit<PressableProps, 'children' | 'style'> {

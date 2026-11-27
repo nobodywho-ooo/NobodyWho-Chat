@@ -1,25 +1,20 @@
 import { StyleSheet } from 'react-native';
 import { Spacings } from 'style';
 
-const SHEET_RADIUS = 28;
-const BACKDROP_OPACITY = 0.4;
-
 export const styles = StyleSheet.create({
-  rootContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  backdropContainer: {
-    ...StyleSheet.absoluteFill,
-    backgroundColor: `rgba(0, 0, 0, ${BACKDROP_OPACITY})`,
-  },
   sheetContainer: {
-    borderTopLeftRadius: SHEET_RADIUS,
-    borderTopRightRadius: SHEET_RADIUS,
     paddingTop: Spacings.xxl,
+    paddingBottom: Spacings.xl,
     paddingHorizontal: Spacings.xl,
     alignItems: 'center',
     gap: Spacings.md,
+  },
+  // Where the model filter sheet's header puts its close icon.
+  closeIcon: {
+    position: 'absolute',
+    top: Spacings.xl,
+    right: Spacings.xl,
+    zIndex: 1,
   },
   iconContainer: {
     padding: Spacings.md,

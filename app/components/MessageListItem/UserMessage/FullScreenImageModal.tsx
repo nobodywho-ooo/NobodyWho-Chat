@@ -12,6 +12,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Spacings } from 'style';
@@ -73,6 +74,7 @@ export const FullScreenImageModal: React.FC<FullScreenImageModalProps> = ({
       statusBarTranslucent
     >
       <GestureHandlerRootView style={styles.rootContainer}>
+        <StatusBar style="light" verticalBarBehaviorIOS="disabled" />
         <Animated.View style={[styles.backdropContainer, backdropStyle]} />
         <GestureDetector gesture={panGesture}>
           <Animated.View style={styles.gestureContainer}>
@@ -92,7 +94,13 @@ export const FullScreenImageModal: React.FC<FullScreenImageModalProps> = ({
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={t('components.messageListItem.closeImage')}
-          style={[styles.closeButton, { top: insets.top + Spacings.md }]}
+          style={[
+            styles.closeButton,
+            {
+              top: insets.top + Spacings.md,
+              left: insets.left + Spacings.lg,
+            },
+          ]}
         >
           <PlatformIcon
             iosIconName="xmark"
@@ -127,6 +135,5 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    left: Spacings.lg,
   },
 });

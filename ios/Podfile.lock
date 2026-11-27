@@ -54,12 +54,16 @@ PODS:
     - ExpoModulesCore
   - ExpoFont (58.0.12):
     - ExpoModulesCore
+  - ExpoGlassEffect (58.0.6):
+    - ExpoModulesCore
   - ExpoImageManipulator (58.0.16):
     - ExpoModulesCore
     - SDWebImageWebPCoder
   - ExpoImagePicker (58.0.10):
     - ExpoModulesCore
   - ExpoKeepAwake (58.0.4):
+    - ExpoModulesCore
+  - ExpoLinking (58.0.17):
     - ExpoModulesCore
   - ExpoLogBox (58.0.15):
     - React-Core
@@ -99,6 +103,13 @@ PODS:
     - ExpoModulesJSI
     - ExpoModulesWorklets
     - RNWorklets
+  - ExpoRouter (58.0.33):
+    - ExpoModulesCore
+    - RNScreens
+  - ExpoStatusBar (58.0.5):
+    - ExpoModulesCore
+  - ExpoSymbols (58.0.5):
+    - ExpoModulesCore
   - fast_float (8.0.0):
     - ReactNativeDependencies
   - FBLazyVector (0.88.1):
@@ -2083,8 +2094,7 @@ PODS:
     - React-perflogger (= 0.88.1)
     - React-utils (= 0.88.1)
     - ReactNativeDependencies
-  - ReactNativeDependencies (0.88.1)
-  - ReactNativeEnrichedMarkdown (1.2.0):
+  - ReactNativeBottomSheet (1.1.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2107,7 +2117,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ReactNavigation (8.0.0-alpha.51):
+  - ReactNativeDependencies (0.88.1)
+  - ReactNativeEnrichedMarkdown (1.2.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2553,14 +2564,19 @@ DEPENDENCIES:
   - "ExpoDomWebView (from `../node_modules/@expo/dom-webview/ios`)"
   - ExpoFileSystem (from `../node_modules/expo-file-system/ios`)
   - ExpoFont (from `../node_modules/expo-font/ios`)
+  - ExpoGlassEffect (from `../node_modules/expo-glass-effect/ios`)
   - ExpoImageManipulator (from `../node_modules/expo-image-manipulator/ios`)
   - ExpoImagePicker (from `../node_modules/expo-image-picker/ios`)
   - ExpoKeepAwake (from `../node_modules/expo-keep-awake/ios`)
+  - ExpoLinking (from `../node_modules/expo-linking/ios`)
   - "ExpoLogBox (from `../node_modules/@expo/log-box`)"
   - ExpoModulesCore (from `../node_modules/expo-modules-core`)
   - ExpoModulesJSI (from `../node_modules/expo-modules-jsi/apple`)
   - ExpoModulesWorklets (from `../node_modules/expo-modules-core`)
   - ExpoModulesWorkletsAdapter (from `../node_modules/expo-modules-core`)
+  - ExpoRouter (from `../node_modules/expo-router/ios`)
+  - ExpoStatusBar (from `../node_modules/expo-status-bar/ios`)
+  - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
   - fast_float (from `build/rndeps-facades/fast_float`)
   - FBLazyVector (from `build/rncore-facades/FBLazyVector`)
   - fmt (from `build/rndeps-facades/fmt`)
@@ -2650,9 +2666,9 @@ DEPENDENCIES:
   - ReactAppDependencyProvider (from `build/generated/ios/ReactAppDependencyProvider`)
   - ReactCodegen (from `build/generated/ios/ReactCodegen`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - "ReactNativeBottomSheet (from `../node_modules/@swmansion/react-native-bottom-sheet`)"
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - ReactNativeEnrichedMarkdown (from `../node_modules/react-native-enriched-markdown`)
-  - "ReactNavigation (from `../node_modules/@react-navigation/native`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
   - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
@@ -2703,12 +2719,16 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-file-system/ios"
   ExpoFont:
     :path: "../node_modules/expo-font/ios"
+  ExpoGlassEffect:
+    :path: "../node_modules/expo-glass-effect/ios"
   ExpoImageManipulator:
     :path: "../node_modules/expo-image-manipulator/ios"
   ExpoImagePicker:
     :path: "../node_modules/expo-image-picker/ios"
   ExpoKeepAwake:
     :path: "../node_modules/expo-keep-awake/ios"
+  ExpoLinking:
+    :path: "../node_modules/expo-linking/ios"
   ExpoLogBox:
     :path: "../node_modules/@expo/log-box"
   ExpoModulesCore:
@@ -2719,6 +2739,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-modules-core"
   ExpoModulesWorkletsAdapter:
     :path: "../node_modules/expo-modules-core"
+  ExpoRouter:
+    :path: "../node_modules/expo-router/ios"
+  ExpoStatusBar:
+    :path: "../node_modules/expo-status-bar/ios"
+  ExpoSymbols:
+    :path: "../node_modules/expo-symbols/ios"
   fast_float:
     :path: build/rndeps-facades/fast_float
   FBLazyVector:
@@ -2896,12 +2922,12 @@ EXTERNAL SOURCES:
     :path: build/generated/ios/ReactCodegen
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  ReactNativeBottomSheet:
+    :path: "../node_modules/@swmansion/react-native-bottom-sheet"
   ReactNativeDependencies:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
   ReactNativeEnrichedMarkdown:
     :path: "../node_modules/react-native-enriched-markdown"
-  ReactNavigation:
-    :path: "../node_modules/@react-navigation/native"
   RNCMaskedView:
     :path: "../node_modules/@react-native-masked-view/masked-view"
   RNDeviceInfo:
@@ -2944,14 +2970,19 @@ SPEC CHECKSUMS:
   ExpoDomWebView: b2a6d681b9d34c23b1f584321386ca8da1d36afb
   ExpoFileSystem: 3f4f423755d1ed5ef084caeb3a62c4a3fca0bf12
   ExpoFont: daea737a2e3742f9a946f2884518e70dd37011f3
+  ExpoGlassEffect: 08d1ca0dd20c907c4248522627461872e6bdc0a9
   ExpoImageManipulator: a480e23723df0ed8d2d67b1251eb3a0afe26a42e
   ExpoImagePicker: a466134ec92fed0b38bbf9062c7eb5f3c8c49d94
   ExpoKeepAwake: 3dc7cce59bdc13796f772ac54d3af1ca6b6954cd
+  ExpoLinking: 62836d27eef5815b20abaebfa7683b18a32bafd1
   ExpoLogBox: 9bfba7bb99c806b678703e6c62323f3c4785e706
   ExpoModulesCore: 14422e046fbe8669653396d79f8cc2c94dada405
   ExpoModulesJSI: 6684bdf9d04f2e5e39f6b90189dcb0def22a55d6
   ExpoModulesWorklets: 03d171c0296cdffc054e9570e9393a7655ef360d
   ExpoModulesWorkletsAdapter: 33dd492e9c87db147c46e157c36d0761a48577c8
+  ExpoRouter: 5c647d3dcd79d921709d8e3334de3a01a40ca6a3
+  ExpoStatusBar: 38eff05a54229c9a388cb56cef29117b8dc77eb1
+  ExpoSymbols: 43a42871f937948a752814aaf3b0f9f0957a71c6
   fast_float: 7c925d1cebf8328d4018d061f49377e9f887e3b4
   FBLazyVector: 07cb4c5b92110c132f2bb73b908e87f35cbe0a19
   fmt: ba0886e864ebb21d14c98b2e12e164b8002f5b93
@@ -3041,9 +3072,9 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: 2dbb2d65f3a487b8a69449f5b1b12b44656d2204
   ReactCodegen: f799405e51337dfaf8954bd653dd912f2e9f05d9
   ReactCommon: b63ce798b898ed77c6cfdeb80b18080161f52ed5
+  ReactNativeBottomSheet: dd7d6119d1ddaaa3b1843eae04c0d7a20c0672e5
   ReactNativeDependencies: a5164c3ebbe90d992022b5d9cbabbf770a6d7d05
   ReactNativeEnrichedMarkdown: 956cdeae3a3831a0213bec7479391e9d7aa47e93
-  ReactNavigation: 1cf3b6680f489f3dcddddab84a855717421796f7
   RNCMaskedView: 89bb912716973f9715102cfe932f3ca6793b21f9
   RNDeviceInfo: 4c852998208b60dc192ae3529e5867817719ad1e
   RNGestureHandler: 3eb406a87932ac20e2909d36728129821fafbcdb

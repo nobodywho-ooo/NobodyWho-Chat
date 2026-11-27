@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { useDrawerStatus } from '@react-navigation/drawer';
+import { useDrawerStatus } from 'expo-router/drawer';
 import {
   IconButton,
   iconButtonSize,
@@ -23,7 +23,7 @@ import {
   getAppState,
   setAppState,
 } from 'database';
-import { useAppState, useStyled } from 'hooks';
+import { useAppState, useDrawerFrame, useStyled } from 'hooks';
 import { haptics } from 'helpers';
 
 import { VoiceSetup } from './components';
@@ -55,6 +55,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
+  const { paddingLeft, paddingRight } = useDrawerFrame('right');
 
   const isDrawerOpen = useDrawerStatus() === 'open';
   const glowOpacity = useDrawerRevealOpacity();
@@ -111,7 +112,7 @@ export const VoiceAssistantScreen: React.FC<VoiceAssistantScreenProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingLeft, paddingRight }]}>
       {!showPreferences && (
         <EdgeGlow
           levels={voiceLevels.levels}

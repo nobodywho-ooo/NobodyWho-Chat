@@ -1,4 +1,4 @@
-import { useDrawerProgress } from '@react-navigation/drawer';
+import { useDrawerProgress } from 'expo-router/drawer';
 import {
   cancelAnimation,
   useAnimatedReaction,

@@ -7,8 +7,8 @@ import { ModelPipeline } from 'types';
 
 import { OnboardingScreen } from '../OnboardingScreen';
 
-jest.mock('../components/OnboardingChoices/OnboardingChoices', () => ({
-  OnboardingChoices: 'OnboardingChoices',
+jest.mock('../components/OnboardingProvider/OnboardingProvider', () => ({
+  OnboardingProvider: 'OnboardingProvider',
 }));
 
 jest.mock('../../LoadingScreen/LoadingScreen', () => ({
@@ -41,7 +41,7 @@ const firstPick = buildModel(1, {
 const catalogue = { models: [firstPick], ramGB: 8 };
 
 const choices = () =>
-  screen.container.queryAll(node => node.type === 'OnboardingChoices');
+  screen.container.queryAll(node => node.type === 'OnboardingProvider');
 const loaders = () =>
   screen.container.queryAll(node => node.type === 'LoadingScreen');
 
@@ -52,7 +52,9 @@ beforeEach(() => {
 
 test('shows a plain loader while the catalogue is fetched', async () => {
   mockGetDeviceCatalogue.mockReturnValue(new Promise(() => {}));
-  await render(<OnboardingScreen onFinish={jest.fn()} />);
+  await render(
+    <OnboardingScreen onFinish={jest.fn()}>{null}</OnboardingScreen>,
+  );
 
   const [loader] = loaders();
   // No onboarding wording: there may turn out to be no onboarding.
@@ -63,7 +65,7 @@ test('shows a plain loader while the catalogue is fetched', async () => {
 test('leaves for the app when the catalogue cannot be fetched', async () => {
   mockGetDeviceCatalogue.mockRejectedValue(new Error('offline'));
   const onFinish = jest.fn();
-  await render(<OnboardingScreen onFinish={onFinish} />);
+  await render(<OnboardingScreen onFinish={onFinish}>{null}</OnboardingScreen>);
 
   await waitFor(() => expect(onFinish).toHaveBeenCalledTimes(1));
   expect(choices()).toEqual([]);
@@ -78,7 +80,7 @@ test('leaves for the app when there is no suggested text model', async () => {
     ramGB: 8,
   });
   const onFinish = jest.fn();
-  await render(<OnboardingScreen onFinish={onFinish} />);
+  await render(<OnboardingScreen onFinish={onFinish}>{null}</OnboardingScreen>);
 
   await waitFor(() => expect(onFinish).toHaveBeenCalledTimes(1));
   expect(choices()).toEqual([]);
@@ -91,7 +93,7 @@ test('leaves for the app when no suggested text model fits the device', async ()
     ramGB: 2.5,
   });
   const onFinish = jest.fn();
-  await render(<OnboardingScreen onFinish={onFinish} />);
+  await render(<OnboardingScreen onFinish={onFinish}>{null}</OnboardingScreen>);
 
   await waitFor(() => expect(onFinish).toHaveBeenCalledTimes(1));
   expect(choices()).toEqual([]);
@@ -99,10 +101,14 @@ test('leaves for the app when no suggested text model fits the device', async ()
 
 test('fetches once and hands the catalogue to the choices', async () => {
   const onFinish = jest.fn();
-  const { rerender } = await render(<OnboardingScreen onFinish={onFinish} />);
+  const { rerender } = await render(
+    <OnboardingScreen onFinish={onFinish}>{null}</OnboardingScreen>,
+  );
   await waitFor(() => expect(choices()).toHaveLength(1));
   const nextOnFinish = jest.fn();
-  await rerender(<OnboardingScreen onFinish={nextOnFinish} />);
+  await rerender(
+    <OnboardingScreen onFinish={nextOnFinish}>{null}</OnboardingScreen>,
+  );
 
   expect(mockGetDeviceCatalogue).toHaveBeenCalledTimes(1);
   const [onboardingChoices] = choices();

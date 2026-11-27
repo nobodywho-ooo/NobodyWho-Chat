@@ -24,6 +24,12 @@ import {
 import { PlatformIcon } from './PlatformIcon/PlatformIcon';
 import { ScrollToBottomButton } from './ScrollToBottomButton/ScrollToBottomButton';
 import { SelectablePill } from './SelectablePill/SelectablePill';
+import {
+  SHEET_CLOSE_BUTTON_CLEARANCE,
+  Sheet,
+  useSheetBottomClearance,
+} from './Sheet/Sheet';
+import { SheetCloseIcon, SheetHeader } from './Sheet/SheetHeader';
 import { ShimmerText } from './ShimmerText/ShimmerText';
 import { Slider } from './Slider/Slider';
 import { Tag } from './Tag/Tag';
@@ -58,6 +64,10 @@ export {
   PlatformIcon,
   ScrollToBottomButton,
   SelectablePill,
+  SHEET_CLOSE_BUTTON_CLEARANCE,
+  Sheet,
+  SheetCloseIcon,
+  SheetHeader,
   ShimmerText,
   Slider,
   SpeechToTextPreferences,
@@ -66,6 +76,7 @@ export {
   TextToSpeechPreferences,
   Toast,
   WebScrapeHost,
+  useSheetBottomClearance,
 };
 
 export type { GlowEdge, GlowLevels, IconButtonIconProps };

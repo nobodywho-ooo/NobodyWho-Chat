@@ -5,6 +5,11 @@ import { isIOS } from 'helpers';
 // message starter, a dictation), so such a value remounts the field via
 // `inputKey`. Text the user types goes through `handleChangeText` and keeps
 // the same field.
+//
+// Clearing from outside (sending) remounts it too: the old field would shrink
+// later, on the native text update, and the input bar's container keeps its
+// multi-line height through that update — the bar floated above the bottom
+// until its next render, the end of the answer.
 export const useSyncedInputValue = (
   value: string,
   onChangeText: (text: string) => void,
@@ -14,7 +19,7 @@ export const useSyncedInputValue = (
 
   if (value !== syncedValue) {
     setSyncedValue(value);
-    if (isIOS && value !== '') {
+    if (isIOS) {
       setInputKey(key => key + 1);
     }
   }

@@ -679,8 +679,14 @@ export const mockUseSafeAreaInsets = jest.fn(() => ({
 jest.mock('react-native-safe-area-context', () => {
   return {
     useSafeAreaInsets: () => mockUseSafeAreaInsets(),
+    SafeAreaView: 'SafeAreaView',
   };
 });
+
+jest.mock('expo-status-bar', () => ({
+  StatusBar: 'StatusBar',
+  useVerticalBarEdgeIOS: () => null,
+}));
 
 jest.mock('react-native-localize', () => ({
   getLocales: () => [
@@ -725,73 +731,57 @@ jest.mock('@op-engineering/op-sqlite', () => {
   };
 });
 
-jest.mock('@react-navigation/native', () => {
-  return {
-    useNavigation: () => ({ goBack: jest.fn() }),
-    useRoute: () => jest.fn(),
-    getFocusedRouteNameFromRoute: jest.fn(),
-    SFSymbol: 'SFSymbol',
-    MaterialSymbol: 'MaterialSymbol',
-  };
-});
-
-jest.mock('@react-navigation/native-stack', () => {
-  return {
-    createNativeStackNavigator: () => jest.fn,
-  };
-});
-
-jest.mock('@react-navigation/core', () => {
-  return {
-    useRoute: () => jest.fn(),
-  };
-});
-
-jest.mock('@react-navigation/elements', () => ({
-  useHeaderHeight: () => 0,
-}));
-
-jest.mock('@react-navigation/drawer', () => {
-  const mockReact = require('react');
-  return {
-    useDrawerStatus: () => 'open',
-    useDrawerProgress: () => ({ value: 1 }),
-    createDrawerNavigator: () => ({
-      Navigator: ({ children }) =>
-        mockReact.createElement(mockReact.Fragment, null, children),
-      Screen: ({ options }) => {
-        const resolved =
-          typeof options === 'function'
-            ? options({ route: { key: 'Chat', name: 'Chat' } })
-            : options;
-        return mockReact.createElement(
-          mockReact.Fragment,
-          null,
-          resolved.headerTitle
-            ? resolved.headerTitle({ children: resolved.title })
-            : null,
-          resolved.headerRight ? resolved.headerRight() : null,
-        );
-      },
-    }),
-  };
-});
-
 export const mockNavigate = jest.fn();
 export const mockGoBack = jest.fn();
 export const mockSetOptions = jest.fn();
-export const mockUseRoute = jest.fn(() => ({}));
+export const mockUseLocalSearchParams = jest.fn(() => ({}));
+export const mockRouter = {
+  navigate: jest.fn(),
+  push: jest.fn(),
+  replace: jest.fn(),
+  back: jest.fn(),
+  canGoBack: jest.fn(() => true),
+};
 
-jest.mock('@react-navigation/native', () => ({
+jest.mock('expo-router', () => ({
+  router: mockRouter,
+  useRouter: () => mockRouter,
   useNavigation: () => ({
     navigate: mockNavigate,
     goBack: mockGoBack,
     setOptions: mockSetOptions,
   }),
-  getFocusedRouteNameFromRoute: jest.fn(() => 'ChatScreen'),
+  useLocalSearchParams: () => mockUseLocalSearchParams(),
   useIsFocused: () => true,
-  useRoute: () => mockUseRoute(),
+  usePathname: () => '/',
   usePreventRemove: jest.fn(),
-  SFSymbol: 'SFSymbol',
-  MaterialSymbol: 'MaterialSymbol',
 }));
+
+jest.mock('expo-router/react-navigation', () => ({
+  useHeaderHeight: () => 0,
+}));
+
+jest.mock('expo-router/drawer', () => ({
+  useDrawerStatus: () => 'open',
+  useDrawerProgress: () => ({ value: 1 }),
+}));
+
+jest.mock('expo-symbols', () => ({ SymbolView: 'SymbolView' }));
+
+// The native sheet as a host element, mounted only while open (its `lazy`
+// behaviour). Tests close it through its props: onIndexChange(0) is a drag
+// down or a scrim tap.
+jest.mock('@swmansion/react-native-bottom-sheet', () => {
+  const mockReact = require('react');
+  const sheet =
+    name =>
+    ({ index, children, surface: _surface, ...props }) =>
+      index > 0
+        ? mockReact.createElement(name, { index, ...props }, children)
+        : null;
+  return {
+    ModalBottomSheet: sheet('ModalBottomSheet'),
+    BottomSheet: sheet('BottomSheet'),
+    BottomSheetProvider: ({ children }) => children,
+  };
+});

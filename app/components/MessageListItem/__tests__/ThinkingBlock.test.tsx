@@ -1,10 +1,12 @@
 import React from 'react';
 import { fireEvent, render } from '@testing-library/react-native';
+import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { StreamdownText } from 'react-native-streamdown';
 
 import { ThinkingBlock } from '../AssistantMessage/ThinkingBlock';
 
 const mockStreamdown = StreamdownText as unknown as jest.Mock;
+const mockEnrichedMarkdown = EnrichedMarkdownText as unknown as jest.Mock;
 
 afterEach(() => {
   jest.clearAllMocks();
@@ -26,7 +28,20 @@ test('shows the "thinking" label while active', async () => {
   expect(getByText('components.messageListItem.thinking')).toBeTruthy();
 });
 
-test('renders the reasoning into the preview with blank lines stripped', async () => {
+test('streams the reasoning into the preview with blank lines stripped', async () => {
+  await render(
+    <ThinkingBlock
+      thinking={'line one\n\n\nline two'}
+      active
+      onPress={jest.fn()}
+    />,
+  );
+
+  expect(mockStreamdown).toHaveBeenCalled();
+  expect(mockStreamdown.mock.calls[0][0].markdown).toBe('line one\nline two');
+});
+
+test('renders a finished thought without the streaming renderer', async () => {
   await render(
     <ThinkingBlock
       thinking={'line one\n\n\nline two'}
@@ -35,8 +50,10 @@ test('renders the reasoning into the preview with blank lines stripped', async (
     />,
   );
 
-  expect(mockStreamdown).toHaveBeenCalled();
-  expect(mockStreamdown.mock.calls[0][0].markdown).toBe('line one\nline two');
+  expect(mockStreamdown).not.toHaveBeenCalled();
+  expect(mockEnrichedMarkdown.mock.calls[0][0].markdown).toBe(
+    'line one\nline two',
+  );
 });
 
 test('calls onPress when tapped', async () => {

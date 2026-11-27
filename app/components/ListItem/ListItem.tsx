@@ -1,9 +1,6 @@
 import React from 'react';
 import { Pressable, PressableProps, View } from 'react-native';
-import {
-  type SFSymbolProps,
-  type MaterialSymbolProps,
-} from '@react-navigation/native';
+import type { AndroidIconName, IosIconName } from 'types';
 import { useStyled } from 'hooks';
 import { Text } from '../Text/Text';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
@@ -11,8 +8,8 @@ import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import styles from './ListItem.styles';
 
 interface ListItemIconProps {
-  iosIconName: SFSymbolProps['name'];
-  androidIconName: MaterialSymbolProps['name'];
+  iosIconName: IosIconName;
+  androidIconName: AndroidIconName;
   iconColor: string;
 }
 

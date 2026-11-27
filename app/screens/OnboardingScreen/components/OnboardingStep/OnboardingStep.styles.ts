@@ -9,13 +9,19 @@ export default StyleSheet.create({
     ...Layout.container,
     paddingHorizontal: ONBOARDING_PADDING_HORIZONTAL,
   },
-  content: {
-    ...Layout.content,
+  scroll: {
     flex: 1,
   },
-  // Takes the free space above the step, pushing it to the bottom edge.
+  scrollContent: {
+    flexGrow: 1,
+  },
+  content: {
+    ...Layout.content,
+    flexGrow: 1,
+  },
   headerContainer: {
-    flex: 1,
+    flexGrow: 1,
+    flexShrink: 0,
     justifyContent: 'center',
     paddingVertical: Spacings.xxl,
   },

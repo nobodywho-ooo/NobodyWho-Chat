@@ -1,15 +1,10 @@
 import React from 'react';
-import {
-  SFSymbol,
-  MaterialSymbol,
-  type SFSymbolProps,
-  type MaterialSymbolProps,
-} from '@react-navigation/native';
-import { isIOS } from 'helpers';
+import { SymbolView } from 'expo-symbols';
+import type { AndroidIconName, IosIconName } from 'types';
 
 interface PlatformIconProps {
-  iosIconName: SFSymbolProps['name'];
-  androidIconName: MaterialSymbolProps['name'];
+  iosIconName: IosIconName;
+  androidIconName: AndroidIconName;
   size?: number;
   color: string;
 }
@@ -19,20 +14,11 @@ export const PlatformIcon: React.FC<PlatformIconProps> = ({
   androidIconName,
   size = 20,
   color,
-}) => {
-  const style = { width: size, height: size };
-
-  if (isIOS) {
-    return (
-      <SFSymbol name={iosIconName} size={size} color={color} style={style} />
-    );
-  }
-  return (
-    <MaterialSymbol
-      name={androidIconName}
-      size={size}
-      color={color}
-      style={style}
-    />
-  );
-};
+}) => (
+  <SymbolView
+    name={{ ios: iosIconName, android: androidIconName }}
+    size={size}
+    tintColor={color}
+    style={{ width: size, height: size }}
+  />
+);

@@ -1,12 +1,12 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react-native';
 
-import { mockNavigate } from 'jest/mock/node-modules';
+import { mockRouter } from 'jest/mock/node-modules';
 
 import { NoModelSelectedScreen } from '../NoModelSelectedScreen';
 
 beforeEach(() => {
-  mockNavigate.mockClear();
+  mockRouter.navigate.mockClear();
 });
 
 test('renders correctly NoModelSelectedScreen', async () => {
@@ -22,5 +22,5 @@ test('pressing the button opens Models', async () => {
   );
   await fireEvent.press(button);
 
-  expect(mockNavigate).toHaveBeenCalledWith('Models');
+  expect(mockRouter.navigate).toHaveBeenCalledWith('/models');
 });

@@ -1,24 +1,36 @@
 import React, { useCallback, useState } from 'react';
 import { LayoutChangeEvent, View } from 'react-native';
-import type { DrawerContentComponentProps } from '@react-navigation/drawer';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LinearGradient from 'react-native-linear-gradient';
 import { setAppState } from 'database';
-import { ActionButton, Button, IconButton, Text } from 'components';
+import {
+  ActionButton,
+  Button,
+  IconButton,
+  Text,
+  iconButtonSize,
+} from 'components';
 import { ConversationsList } from './components';
 import { useAiService } from 'services';
 import { useTheme } from 'context';
 import { useModels } from 'hooks';
 import { Theme, isChatPipeline } from 'types';
 import { Spacings } from 'style';
+import { Routes } from 'navigation';
 
-import styles, { FLOATING_BUTTON_BOTTOM } from './DrawerContentScreen.styles';
+import styles, {
+  FLOATING_BUTTON_BOTTOM,
+  RAIL_BUTTON_PITCH,
+  RAIL_FIRST_BUTTON_CENTER,
+} from './DrawerContentScreen.styles';
 
 interface DrawerContentScreenProps {
-  navigation: DrawerContentComponentProps['navigation'];
   onCloseDrawer: () => void;
   isChatFocused?: boolean;
+  onHideSidebar?: () => void;
+  railInsetRight?: number; // The safe-area inset of the right edge - Duo
 }
 
 const gradientColors: Record<Theme, string[]> = {
@@ -27,9 +39,10 @@ const gradientColors: Record<Theme, string[]> = {
 };
 
 export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
-  navigation,
   onCloseDrawer,
   isChatFocused = true,
+  onHideSidebar,
+  railInsetRight = 0,
 }) => {
   const { t } = useTranslation();
   const { models } = useModels();
@@ -42,20 +55,20 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
 
   const handleModelsPress = useCallback(() => {
     chat.current?.stopGeneration();
-    navigation.navigate('Models');
+    router.navigate(Routes.models);
     closeDrawer();
-  }, [navigation, chat, closeDrawer]);
+  }, [chat, closeDrawer]);
 
   const handleSettingsPress = useCallback(() => {
     chat.current?.stopGeneration();
-    navigation.navigate('Settings');
+    router.navigate(Routes.settings);
     closeDrawer();
-  }, [navigation, chat, closeDrawer]);
+  }, [chat, closeDrawer]);
 
   const showChat = useCallback(() => {
-    navigation.navigate('Chat');
+    router.navigate(Routes.chat);
     closeDrawer();
-  }, [navigation, closeDrawer]);
+  }, [closeDrawer]);
 
   const handleNewChatPress = useCallback(() => {
     setAppState({ conversationIdInUse: undefined });
@@ -77,27 +90,60 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
   const listBottomInset = showNewChat
     ? newChatBottom + newChatHeight + Spacings.lg
     : 0;
+  const hasRail = railInsetRight > 0;
+  const buttonSize = iconButtonSize();
+
+  const settingsButton = (
+    <IconButton
+      icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
+      accessibilityRole="button"
+      accessibilityLabel={t('screens.drawerContent.settings')}
+      onPress={handleSettingsPress}
+    />
+  );
+  const closeButton = (
+    <IconButton
+      icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
+      accessibilityRole="button"
+      onPress={closeDrawer}
+    />
+  );
 
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text variant="h3" bold>
-          nobodywho
-        </Text>
-        <View style={styles.headerButtons}>
+    <View
+      style={[styles.container, hasRail && { paddingRight: railInsetRight }]}
+    >
+      {onHideSidebar ? (
+        <View style={styles.headerContainer}>
           <IconButton
-            icon={{ iosIconName: 'gearshape', androidIconName: 'settings' }}
+            icon={{
+              iosIconName: 'sidebar.left',
+              androidIconName: 'left_panel_close',
+            }}
             accessibilityRole="button"
-            accessibilityLabel={t('screens.drawerContent.settings')}
-            onPress={handleSettingsPress}
+            accessibilityLabel={t('navigation.hideSidebar')}
+            onPress={onHideSidebar}
           />
-          <IconButton
-            icon={{ iosIconName: 'xmark', androidIconName: 'close' }}
-            accessibilityRole="button"
-            onPress={closeDrawer}
-          />
+          <Text variant="h3" bold style={styles.centeredTitle}>
+            nobodywho
+          </Text>
+          {settingsButton}
         </View>
-      </View>
+      ) : (
+        <View style={styles.headerContainer}>
+          <Text variant="h3" bold>
+            nobodywho
+          </Text>
+          {hasRail ? (
+            <View style={{ height: buttonSize }} />
+          ) : (
+            <View style={styles.headerButtons}>
+              {settingsButton}
+              {closeButton}
+            </View>
+          )}
+        </View>
+      )}
 
       <View style={styles.actionsContainer}>
         <ActionButton
@@ -124,6 +170,21 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
         style={styles.bottomGradient}
       />
 
+      {hasRail && (
+        <View
+          style={[
+            styles.railButtons,
+            {
+              top: RAIL_FIRST_BUTTON_CENTER - buttonSize / 2,
+              gap: RAIL_BUTTON_PITCH - buttonSize,
+            },
+          ]}
+        >
+          {closeButton}
+          {settingsButton}
+        </View>
+      )}
+
       {showNewChat && (
         <Button
           title={t('screens.drawerContent.newChat')}
@@ -131,7 +192,10 @@ export const DrawerContentScreen: React.FC<DrawerContentScreenProps> = ({
           icon={{ iosIconName: 'plus.bubble', androidIconName: 'add_comment' }}
           onPress={handleNewChatPress}
           onLayout={handleNewChatLayout}
-          style={[styles.floatingButton, { bottom: newChatBottom }]}
+          style={[
+            styles.floatingButton,
+            { bottom: newChatBottom, marginRight: railInsetRight },
+          ]}
         />
       )}
     </View>

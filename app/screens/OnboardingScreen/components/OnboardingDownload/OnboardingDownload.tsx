@@ -8,7 +8,8 @@ import { getModelById } from 'repositories';
 import { Spacings } from 'style';
 import { Button, PlatformIcon, ProgressBar, Text, EdgeGlow } from 'components';
 
-import { OnboardingScreenProps } from '../../Onboarding.types';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { OnboardingDownloadParams } from '../../Onboarding.types';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { useOnboardingHeader } from '../../hooks/useOnboardingHeader';
 import {
@@ -17,16 +18,18 @@ import {
 } from '../../hooks/useDownloadPulses';
 import { OnboardingStep } from '../OnboardingStep/OnboardingStep';
 
+import { ONBOARDING_PADDING_HORIZONTAL } from '../../Onboarding.styles';
 import styles from './OnboardingDownload.styles';
 
-export const OnboardingDownload: React.FC<
-  OnboardingScreenProps<'OnboardingDownload'>
-> = ({ navigation, route }) => {
+export const OnboardingDownload: React.FC = () => {
+  const router = useRouter();
+  const params = useLocalSearchParams<OnboardingDownloadParams>();
   const { t } = useTranslation();
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
   const { onFinish, curatedModels } = useOnboarding();
-  const { modelId, setup } = route.params;
+  const modelId = Number(params.modelId);
+  const { setup } = params;
 
   const [isDone, setIsDone] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -36,13 +39,13 @@ export const OnboardingDownload: React.FC<
   const glowOpacity = useDownloadGlowOpacity(progress);
   useKeepAwakeWhile(!isDone && !isLeaving);
 
-  useOnboardingHeader(navigation, !isLeaving);
+  useOnboardingHeader(!isLeaving);
 
   useEffect(() => {
     if (isLeaving) {
-      navigation.goBack();
+      router.back();
     }
-  }, [isLeaving, navigation]);
+  }, [isLeaving, router]);
 
   const hasStarted = useRef(false);
 
@@ -106,6 +109,8 @@ export const OnboardingDownload: React.FC<
           {
             backgroundColor: colors.surface,
             paddingBottom: insets.bottom + Spacings.lg,
+            paddingLeft: insets.left + ONBOARDING_PADDING_HORIZONTAL,
+            paddingRight: insets.right + ONBOARDING_PADDING_HORIZONTAL,
           },
         ]}
       >

@@ -6,7 +6,7 @@ import {
   screen,
   waitFor,
 } from '@testing-library/react-native';
-import { usePreventRemove } from '@react-navigation/native';
+import { usePreventRemove } from 'expo-router';
 
 import { CURATED_VOICE_ONLY_MODELS, ModelSetup } from 'helpers';
 import type { CuratedModels } from 'hooks';
@@ -14,7 +14,11 @@ import { getModelById } from 'repositories';
 import { buildModel } from 'jest/factories/model';
 
 import { OnboardingContext } from '../../../hooks/useOnboarding';
-import { OnboardingScreenProps } from '../../../Onboarding.types';
+import {
+  mockRouter,
+  mockSetOptions,
+  mockUseLocalSearchParams,
+} from 'jest/mock/node-modules';
 import { OnboardingDownload } from '../OnboardingDownload';
 
 const mockDownloads = {
@@ -33,29 +37,20 @@ const recommended = buildModel(1, { tags: ['Recommended'] });
 const firstPick = buildModel(2, { tags: ['Great First Pick'] });
 const chatModels = [recommended, firstPick];
 
-const navigation = { goBack: jest.fn(), setOptions: jest.fn() };
-
 const renderDownload = ({
   modelId = recommended.id,
   setup = 'textOnly' as ModelSetup,
   onFinish = jest.fn(),
-} = {}) =>
-  render(
+} = {}) => {
+  mockUseLocalSearchParams.mockReturnValue({ modelId: String(modelId), setup });
+  return render(
     <OnboardingContext.Provider value={{ chatModels, onFinish, curatedModels }}>
-      <OnboardingDownload
-        {...({
-          navigation,
-          route: {
-            key: 'OnboardingDownload',
-            name: 'OnboardingDownload',
-            params: { modelId, setup },
-          },
-        } as unknown as OnboardingScreenProps<'OnboardingDownload'>)}
-      />
+      <OnboardingDownload />
     </OnboardingContext.Provider>,
   );
+};
 
-const headerOptions = () => navigation.setOptions.mock.lastCall[0];
+const headerOptions = () => mockSetOptions.mock.lastCall[0];
 const isRemovePrevented = () =>
   jest.mocked(usePreventRemove).mock.lastCall?.[0];
 
@@ -81,12 +76,7 @@ test('downloads only the picked text model, once', async () => {
     <OnboardingContext.Provider
       value={{ chatModels, onFinish: jest.fn(), curatedModels }}
     >
-      <OnboardingDownload
-        {...({
-          navigation,
-          route: { params: { modelId: recommended.id, setup: 'textOnly' } },
-        } as unknown as OnboardingScreenProps<'OnboardingDownload'>)}
-      />
+      <OnboardingDownload />
     </OnboardingContext.Provider>,
   );
 
@@ -112,12 +102,7 @@ test('waits for the installed models to load before downloading', async () => {
     <OnboardingContext.Provider
       value={{ chatModels, onFinish: jest.fn(), curatedModels }}
     >
-      <OnboardingDownload
-        {...({
-          navigation,
-          route: { params: { modelId: recommended.id, setup: 'textOnly' } },
-        } as unknown as OnboardingScreenProps<'OnboardingDownload'>)}
-      />
+      <OnboardingDownload />
     </OnboardingContext.Provider>,
   );
 
@@ -155,7 +140,7 @@ test('Cancel stops the download and goes back once unlocked', async () => {
 
   expect(mockDownloads.cancel).toHaveBeenCalledTimes(1);
   expect(isRemovePrevented()).toBe(false);
-  expect(navigation.goBack).toHaveBeenCalledTimes(1);
+  expect(mockRouter.back).toHaveBeenCalledTimes(1);
 });
 
 test('shows All set once downloaded, and Start enters the app', async () => {
@@ -231,6 +216,6 @@ test('goes back to the choices when the models do not fit', async () => {
   const onFinish = jest.fn();
   await renderDownload({ onFinish });
 
-  await waitFor(() => expect(navigation.goBack).toHaveBeenCalledTimes(1));
+  await waitFor(() => expect(mockRouter.back).toHaveBeenCalledTimes(1));
   expect(onFinish).not.toHaveBeenCalled();
 });

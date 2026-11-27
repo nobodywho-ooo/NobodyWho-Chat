@@ -16,6 +16,9 @@ import dfm from 'svg/dfm.svg';
 import loaderDot from 'svg/o.svg';
 import logo from 'svg/logo.svg';
 import logoDot from 'svg/dot.svg';
+import github from 'svg/github.svg';
+import x from 'svg/x.svg';
+import nobodywhoWordmark from 'svg/nw.svg';
 
 export {
   qwen,
@@ -36,4 +39,7 @@ export {
   loaderDot,
   logo,
   logoDot,
+  github,
+  x,
+  nobodywhoWordmark,
 };

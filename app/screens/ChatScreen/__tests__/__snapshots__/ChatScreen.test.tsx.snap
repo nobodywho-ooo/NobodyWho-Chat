@@ -194,94 +194,25 @@ exports[`renders ChatScreen with existing messages 1`] = `
       >
         <View>
           <View
+            pointerEvents="box-none"
             style={
               {
-                "alignItems": "flex-end",
-                "alignSelf": "flex-end",
-                "marginVertical": 12,
-                "maxWidth": "90%",
+                "paddingLeft": 75,
+                "paddingRight": 75,
               }
             }
           >
             <View
-              accessibilityState={
-                {
-                  "busy": undefined,
-                  "checked": undefined,
-                  "disabled": undefined,
-                  "expanded": undefined,
-                  "selected": undefined,
-                }
-              }
-              accessibilityValue={
-                {
-                  "max": undefined,
-                  "min": undefined,
-                  "now": undefined,
-                  "text": undefined,
-                }
-              }
-              accessible={true}
-              collapsable={false}
-              focusable={true}
-              onBlur={[Function]}
-              onClick={[Function]}
-              onFocus={[Function]}
-              onResponderGrant={[Function]}
-              onResponderMove={[Function]}
-              onResponderRelease={[Function]}
-              onResponderTerminate={[Function]}
-              onResponderTerminationRequest={[Function]}
-              onStartShouldSetResponder={[Function]}
-              style={
-                [
-                  {
-                    "borderRadius": 16,
-                    "paddingHorizontal": 16,
-                    "paddingVertical": 12,
-                  },
-                  {
-                    "backgroundColor": "#ebebeb",
-                  },
-                  false,
-                ]
-              }
-            >
-              <Text
-                style={
-                  {
-                    "fontSize": 15,
-                    "lineHeight": 22,
-                  }
-                }
-              >
-                Hello there
-              </Text>
-            </View>
-          </View>
-          <View
-            style={
-              {
-                "marginTop": 12,
-                "marginVertical": 12,
-              }
-            }
-          >
-            <View />
-            <View
               style={
                 {
-                  "alignItems": "center",
-                  "flexDirection": "row",
-                  "flexWrap": "wrap",
-                  "gap": 16,
-                  "marginTop": 12,
+                  "alignItems": "flex-end",
+                  "alignSelf": "flex-end",
+                  "marginVertical": 12,
+                  "maxWidth": "90%",
                 }
               }
             >
               <View
-                accessibilityLabel="components.messageListItem.copy"
-                accessibilityRole="button"
                 accessibilityState={
                   {
                     "busy": undefined,
@@ -302,7 +233,6 @@ exports[`renders ChatScreen with existing messages 1`] = `
                 accessible={true}
                 collapsable={false}
                 focusable={true}
-                hitSlop={8}
                 onBlur={[Function]}
                 onClick={[Function]}
                 onFocus={[Function]}
@@ -314,16 +244,106 @@ exports[`renders ChatScreen with existing messages 1`] = `
                 onStartShouldSetResponder={[Function]}
                 style={
                   [
+                    {
+                      "borderRadius": 16,
+                      "paddingHorizontal": 16,
+                      "paddingVertical": 12,
+                    },
+                    {
+                      "backgroundColor": "#ebebeb",
+                    },
                     false,
                   ]
                 }
               >
-                <PlatformIcon
-                  androidIconName="content_copy"
-                  color="#7c7c7c"
-                  iosIconName="doc.on.doc"
-                  size={16}
-                />
+                <Text
+                  style={
+                    {
+                      "fontSize": 15,
+                      "lineHeight": 22,
+                    }
+                  }
+                >
+                  Hello there
+                </Text>
+              </View>
+            </View>
+          </View>
+          <View
+            pointerEvents="box-none"
+            style={
+              {
+                "paddingLeft": 75,
+                "paddingRight": 75,
+              }
+            }
+          >
+            <View
+              style={
+                {
+                  "marginTop": 12,
+                  "marginVertical": 12,
+                }
+              }
+            >
+              <View />
+              <View
+                style={
+                  {
+                    "alignItems": "center",
+                    "flexDirection": "row",
+                    "flexWrap": "wrap",
+                    "gap": 16,
+                    "marginTop": 12,
+                  }
+                }
+              >
+                <View
+                  accessibilityLabel="components.messageListItem.copy"
+                  accessibilityRole="button"
+                  accessibilityState={
+                    {
+                      "busy": undefined,
+                      "checked": undefined,
+                      "disabled": undefined,
+                      "expanded": undefined,
+                      "selected": undefined,
+                    }
+                  }
+                  accessibilityValue={
+                    {
+                      "max": undefined,
+                      "min": undefined,
+                      "now": undefined,
+                      "text": undefined,
+                    }
+                  }
+                  accessible={true}
+                  collapsable={false}
+                  focusable={true}
+                  hitSlop={8}
+                  onBlur={[Function]}
+                  onClick={[Function]}
+                  onFocus={[Function]}
+                  onResponderGrant={[Function]}
+                  onResponderMove={[Function]}
+                  onResponderRelease={[Function]}
+                  onResponderTerminate={[Function]}
+                  onResponderTerminationRequest={[Function]}
+                  onStartShouldSetResponder={[Function]}
+                  style={
+                    [
+                      false,
+                    ]
+                  }
+                >
+                  <PlatformIcon
+                    androidIconName="content_copy"
+                    color="#7c7c7c"
+                    iosIconName="doc.on.doc"
+                    size={16}
+                  />
+                </View>
               </View>
             </View>
           </View>
@@ -341,12 +361,29 @@ exports[`renders ChatScreen with existing messages 1`] = `
       }
     }
   >
+    <View
+      pointerEvents="box-none"
+      style={
+        {
+          "paddingLeft": 75,
+          "paddingRight": 75,
+        }
+      }
+    />
     <InputBar
       attachExpanded={false}
       canAttachAudio={false}
       canAttachImage={false}
       canDictate={false}
       canThink={false}
+      column={
+        {
+          "insetLeft": 0,
+          "insetRight": 0,
+          "paddingLeft": 75,
+          "paddingRight": 75,
+        }
+      }
       composerRef={
         {
           "current": null,
@@ -626,12 +663,29 @@ exports[`renders correctly empty ChatScreen 1`] = `
       }
     }
   >
+    <View
+      pointerEvents="box-none"
+      style={
+        {
+          "paddingLeft": 75,
+          "paddingRight": 75,
+        }
+      }
+    />
     <InputBar
       attachExpanded={false}
       canAttachAudio={false}
       canAttachImage={false}
       canDictate={false}
       canThink={false}
+      column={
+        {
+          "insetLeft": 0,
+          "insetRight": 0,
+          "paddingLeft": 75,
+          "paddingRight": 75,
+        }
+      }
       composerRef={
         {
           "current": null,
@@ -666,11 +720,17 @@ exports[`renders correctly empty ChatScreen 1`] = `
     >
       <RCTScrollView
         contentContainerStyle={
-          {
-            "columnGap": 8,
-            "paddingHorizontal": 12,
-            "paddingVertical": 8,
-          }
+          [
+            {
+              "columnGap": 8,
+              "paddingHorizontal": 12,
+              "paddingVertical": 8,
+            },
+            {
+              "paddingLeft": 87,
+              "paddingRight": 12,
+            },
+          ]
         }
         horizontal={true}
         keyboardShouldPersistTaps="handled"

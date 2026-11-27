@@ -22,7 +22,6 @@ export const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    left: Spacings.lg,
   },
   controlsContainer: {
     position: 'absolute',

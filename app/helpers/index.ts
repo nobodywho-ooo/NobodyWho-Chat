@@ -1,6 +1,11 @@
 import { isIOS, isAndroid, getIOSVersion, isIOS26OrLater } from './platform';
 import { log } from './log';
 import { isHttpUrl, openExternalUrl } from './openExternalUrl';
+import {
+  FEEDBACK_EMAIL,
+  feedbackMailtoUrl,
+  openFeedbackEmail,
+} from './feedbackEmail';
 import { capitalize } from './string';
 import { safeJsonParse } from './json';
 import { getMarkdownStyle } from './markdown';
@@ -239,6 +244,9 @@ export {
   withAlpha,
   isHttpUrl,
   openExternalUrl,
+  FEEDBACK_EMAIL,
+  feedbackMailtoUrl,
+  openFeedbackEmail,
   APP_LICENCES,
   fetchModelLicences,
   isModelLicenceList,

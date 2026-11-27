@@ -16,3 +16,9 @@ export * from './TermsScreen/TermsScreen';
 export * from './PrivacyPolicyScreen/PrivacyPolicyScreen';
 export * from './LanguageScreen/LanguageScreen';
 export * from './AcknowledgementsScreen/AcknowledgementsScreen';
+export {
+  OnboardingDownload,
+  TextModelChoice,
+  VoiceChoice,
+  Welcome,
+} from './OnboardingScreen/components';

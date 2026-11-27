@@ -11,6 +11,7 @@ import { isLiquidGlassSupported } from '@callstack/liquid-glass';
 import { useStyled } from 'hooks';
 import { IconButtonIconProps } from 'components';
 import { haptics } from 'helpers';
+import { Spacings } from 'style';
 
 import { styles } from './InputBar.styles';
 import { AttachTray, type ImageAttachSource } from './components/AttachTray';
@@ -23,6 +24,7 @@ import { useAttachTrayCollapse } from './hooks/useAttachTrayCollapse';
 import { useDrawerSwipeExclusion } from './hooks/useDrawerSwipeExclusion';
 import { useOpenVoiceAssistant } from './hooks/useOpenVoiceAssistant';
 import { useSyncedInputValue } from './hooks/useSyncedInputValue';
+import type { ChatColumn } from '../../hooks/useChatColumn';
 
 export type { ImageAttachSource };
 
@@ -41,6 +43,7 @@ interface InputBarProps {
   onComposerLayout?: (event: LayoutChangeEvent) => void;
   style?: StyleProp<ViewStyle>;
   messageStarters?: React.ReactNode;
+  column?: ChatColumn;
   canAttachImage?: boolean;
   canAttachAudio?: boolean;
   imageSource?: ImageAttachSource;
@@ -77,6 +80,7 @@ const InputBarView: React.FC<InputBarProps> = ({
   onComposerLayout,
   style,
   messageStarters,
+  column,
   canAttachImage = false,
   canAttachAudio = false,
   imageSource,
@@ -114,6 +118,11 @@ const InputBarView: React.FC<InputBarProps> = ({
   const expanded = canAttach && attachExpanded;
   const hasImage = imageSource !== undefined;
   const hasAttachment = hasImage || hasAudio;
+
+  const columnPadding = column && {
+    paddingLeft: column.paddingLeft,
+    paddingRight: column.paddingRight,
+  };
 
   useAttachTrayCollapse({
     attachExpanded,
@@ -170,23 +179,29 @@ const InputBarView: React.FC<InputBarProps> = ({
     <View style={styles.mainContainer} onLayout={handleLayout}>
       {messageStarters}
       {expanded && (
-        <AttachTray
-          canAttachImage={canAttachImage}
-          canAttachAudio={canAttachAudio}
-          imageSource={imageSource}
-          hasAudio={hasAudio}
-          disabled={featuresDisabled}
-          onAttachImage={onAttachImage}
-          onAttachCamera={onAttachCamera}
-          onAttachAudio={onAttachAudio}
-          onUnavailable={onUnavailable}
-        />
+        <View style={columnPadding}>
+          <AttachTray
+            canAttachImage={canAttachImage}
+            canAttachAudio={canAttachAudio}
+            imageSource={imageSource}
+            hasAudio={hasAudio}
+            disabled={featuresDisabled}
+            onAttachImage={onAttachImage}
+            onAttachCamera={onAttachCamera}
+            onAttachAudio={onAttachAudio}
+            onUnavailable={onUnavailable}
+          />
+        </View>
       )}
       <View
         ref={composerRef}
         onLayout={onComposerLayout}
         style={[
           styles.inputFieldContainer,
+          column && {
+            paddingLeft: Spacings.md + column.paddingLeft,
+            paddingRight: Spacings.md + column.paddingRight,
+          },
           style,
           !isLiquidGlassSupported && { backgroundColor: colors.surface },
         ]}
@@ -208,7 +223,7 @@ const InputBarView: React.FC<InputBarProps> = ({
         >
           <TextInput
             key={inputKey}
-            autoFocus={focused}
+            autoFocus={focused && value !== ''}
             style={[styles.textInput, { color: colors.onSurface }]}
             placeholder={t('components.inputBar.placeholder')}
             placeholderTextColor="#999"

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { MaterialSymbolProps, SFSymbolProps } from '@react-navigation/native';
+import type { AndroidIconName, IosIconName } from 'types';
 import { FIRST_PICK_TAG } from 'helpers';
 import { useStyled } from 'hooks';
 import { Text } from '../Text/Text';
@@ -13,8 +13,8 @@ export type TagVariant = 'default' | 'highlight' | 'warning';
 interface TagProps {
   label: string;
   variant?: TagVariant;
-  iosIconName?: SFSymbolProps['name'];
-  androidIconName?: MaterialSymbolProps['name'];
+  iosIconName?: IosIconName;
+  androidIconName?: AndroidIconName;
 }
 
 export const Tag: React.FC<TagProps> = ({

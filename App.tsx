@@ -1,34 +1,9 @@
 import 'i18n';
-import React, { useCallback, useEffect, useRef } from 'react';
-import { useState } from 'react';
-import { Platform, StatusBar } from 'react-native';
-import { setAudioModeAsync } from 'expo-audio';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { KeyboardProvider } from 'react-native-keyboard-controller';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { DefaultTheme, DarkTheme } from '@react-navigation/native';
+import React from 'react';
+import { Platform } from 'react-native';
+import { ExpoRoot } from 'expo-router';
 import * as Sentry from '@sentry/react-native';
-import { ThemeProvider, isDarkModeEnabled } from 'context';
-import {
-  initDatabase,
-  resetDatabase,
-  hydrateAppState,
-  getAppState,
-  setAppState,
-} from 'database';
-import {
-  getAllModels,
-  getConversationById,
-  getModelById,
-  getModelDownloads,
-} from 'repositories';
-import { log } from 'helpers';
-import { isChatPipeline, MODEL_SLOTS } from 'types';
-import { useResumeModelDownloads, useStyled } from 'hooks';
-import { ErrorScreen, LogoLoadingScreen, OnboardingScreen } from 'screens';
-import { WebScrapeHost } from 'components';
-import { AiServiceProvider, prefetchModelCatalogue } from 'services';
-import { RootNavigator } from 'navigation';
+import { navigationIntegration } from 'navigation';
 
 const unWantedError =
   'Cannot create devtools websocket connections in embedded environments.';
@@ -41,11 +16,7 @@ Sentry.init({
   tracesSampleRate: SAMPLE_RATE,
   profilesSampleRate: SAMPLE_RATE,
   enableLogs: true,
-  integrations: [
-    Sentry.reactNavigationIntegration({
-      enableTimeToInitialDisplay: true,
-    }),
-  ],
+  integrations: [navigationIntegration],
   enableNativeFramesTracking: true,
   environment: __DEV__ ? 'development' : 'production',
   debug: false,
@@ -77,196 +48,16 @@ Sentry.init({
   },
 });
 
-interface AppContentProps {
-  showOnboarding: boolean;
-  onOnboardingFinish: () => void;
-}
-
-function AppContent({ showOnboarding, onOnboardingFinish }: AppContentProps) {
-  const { colors } = useStyled();
-  const isDarkMode = isDarkModeEnabled();
-
-  const navigationTheme = {
-    ...(isDarkMode ? DarkTheme : DefaultTheme),
-    colors: {
-      ...(isDarkMode ? DarkTheme.colors : DefaultTheme.colors),
-      background: colors.surface,
-    },
-  };
-
-  useResumeModelDownloads({ alertOnFailure: !showOnboarding });
-
-  return (
-    <>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <Sentry.NavigationContainer theme={navigationTheme}>
-        {showOnboarding ? (
-          <OnboardingScreen onFinish={onOnboardingFinish} />
-        ) : (
-          <RootNavigator />
-        )}
-      </Sentry.NavigationContainer>
-      {!showOnboarding && <WebScrapeHost />}
-    </>
-  );
-}
-
-// Hydrated state can point at rows that no longer exist (model deleted,
-// database reset). Clear stale ids so the app degrades to the select-a-model
-// or empty-chat flows instead of dead-ending on the error screen.
-async function dropStaleIdsInUse(): Promise<void> {
-  const state = getAppState();
-
-  for (const { appStateKey } of MODEL_SLOTS) {
-    if (appStateKey === 'modelIdInUse') {
-      continue; // handle bellow for loop
-    }
-
-    const modelId = state[appStateKey];
-
-    if (modelId !== undefined && (await getModelById(modelId)) === undefined) {
-      await setAppState({ [appStateKey]: undefined });
-    }
-  }
-
-  const { modelIdInUse, conversationIdInUse } = state;
-
-  if (
-    modelIdInUse !== undefined &&
-    (await getModelById(modelIdInUse)) === undefined
-  ) {
-    await setAppState({
-      modelIdInUse: undefined,
-      conversationIdInUse: undefined,
-    });
-    return;
-  }
-
-  if (conversationIdInUse === undefined) {
-    return;
-  }
-
-  const conversation = await getConversationById(conversationIdInUse);
-  if (conversation === undefined || conversation.modelId !== modelIdInUse) {
-    await setAppState({ conversationIdInUse: undefined });
-  }
-}
-
-// Onboarding shows when no chat model is downloaded or in download.
-async function needsOnboarding(): Promise<boolean> {
-  if (getAppState().modelIdInUse !== undefined) {
-    return false;
-  }
-
-  try {
-    const [models, downloads] = await Promise.all([
-      getAllModels(),
-      getModelDownloads(),
-    ]);
-
-    return (
-      !models.some(model => isChatPipeline(model.pipeline)) &&
-      !downloads.some(download => isChatPipeline(download.model.pipeline))
-    );
-  } catch (error) {
-    log('needsOnboarding failed', error, { capture: true });
-    return false;
-  }
-}
-
-function AppLoader() {
-  const [dbReady, setDbReady] = useState(false);
-  const [dbError, setDbError] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [introDone, setIntroDone] = useState(false);
-
-  const running = useRef(false);
-
-  const finishIntro = useCallback(() => setIntroDone(true), []);
-
-  const finishOnboarding = useCallback(() => setShowOnboarding(false), []);
-
-  const init = useCallback(async () => {
-    if (running.current) {
-      return;
-    }
-    running.current = true;
-
-    setDbError(false);
-    setDbReady(false);
-
-    setAudioModeAsync({ playsInSilentMode: true }).catch(error =>
-      log('AppLoader setAudioModeAsync failed', error),
-    );
-
-    prefetchModelCatalogue();
-
-    try {
-      await initDatabase();
-      await hydrateAppState();
-      await dropStaleIdsInUse();
-      setShowOnboarding(await needsOnboarding());
-
-      Sentry.appLoaded();
-      setDbReady(true);
-    } catch (error) {
-      log('App init failed', error, { capture: true });
-      setDbError(true);
-    } finally {
-      running.current = false;
-    }
-  }, []);
-
-  const reset = useCallback(async () => {
-    if (running.current) {
-      return;
-    }
-    running.current = true;
-
-    setDbError(false);
-    setDbReady(false);
-    try {
-      await resetDatabase();
-    } catch (error) {
-      log('App reset failed', error, { capture: true });
-    } finally {
-      running.current = false;
-    }
-    init();
-  }, [init]);
-
-  useEffect(() => {
-    init();
-  }, [init]);
-
-  if (dbError) {
-    return <ErrorScreen onRetry={init} onReset={reset} />;
-  }
-
-  if (!dbReady || !introDone) {
-    return <LogoLoadingScreen onAnimationEnd={finishIntro} />;
-  }
-
-  return (
-    <AiServiceProvider>
-      <AppContent
-        showOnboarding={showOnboarding}
-        onOnboardingFinish={finishOnboarding}
-      />
-    </AiServiceProvider>
-  );
-}
+// Route files under app/routes (Expo Router's default filter: no +api, +html
+// or +middleware files). This is a bare React Native app whose entry stays
+// index.js, so it hands Expo Router the routes itself instead of going through
+// expo-router/entry. Must be a literal require.context call for Metro.
+const routes = require.context(
+  './app/routes',
+  true,
+  /^(?:\.\/)(?!(?:(?:(?:.*\+api)|(?:\+html)|(?:\+middleware)))\.[tj]sx?$).*(?:\.android|\.ios|\.native)?\.[tj]sx?$/,
+);
 
 export default Sentry.wrap(function App() {
-  return (
-    <GestureHandlerRootView>
-      <KeyboardProvider>
-        <SafeAreaProvider>
-          <ThemeProvider>
-            <AppLoader />
-          </ThemeProvider>
-        </SafeAreaProvider>
-      </KeyboardProvider>
-    </GestureHandlerRootView>
-  );
+  return <ExpoRoot context={routes} />;
 });

@@ -1,16 +1,16 @@
 import React from 'react';
 import { View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, Text } from 'components';
 import { useStyled } from 'hooks';
+import { Routes } from 'navigation';
 
 import styles from './NoModelSelectedScreen.styles';
 
 export const NoModelSelectedScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const navigation = useNavigation();
 
   return (
     <View
@@ -33,8 +33,7 @@ export const NoModelSelectedScreen: React.FC = () => {
       <Button
         title={t('screens.noModelSelected.selectModel')}
         onPress={() => {
-          // @ts-ignore
-          navigation.navigate('Models');
+          router.navigate(Routes.models);
         }}
       />
     </View>

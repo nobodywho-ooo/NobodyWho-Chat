@@ -7,10 +7,7 @@ import {
   View,
   ViewStyle,
 } from 'react-native';
-import {
-  type SFSymbolProps,
-  type MaterialSymbolProps,
-} from '@react-navigation/native';
+import type { AndroidIconName, IosIconName } from 'types';
 import { PlatformIcon } from 'components';
 import { useStyled } from 'hooks';
 import { ButtonVariant } from 'types';
@@ -18,8 +15,8 @@ import { ButtonVariant } from 'types';
 import { styles, getVariantStyles } from './Button.styles';
 
 interface ButtonIconProps {
-  iosIconName: SFSymbolProps['name'];
-  androidIconName: MaterialSymbolProps['name'];
+  iosIconName: IosIconName;
+  androidIconName: AndroidIconName;
 }
 
 interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {

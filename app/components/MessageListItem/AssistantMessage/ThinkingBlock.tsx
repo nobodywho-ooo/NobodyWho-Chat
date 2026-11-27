@@ -1,7 +1,8 @@
-import React, { useCallback, useMemo, useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTranslation } from 'react-i18next';
+import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 import { StreamdownText } from 'react-native-streamdown';
 import { getMarkdownStyle } from 'helpers';
 import { useStyled, useThemeMode } from 'hooks';
@@ -33,7 +34,6 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
   const { t } = useTranslation();
   const { colors } = useStyled();
   const { isDarkMode } = useThemeMode();
-  const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
 
   const markdownStyle = useMemo(() => {
     const base = getMarkdownStyle(isDarkMode, colors.onSurfaceVariant);
@@ -46,10 +46,6 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
       },
     };
   }, [isDarkMode, colors.onSurfaceVariant]);
-
-  const scrollToLatest = useCallback(() => {
-    scrollRef.current?.scrollToEnd({ animated: false });
-  }, []);
 
   const previewThinking = useMemo(
     () =>
@@ -97,18 +93,21 @@ export const ThinkingBlock: React.FC<ThinkingBlockProps> = ({
           end={{ x: 0, y: 1 }}
           style={styles.fadeContainer}
         />
-        <ScrollView
-          ref={scrollRef}
-          style={styles.previewScrollContainer}
-          showsVerticalScrollIndicator={false}
-          onContentSizeChange={scrollToLatest}
-          pointerEvents="none"
-        >
-          <StreamdownText
-            markdown={previewThinking}
-            markdownStyle={markdownStyle}
-          />
-        </ScrollView>
+        <View style={styles.previewWindow} pointerEvents="none">
+          <View style={styles.previewText}>
+            {active ? (
+              <StreamdownText
+                markdown={previewThinking}
+                markdownStyle={markdownStyle}
+              />
+            ) : (
+              <EnrichedMarkdownText
+                markdown={previewThinking}
+                markdownStyle={markdownStyle}
+              />
+            )}
+          </View>
+        </View>
       </View>
     </Pressable>
   );
@@ -139,8 +138,16 @@ const styles = StyleSheet.create({
   previewContainer: {
     position: 'relative',
   },
-  previewScrollContainer: {
+  previewWindow: {
     height: PREVIEW_HEIGHT,
+    overflow: 'hidden',
+  },
+  previewText: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    minHeight: PREVIEW_HEIGHT,
   },
   fadeContainer: {
     position: 'absolute',

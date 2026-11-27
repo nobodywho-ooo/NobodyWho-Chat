@@ -20,9 +20,9 @@ import { DisplayMessage } from 'types';
 import { AnswerBody } from './AnswerBody';
 import { AudioSpeakerButton } from './AudioSpeakerButton';
 import { ThinkingBlock } from './ThinkingBlock';
-import { ThinkingModal } from './ThinkingModal';
+import { ThinkingSheet } from './ThinkingSheet';
 import { ToolCallBlock } from './ToolCallBlock';
-import { ToolCallModal } from './ToolCallModal';
+import { ToolCallSheet } from './ToolCallSheet';
 import { WebSearchBlock, WebSourcesSheet } from './WebSearch';
 
 import { PlatformIcon } from '../../PlatformIcon/PlatformIcon';
@@ -279,7 +279,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
         </View>
       )}
       {thinking !== null && (
-        <ThinkingModal
+        <ThinkingSheet
           thinking={thinkingOpen ? thinking : null}
           active={isThinkingActive}
           onClose={() => setThinkingOpen(false)}
@@ -293,7 +293,7 @@ const AssistantMessageComponent: React.FC<AssistantMessageProps> = ({
         />
       )}
       {openToolIndex !== null && toolInvocations[openToolIndex] && (
-        <ToolCallModal
+        <ToolCallSheet
           name={toolInvocations[openToolIndex].name}
           arguments={toolInvocations[openToolIndex].arguments}
           result={toolInvocations[openToolIndex].result}

@@ -1,20 +1,11 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
-import { OnboardingScreenProps } from '../../../Onboarding.types';
+import { mockRouter } from 'jest/mock/node-modules';
+
 import { Welcome } from '../Welcome';
 
-const navigation = { replace: jest.fn() };
-
-const renderWelcome = () =>
-  render(
-    <Welcome
-      {...({
-        navigation,
-        route: { key: 'Welcome', name: 'Welcome' },
-      } as unknown as OnboardingScreenProps<'Welcome'>)}
-    />,
-  );
+const renderWelcome = () => render(<Welcome />);
 
 beforeEach(() => {
   jest.clearAllMocks();
@@ -43,5 +34,5 @@ test('continues to the text model choice, leaving nothing to go back to', async 
 
   await fireEvent.press(screen.getByTestId('onboarding-continue-button'));
 
-  expect(navigation.replace).toHaveBeenCalledWith('TextModelChoice');
+  expect(mockRouter.replace).toHaveBeenCalledWith('/onboarding/text-model');
 });

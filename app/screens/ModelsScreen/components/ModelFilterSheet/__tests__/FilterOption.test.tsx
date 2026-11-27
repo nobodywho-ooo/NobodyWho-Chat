@@ -10,16 +10,21 @@ const ICON = {
   androidIconName: 'text_to_speech',
 } as const;
 
-const dotColor = (screen: Awaited<ReturnType<typeof render>>) => {
-  const [dot] = screen.container.queryAll(
+const iconColor = (screen: Awaited<ReturnType<typeof render>>) => {
+  const [icon] = screen.container.queryAll(
+    node => node.type === 'PlatformIcon',
+  );
+  return icon.props.color;
+};
+
+const hasDot = (screen: Awaited<ReturnType<typeof render>>) =>
+  screen.container.queryAll(
     node =>
       node.type === 'View' &&
       StyleSheet.flatten(node.props.style)?.borderRadius === 3,
-  );
-  return StyleSheet.flatten(dot.props.style).backgroundColor;
-};
+  ).length > 0;
 
-test('the selected option gets a primary dot and a bold label', async () => {
+test('the selected option has a bold label and icon in the primary colour, no dot', async () => {
   const screen = await render(
     <FilterOption
       label="Text to Speech"
@@ -29,14 +34,14 @@ test('the selected option gets a primary dot and a bold label', async () => {
     />,
   );
 
-  expect(dotColor(screen)).toBe(lightColors.primary);
+  expect(hasDot(screen)).toBe(false);
+  expect(iconColor(screen)).toBe(lightColors.primary);
   const label = screen.getByText('Text to Speech');
   expect(label.props.bold).toBe(true);
-  // No colour override: Text's own default, onSurface.
-  expect(label.props.style).toBeUndefined();
+  expect(label.props.style).toEqual({ color: lightColors.primary });
 });
 
-test('an unselected option has no visible dot and a regular label', async () => {
+test('an unselected option has a regular label and icon in the text colour', async () => {
   const screen = await render(
     <FilterOption
       label="Text to Speech"
@@ -46,26 +51,11 @@ test('an unselected option has no visible dot and a regular label', async () => 
     />,
   );
 
-  expect(dotColor(screen)).toBeUndefined();
+  expect(hasDot(screen)).toBe(false);
+  expect(iconColor(screen)).toBe(lightColors.onSurface);
   const label = screen.getByText('Text to Speech');
   expect(label.props.bold).toBe(false);
   expect(label.props.style).toBeUndefined();
-});
-
-test('the icon uses the label colour', async () => {
-  const screen = await render(
-    <FilterOption
-      label="Text to Speech"
-      icon={ICON}
-      selected={false}
-      onPress={jest.fn()}
-    />,
-  );
-
-  const [icon] = screen.container.queryAll(
-    node => node.type === 'PlatformIcon',
-  );
-  expect(icon.props.color).toBe(lightColors.onSurface);
 });
 
 test('pressing the option calls onPress', async () => {

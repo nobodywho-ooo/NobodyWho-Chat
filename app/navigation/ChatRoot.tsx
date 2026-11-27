@@ -10,7 +10,7 @@ import React, {
   useState,
 } from 'react';
 import { BlurTargetView } from 'expo-blur';
-import { useHeaderHeight } from '@react-navigation/elements';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { AppState, AppStateStatus, StyleSheet, View } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { SamplerPresets } from 'react-native-nobodywho';
@@ -169,7 +169,7 @@ const ChatRootScreen = () => {
   );
 };
 
-export const ChatStackNavigator = () => {
+export const ChatRoot = () => {
   const { t } = useTranslation();
   const { models, loading: modelsLoading } = useModels();
   const { modelIdInUse, conversationIdInUse: inUseConversationId } =
@@ -194,13 +194,13 @@ export const ChatStackNavigator = () => {
     } = getAppState();
 
     if (modelId === undefined) {
-      throw new Error('ChatStackNavigator: no model in use');
+      throw new Error('ChatRoot: no model in use');
     }
 
     const model = await getModelById(modelId);
 
     if (model === undefined) {
-      throw new Error(`ChatStackNavigator: model ${modelId} not found`);
+      throw new Error(`ChatRoot: model ${modelId} not found`);
     }
 
     // Every write site keeps non-chat models out of modelIdInUse; this is the
@@ -208,7 +208,7 @@ export const ChatStackNavigator = () => {
     // native loader.
     if (!isChatPipeline(model.pipeline)) {
       throw new Error(
-        `ChatStackNavigator: model ${modelId} (${model.pipeline}) is not a chat model`,
+        `ChatRoot: model ${modelId} (${model.pipeline}) is not a chat model`,
       );
     }
 
@@ -232,7 +232,7 @@ export const ChatStackNavigator = () => {
     const isCurrent = () => load === historyLoadRef.current;
 
     if (chat.current === undefined) {
-      throw new Error('ChatStackNavigator: current chat is undefined');
+      throw new Error('ChatRoot: current chat is undefined');
     }
 
     // A background digest run restores the previous conversation's history
@@ -244,26 +244,31 @@ export const ChatStackNavigator = () => {
     }
 
     const { modelIdInUse: modelId, conversationIdInUse } = getAppState();
+
     if (conversationIdInUse === undefined) {
       await chat.current.setChatHistory([]);
+
       if (!isCurrent()) {
         return;
       }
+
       setChatHistory(emptyHistory());
       setLoadedConversationId(undefined);
+
       return;
     }
 
     const conversation = await getConversationById(conversationIdInUse);
+
     if (conversation === undefined) {
       throw new Error(
-        `ChatStackNavigator: conversation ${conversationIdInUse} not found`,
+        `ChatRoot: conversation ${conversationIdInUse} not found`,
       );
     }
 
     if (conversation.modelId !== modelId) {
       throw new Error(
-        `ChatStackNavigator: conversation ${conversationIdInUse} belongs to model ${conversation.modelId}, not ${modelId}`,
+        `ChatRoot: conversation ${conversationIdInUse} belongs to model ${conversation.modelId}, not ${modelId}`,
       );
     }
 
@@ -274,7 +279,7 @@ export const ChatStackNavigator = () => {
     }
 
     if (chat.current === undefined) {
-      throw new Error('ChatStackNavigator: current chat is undefined');
+      throw new Error('ChatRoot: current chat is undefined');
     }
 
     await chat.current.setChatHistory(toModelHistory(messages));
@@ -302,12 +307,13 @@ export const ChatStackNavigator = () => {
 
     try {
       const completed = await steps();
+
       if (completed && isCurrent()) {
         setStatus(SessionStatus.Ready);
       }
     } catch (error) {
       if (isCurrent()) {
-        log('ChatStackNavigator session error', error, { capture: true });
+        log('ChatRoot session error', error, { capture: true });
         setStatus(SessionStatus.Error);
       }
     }
@@ -354,7 +360,7 @@ export const ChatStackNavigator = () => {
       if (chat.current === undefined || sessionId !== sessionIdRef.current) {
         return;
       }
-      log('ChatStackNavigator history refresh error', error, { capture: true });
+      log('ChatRoot history refresh error', error, { capture: true });
       setStatus(SessionStatus.Error);
     }
   }, [chat, resetAndLoadChatHistory]);
@@ -384,13 +390,15 @@ export const ChatStackNavigator = () => {
 
     try {
       const messages = await getMessagesByConversationId(id);
+
       if (load !== historyLoadRef.current) {
         return;
       }
+
       setChatHistory(toChatHistory(messages));
       setLoadedConversationId(id);
     } catch (error) {
-      log('ChatStackNavigator voice history reload', error, { capture: true });
+      log('ChatRoot voice history reload', error, { capture: true });
     }
   }, []);
 
@@ -404,6 +412,7 @@ export const ChatStackNavigator = () => {
         selfCreatedConversationIdRef.current = id;
         setAppState({ conversationIdInUse: id });
       }
+
       reloadDisplayHistory(id);
     },
     [reloadDisplayHistory],
@@ -502,7 +511,7 @@ export const ChatStackNavigator = () => {
         try {
           chat.current?.stopGeneration();
         } catch (error) {
-          log('ChatStackNavigator stopGeneration', error);
+          log('ChatRoot stopGeneration', error);
         }
         refreshChatHistory();
       }

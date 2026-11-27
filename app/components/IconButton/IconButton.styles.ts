@@ -2,7 +2,7 @@ import { StyleSheet } from 'react-native';
 import { isLiquidGlassSupported } from '@callstack/liquid-glass';
 
 const SIZE = 36;
-const GLASS_SIZE = 44; // see BUTTON_SIZE in @react-navigation/elements.
+const GLASS_SIZE = 44; // see BUTTON_SIZE in expo-router/react-navigation (elements).
 
 export const iconButtonSize = (compact = false) =>
   isLiquidGlassSupported && !compact ? GLASS_SIZE : SIZE;

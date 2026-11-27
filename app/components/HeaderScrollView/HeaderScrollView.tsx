@@ -7,7 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useHeaderHeight } from '@react-navigation/elements';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { BlurTargetView } from 'expo-blur';
 
 import { GlassScrollEdge } from '../GlassScrollEdge/GlassScrollEdge';
@@ -18,9 +18,20 @@ interface HeaderScrollViewProps extends ScrollViewProps {
 
 type Style = ScrollViewProps['contentContainerStyle'];
 
-const paddingOf = (style: Style, side: 'paddingTop' | 'paddingBottom') => {
+// Side insets: the iPhone Duo status-bar rail (84 pt) on the left or right edge in landscape
+// Padding the content, not the ScrollView, keeps the background scrolling edge to edge.
+type PaddingSide =
+  'paddingTop' | 'paddingBottom' | 'paddingLeft' | 'paddingRight';
+const AXIS_OF: Record<PaddingSide, 'paddingVertical' | 'paddingHorizontal'> = {
+  paddingTop: 'paddingVertical',
+  paddingBottom: 'paddingVertical',
+  paddingLeft: 'paddingHorizontal',
+  paddingRight: 'paddingHorizontal',
+};
+
+const paddingOf = (style: Style, side: PaddingSide) => {
   const flat = StyleSheet.flatten(style) ?? {};
-  const value = flat[side] ?? flat.paddingVertical ?? flat.padding ?? 0;
+  const value = flat[side] ?? flat[AXIS_OF[side]] ?? flat.padding ?? 0;
   return typeof value === 'number' ? value : 0;
 };
 
@@ -30,7 +41,7 @@ export const HeaderScrollView: React.FC<HeaderScrollViewProps> = ({
   ...props
 }) => {
   const headerHeight = useHeaderHeight();
-  const { bottom } = useSafeAreaInsets();
+  const { bottom, left, right } = useSafeAreaInsets();
   const blurTargetRef = useRef<ComponentRef<typeof View>>(null);
 
   return (
@@ -47,6 +58,10 @@ export const HeaderScrollView: React.FC<HeaderScrollViewProps> = ({
             {
               paddingTop:
                 paddingOf(contentContainerStyle, 'paddingTop') + headerHeight,
+              paddingLeft:
+                paddingOf(contentContainerStyle, 'paddingLeft') + left,
+              paddingRight:
+                paddingOf(contentContainerStyle, 'paddingRight') + right,
             },
             Platform.OS === 'android' && {
               paddingBottom:

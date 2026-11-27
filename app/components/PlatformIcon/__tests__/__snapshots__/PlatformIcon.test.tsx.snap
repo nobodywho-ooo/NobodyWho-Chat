@@ -1,9 +1,13 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`renders correctly PlatformIcon 1`] = `
-<SFSymbol
-  color="red"
-  name="bubble.fill"
+<SymbolView
+  name={
+    {
+      "android": "chat_bubble",
+      "ios": "bubble.fill",
+    }
+  }
   size={48}
   style={
     {
@@ -11,5 +15,6 @@ exports[`renders correctly PlatformIcon 1`] = `
       "width": 48,
     }
   }
+  tintColor="red"
 />
 `;

@@ -20,8 +20,12 @@
     "close": "Close",
     "chatMenu": {
       "newChat": "New Chat",
-      "deleteChat": "Delete Chat"
-    }
+      "deleteChat": "Delete Chat",
+      "more": "More"
+    },
+    "openMenu": "Menu",
+    "showSidebar": "Show sidebar",
+    "hideSidebar": "Hide sidebar"
   },
   "components": {
     "messageStarters": {
@@ -359,16 +363,23 @@
       "language": "Language",
       "languageSubtitle": "The language of the app",
       "about": "About",
+      "links": "Links",
+      "linksSubtitle": "Website, source code and X",
       "terms": "Terms & Conditions",
       "termsSubtitle": "Read our terms of use",
       "privacyPolicy": "Privacy Policy",
       "privacyPolicySubtitle": "How we handle your data",
       "acknowledgements": "Acknowledgements",
       "acknowledgementsSubtitle": "Models, code and web search",
+      "feedback": "Feedback",
+      "feedbackSubtitle": "Report a bug or suggest an improvement",
+      "feedbackUnavailableTitle": "No email app",
+      "feedbackUnavailableMessage": "Write to us at {{email}}",
       "rateApp": "Rate the app",
       "rateAppSubtitle": "Leave a review on the store",
       "website": "Website",
-      "github": "Github",
+      "nobodywhoGithub": "NobodyWho GitHub",
+      "appRepository": "App Repository",
       "x": "X"
     },
     "language": {

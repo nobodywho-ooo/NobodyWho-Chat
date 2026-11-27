@@ -3,7 +3,7 @@ import { StyleSheet } from 'react-native';
 import { render, fireEvent } from '@testing-library/react-native';
 
 import { mockSetAppState } from 'jest/mock/database';
-import { mockNavigate, mockUseSafeAreaInsets } from 'jest/mock/node-modules';
+import { mockRouter, mockUseSafeAreaInsets } from 'jest/mock/node-modules';
 import { mockUseModels } from 'jest/mock/hooks';
 import { buildModel } from 'jest/factories/model';
 import { AiServiceProvider } from 'services';
@@ -11,10 +11,6 @@ import { ModelPipeline } from 'types';
 
 import { DrawerContentScreen } from '../DrawerContentScreen';
 import { FLOATING_BUTTON_BOTTOM } from '../DrawerContentScreen.styles';
-
-// DrawerContentScreen navigates via the navigation prop the drawer passes it
-// (not useNavigation — that resolves to the parent navigator in drawer content).
-const navigation = { navigate: mockNavigate } as never;
 
 // Button and ConversationsList are host-mocked, so they're found through the
 // container by their props / host type.
@@ -35,7 +31,7 @@ const getConversationsList = (screen: Screen) => {
 };
 
 beforeEach(() => {
-  mockNavigate.mockClear();
+  mockRouter.navigate.mockClear();
   mockSetAppState.mockClear();
   mockUseModels.mockReturnValue({ models: [] });
 });
@@ -44,7 +40,7 @@ test('renders correctly DrawerContentScreen', async () => {
   const tree = (
     await render(
       <AiServiceProvider>
-        <DrawerContentScreen navigation={navigation} onCloseDrawer={() => {}} />
+        <DrawerContentScreen onCloseDrawer={() => {}} />
       </AiServiceProvider>,
     )
   ).toJSON();
@@ -54,7 +50,7 @@ test('renders correctly DrawerContentScreen', async () => {
 test('pressing the settings icon replaces the chat with the Settings destination', async () => {
   const screen = await render(
     <AiServiceProvider>
-      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
+      <DrawerContentScreen onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
@@ -62,23 +58,43 @@ test('pressing the settings icon replaces the chat with the Settings destination
     screen.getByLabelText('screens.drawerContent.settings'),
   );
 
-  expect(mockNavigate).toHaveBeenCalledWith('Settings');
+  expect(mockRouter.navigate).toHaveBeenCalledWith('/settings');
+});
+
+test('as a sidebar, offers to hide it in place of the close button', async () => {
+  const onHideSidebar = jest.fn();
+  const screen = await render(
+    <AiServiceProvider>
+      <DrawerContentScreen
+        onCloseDrawer={jest.fn()}
+        onHideSidebar={onHideSidebar}
+      />
+    </AiServiceProvider>,
+  );
+
+  const iconButtons = screen.container.queryAll(
+    node => node.type === 'IconButton',
+  );
+  expect(iconButtons.map(node => node.props.icon.iosIconName)).toEqual([
+    'sidebar.left',
+    'gearshape',
+  ]);
+
+  await fireEvent.press(screen.getByLabelText('navigation.hideSidebar'));
+  expect(onHideSidebar).toHaveBeenCalledTimes(1);
 });
 
 test('pressing models replaces the chat with the Models destination', async () => {
   const onCloseDrawer = jest.fn();
   const screen = await render(
     <AiServiceProvider>
-      <DrawerContentScreen
-        navigation={navigation}
-        onCloseDrawer={onCloseDrawer}
-      />
+      <DrawerContentScreen onCloseDrawer={onCloseDrawer} />
     </AiServiceProvider>,
   );
 
   await fireEvent.press(screen.getByText('screens.drawerContent.models'));
 
-  expect(mockNavigate).toHaveBeenCalledWith('Models');
+  expect(mockRouter.navigate).toHaveBeenCalledWith('/models');
   expect(onCloseDrawer).toHaveBeenCalled();
 });
 
@@ -87,10 +103,7 @@ test('pressing new chat clears the conversation in use, shows the chat and close
   const onCloseDrawer = jest.fn();
   const screen = await render(
     <AiServiceProvider>
-      <DrawerContentScreen
-        navigation={navigation}
-        onCloseDrawer={onCloseDrawer}
-      />
+      <DrawerContentScreen onCloseDrawer={onCloseDrawer} />
     </AiServiceProvider>,
   );
 
@@ -99,7 +112,7 @@ test('pressing new chat clears the conversation in use, shows the chat and close
   expect(mockSetAppState).toHaveBeenCalledWith({
     conversationIdInUse: undefined,
   });
-  expect(mockNavigate).toHaveBeenCalledWith('Chat');
+  expect(mockRouter.navigate).toHaveBeenCalledWith('/');
   expect(onCloseDrawer).toHaveBeenCalled();
 });
 
@@ -110,7 +123,7 @@ test('the conversations list leaves room to scroll clear of the new chat button'
   mockUseModels.mockReturnValue({ models: [buildModel(1)] });
   const screen = await render(
     <AiServiceProvider>
-      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
+      <DrawerContentScreen onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
@@ -141,7 +154,7 @@ test('the new chat button floats above the system navigation bar', async () => {
   mockUseModels.mockReturnValue({ models: [buildModel(1)] });
   const screen = await render(
     <AiServiceProvider>
-      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
+      <DrawerContentScreen onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
@@ -161,7 +174,7 @@ test('the conversations list reclaims the room when there is no new chat button'
 
   const screen = await render(
     <AiServiceProvider>
-      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
+      <DrawerContentScreen onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
@@ -173,7 +186,7 @@ test('hides the new chat button when no model is downloaded', async () => {
 
   const screen = await render(
     <AiServiceProvider>
-      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
+      <DrawerContentScreen onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
@@ -190,7 +203,7 @@ test('hides the new chat button when only voice models are downloaded', async ()
 
   const screen = await render(
     <AiServiceProvider>
-      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
+      <DrawerContentScreen onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 
@@ -202,7 +215,7 @@ test('has no change model button: the chat header does that', async () => {
 
   const screen = await render(
     <AiServiceProvider>
-      <DrawerContentScreen navigation={navigation} onCloseDrawer={jest.fn()} />
+      <DrawerContentScreen onCloseDrawer={jest.fn()} />
     </AiServiceProvider>,
   );
 

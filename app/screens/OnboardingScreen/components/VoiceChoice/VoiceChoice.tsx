@@ -7,7 +7,9 @@ import { useStyled } from 'hooks';
 import { canRerankWithEmbeddings } from 'services';
 import { isEmbeddingPipeline } from 'types';
 
-import { OnboardingScreenProps } from '../../Onboarding.types';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Routes } from 'navigation';
+import { VoiceChoiceParams } from '../../Onboarding.types';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { useOnboardingHeader } from '../../hooks/useOnboardingHeader';
 import { OnboardingCard } from '../OnboardingCard/OnboardingCard';
@@ -17,19 +19,18 @@ import styles from './VoiceChoice.styles';
 
 const CHOICE_ICON_SIZE = 24;
 
-export const VoiceChoice: React.FC<OnboardingScreenProps<'VoiceChoice'>> = ({
-  navigation,
-  route,
-}) => {
+export const VoiceChoice: React.FC = () => {
+  const router = useRouter();
+  const params = useLocalSearchParams<VoiceChoiceParams>();
   const { t } = useTranslation();
   const { colors } = useStyled();
   const {
     chatModels,
     curatedModels: { availabilityOf, ramGB },
   } = useOnboarding();
-  const { modelId } = route.params;
+  const modelId = Number(params.modelId);
 
-  useOnboardingHeader(navigation, false);
+  useOnboardingHeader(false);
 
   const downloadSizeGB = useCallback(
     (setup: ModelSetup) => {
@@ -76,8 +77,11 @@ export const VoiceChoice: React.FC<OnboardingScreenProps<'VoiceChoice'>> = ({
 
   const download = useCallback(
     (setup: ModelSetup) =>
-      navigation.navigate('OnboardingDownload', { modelId, setup }),
-    [navigation, modelId],
+      router.push({
+        pathname: Routes.onboardingDownload,
+        params: { modelId: String(modelId), setup },
+      }),
+    [router, modelId],
   );
 
   return (

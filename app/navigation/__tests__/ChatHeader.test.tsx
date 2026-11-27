@@ -8,7 +8,7 @@ import {
 } from 'jest/mock/hooks';
 import { mockSetAppState } from 'jest/mock/database';
 import { mockDeleteConversation } from 'jest/mock/repositories';
-import { mockNavigate } from 'jest/mock/node-modules';
+import { mockRouter } from 'jest/mock/node-modules';
 import { buildConversation } from 'jest/factories/conversation';
 import { buildModel } from 'jest/factories/model';
 import { log } from 'helpers';
@@ -16,7 +16,14 @@ import { AiServiceProvider } from 'services';
 import { lightColors } from 'style';
 import { ModelPipeline } from 'types';
 
-import { DrawerNavigator } from '../DrawerNavigator';
+import { ChatHeaderRight, ChatHeaderTitle } from '../ChatHeader';
+
+const ChatHeader = () => (
+  <>
+    <ChatHeaderTitle />
+    <ChatHeaderRight />
+  </>
+);
 
 const mockLog = log as jest.Mock;
 
@@ -44,7 +51,7 @@ beforeEach(() => {
   mockSetAppState.mockClear();
   mockDeleteConversation.mockReset().mockResolvedValue(undefined);
   mockLog.mockClear();
-  mockNavigate.mockClear();
+  mockRouter.push.mockClear();
 });
 
 const queryHeaderChevrons = (screen: Awaited<ReturnType<typeof render>>) =>
@@ -53,7 +60,7 @@ const queryHeaderChevrons = (screen: Awaited<ReturnType<typeof render>>) =>
 test('shows only the in-use model name and parameter count in the header', async () => {
   const screen = await render(
     <AiServiceProvider>
-      <DrawerNavigator />
+      <ChatHeader />
     </AiServiceProvider>,
   );
 
@@ -69,7 +76,7 @@ test('shows the model logo before its name in the header', async () => {
 
   const screen = await render(
     <AiServiceProvider>
-      <DrawerNavigator />
+      <ChatHeader />
     </AiServiceProvider>,
   );
 
@@ -83,7 +90,7 @@ test('pressing the header title opens the downloaded models screen', async () =>
 
   const screen = await render(
     <AiServiceProvider>
-      <DrawerNavigator />
+      <ChatHeader />
     </AiServiceProvider>,
   );
 
@@ -91,8 +98,9 @@ test('pressing the header title opens the downloaded models screen', async () =>
 
   await fireEvent.press(screen.getByText('Model 1'));
 
-  expect(mockNavigate).toHaveBeenCalledWith('DownloadedModelsScreen', {
-    canDelete: false,
+  expect(mockRouter.push).toHaveBeenCalledWith({
+    pathname: '/downloaded-models',
+    params: { canDelete: 'false' },
   });
 });
 
@@ -100,7 +108,7 @@ test('pressing the header title opens the downloaded models screen', async () =>
 test('hides the header chevron and ignores presses with a single model', async () => {
   const screen = await render(
     <AiServiceProvider>
-      <DrawerNavigator />
+      <ChatHeader />
     </AiServiceProvider>,
   );
 
@@ -108,7 +116,7 @@ test('hides the header chevron and ignores presses with a single model', async (
 
   await fireEvent.press(screen.getByText('Model 1'));
 
-  expect(mockNavigate).not.toHaveBeenCalled();
+  expect(mockRouter.push).not.toHaveBeenCalled();
 });
 
 test('does not count voice models as models to change to', async () => {
@@ -122,7 +130,7 @@ test('does not count voice models as models to change to', async () => {
 
   const screen = await render(
     <AiServiceProvider>
-      <DrawerNavigator />
+      <ChatHeader />
     </AiServiceProvider>,
   );
 
@@ -130,7 +138,7 @@ test('does not count voice models as models to change to', async () => {
 
   await fireEvent.press(screen.getByText('Model 1'));
 
-  expect(mockNavigate).not.toHaveBeenCalled();
+  expect(mockRouter.push).not.toHaveBeenCalled();
 });
 
 test('shows no header title when no model is in use', async () => {
@@ -142,7 +150,7 @@ test('shows no header title when no model is in use', async () => {
 
   const screen = await render(
     <AiServiceProvider>
-      <DrawerNavigator />
+      <ChatHeader />
     </AiServiceProvider>,
   );
 
@@ -159,7 +167,7 @@ test('greys out the header menu and ignores presses when no conversation is in u
 
   const screen = await render(
     <AiServiceProvider>
-      <DrawerNavigator />
+      <ChatHeader />
     </AiServiceProvider>,
   );
 
@@ -174,7 +182,7 @@ test('greys out the header menu and ignores presses when no conversation is in u
 test('shows the header menu with New Chat and Delete Chat actions', async () => {
   const screen = await render(
     <AiServiceProvider>
-      <DrawerNavigator />
+      <ChatHeader />
     </AiServiceProvider>,
   );
 
@@ -192,7 +200,7 @@ test('shows the header menu with New Chat and Delete Chat actions', async () => 
 test('New Chat clears the conversation in use without deleting anything', async () => {
   const screen = await render(
     <AiServiceProvider>
-      <DrawerNavigator />
+      <ChatHeader />
     </AiServiceProvider>,
   );
   const { onPressAction } = getMenu(screen).props;
@@ -210,7 +218,7 @@ test('New Chat clears the conversation in use without deleting anything', async 
 test('Delete Chat deletes the current conversation and starts a new chat', async () => {
   const screen = await render(
     <AiServiceProvider>
-      <DrawerNavigator />
+      <ChatHeader />
     </AiServiceProvider>,
   );
   const { onPressAction } = getMenu(screen).props;
@@ -230,7 +238,7 @@ test('Delete Chat logs and recovers when the deletion fails', async () => {
 
   const screen = await render(
     <AiServiceProvider>
-      <DrawerNavigator />
+      <ChatHeader />
     </AiServiceProvider>,
   );
   const { onPressAction } = getMenu(screen).props;

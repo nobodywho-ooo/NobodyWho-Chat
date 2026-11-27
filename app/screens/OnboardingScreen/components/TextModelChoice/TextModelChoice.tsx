@@ -3,22 +3,22 @@ import { useTranslation } from 'react-i18next';
 import { curatedOnboardingModels } from 'helpers';
 import { isChatPipeline, Model } from 'types';
 
-import { OnboardingScreenProps } from '../../Onboarding.types';
+import { useRouter } from 'expo-router';
+import { Routes } from 'navigation';
 import { useOnboarding } from '../../hooks/useOnboarding';
 import { useOnboardingHeader } from '../../hooks/useOnboardingHeader';
 import { OnboardingModelCard } from '../OnboardingModelCard/OnboardingModelCard';
 import { OnboardingStep } from '../OnboardingStep/OnboardingStep';
 
-export const TextModelChoice: React.FC<
-  OnboardingScreenProps<'TextModelChoice'>
-> = ({ navigation }) => {
+export const TextModelChoice: React.FC = () => {
+  const router = useRouter();
   const { t } = useTranslation();
   const {
     chatModels,
     curatedModels: { availabilityOf },
   } = useOnboarding();
 
-  useOnboardingHeader(navigation, false);
+  useOnboardingHeader(false);
 
   const handlePress = useCallback(
     (model: Model) => {
@@ -33,16 +33,19 @@ export const TextModelChoice: React.FC<
         );
 
       if (offersVoice) {
-        navigation.navigate('VoiceChoice', { modelId: model.id });
+        router.push({
+          pathname: Routes.onboardingVoice,
+          params: { modelId: String(model.id) },
+        });
         return;
       }
 
-      navigation.navigate('OnboardingDownload', {
-        modelId: model.id,
-        setup: 'textOnly',
+      router.push({
+        pathname: Routes.onboardingDownload,
+        params: { modelId: String(model.id), setup: 'textOnly' },
       });
     },
-    [navigation, availabilityOf],
+    [router, availabilityOf],
   );
 
   return (

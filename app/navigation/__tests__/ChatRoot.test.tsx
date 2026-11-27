@@ -16,7 +16,7 @@ import {
 } from 'repositories';
 import { ChatScreen } from 'screens';
 
-import { ChatStackNavigator } from '../ChatStackNavigator';
+import { ChatRoot } from '../ChatRoot';
 
 // ChatScreen stays real; wrapping it in a jest.fn lets a test read the props the
 // navigator hands it (test-renderer only exposes host elements).
@@ -271,7 +271,7 @@ const sendMessage = async (
 test('shows NoModelDownloadedScreen when no model is downloaded', async () => {
   mockUseModels.mockReturnValue({ models: [], loading: false });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
 
   expect(
     screen.getByText('screens.noModelDownloaded.noModelAvailable'),
@@ -284,7 +284,7 @@ test('shows the loading screen while models are still loading', async () => {
   mockUseModels.mockReturnValue({ models: [], loading: true });
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
 
   expect(
     screen.queryByText('screens.noModelDownloaded.noModelAvailable'),
@@ -301,7 +301,7 @@ test('shows the loading screen while models are still loading', async () => {
 });
 
 test('shows NoModelSelectedScreen and starts no session when no model is in use', async () => {
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
 
   expect(
     screen.getByText('screens.noModelSelected.pleaseSelectAModel'),
@@ -312,7 +312,7 @@ test('shows NoModelSelectedScreen and starts no session when no model is in use'
 test('mounts the in-use model and shows the empty chat', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
 
   await showEmptyChat(screen);
   expect(mockCreateChat).toHaveBeenCalledWith({
@@ -326,7 +326,7 @@ test('shows the error screen when the in-use model cannot be resolved', async ()
   mockGetModelById.mockResolvedValue(undefined);
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
 
   await waitFor(() =>
     expect(screen.getByText('common.somethingWentWrong')).toBeTruthy(),
@@ -338,7 +338,7 @@ test('disposes and rebuilds the chat when the in-use model changes', async () =>
   await setAppState({ modelIdInUse: 0 });
   mockGetModelById.mockImplementation(async (id: number) => buildModel(id));
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
 
   await act(async () => {
@@ -361,7 +361,7 @@ test('a model switch keeps the chat on screen, inert, behind a loading toast', a
   mockGetModelById.mockImplementation(async (id: number) => buildModel(id));
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
   expect(getInputBar(screen).props.disabled).toBe(false);
 
@@ -401,7 +401,7 @@ test('a model switch keeps the chat on screen, inert, behind a loading toast', a
 test('disposes and rebuilds the chat when the assistant config changes', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
 
   await act(async () => {
@@ -445,7 +445,7 @@ test('loads no speech engine at launch', async () => {
     vadModelIdInUse: 12,
   });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
 
   // Only the chat model loads up front; the others wait for their first use.
@@ -467,7 +467,7 @@ test('loads a non-Supertonic TTS model with no voice or language', async () => {
     buildModel(5, { pipeline: ModelPipeline.textToSpeech, family: 'Kokoro' }),
   );
 
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
   await firstUse('tts');
 
   expect(mockCreateTts).toHaveBeenLastCalledWith({
@@ -493,7 +493,7 @@ test('forwards the chosen voice and language to a Supertonic model', async () =>
     }),
   );
 
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
   await firstUse('tts');
 
   expect(mockCreateTts).toHaveBeenLastCalledWith({
@@ -504,7 +504,7 @@ test('forwards the chosen voice and language to a Supertonic model', async () =>
 });
 
 test('loads nothing on first use when no model is selected for the slot', async () => {
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
 
   let loaded = true;
   await act(async () => {
@@ -524,7 +524,7 @@ test('loads the selected STT model on first use', async () => {
     }),
   );
 
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
   await firstUse('stt');
 
   expect(mockCreateStt).toHaveBeenLastCalledWith({
@@ -544,7 +544,7 @@ test('forwards the chosen transcription language to the STT engine', async () =>
     }),
   );
 
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
   await firstUse('stt');
 
   expect(mockCreateStt).toHaveBeenLastCalledWith({
@@ -567,7 +567,7 @@ test('reloads a loaded STT engine when the transcription language changes', asyn
     }),
   );
 
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
   await firstUse('stt');
   expect(mockCreateStt).toHaveBeenCalledTimes(1);
 
@@ -591,7 +591,7 @@ test('leaves an unused STT engine unloaded when the transcription language chang
     assistantConfig: { ...DEFAULT_ASSISTANT_CONFIG, sttLanguage: 'da' },
   });
 
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
 
   await act(async () => {
     await setAppState({
@@ -611,7 +611,7 @@ test('disposes the STT engine when the transcription model changes', async () =>
     }),
   );
 
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
 
   await act(async () => {
     await setAppState({ sttModelIdInUse: 11 });
@@ -641,7 +641,7 @@ test('unloads the speech engines on background and leaves them for their next us
         : buildModel(id),
   );
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
   await firstUse('stt');
   await firstUse('vad');
@@ -670,7 +670,7 @@ test('loads the selected VAD model on first use', async () => {
     }),
   );
 
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
   await firstUse('vad');
 
   expect(mockCreateVad).toHaveBeenLastCalledWith({
@@ -684,7 +684,7 @@ test('reloads a loaded VAD engine when the detection model changes', async () =>
   );
   await setAppState({ vadModelIdInUse: 12 });
 
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
   await firstUse('vad');
 
   await act(async () => {
@@ -704,7 +704,7 @@ test('stops a running generation when switching to another conversation', async 
     buildConversation(id, { modelId: 0 }),
   );
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
   mockChatInstance.stopGeneration.mockClear();
 
@@ -723,7 +723,7 @@ test('a slower, superseded history load does not land over the newer one', async
     buildConversation(id, { modelId: 0 }),
   );
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
 
   // Conversation 4's messages come back only after 5's have.
@@ -780,7 +780,7 @@ test('injects restored assistant messages with an empty toolCalls array', async 
   ]);
   await setAppState({ modelIdInUse: 0, conversationIdInUse: 5 });
 
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
 
   await waitFor(() =>
     expect(mockChatInstance.setChatHistory).toHaveBeenCalled(),
@@ -805,7 +805,7 @@ test('injects restored assistant messages with an empty toolCalls array', async 
 test('reloads only the history when the in-use conversation changes', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
 
   mockGetConversationById.mockResolvedValue({
@@ -829,7 +829,7 @@ test('reloads only the history when the in-use conversation changes', async () =
 test('a voice turn adopts a freshly created conversation without resetting the chat', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
 
   // The initial empty-history injection is the only native reset we expect.
@@ -880,7 +880,7 @@ test('a voice turn on the in-use conversation refreshes the display only', async
   });
   await setAppState({ modelIdInUse: 0, conversationIdInUse: 5 });
 
-  await render(<ChatStackNavigator />);
+  await render(<ChatRoot />);
   await waitFor(() =>
     expect(mockGetMessagesByConversationId).toHaveBeenCalledWith(5),
   );
@@ -905,7 +905,7 @@ test('a voice turn on the in-use conversation refreshes the display only', async
 test('switching conversations keeps the chat screen mounted (no loading flash)', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
 
   mockGetConversationById.mockResolvedValue({
@@ -956,7 +956,7 @@ test('switching conversations keeps the chat screen mounted (no loading flash)',
 test('sending the first message persists in use without reloading the chat', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
   // Only the initial empty load so far.
   expect(mockChatInstance.setChatHistory).toHaveBeenCalledTimes(1);
@@ -998,7 +998,7 @@ test('clearing the conversation after a load error reloads and recovers', async 
   });
   await setAppState({ modelIdInUse: 0, conversationIdInUse: 5 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await waitFor(() =>
     expect(screen.getByText('common.somethingWentWrong')).toBeTruthy(),
   );
@@ -1014,7 +1014,7 @@ test('clearing the conversation after a load error reloads and recovers', async 
 test('unloads the chat on background and rebuilds it on foreground', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
   expect(mockCreateChat).toHaveBeenCalledTimes(1);
 
@@ -1043,7 +1043,7 @@ test('a background mid-load is not reported as a failed session', async () => {
       }),
   );
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await waitFor(() => expect(mockCreateChat).toHaveBeenCalledTimes(1));
 
   // Loads take seconds, so the OS can background us in the middle of one. That
@@ -1072,7 +1072,7 @@ test('a background mid-load is not reported as a failed session', async () => {
 test('keeps the model resident when a dialog we launched backgrounds the app', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
   expect(mockCreateChat).toHaveBeenCalledTimes(1);
 
@@ -1098,7 +1098,7 @@ test('keeps the model resident when a dialog we launched backgrounds the app', a
 test('does not unload on the transient inactive state', async () => {
   await setAppState({ modelIdInUse: 0 });
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
 
   // iOS emits 'inactive' for Control Center / app switcher / Face ID — the
@@ -1115,7 +1115,7 @@ test('does not unload on the transient inactive state', async () => {
 });
 
 test('does not unload on background when no model is in use', async () => {
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   expect(
     screen.getByText('screens.noModelSelected.pleaseSelectAModel'),
   ).toBeTruthy();
@@ -1144,7 +1144,7 @@ test('New Chat clears a conversation the screen created itself', async () => {
     buildConversation(9, { modelId: 0 }),
   );
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
   await sendMessage(screen, 'first message');
 
@@ -1178,7 +1178,7 @@ test('a message after Delete Chat starts a new conversation, not the deleted one
     rows.get(id),
   );
 
-  const screen = await render(<ChatStackNavigator />);
+  const screen = await render(<ChatRoot />);
   await showEmptyChat(screen);
   await sendMessage(screen, 'first message');
 

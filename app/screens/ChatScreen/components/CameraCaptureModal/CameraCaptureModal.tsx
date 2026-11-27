@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { Linking, Modal, Pressable, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, Text } from 'components';
@@ -81,6 +82,10 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
       statusBarTranslucent
     >
       <View style={styles.container}>
+        {/* A viewfinder reads better with horizontal system bars than with the
+            vertical rail (iPhone Duo); light content over the black
+            background. */}
+        <StatusBar style="light" verticalBarBehaviorIOS="disabled" />
         {granted ? (
           <CameraView ref={cameraRef} style={styles.camera} facing="back" />
         ) : (
@@ -104,7 +109,13 @@ export const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={t('components.cameraCapture.close')}
-          style={[styles.closeButton, { top: insets.top + Spacings.md }]}
+          style={[
+            styles.closeButton,
+            {
+              top: insets.top + Spacings.md,
+              left: insets.left + Spacings.lg,
+            },
+          ]}
         >
           <PlatformIcon
             iosIconName="xmark"

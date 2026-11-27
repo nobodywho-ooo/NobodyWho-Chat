@@ -11,14 +11,8 @@ export default StyleSheet.create({
     alignSelf: 'center',
     paddingVertical: Spacings.xl,
   },
-  buttonsContainer: {
-    marginTop: Spacings.xxxxl,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacings.sm,
-  },
   appName: {
-    paddingTop: Spacings.xl,
+    paddingTop: Spacings.xxxxl,
   },
   appInfo: {
     paddingTop: Spacings.sm,

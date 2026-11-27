@@ -96,7 +96,9 @@ test('passes raw <think> blocks through to MessageListItem', async () => {
     screen.getByLabelText('components.messageListItem.viewThinking'),
   ).toBeOnTheScreen();
   expect(
-    jest.mocked(StreamdownText).mock.calls.map(([props]) => props.markdown),
+    jest
+      .mocked(EnrichedMarkdownText)
+      .mock.calls.map(([props]) => props.markdown),
   ).toContain('reasoning');
   expect(jest.mocked(EnrichedMarkdownText).mock.lastCall?.[0].markdown).toBe(
     'answer',

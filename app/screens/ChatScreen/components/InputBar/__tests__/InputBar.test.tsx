@@ -572,17 +572,25 @@ test('keeps the keyboard up across the remount when the field was focused', asyn
   expect(screen.getByPlaceholderText(PLACEHOLDER).props.autoFocus).toBe(true);
 });
 
-test('does not remount when the text is cleared after sending', async () => {
+// A field that shrank only on the native text update left the input bar's
+// container at its multi-line height, the bar floating above the bottom.
+test('remounts the field when sending clears it, without taking the focus back', async () => {
   const setValueRef: { current: ((text: string) => void) | undefined } = {
     current: undefined,
   };
   const screen = await render(<ControlledInputBar setValueRef={setValueRef} />);
+  await act(() => screen.getByPlaceholderText(PLACEHOLDER).props.onFocus());
   await act(() =>
-    screen.getByPlaceholderText(PLACEHOLDER).props.onChangeText('Hello'),
+    screen
+      .getByPlaceholderText(PLACEHOLDER)
+      .props.onChangeText('A message long enough for a few lines'),
   );
   const before = screen.getByPlaceholderText(PLACEHOLDER);
 
   await act(() => setValueRef.current?.(''));
 
-  expect(screen.getByPlaceholderText(PLACEHOLDER)).toBe(before);
+  const after = screen.getByPlaceholderText(PLACEHOLDER);
+  expect(after).not.toBe(before);
+  expect(after.props.value).toBe('');
+  expect(after.props.autoFocus).toBe(false);
 });

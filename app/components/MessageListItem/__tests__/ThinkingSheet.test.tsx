@@ -1,10 +1,10 @@
 import React from 'react';
 import { Linking } from 'react-native';
-import { fireEvent, render } from '@testing-library/react-native';
+import { act, render } from '@testing-library/react-native';
 import { StreamdownText } from 'react-native-streamdown';
 import { EnrichedMarkdownText } from 'react-native-enriched-markdown';
 
-import { ThinkingModal } from '../AssistantMessage/ThinkingModal';
+import { ThinkingSheet } from '../AssistantMessage/ThinkingSheet';
 
 const mockStreamdown = StreamdownText as unknown as jest.Mock;
 const mockEnriched = EnrichedMarkdownText as unknown as jest.Mock;
@@ -15,7 +15,7 @@ afterEach(() => {
 
 test('renders the title and the reasoning with the static renderer when not active', async () => {
   const { getByText } = await render(
-    <ThinkingModal thinking="some reasoning" onClose={jest.fn()} />,
+    <ThinkingSheet thinking="some reasoning" onClose={jest.fn()} />,
   );
 
   expect(getByText('components.messageListItem.thinkingTitle')).toBeTruthy();
@@ -25,7 +25,7 @@ test('renders the title and the reasoning with the static renderer when not acti
 
 test('uses the streaming renderer while thinking is active', async () => {
   await render(
-    <ThinkingModal thinking="streaming reasoning" active onClose={jest.fn()} />,
+    <ThinkingSheet thinking="streaming reasoning" active onClose={jest.fn()} />,
   );
 
   expect(mockStreamdown.mock.calls[0][0].markdown).toBe('streaming reasoning');
@@ -35,7 +35,7 @@ test('uses the streaming renderer while thinking is active', async () => {
 test('opens a tapped link in the reasoning', async () => {
   jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
   await render(
-    <ThinkingModal
+    <ThinkingSheet
       thinking="see [link](https://example.com)"
       onClose={jest.fn()}
     />,
@@ -46,21 +46,27 @@ test('opens a tapped link in the reasoning', async () => {
   expect(Linking.openURL).toHaveBeenCalledWith('https://example.com');
 });
 
-test('calls onClose when the close button is pressed', async () => {
+test('closes when dragged down or the scrim is tapped, with no close button', async () => {
   const onClose = jest.fn();
-  const { getByLabelText } = await render(
-    <ThinkingModal thinking="x" onClose={onClose} />,
+  const screen = await render(<ThinkingSheet thinking="x" onClose={onClose} />);
+  const [sheet] = screen.container.queryAll(
+    node => node.type === 'ModalBottomSheet',
   );
 
-  await fireEvent.press(
-    getByLabelText('components.messageListItem.closeThinking'),
+  expect(sheet.props.scrimAccessibilityLabel).toBe(
+    'components.messageListItem.closeThinking',
   );
+  expect(
+    screen.container.queryAll(node => node.type === 'IconButton'),
+  ).toHaveLength(0);
+
+  await act(() => sheet.props.onIndexChange(0));
   expect(onClose).toHaveBeenCalledTimes(1);
 });
 
 test('is hidden when thinking is null', async () => {
   const { queryByLabelText, queryByText } = await render(
-    <ThinkingModal thinking={null} onClose={jest.fn()} />,
+    <ThinkingSheet thinking={null} onClose={jest.fn()} />,
   );
 
   expect(queryByText('components.messageListItem.thinkingTitle')).toBeNull();
@@ -71,7 +77,7 @@ test('is hidden when thinking is null', async () => {
 
 test('matches the snapshot when open', async () => {
   const { toJSON } = await render(
-    <ThinkingModal thinking="some reasoning" onClose={jest.fn()} />,
+    <ThinkingSheet thinking="some reasoning" onClose={jest.fn()} />,
   );
   expect(toJSON()).toMatchSnapshot();
 });

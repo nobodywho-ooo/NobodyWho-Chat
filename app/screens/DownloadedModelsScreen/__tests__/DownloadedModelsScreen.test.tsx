@@ -15,7 +15,7 @@ import { mockUseAppState, mockUseModels } from 'jest/mock/hooks';
 import {
   mockGoBack,
   mockSetOptions,
-  mockUseRoute,
+  mockUseLocalSearchParams,
 } from 'jest/mock/node-modules';
 import { buildModel } from 'jest/factories/model';
 
@@ -74,7 +74,7 @@ const headerToggle = () => {
 beforeEach(() => {
   mockUseModels.mockReturnValue({ models: [] });
   mockUseAppState.mockReturnValue({});
-  mockUseRoute.mockReturnValue({ params: { canDelete: true } });
+  mockUseLocalSearchParams.mockReturnValue({ canDelete: 'true' });
   mockSetAppState.mockClear();
   mockSetOptions.mockClear();
   mockStopGeneration.mockClear();
@@ -241,7 +241,7 @@ test('a failed attachment cleanup still releases the deleted chat model', async 
 
 test('without canDelete (drawer entry) deletion is unavailable', async () => {
   const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-  mockUseRoute.mockReturnValue({ params: { canDelete: false } });
+  mockUseLocalSearchParams.mockReturnValue({ canDelete: 'false' });
   const models = [buildModel(1), buildModel(2)];
   mockUseModels.mockReturnValue({ models });
   mockUseAppState.mockReturnValue({ modelIdInUse: 1 });

@@ -1,5 +1,5 @@
 import { useEffect, useId } from 'react';
-import { useIsFocused } from '@react-navigation/native';
+import { useIsFocused } from 'expo-router';
 import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { log } from 'helpers';
 

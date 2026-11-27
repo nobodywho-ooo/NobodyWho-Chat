@@ -246,23 +246,20 @@ test('labels the thinking block as in-progress while the reasoning streams', asy
   expect(getByText('components.messageListItem.thinking')).toBeTruthy();
 });
 
-test('opens the thinking modal when the thinking block is pressed', async () => {
+test('opens the thinking sheet when the thinking block is pressed', async () => {
   const message: DisplayMessage = {
     role: 'assistant',
     content: '<think>weighing options</think>answer',
   };
-  const { getByLabelText, queryByLabelText } = await renderAssistant(message);
-  expect(
-    queryByLabelText('components.messageListItem.closeThinking'),
-  ).toBeNull();
+  const { getByLabelText, getByTestId, queryByTestId } =
+    await renderAssistant(message);
+  expect(queryByTestId('thinking-sheet')).toBeNull();
 
   await fireEvent.press(
     getByLabelText('components.messageListItem.viewThinking'),
   );
 
-  expect(
-    getByLabelText('components.messageListItem.closeThinking'),
-  ).toBeTruthy();
+  expect(getByTestId('thinking-sheet')).toBeTruthy();
 });
 
 // --- Read-aloud (TTS) ------------------------------------------------------
@@ -545,7 +542,7 @@ describe('web search block', () => {
     await fireEvent.press(screen.getAllByTestId('web-sources-row')[0]);
     expect(openURL).toHaveBeenCalledWith('https://weather.example/paris');
 
-    await fireEvent.press(screen.getByTestId('web-sources-close'));
+    await fireEvent.press(screen.getByTestId('web-sources-sheet-close'));
     expect(screen.queryByTestId('web-sources-sheet')).toBeNull();
   });
 

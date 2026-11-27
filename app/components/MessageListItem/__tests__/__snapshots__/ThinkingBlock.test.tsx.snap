@@ -122,18 +122,27 @@ exports[`matches the snapshot 1`] = `
         }
       }
     />
-    <RCTScrollView
-      onContentSizeChange={[Function]}
+    <View
       pointerEvents="none"
-      showsVerticalScrollIndicator={false}
       style={
         {
           "height": 80,
+          "overflow": "hidden",
         }
       }
     >
-      <View />
-    </RCTScrollView>
+      <View
+        style={
+          {
+            "bottom": 0,
+            "left": 0,
+            "minHeight": 80,
+            "position": "absolute",
+            "right": 0,
+          }
+        }
+      />
+    </View>
   </View>
 </View>
 `;

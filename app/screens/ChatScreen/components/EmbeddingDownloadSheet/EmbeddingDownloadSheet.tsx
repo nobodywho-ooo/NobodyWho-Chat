@@ -1,9 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Pressable, View } from 'react-native';
-import Animated, { SlideInDown } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { View } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Button, PlatformIcon, ProgressBar, Text } from 'components';
+import {
+  Button,
+  PlatformIcon,
+  ProgressBar,
+  Sheet,
+  SheetCloseIcon,
+  Text,
+} from 'components';
 import {
   CURATED_SEARCH_MODELS,
   modelSizeLabel,
@@ -12,11 +17,9 @@ import {
 import { useCuratedModels, useStyled } from 'hooks';
 import { canRerankWithEmbeddings } from 'services';
 import { Model } from 'types';
-import { Spacings } from 'style';
 
 import { styles } from './EmbeddingDownloadSheet.styles';
 
-const SHEET_ENTER_MS = 260;
 const ICON_SIZE = 28;
 
 export type EmbeddingPromptOutcome = 'ready' | 'dismissed' | 'unavailable';
@@ -36,7 +39,6 @@ export const EmbeddingDownloadSheet: React.FC<EmbeddingDownloadSheetProps> = ({
 }) => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const insets = useSafeAreaInsets();
   const [failed, setFailed] = useState(false);
   const {
     availabilityOf,
@@ -113,89 +115,72 @@ export const EmbeddingDownloadSheet: React.FC<EmbeddingDownloadSheetProps> = ({
         );
 
   return (
-    <Modal
+    <Sheet
       visible={visible}
-      transparent
-      animationType="fade"
-      statusBarTranslucent
-      navigationBarTranslucent
-      onRequestClose={dismiss}
+      onClose={dismiss}
+      closeLabel={t('screens.chat.embeddingDownload.cancel')}
+      showCloseButton={false}
+      testID="embedding-download-sheet"
     >
-      <View style={styles.rootContainer}>
-        <Pressable
-          style={styles.backdropContainer}
-          onPress={dismiss}
-          accessibilityRole="button"
-          accessibilityLabel={t('screens.chat.embeddingDownload.cancel')}
-          testID="embedding-download-backdrop"
-        />
-        <Animated.View
-          entering={SlideInDown.duration(SHEET_ENTER_MS)}
+      <SheetCloseIcon
+        onPress={dismiss}
+        accessibilityLabel={t('screens.chat.embeddingDownload.cancel')}
+        testID="embedding-download-sheet-close"
+        style={styles.closeIcon}
+      />
+      <View style={styles.sheetContainer}>
+        <View
           style={[
-            styles.sheetContainer,
-            {
-              backgroundColor: colors.surface,
-              paddingBottom: insets.bottom + Spacings.lg,
-            },
+            styles.iconContainer,
+            { backgroundColor: colors.surfaceContainer },
           ]}
-          testID="embedding-download-sheet"
         >
-          <View
-            style={[
-              styles.iconContainer,
-              { backgroundColor: colors.surfaceContainer },
-            ]}
-          >
-            <PlatformIcon
-              iosIconName="globe"
-              androidIconName="language"
-              size={ICON_SIZE}
-              color={colors.primary}
+          <PlatformIcon
+            iosIconName="globe"
+            androidIconName="language"
+            size={ICON_SIZE}
+            color={colors.onSurface}
+          />
+        </View>
+        <Text variant="h3" bold style={styles.centeredText}>
+          {t('screens.chat.embeddingDownload.title')}
+        </Text>
+        <Text
+          variant="body1"
+          style={[styles.centeredText, { color: colors.onSurfaceVariant }]}
+        >
+          {message}
+        </Text>
+        {downloading && !failed ? (
+          <View style={styles.progressContainer}>
+            <ProgressBar progress={progress} />
+            <Text
+              variant="body2"
+              style={[styles.centeredText, { color: colors.onSurfaceVariant }]}
+            >
+              {`${Math.round(progress * 100)}%`}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.actionsContainer}>
+            <Button
+              title={t(
+                failed
+                  ? 'screens.chat.embeddingDownload.retry'
+                  : 'screens.chat.embeddingDownload.download',
+              )}
+              onPress={download}
+              testID="embedding-download-confirm"
+            />
+            <Button
+              variant="outline"
+              title={t('screens.chat.embeddingDownload.cancel')}
+              onPress={dismiss}
+              testID="embedding-download-cancel"
             />
           </View>
-          <Text variant="h3" bold style={styles.centeredText}>
-            {t('screens.chat.embeddingDownload.title')}
-          </Text>
-          <Text
-            variant="body1"
-            style={[styles.centeredText, { color: colors.onSurfaceVariant }]}
-          >
-            {message}
-          </Text>
-          {downloading && !failed ? (
-            <View style={styles.progressContainer}>
-              <ProgressBar progress={progress} />
-              <Text
-                variant="body2"
-                style={[
-                  styles.centeredText,
-                  { color: colors.onSurfaceVariant },
-                ]}
-              >
-                {`${Math.round(progress * 100)}%`}
-              </Text>
-            </View>
-          ) : (
-            <View style={styles.actionsContainer}>
-              <Button
-                title={t(
-                  failed
-                    ? 'screens.chat.embeddingDownload.retry'
-                    : 'screens.chat.embeddingDownload.download',
-                )}
-                onPress={download}
-                testID="embedding-download-confirm"
-              />
-              <Button
-                variant="outline"
-                title={t('screens.chat.embeddingDownload.cancel')}
-                onPress={dismiss}
-                testID="embedding-download-cancel"
-              />
-            </View>
-          )}
-        </Animated.View>
+        )}
       </View>
-    </Modal>
+    </Sheet>
   );
 };

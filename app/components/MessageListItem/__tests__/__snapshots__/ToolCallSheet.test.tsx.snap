@@ -1,0 +1,206 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`matches the snapshot when visible 1`] = `
+<ModalBottomSheet
+  detents={
+    [
+      0,
+      {
+        "insets": {
+          "bottom": 12,
+          "left": 12,
+          "right": 12,
+        },
+        "value": "70%",
+      },
+    ]
+  }
+  index={1}
+  lazy={true}
+  maxWidth={504}
+  onIndexChange={[Function]}
+  scrimAccessibilityLabel="components.messageListItem.closeToolCalls"
+  scrimColor="rgba(0, 0, 0, 0.4)"
+  surfaceStyle={
+    {
+      "borderCurve": "continuous",
+      "borderRadius": 28,
+    }
+  }
+  windowOverlay={true}
+>
+  <View
+    style={
+      {
+        "flex": 1,
+      }
+    }
+    testID="tool-call-sheet"
+  >
+    <IconButton
+      accessibilityLabel="components.messageListItem.closeToolCalls"
+      accessibilityRole="button"
+      icon={
+        {
+          "androidIconName": "close",
+          "iosIconName": "xmark",
+        }
+      }
+      onPress={[MockFunction]}
+      style={
+        {
+          "position": "absolute",
+          "right": 12,
+          "top": 12,
+          "zIndex": 1,
+        }
+      }
+      testID="tool-call-sheet-close"
+    />
+    <View
+      style={
+        {
+          "alignItems": "center",
+          "columnGap": 4,
+          "flexDirection": "row",
+          "paddingBottom": 12,
+          "paddingLeft": 16,
+          "paddingRight": 56,
+          "paddingTop": 20,
+        }
+      }
+    >
+      <PlatformIcon
+        androidIconName="build"
+        color="#000000"
+        iosIconName="wrench.and.screwdriver"
+        size={18}
+      />
+      <Text
+        bold={true}
+        numberOfLines={1}
+        style={
+          {
+            "flex": 1,
+          }
+        }
+        variant="body1"
+      >
+        get_weather
+      </Text>
+    </View>
+    <RCTScrollView
+      contentContainerStyle={
+        [
+          {
+            "paddingHorizontal": 16,
+            "rowGap": 4,
+          },
+          {
+            "paddingBottom": 32,
+          },
+        ]
+      }
+      showsVerticalScrollIndicator={true}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    >
+      <View>
+        <Text
+          style={
+            [
+              {
+                "letterSpacing": 0.5,
+                "marginTop": 12,
+                "textTransform": "uppercase",
+              },
+              {
+                "color": "#7c7c7c",
+              },
+            ]
+          }
+          variant="caption"
+        >
+          components.messageListItem.toolArguments
+        </Text>
+        <Text
+          style={
+            [
+              {
+                "fontFamily": "Courier",
+                "fontSize": 13,
+                "lineHeight": 18,
+              },
+              {
+                "color": "#000000",
+              },
+            ]
+          }
+        >
+          {
+  "city": "Paris"
+}
+        </Text>
+        <Text
+          style={
+            [
+              {
+                "letterSpacing": 0.5,
+                "marginTop": 12,
+                "textTransform": "uppercase",
+              },
+              {
+                "color": "#7c7c7c",
+              },
+            ]
+          }
+          variant="caption"
+        >
+          components.messageListItem.toolResult
+        </Text>
+        <Text
+          style={
+            [
+              {
+                "fontFamily": "Courier",
+                "fontSize": 13,
+                "lineHeight": 18,
+              },
+              {
+                "color": "#000000",
+              },
+            ]
+          }
+        >
+          {"temperatureCelsius":12}
+        </Text>
+      </View>
+    </RCTScrollView>
+    <LinearGradient
+      colors={
+        [
+          "#FFFFFF00",
+          "#FFFFFF",
+        ]
+      }
+      pointerEvents="none"
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+          },
+          {
+            "height": 32,
+          },
+        ]
+      }
+    />
+  </View>
+</ModalBottomSheet>
+`;

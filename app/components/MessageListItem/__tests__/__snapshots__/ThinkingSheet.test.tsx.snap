@@ -1,0 +1,120 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`matches the snapshot when open 1`] = `
+<ModalBottomSheet
+  detents={
+    [
+      0,
+      {
+        "insets": {
+          "bottom": 0,
+          "left": 0,
+          "right": 0,
+        },
+        "value": "60%",
+      },
+      {
+        "insets": {
+          "left": 0,
+          "right": 0,
+        },
+        "value": "100%",
+      },
+    ]
+  }
+  index={1}
+  lazy={true}
+  maxWidth={640}
+  onIndexChange={[Function]}
+  scrimAccessibilityLabel="components.messageListItem.closeThinking"
+  scrimColor="rgba(0, 0, 0, 0.4)"
+  surfaceStyle={
+    {
+      "borderCurve": "continuous",
+      "borderTopLeftRadius": 28,
+      "borderTopRightRadius": 28,
+    }
+  }
+  windowOverlay={true}
+>
+  <View
+    style={
+      {
+        "flex": 1,
+      }
+    }
+    testID="thinking-sheet"
+  >
+    <View
+      style={
+        [
+          {
+            "alignSelf": "center",
+            "borderRadius": 2.5,
+            "height": 5,
+            "marginTop": 8,
+            "width": 36,
+          },
+          {
+            "backgroundColor": "#e1e1e1",
+          },
+        ]
+      }
+    />
+    <Text
+      bold={true}
+      style={
+        {
+          "paddingHorizontal": 16,
+          "paddingVertical": 12,
+        }
+      }
+      variant="body1"
+    >
+      components.messageListItem.thinkingTitle
+    </Text>
+    <RCTScrollView
+      contentContainerStyle={
+        [
+          {
+            "paddingHorizontal": 16,
+          },
+          {
+            "paddingBottom": 32,
+          },
+        ]
+      }
+      showsVerticalScrollIndicator={true}
+      style={
+        {
+          "flex": 1,
+        }
+      }
+    >
+      <View />
+    </RCTScrollView>
+    <LinearGradient
+      colors={
+        [
+          "#FFFFFF00",
+          "#FFFFFF",
+        ]
+      }
+      pointerEvents="none"
+      style={
+        [
+          {
+            "bottom": 0,
+            "left": 0,
+            "position": "absolute",
+            "right": 0,
+          },
+          {
+            "height": 32,
+          },
+        ]
+      }
+    />
+  </View>
+</ModalBottomSheet>
+`;

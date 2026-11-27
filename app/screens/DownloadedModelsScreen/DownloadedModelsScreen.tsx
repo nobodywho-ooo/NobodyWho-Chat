@@ -5,7 +5,7 @@ import React, {
   useState,
 } from 'react';
 import { Pressable, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useLocalSearchParams, useNavigation } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useModels, useStyled } from 'hooks';
 import {
@@ -22,11 +22,10 @@ export const DownloadedModelsScreen: React.FC = () => {
   const { colors } = useStyled();
   const { models } = useModels();
   const navigation = useNavigation();
-  const route = useRoute();
+  const params = useLocalSearchParams<{ canDelete?: string }>();
   const [deleteMode, setDeleteMode] = useState(false);
 
-  const canDelete = (route.params as { canDelete?: boolean } | undefined)
-    ?.canDelete;
+  const canDelete = params.canDelete === 'true';
   const hasModels = models.length > 0;
 
   useEffect(() => {
@@ -35,7 +34,7 @@ export const DownloadedModelsScreen: React.FC = () => {
     }
   }, [hasModels, deleteMode]);
 
-  const showDeleteAction = hasModels && !!canDelete;
+  const showDeleteAction = hasModels && canDelete;
 
   const renderHeaderRight = useCallback(
     () => (

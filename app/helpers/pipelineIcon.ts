@@ -1,12 +1,9 @@
-import type {
-  MaterialSymbolProps,
-  SFSymbolProps,
-} from '@react-navigation/native';
+import type { AndroidIconName, IosIconName } from 'types';
 import { ModelPipeline } from 'types';
 
 export interface PipelineIcon {
-  iosIconName: SFSymbolProps['name'];
-  androidIconName: MaterialSymbolProps['name'];
+  iosIconName: IosIconName;
+  androidIconName: AndroidIconName;
 }
 
 // So unrecognised model still renders

@@ -2,7 +2,10 @@ import React, { useMemo } from 'react';
 import { ScrollView } from 'react-native-gesture-handler';
 import { useTranslation } from 'react-i18next';
 import { useDrawerScrollGesture } from 'hooks';
+import { Spacings } from 'style';
 import { ChatPipeline } from 'types';
+
+import type { ChatColumn } from '../../hooks/useChatColumn';
 
 import { MessageStarter } from './MessageStarter';
 import { pickStarterIds } from './starters';
@@ -12,12 +15,14 @@ interface MessageStartersProps {
   pipeline: ChatPipeline;
   onSelect: (body: string) => void;
   disabled?: boolean;
+  column?: ChatColumn;
 }
 
 export const MessageStarters: React.FC<MessageStartersProps> = ({
   pipeline,
   onSelect,
   disabled = false,
+  column,
 }) => {
   const { t } = useTranslation();
   const starterIds = useMemo(() => pickStarterIds(pipeline), [pipeline]);
@@ -30,7 +35,13 @@ export const MessageStarters: React.FC<MessageStartersProps> = ({
       onGestureUpdate_CAN_CAUSE_INFINITE_RERENDER={onScrollGesture}
       horizontal
       style={styles.list}
-      contentContainerStyle={styles.listContent}
+      contentContainerStyle={[
+        styles.listContent,
+        column && {
+          paddingLeft: Spacings.md + column.paddingLeft,
+          paddingRight: Spacings.md + column.insetRight,
+        },
+      ]}
       showsHorizontalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >

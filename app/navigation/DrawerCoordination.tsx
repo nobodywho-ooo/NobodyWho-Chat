@@ -13,10 +13,11 @@ import React, {
 import {
   useDrawerStatus,
   type DrawerContentComponentProps,
-} from '@react-navigation/drawer';
+  type DrawerNavigationOptions,
+} from 'expo-router/drawer';
 import type {
+  LegacyPanGesture,
   NativeGesture,
-  PanGestureConfig,
 } from 'react-native-gesture-handler';
 import { haptics } from 'helpers';
 import { drawerScrollGestureStore } from 'hooks';
@@ -134,24 +135,34 @@ export const DrawerCoordinationProvider: FC<{ children: ReactNode }> = ({
 // The navigator's own `transitionEnd` event can't drive this: the drawer emits
 // it against the navigator's state key, while a screen's `listeners` only ever
 // receive events targeted at their own route key, so nothing is delivered.
-export const DrawerStatusReporter: FC<{ side: Side }> = ({ side }) => {
+export const DrawerStatusReporter: FC<{
+  side: Side;
+  isSidebar?: boolean;
+  navigation?: DrawerContentComponentProps['navigation'];
+}> = ({ side, isSidebar = false, navigation }) => {
   const status = useDrawerStatus();
   const { reportStatus } = useDrawerCoordination();
-  // Seeded with the first status so mounting is never mistaken for a change.
-  const previousStatus = useRef(status);
+  const isOpen = status === 'open' && !isSidebar;
+  const previousIsOpen = useRef(isOpen);
 
   useEffect(() => {
-    reportStatus(side, status === 'open');
-  }, [side, status, reportStatus]);
+    reportStatus(side, isOpen);
+  }, [side, isOpen, reportStatus]);
 
   useEffect(() => {
-    if (previousStatus.current === status) {
+    if (isSidebar && status === 'open') {
+      navigation?.closeDrawer();
+    }
+  }, [isSidebar, status, navigation]);
+
+  useEffect(() => {
+    if (previousIsOpen.current === isOpen) {
       return;
     }
 
-    previousStatus.current = status;
+    previousIsOpen.current = isOpen;
     haptics.medium();
-  }, [status]);
+  }, [isOpen]);
 
   return null;
 };
@@ -176,25 +187,11 @@ export const DrawerOpenerReporter: FC<{
   return null;
 };
 
-// react-native-drawer-layout slides the drawer 20px into view 160ms after the
-// touch goes down (PEEK_DELAY / PEEK_DISTANCE in its Drawer.native), as a hint
-// that a drawer is there, then springs it back when the touch ends. Both pans
-// receive every touch on the chat — swipeEdgeWidth spans the window — so any
-// touch-and-hold peeked both drawers at once. The long press that starts a text
-// selection in a message is exactly such a hold, which is why both slid in and
-// back out again mid-selection.
-//
-// Dropping the library's onBegin drops the peek with it. The only other thing it
-// does is record touchStartX, which offsets a drag that starts beside a narrower
-// drawer; both drawers here are full-width, so that offset always clamps to zero
-// and nothing else reads the value.
-const skipPeek = () => {
-  'worklet';
-};
-
 const OPEN_THRESHOLD = 10;
 // A bound the drag can never reach, disabling activation in that direction.
 const NEVER = 10000;
+
+type HitSlop = Parameters<LegacyPanGesture['hitSlop']>[0];
 
 // Both drawers open on a swipe started anywhere on screen (swipeEdgeWidth is the
 // full window width), so a drag across the input bar — dragging a text selection
@@ -205,10 +202,7 @@ const NEVER = 10000;
 //
 // Only while the drawer is closed. Once it's open the whole screen has to stay
 // available for the drag that closes it again.
-const excludeBottom = (
-  hitSlop: PanGestureConfig['hitSlop'],
-  exclusion: number,
-): PanGestureConfig['hitSlop'] => {
+const excludeBottom = (hitSlop: HitSlop, exclusion: number): HitSlop => {
   if (exclusion <= 0) {
     return hitSlop;
   }
@@ -220,35 +214,76 @@ const excludeBottom = (
   return {
     ...(typeof hitSlop === 'object' && hitSlop !== null ? hitSlop : {}),
     bottom: -exclusion,
-  } as PanGestureConfig['hitSlop'];
+  } as HitSlop;
 };
 
+// Expo Router's drawer (react-native-drawer-layout 4) still builds its pan with
+// RNGH's legacy builder API, while the scroll gestures come from RNGH 3
+// ScrollViews. The legacy relations accept raw handler tags, which both APIs
+// share. requireExternalGestureToFail's type leaves numbers out, hence `config`.
+const configureDrawerPan = (
+  gesture: LegacyPanGesture,
+  activeOffsetX: [number, number],
+  isOpen: boolean,
+  scrollGestures: NativeGesture[],
+  swipeExclusion: number,
+) => {
+  gesture.activeOffsetX(activeOffsetX);
+
+  if (scrollGestures.length > 0) {
+    gesture.config.requireToFail = [
+      ...(gesture.config.requireToFail ?? []),
+      ...scrollGestures.map(({ handlerTag }) => handlerTag),
+    ];
+  }
+
+  if (!isOpen) {
+    gesture.hitSlop(
+      excludeBottom(gesture.config.hitSlop as HitSlop, swipeExclusion),
+    );
+  }
+
+  return gesture;
+};
+
+// The navigator's type names RNGH 3's PanGesture, but what it hands over (and
+// takes back) at runtime is the legacy builder.
+type ConfigureGestureHandler = NonNullable<
+  DrawerNavigationOptions['configureGestureHandler']
+>;
+
+const asConfigureGestureHandler = (
+  configure: (gesture: LegacyPanGesture) => LegacyPanGesture,
+) => configure as unknown as ConfigureGestureHandler;
+
 // Left drawer: right-ward drag opens; when open, a left-ward drag closes it.
-export const buildLeftDrawerGesture =
-  (isOpen: boolean, scrollGestures: NativeGesture[], swipeExclusion: number) =>
-  (gesture: PanGestureConfig): PanGestureConfig => ({
-    ...gesture,
-    onBegin: skipPeek,
-    activeOffsetX: isOpen
-      ? [-OPEN_THRESHOLD, OPEN_THRESHOLD]
-      : [-NEVER, OPEN_THRESHOLD],
-    requireToFail: scrollGestures.length > 0 ? scrollGestures : undefined,
-    hitSlop: isOpen
-      ? gesture.hitSlop
-      : excludeBottom(gesture.hitSlop, swipeExclusion),
-  });
+export const buildLeftDrawerGesture = (
+  isOpen: boolean,
+  scrollGestures: NativeGesture[],
+  swipeExclusion: number,
+) =>
+  asConfigureGestureHandler(gesture =>
+    configureDrawerPan(
+      gesture,
+      isOpen ? [-OPEN_THRESHOLD, OPEN_THRESHOLD] : [-NEVER, OPEN_THRESHOLD],
+      isOpen,
+      scrollGestures,
+      swipeExclusion,
+    ),
+  );
 
 // Right drawer: left-ward drag opens; when open, a right-ward drag closes it.
-export const buildRightDrawerGesture =
-  (isOpen: boolean, scrollGestures: NativeGesture[], swipeExclusion: number) =>
-  (gesture: PanGestureConfig): PanGestureConfig => ({
-    ...gesture,
-    onBegin: skipPeek,
-    activeOffsetX: isOpen
-      ? [-OPEN_THRESHOLD, OPEN_THRESHOLD]
-      : [-OPEN_THRESHOLD, NEVER],
-    requireToFail: scrollGestures.length > 0 ? scrollGestures : undefined,
-    hitSlop: isOpen
-      ? gesture.hitSlop
-      : excludeBottom(gesture.hitSlop, swipeExclusion),
-  });
+export const buildRightDrawerGesture = (
+  isOpen: boolean,
+  scrollGestures: NativeGesture[],
+  swipeExclusion: number,
+) =>
+  asConfigureGestureHandler(gesture =>
+    configureDrawerPan(
+      gesture,
+      isOpen ? [-OPEN_THRESHOLD, OPEN_THRESHOLD] : [-OPEN_THRESHOLD, NEVER],
+      isOpen,
+      scrollGestures,
+      swipeExclusion,
+    ),
+  );

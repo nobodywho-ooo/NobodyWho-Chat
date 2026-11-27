@@ -13,6 +13,8 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
       [
         undefined,
         {
+          "paddingLeft": 0,
+          "paddingRight": 0,
           "paddingTop": 0,
         },
         false,
@@ -45,11 +47,16 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
     <View>
       <RCTScrollView
         contentContainerStyle={
-          {
-            "columnGap": 8,
-            "paddingHorizontal": 16,
-            "paddingTop": 16,
-          }
+          [
+            {
+              "columnGap": 8,
+              "paddingTop": 16,
+            },
+            {
+              "paddingLeft": 16,
+              "paddingRight": 16,
+            },
+          ]
         }
         horizontal={true}
         onContentSizeChange={[Function]}
@@ -57,10 +64,15 @@ exports[`0 models to download (network failure), 0 models downloaded and no mode
         onLayout={[Function]}
         showsHorizontalScrollIndicator={false}
         style={
-          {
-            "flexGrow": 0,
-            "marginHorizontal": -16,
-          }
+          [
+            {
+              "flexGrow": 0,
+            },
+            {
+              "marginLeft": -16,
+              "marginRight": -16,
+            },
+          ]
         }
       >
         <View>
@@ -433,6 +445,8 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
       [
         undefined,
         {
+          "paddingLeft": 0,
+          "paddingRight": 0,
           "paddingTop": 0,
         },
         false,
@@ -465,11 +479,16 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
     <View>
       <RCTScrollView
         contentContainerStyle={
-          {
-            "columnGap": 8,
-            "paddingHorizontal": 16,
-            "paddingTop": 16,
-          }
+          [
+            {
+              "columnGap": 8,
+              "paddingTop": 16,
+            },
+            {
+              "paddingLeft": 16,
+              "paddingRight": 16,
+            },
+          ]
         }
         horizontal={true}
         onContentSizeChange={[Function]}
@@ -477,10 +496,15 @@ exports[`0 models to download (network failure), 1 model downloaded and 1 in use
         onLayout={[Function]}
         showsHorizontalScrollIndicator={false}
         style={
-          {
-            "flexGrow": 0,
-            "marginHorizontal": -16,
-          }
+          [
+            {
+              "flexGrow": 0,
+            },
+            {
+              "marginLeft": -16,
+              "marginRight": -16,
+            },
+          ]
         }
       >
         <View>
@@ -853,6 +877,8 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
       [
         undefined,
         {
+          "paddingLeft": 0,
+          "paddingRight": 0,
           "paddingTop": 0,
         },
         false,
@@ -885,11 +911,16 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
     <View>
       <RCTScrollView
         contentContainerStyle={
-          {
-            "columnGap": 8,
-            "paddingHorizontal": 16,
-            "paddingTop": 16,
-          }
+          [
+            {
+              "columnGap": 8,
+              "paddingTop": 16,
+            },
+            {
+              "paddingLeft": 16,
+              "paddingRight": 16,
+            },
+          ]
         }
         horizontal={true}
         onContentSizeChange={[Function]}
@@ -897,10 +928,15 @@ exports[`2 models to download, 2 models downloaded and 1 in use 1`] = `
         onLayout={[Function]}
         showsHorizontalScrollIndicator={false}
         style={
-          {
-            "flexGrow": 0,
-            "marginHorizontal": -16,
-          }
+          [
+            {
+              "flexGrow": 0,
+            },
+            {
+              "marginLeft": -16,
+              "marginRight": -16,
+            },
+          ]
         }
       >
         <View>

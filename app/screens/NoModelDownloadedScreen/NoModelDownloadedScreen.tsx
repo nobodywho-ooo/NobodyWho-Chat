@@ -1,9 +1,10 @@
 import React from 'react';
 import { View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Button, PlatformIcon, Text } from 'components';
 import { useModelDownloads, useStyled } from 'hooks';
+import { Routes } from 'navigation';
 import { isChatPipeline } from 'types';
 
 import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
@@ -13,7 +14,6 @@ import styles from './NoModelDownloadedScreen.styles';
 export const NoModelDownloadedScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const navigation = useNavigation();
   const { downloads, loading } = useModelDownloads();
 
   const chatDownloads = downloads.filter(download =>
@@ -49,8 +49,7 @@ export const NoModelDownloadedScreen: React.FC = () => {
       <Button
         title={t('screens.noModelDownloaded.downloadModel')}
         onPress={() => {
-          // @ts-ignore
-          navigation.navigate('Models');
+          router.navigate(Routes.models);
         }}
       />
     </View>

@@ -12,8 +12,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareLegendList } from '@legendapp/list/keyboard';
 import { KeyboardStickyView } from 'react-native-keyboard-controller';
 import { BlurTargetView, BlurView } from 'expo-blur';
-import { useHeaderHeight } from '@react-navigation/elements';
-import { useIsFocused } from '@react-navigation/native';
+import { useHeaderHeight } from 'expo-router/react-navigation';
+import { useIsFocused } from 'expo-router';
 import LinearGradient from 'react-native-linear-gradient';
 import {
   AmbientGlow,
@@ -42,11 +42,13 @@ import { Theme } from 'types';
 import {
   CameraCaptureModal,
   EmbeddingDownloadSheet,
+  ContentColumn,
   InputBar,
   MessageStarters,
 } from './components';
 import {
   useAttachments,
+  useChatColumn,
   useChatGeneration,
   useMessageListScroll,
   useSttTranscription,
@@ -94,6 +96,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
   const insets = useSafeAreaInsets();
   const headerInset = useHeaderHeight();
   const { slots, chatPipeline } = useAiService();
+  const column = useChatColumn();
   const { ttsModelIdInUse, sttModelIdInUse } = useAppState();
 
   const canPlayAudio = ttsModelIdInUse !== undefined;
@@ -329,19 +332,22 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       const messageId = messageKey(item, index);
 
       return (
-        <MessageListItem
-          message={item}
-          isStreaming={isStreaming && index === messages.length - 1}
-          messageId={messageId}
-          canPlayAudio={canPlayAudio}
-          isAudioLoading={audioLoadingId === messageId}
-          isAudioPlaying={audioPlayingId === messageId}
-          onPlayAudio={playAudio}
-          onStopAudio={stopAudio}
-        />
+        <ContentColumn column={column}>
+          <MessageListItem
+            message={item}
+            isStreaming={isStreaming && index === messages.length - 1}
+            messageId={messageId}
+            canPlayAudio={canPlayAudio}
+            isAudioLoading={audioLoadingId === messageId}
+            isAudioPlaying={audioPlayingId === messageId}
+            onPlayAudio={playAudio}
+            onStopAudio={stopAudio}
+          />
+        </ContentColumn>
       );
     },
     [
+      column,
       isStreaming,
       messages.length,
       canPlayAudio,
@@ -355,6 +361,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
 
   const listExtraData = useMemo(
     () => ({
+      column,
       isStreaming,
       lastIndex: messages.length - 1,
       canPlayAudio,
@@ -362,6 +369,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
       audioPlayingId,
     }),
     [
+      column,
       isStreaming,
       messages.length,
       canPlayAudio,
@@ -382,9 +390,10 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           pipeline={chatPipeline}
           onSelect={setInputText}
           disabled={disabled}
+          column={column}
         />
       ),
-    [showStarters, chatPipeline, disabled],
+    [showStarters, chatPipeline, disabled, column],
   );
 
   const listContentStyle = useMemo(
@@ -476,12 +485,14 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
         style={styles.inputBarContainer}
         pointerEvents="box-none"
       >
-        <ScrollToBottomButton
-          visible={hasMessages && list.canScrollToBottom}
-          onPress={list.scrollToBottom}
-          blurTarget={blurTargetRef}
-          style={styles.scrollToBottomContainer}
-        />
+        <ContentColumn column={column}>
+          <ScrollToBottomButton
+            visible={hasMessages && list.canScrollToBottom}
+            onPress={list.scrollToBottom}
+            blurTarget={blurTargetRef}
+            style={styles.scrollToBottomContainer}
+          />
+        </ContentColumn>
         <InputBar
           composerRef={list.composerRef}
           onComposerLayout={list.onComposerLayout}
@@ -517,6 +528,7 @@ export const ChatScreen: React.FC<ChatScreenProps> = ({
           onStop={onStop}
           style={inputBarStyle}
           messageStarters={messageStarters}
+          column={column}
         />
       </KeyboardStickyView>
       <Toast

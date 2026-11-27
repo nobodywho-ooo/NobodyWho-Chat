@@ -1,17 +1,6 @@
-import { useCallback, useRef, useEffect } from 'react';
-import {
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-  useWindowDimensions,
-} from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  createDrawerNavigator,
-  type DrawerContentComponentProps,
-} from '@react-navigation/drawer';
-import { useNavigation } from '@react-navigation/native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { router, type NativeStackNavigationOptions } from 'expo-router';
 import {
   MenuView,
   type MenuAction,
@@ -23,7 +12,6 @@ import {
   deleteConversation,
   getDocumentPathsByConversationId,
 } from 'repositories';
-import { DrawerContentScreen, ModelsScreen, SettingsScreen } from 'screens';
 import { PlatformIcon, Text, fontSizes } from 'components';
 import {
   log,
@@ -33,63 +21,69 @@ import {
   parameterCountLabel,
 } from 'helpers';
 import { useAppState, useModels, useStyled } from 'hooks';
-import { subscribeChatModelArrival, useAiService } from 'services';
+import { useAiService } from 'services';
 import { Spacings } from 'style';
 import { isChatPipeline } from 'types';
 
-import { ChatStackNavigator } from './ChatStackNavigator';
-import {
-  DrawerStatusReporter,
-  buildLeftDrawerGesture,
-  useDrawerCoordination,
-} from './DrawerCoordination';
+import { useMenuHeaderOptions } from './MenuHeader';
+import { Routes } from './routes';
 
 const ICON_SIZE = 22;
 const HEADER_LOGO_SIZE = 22;
 const MENU_ACTION_NEW_CHAT = 'new-chat';
 const MENU_ACTION_DELETE_CHAT = 'delete-chat';
 
-const Drawer = createDrawerNavigator();
-
-const ChatHeaderRight = () => {
-  const { t } = useTranslation();
-  const { colors } = useStyled();
+const useChatMenu = () => {
   const { conversationIdInUse } = useAppState();
   const { slots } = useAiService();
 
-  const runMenuAction = useCallback(
-    async (event: string) => {
-      slots.chat.ref.current?.stopGeneration();
+  const newChat = useCallback(() => {
+    slots.chat.ref.current?.stopGeneration();
+    setAppState({ conversationIdInUse: undefined });
+  }, [slots]);
 
-      if (event === MENU_ACTION_NEW_CHAT) {
-        setAppState({ conversationIdInUse: undefined });
-        return;
-      }
+  const deleteChat = useCallback(async () => {
+    slots.chat.ref.current?.stopGeneration();
 
-      if (
-        event === MENU_ACTION_DELETE_CHAT &&
-        conversationIdInUse !== undefined
-      ) {
-        setAppState({ conversationIdInUse: undefined });
+    if (conversationIdInUse === undefined) {
+      return;
+    }
 
-        try {
-          const documentPaths =
-            await getDocumentPathsByConversationId(conversationIdInUse);
+    setAppState({ conversationIdInUse: undefined });
 
-          await deleteConversation(conversationIdInUse);
+    try {
+      const documentPaths =
+        await getDocumentPathsByConversationId(conversationIdInUse);
 
-          await deleteMessageDocuments(documentPaths);
-        } catch (error) {
-          log('Failed to delete conversation', error, { capture: true });
-        }
-      }
-    },
-    [conversationIdInUse, slots],
-  );
+      await deleteConversation(conversationIdInUse);
+
+      await deleteMessageDocuments(documentPaths);
+    } catch (error) {
+      log('Failed to delete conversation', error, { capture: true });
+    }
+  }, [conversationIdInUse, slots]);
+
+  return {
+    hasConversation: conversationIdInUse !== undefined,
+    newChat,
+    deleteChat,
+  };
+};
+
+export const ChatHeaderRight = () => {
+  const { t } = useTranslation();
+  const { colors } = useStyled();
+  const { hasConversation, newChat, deleteChat } = useChatMenu();
 
   const handleMenuAction = useCallback(
-    ({ nativeEvent }: NativeActionEvent) => runMenuAction(nativeEvent.event),
-    [runMenuAction],
+    ({ nativeEvent }: NativeActionEvent) => {
+      if (nativeEvent.event === MENU_ACTION_NEW_CHAT) {
+        newChat();
+      } else if (nativeEvent.event === MENU_ACTION_DELETE_CHAT) {
+        deleteChat();
+      }
+    },
+    [newChat, deleteChat],
   );
 
   const newChatAction: MenuAction = {
@@ -134,8 +128,6 @@ const ChatHeaderRight = () => {
       ]
     : [newChatAction, deleteChatAction];
 
-  const hasConversation = conversationIdInUse !== undefined;
-
   return (
     <View
       pointerEvents={hasConversation ? 'auto' : 'none'}
@@ -160,12 +152,11 @@ const ChatHeaderRight = () => {
   );
 };
 
-const renderChatHeaderRight = () => <ChatHeaderRight />;
+export const renderChatHeaderRight = () => <ChatHeaderRight />;
 
-const ChatHeaderTitle = () => {
+export const ChatHeaderTitle = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const navigation = useNavigation();
   const { modelIdInUse } = useAppState();
   const { models } = useModels();
   const { slots } = useAiService();
@@ -179,9 +170,11 @@ const ChatHeaderTitle = () => {
 
   const handlePress = useCallback(() => {
     slots.chat.ref.current?.stopGeneration();
-    // @ts-ignore
-    navigation.navigate('DownloadedModelsScreen', { canDelete: false });
-  }, [navigation, slots]);
+    router.push({
+      pathname: Routes.downloadedModels,
+      params: { canDelete: 'false' },
+    });
+  }, [slots]);
 
   if (!model?.name) {
     return null;
@@ -229,103 +222,86 @@ const ChatHeaderTitle = () => {
   );
 };
 
-const renderChatHeaderTitle = () => <ChatHeaderTitle />;
+export const renderChatHeaderTitle = () => <ChatHeaderTitle />;
 
-const OpenChatOnModelArrival = ({
-  navigation,
-}: Pick<DrawerContentComponentProps, 'navigation'>) => {
-  const navigationRef = useRef(navigation);
-  navigationRef.current = navigation;
+const renderNoTitle = () => null;
 
-  useEffect(
-    () =>
-      subscribeChatModelArrival(() => {
-        navigationRef.current.navigate('Chat');
-      }),
-    [],
-  );
+// iOS: a custom title view handed over while the screen mounts beside the
+// sidebar is never placed in the bar — it stays at the window's top-left,
+// hidden under the sidebar. Added one frame later, UIKit lays it out.
+const useMountedAfterFirstFrame = () => {
+  const [isMounted, setMounted] = useState(!isIOS);
 
-  return null;
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
+  return isMounted;
 };
 
-const renderDrawerContent = ({
-  navigation,
-  state,
-}: DrawerContentComponentProps) => (
-  <>
-    <DrawerStatusReporter side="left" />
-    <OpenChatOnModelArrival navigation={navigation} />
-    <DrawerContentScreen
-      navigation={navigation}
-      onCloseDrawer={() => navigation.closeDrawer()}
-      isChatFocused={state.routes[state.index]?.name === 'Chat'}
-    />
-  </>
-);
-
-export const DrawerNavigator = () => {
+// The chat's native header: the menu button (useMenuHeaderOptions), the model
+// name and the More menu, a native bar item on iOS (into the vertical bar on
+// iPhone Duo).
+export const useChatHeaderOptions = (): NativeStackNavigationOptions => {
   const { t } = useTranslation();
-  const { colors } = useStyled();
-  const { openSide, scrollGestures, swipeExclusion } = useDrawerCoordination();
+  const { hasConversation, newChat, deleteChat } = useChatMenu();
+  const menuOptions = useMenuHeaderOptions();
+  const isTitleMounted = useMountedAfterFirstFrame();
 
-  const insets = useSafeAreaInsets();
-  const { width: windowWidth } = useWindowDimensions();
+  return useMemo<NativeStackNavigationOptions>(() => {
+    const options: NativeStackNavigationOptions = {
+      ...menuOptions,
+      headerTitle: isTitleMounted ? renderChatHeaderTitle : renderNoTitle,
+    };
 
-  return (
-    <Drawer.Navigator
-      drawerContent={renderDrawerContent}
-      screenOptions={{
-        headerTransparent: true,
-        headerTintColor: colors.onSurface,
-        headerTitleStyle: { color: colors.onSurface },
-        drawerStyle: {
-          backgroundColor: colors.surfaceSecondary,
-          paddingTop: insets.top,
-          width: '100%',
-          borderTopRightRadius: Spacings.xxxl,
-          borderBottomRightRadius: Spacings.xxxl,
+    if (!isIOS) {
+      return { ...options, headerRight: renderChatHeaderRight };
+    }
+
+    return {
+      ...options,
+      unstable_headerRightItems: () => [
+        {
+          type: 'menu',
+          label: t('navigation.chatMenu.more'),
+          icon: { type: 'sfSymbol', name: 'ellipsis' },
+          disabled: !hasConversation,
+          menu: {
+            items: [
+              {
+                type: 'submenu',
+                label: '',
+                inline: true,
+                items: [
+                  {
+                    type: 'action',
+                    label: t('navigation.chatMenu.newChat'),
+                    icon: { type: 'sfSymbol', name: 'plus.bubble' },
+                    onPress: newChat,
+                  },
+                ],
+              },
+              {
+                type: 'submenu',
+                label: '',
+                inline: true,
+                items: [
+                  {
+                    type: 'action',
+                    label: t('navigation.chatMenu.deleteChat'),
+                    icon: { type: 'sfSymbol', name: 'trash' },
+                    destructive: true,
+                    onPress: deleteChat,
+                  },
+                ],
+              },
+            ],
+          },
         },
-        drawerType: 'front',
-        overlayStyle: { backgroundColor: colors.shadow },
-        swipeEnabled: true,
-        swipeEdgeWidth: windowWidth,
-        configureGestureHandler: buildLeftDrawerGesture(
-          openSide === 'left',
-          scrollGestures,
-          swipeExclusion,
-        ),
-      }}
-    >
-      <Drawer.Screen
-        name="Chat"
-        component={ChatStackNavigator}
-        options={{
-          // Disabled while the right drawer is open so its close gesture wins.
-          swipeEnabled: openSide !== 'right',
-          headerTitle: renderChatHeaderTitle,
-          headerTitleContainerStyle: { marginHorizontal: 8 },
-          headerRight: renderChatHeaderRight,
-          inactiveBehavior: 'none',
-        }}
-      />
-      <Drawer.Screen
-        name="Models"
-        component={ModelsScreen}
-        options={{
-          title: t('navigation.models'),
-          swipeEnabled: openSide !== 'right',
-        }}
-      />
-      <Drawer.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          title: t('navigation.settings'),
-          swipeEnabled: openSide !== 'right',
-        }}
-      />
-    </Drawer.Navigator>
-  );
+      ],
+    };
+  }, [t, hasConversation, newChat, deleteChat, menuOptions, isTitleMounted]);
 };
 
 const styles = StyleSheet.create({

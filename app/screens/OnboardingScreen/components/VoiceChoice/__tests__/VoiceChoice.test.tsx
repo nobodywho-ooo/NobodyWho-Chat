@@ -5,7 +5,7 @@ import {
   screen,
   within,
 } from '@testing-library/react-native';
-import { usePreventRemove } from '@react-navigation/native';
+import { usePreventRemove } from 'expo-router';
 
 import type { CuratedAvailability } from 'helpers';
 import type { CuratedModels } from 'hooks';
@@ -13,7 +13,11 @@ import { buildModel } from 'jest/factories/model';
 import { ModelPipeline } from 'types';
 
 import { OnboardingContext } from '../../../hooks/useOnboarding';
-import { OnboardingScreenProps } from '../../../Onboarding.types';
+import {
+  mockRouter,
+  mockSetOptions,
+  mockUseLocalSearchParams,
+} from 'jest/mock/node-modules';
 import { VoiceChoice } from '../VoiceChoice';
 
 const mockDownloads = {
@@ -27,25 +31,16 @@ const curatedModels = mockDownloads as unknown as CuratedModels;
 const recommended = buildModel(1, { tags: ['Recommended'] });
 const chatModels = [recommended];
 
-const navigation = { navigate: jest.fn(), setOptions: jest.fn() };
-
-const renderChoice = (modelId = recommended.id, onFinish = jest.fn()) =>
-  render(
+const renderChoice = (modelId = recommended.id, onFinish = jest.fn()) => {
+  mockUseLocalSearchParams.mockReturnValue({ modelId: String(modelId) });
+  return render(
     <OnboardingContext.Provider value={{ chatModels, onFinish, curatedModels }}>
-      <VoiceChoice
-        {...({
-          navigation,
-          route: {
-            key: 'VoiceChoice',
-            name: 'VoiceChoice',
-            params: { modelId },
-          },
-        } as unknown as OnboardingScreenProps<'VoiceChoice'>)}
-      />
+      <VoiceChoice />
     </OnboardingContext.Provider>,
   );
+};
 
-const headerOptions = () => navigation.setOptions.mock.lastCall[0];
+const headerOptions = () => mockSetOptions.mock.lastCall[0];
 const isRemovePrevented = () =>
   jest.mocked(usePreventRemove).mock.lastCall?.[0];
 
@@ -96,15 +91,15 @@ test('hands the picked choice over to the download step', async () => {
   await renderChoice(recommended.id);
 
   await fireEvent.press(screen.getByTestId('onboarding-text-only-button'));
-  expect(navigation.navigate).toHaveBeenLastCalledWith('OnboardingDownload', {
-    modelId: recommended.id,
-    setup: 'textOnly',
+  expect(mockRouter.push).toHaveBeenLastCalledWith({
+    pathname: '/onboarding/download',
+    params: { modelId: String(recommended.id), setup: 'textOnly' },
   });
 
   await fireEvent.press(screen.getByTestId('onboarding-text-voice-button'));
-  expect(navigation.navigate).toHaveBeenLastCalledWith('OnboardingDownload', {
-    modelId: recommended.id,
-    setup: 'textAndVoice',
+  expect(mockRouter.push).toHaveBeenLastCalledWith({
+    pathname: '/onboarding/download',
+    params: { modelId: String(recommended.id), setup: 'textAndVoice' },
   });
 });
 
@@ -123,23 +118,16 @@ describe('the search options', () => {
     parts: [{ ...chatPart, type: 'embedding-model', sizeGB: 0.31 }],
   });
 
-  const renderSearchChoice = () =>
-    render(
+  const renderSearchChoice = () => {
+    mockUseLocalSearchParams.mockReturnValue({ modelId: String(bigChat.id) });
+    return render(
       <OnboardingContext.Provider
         value={{ chatModels: [bigChat], onFinish: jest.fn(), curatedModels }}
       >
-        <VoiceChoice
-          {...({
-            navigation,
-            route: {
-              key: 'VoiceChoice',
-              name: 'VoiceChoice',
-              params: { modelId: bigChat.id },
-            },
-          } as unknown as OnboardingScreenProps<'VoiceChoice'>)}
-        />
+        <VoiceChoice />
       </OnboardingContext.Provider>,
     );
+  };
 
   beforeEach(() => {
     mockDownloads.availabilityOf.mockImplementation(() => ({
@@ -164,15 +152,15 @@ describe('the search options', () => {
     );
 
     await fireEvent.press(screen.getByTestId('onboarding-text-search-button'));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('OnboardingDownload', {
-      modelId: bigChat.id,
-      setup: 'textAndSearch',
+    expect(mockRouter.push).toHaveBeenLastCalledWith({
+      pathname: '/onboarding/download',
+      params: { modelId: String(bigChat.id), setup: 'textAndSearch' },
     });
 
     await fireEvent.press(screen.getByTestId('onboarding-all-models-button'));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('OnboardingDownload', {
-      modelId: bigChat.id,
-      setup: 'allModels',
+    expect(mockRouter.push).toHaveBeenLastCalledWith({
+      pathname: '/onboarding/download',
+      params: { modelId: String(bigChat.id), setup: 'allModels' },
     });
   });
 

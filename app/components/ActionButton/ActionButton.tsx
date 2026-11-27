@@ -1,9 +1,6 @@
 import React from 'react';
 import { Pressable } from 'react-native';
-import {
-  type SFSymbolProps,
-  type MaterialSymbolProps,
-} from '@react-navigation/native';
+import type { AndroidIconName, IosIconName } from 'types';
 import { PlatformIcon } from '../PlatformIcon/PlatformIcon';
 import { Text } from '../Text/Text';
 import { useStyled } from 'hooks';
@@ -12,8 +9,8 @@ import styles from './ActionButton.styles';
 
 interface ActionButtonProps {
   icon?: {
-    iosIconName: SFSymbolProps['name'];
-    androidIconName: MaterialSymbolProps['name'];
+    iosIconName: IosIconName;
+    androidIconName: AndroidIconName;
   };
   label: string;
   onPress: () => void;

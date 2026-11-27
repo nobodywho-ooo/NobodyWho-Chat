@@ -21,6 +21,8 @@ exports[`renders correctly CustomizeAssistantScreen 1`] = `
           },
         ],
         {
+          "paddingLeft": 0,
+          "paddingRight": 0,
           "paddingTop": 16,
         },
         false,

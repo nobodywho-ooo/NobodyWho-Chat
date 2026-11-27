@@ -1,13 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { Alert, Platform } from 'react-native';
+import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { getVersion, getBuildNumber } from 'react-native-device-info';
-import { getIOSVersion, openExternalUrl } from 'helpers';
+import {
+  FEEDBACK_EMAIL,
+  getIOSVersion,
+  openExternalUrl,
+  openFeedbackEmail,
+} from 'helpers';
 import { useStyled } from 'hooks';
-import { ActionButton, HeaderScrollView, ListItem, Text } from 'components';
+import { HeaderScrollView, ListItem, Text } from 'components';
 import { Spacings } from 'style';
+import { Routes } from 'navigation';
 
+import { LinksSheet } from './components/LinksSheet/LinksSheet';
 import styles from './SettingsScreen.styles';
 
 const ACKNOWLEDGEMENTS_IOS_ICON =
@@ -23,8 +30,8 @@ const RATE_APP_URL = Platform.select({
 export const SettingsScreen: React.FC = () => {
   const { t } = useTranslation();
   const { colors } = useStyled();
-  const navigation = useNavigation();
   const [appInfo, setAppInfo] = useState('');
+  const [linksVisible, setLinksVisible] = useState(false);
 
   useEffect(() => {
     const version = getVersion();
@@ -32,6 +39,18 @@ export const SettingsScreen: React.FC = () => {
 
     setAppInfo(`version ${version} • build ${buildNumber}`);
   }, []);
+
+  const sendFeedback = async () => {
+    if (await openFeedbackEmail()) {
+      return;
+    }
+    Alert.alert(
+      t('screens.settings.feedbackUnavailableTitle'),
+      t('screens.settings.feedbackUnavailableMessage', {
+        email: FEEDBACK_EMAIL,
+      }),
+    );
+  };
 
   return (
     <HeaderScrollView
@@ -45,8 +64,7 @@ export const SettingsScreen: React.FC = () => {
         iosIconName="slider.horizontal.3"
         androidIconName="tune"
         iconColor={colors.primary}
-        // @ts-ignore
-        onPress={() => navigation.navigate('CustomizeAssistantScreen')}
+        onPress={() => router.push(Routes.customizeAssistant)}
       />
       <ListItem
         title={t('screens.settings.language')}
@@ -54,8 +72,15 @@ export const SettingsScreen: React.FC = () => {
         iosIconName="character.bubble"
         androidIconName="translate"
         iconColor={colors.primary}
-        // @ts-ignore
-        onPress={() => navigation.navigate('LanguageScreen')}
+        onPress={() => router.push(Routes.language)}
+      />
+      <ListItem
+        title={t('screens.settings.feedback')}
+        subtitle={t('screens.settings.feedbackSubtitle')}
+        iosIconName="envelope"
+        androidIconName="mail"
+        iconColor={colors.primary}
+        onPress={sendFeedback}
       />
       <ListItem
         title={t('screens.settings.rateApp')}
@@ -67,13 +92,20 @@ export const SettingsScreen: React.FC = () => {
       />
       <Text style={styles.sectionHeader}>{t('screens.settings.about')}</Text>
       <ListItem
+        title={t('screens.settings.links')}
+        subtitle={t('screens.settings.linksSubtitle')}
+        iosIconName="link"
+        androidIconName="link"
+        iconColor={colors.secondary}
+        onPress={() => setLinksVisible(true)}
+      />
+      <ListItem
         title={t('screens.settings.terms')}
         subtitle={t('screens.settings.termsSubtitle')}
         iosIconName="doc.text.fill"
         androidIconName="description"
         iconColor={colors.secondary}
-        // @ts-ignore
-        onPress={() => navigation.navigate('TermsScreen')}
+        onPress={() => router.push(Routes.terms)}
       />
       <ListItem
         title={t('screens.settings.privacyPolicy')}
@@ -81,8 +113,7 @@ export const SettingsScreen: React.FC = () => {
         iosIconName="lock.shield.fill"
         androidIconName="privacy_tip"
         iconColor={colors.secondary}
-        // @ts-ignore
-        onPress={() => navigation.navigate('PrivacyPolicyScreen')}
+        onPress={() => router.push(Routes.privacyPolicy)}
       />
       <ListItem
         title={t('screens.settings.acknowledgements')}
@@ -90,31 +121,18 @@ export const SettingsScreen: React.FC = () => {
         iosIconName={ACKNOWLEDGEMENTS_IOS_ICON}
         androidIconName="license"
         iconColor={colors.secondary}
-        // @ts-ignore
-        onPress={() => navigation.navigate('AcknowledgementsScreen')}
+        onPress={() => router.push(Routes.acknowledgements)}
       />
-      <View style={styles.buttonsContainer}>
-        <ActionButton
-          label={t('screens.settings.website')}
-          onPress={() => openExternalUrl('https://www.nobodywho.ai/')}
-        />
-        <ActionButton
-          label={t('screens.settings.github')}
-          onPress={() =>
-            openExternalUrl('https://github.com/nobodywho-ooo/nobodywho')
-          }
-        />
-        <ActionButton
-          label={t('screens.settings.x')}
-          onPress={() => openExternalUrl('https://x.com/nobodywho_ai')}
-        />
-      </View>
       <Text variant="h3" bold style={styles.appName}>
         NobodyWho Chat
       </Text>
       <Text variant="body2" style={styles.appInfo}>
         {appInfo}
       </Text>
+      <LinksSheet
+        visible={linksVisible}
+        onClose={() => setLinksVisible(false)}
+      />
     </HeaderScrollView>
   );
 };

@@ -1,16 +1,18 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useRef, useState } from 'react';
 import { DeviceCatalogue, log, onboardingChatModels } from 'helpers';
 import { getDeviceCatalogue } from 'services';
 
 import { LoadingScreen } from '../LoadingScreen/LoadingScreen';
-import { OnboardingChoices } from './components';
+import { OnboardingProvider } from './components';
 
 interface OnboardingScreenProps {
   onFinish: () => void;
+  children: ReactNode;
 }
 
 export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
   onFinish,
+  children,
 }) => {
   const [catalogue, setCatalogue] = useState<DeviceCatalogue>();
 
@@ -54,5 +56,9 @@ export const OnboardingScreen: React.FC<OnboardingScreenProps> = ({
     return <LoadingScreen />;
   }
 
-  return <OnboardingChoices catalogue={catalogue} onFinish={onFinish} />;
+  return (
+    <OnboardingProvider catalogue={catalogue} onFinish={onFinish}>
+      {children}
+    </OnboardingProvider>
+  );
 };

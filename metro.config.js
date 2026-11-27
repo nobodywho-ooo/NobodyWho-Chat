@@ -34,6 +34,9 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   return context.resolveRequest(context, moduleName, platform);
 };
 
+// Expo Router reads the route files through require.context (see App.tsx).
+config.transformer.unstable_allowRequireContext = true;
+
 // react-native-svg-transformer: turn `.svg` imports into React components.
 config.transformer.babelTransformerPath =
   require.resolve('react-native-svg-transformer/react-native');

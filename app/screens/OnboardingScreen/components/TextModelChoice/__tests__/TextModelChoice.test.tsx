@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react-native';
-import { usePreventRemove } from '@react-navigation/native';
+import { usePreventRemove } from 'expo-router';
 
 import {
   CURATED_VOICE_ONLY_MODELS,
@@ -12,7 +12,7 @@ import { buildModel } from 'jest/factories/model';
 import { Model, ModelPipeline } from 'types';
 
 import { OnboardingContext } from '../../../hooks/useOnboarding';
-import { OnboardingScreenProps } from '../../../Onboarding.types';
+import { mockRouter, mockSetOptions } from 'jest/mock/node-modules';
 import { TextModelChoice } from '../TextModelChoice';
 
 const firstPick = buildModel(1, { tags: ['Great First Pick'] });
@@ -36,17 +36,10 @@ const curatedModels = {
   availabilityOf: (curated: unknown) => mockAvailabilityOf(curated),
 } as unknown as CuratedModels;
 
-const navigation = { navigate: jest.fn(), setOptions: jest.fn() };
-
 const renderChoice = (chatModels: Model[], onFinish = jest.fn()) =>
   render(
     <OnboardingContext.Provider value={{ chatModels, onFinish, curatedModels }}>
-      <TextModelChoice
-        {...({
-          navigation,
-          route: { key: 'TextModelChoice', name: 'TextModelChoice' },
-        } as unknown as OnboardingScreenProps<'TextModelChoice'>)}
-      />
+      <TextModelChoice />
     </OnboardingContext.Provider>,
   );
 
@@ -78,8 +71,9 @@ test('pressing a model opens the voice choice for it', async () => {
   expect(pickedChat.matches(recommended)).toBe(true);
   expect(pickedChat.matches(firstPick)).toBe(false);
   expect(voice).toEqual(CURATED_VOICE_ONLY_MODELS);
-  expect(navigation.navigate).toHaveBeenCalledWith('VoiceChoice', {
-    modelId: recommended.id,
+  expect(mockRouter.push).toHaveBeenCalledWith({
+    pathname: '/onboarding/voice',
+    params: { modelId: String(recommended.id) },
   });
 });
 
@@ -97,9 +91,9 @@ test.each<[string, CuratedAvailability]>([
 
     await fireEvent.press(screen.getByLabelText(recommended.name));
 
-    expect(navigation.navigate).toHaveBeenCalledWith('OnboardingDownload', {
-      modelId: recommended.id,
-      setup: 'textOnly',
+    expect(mockRouter.push).toHaveBeenCalledWith({
+      pathname: '/onboarding/download',
+      params: { modelId: String(recommended.id), setup: 'textOnly' },
     });
   },
 );
@@ -108,7 +102,7 @@ test('puts Skip in the header and leaves going back alone', async () => {
   const onFinish = jest.fn();
   await renderChoice([firstPick], onFinish);
 
-  const options = navigation.setOptions.mock.lastCall[0];
+  const options = mockSetOptions.mock.lastCall[0];
   expect(options.headerBackVisible).toBe(true);
   expect(options.gestureEnabled).toBe(true);
   expect(options.headerRight().props.onPress).toBe(onFinish);

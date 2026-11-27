@@ -222,11 +222,11 @@ test("selecting a pipeline shows only that pipeline's models and closes the shee
   ).toBe(true);
 });
 
-test('the backdrop closes the sheet without changing the filter', async () => {
+test('the close button closes the sheet without changing the filter', async () => {
   const screen = await renderMixed();
 
   await openFilters(screen);
-  await fireEvent.press(screen.getByTestId('model-filter-backdrop'));
+  await fireEvent.press(screen.getByTestId('model-filter-sheet-close'));
 
   expect(screen.queryByLabelText('screens.models.allPipelines')).toBeNull();
   expect(queryCards(screen)).toHaveLength(3);

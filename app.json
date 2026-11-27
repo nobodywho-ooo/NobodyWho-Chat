@@ -1,5 +1,10 @@
 {
   "name": "reffen",
   "displayName": "NobodyWho",
-  "plugins": ["expo-audio"]
+  "scheme": "nobodywho",
+  "plugins": [
+    "expo-audio",
+    "expo-router",
+    "expo-font"
+  ]
 }

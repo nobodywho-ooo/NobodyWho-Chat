@@ -1,8 +1,10 @@
 import React, { useCallback, useRef } from 'react';
 import { LayoutChangeEvent, LayoutRectangle } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { useDrawerScrollGesture } from 'hooks';
+import { CONTAINER_PADDING_HORIZONTAL } from 'style';
 
 import styles from './ModelsTabs.styles';
 import { TabPill } from './TabPill';
@@ -27,6 +29,9 @@ export const ModelsTabs: React.FC<ModelsTabsProps> = ({
 }) => {
   const { t } = useTranslation();
   const onScrollGesture = useDrawerScrollGesture();
+  const insets = useSafeAreaInsets();
+  const bleedLeft = CONTAINER_PADDING_HORIZONTAL + insets.left;
+  const bleedRight = CONTAINER_PADDING_HORIZONTAL + insets.right;
 
   const scrollRef = useRef<React.ComponentRef<typeof ScrollView>>(null);
   const viewportWidthRef = useRef(0);
@@ -60,8 +65,14 @@ export const ModelsTabs: React.FC<ModelsTabsProps> = ({
       }}
       onGestureUpdate_CAN_CAUSE_INFINITE_RERENDER={onScrollGesture}
       horizontal
-      style={styles.list}
-      contentContainerStyle={styles.listContent}
+      style={[
+        styles.list,
+        { marginLeft: -bleedLeft, marginRight: -bleedRight },
+      ]}
+      contentContainerStyle={[
+        styles.listContent,
+        { paddingLeft: bleedLeft, paddingRight: bleedRight },
+      ]}
       showsHorizontalScrollIndicator={false}
     >
       {TABS.map(({ tab, labelKey }) => (

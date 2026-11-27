@@ -36,6 +36,8 @@ exports[`renders downloaded models with one selected 1`] = `
       [
         undefined,
         {
+          "paddingLeft": 0,
+          "paddingRight": 0,
           "paddingTop": 0,
         },
         false,

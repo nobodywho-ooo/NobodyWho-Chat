@@ -7,8 +7,10 @@ import { haptics } from 'helpers';
 import { useStyled } from 'hooks';
 import { Spacings, Layout } from 'style';
 
-import { OnboardingScreenProps } from '../../Onboarding.types';
+import { useRouter } from 'expo-router';
+import { Routes } from 'navigation';
 
+import { ONBOARDING_PADDING_HORIZONTAL } from '../../Onboarding.styles';
 import styles from './Welcome.styles';
 
 const FEATURE_ICON_SIZE = 20;
@@ -36,9 +38,8 @@ const FEATURES = [
   },
 ] as const;
 
-export const Welcome: React.FC<OnboardingScreenProps<'Welcome'>> = ({
-  navigation,
-}) => {
+export const Welcome: React.FC = () => {
+  const router = useRouter();
   const { t } = useTranslation();
   const { colors } = useStyled();
   const insets = useSafeAreaInsets();
@@ -51,6 +52,8 @@ export const Welcome: React.FC<OnboardingScreenProps<'Welcome'>> = ({
           backgroundColor: colors.surface,
           paddingTop: insets.top,
           paddingBottom: insets.bottom + Spacings.lg,
+          paddingLeft: insets.left + ONBOARDING_PADDING_HORIZONTAL,
+          paddingRight: insets.right + ONBOARDING_PADDING_HORIZONTAL,
         },
       ]}
     >
@@ -103,7 +106,7 @@ export const Welcome: React.FC<OnboardingScreenProps<'Welcome'>> = ({
         variant="secondary"
         onPress={() => {
           haptics.medium();
-          navigation.replace('TextModelChoice');
+          router.replace(Routes.onboardingTextModel);
         }}
         style={Layout.content}
       />

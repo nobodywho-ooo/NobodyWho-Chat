@@ -1,3 +1,13 @@
-import { OnboardingChoices } from './OnboardingChoices/OnboardingChoices';
+import { OnboardingDownload } from './OnboardingDownload/OnboardingDownload';
+import { OnboardingProvider } from './OnboardingProvider/OnboardingProvider';
+import { TextModelChoice } from './TextModelChoice/TextModelChoice';
+import { VoiceChoice } from './VoiceChoice/VoiceChoice';
+import { Welcome } from './Welcome/Welcome';
 
-export { OnboardingChoices };
+export {
+  OnboardingDownload,
+  OnboardingProvider,
+  TextModelChoice,
+  VoiceChoice,
+  Welcome,
+};

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable } from 'react-native';
 import { PlatformIcon, Text, fontSizes } from 'components';
 import type { IconButtonIconProps } from 'components';
 import { useStyled } from 'hooks';
@@ -29,19 +29,18 @@ export const FilterOption: React.FC<FilterOptionProps> = ({
       accessibilityLabel={label}
       style={({ pressed }) => [styles.option, pressed && styles.pressed]}
     >
-      <View
-        style={[
-          styles.selectedDot,
-          selected && { backgroundColor: colors.primary },
-        ]}
-      />
       <PlatformIcon
         iosIconName={icon.iosIconName}
         androidIconName={icon.androidIconName}
         size={fontSizes.body1}
-        color={colors.onSurface}
+        color={selected ? colors.primary : colors.onSurface}
       />
-      <Text bold={selected}>{label}</Text>
+      <Text
+        bold={selected}
+        style={selected ? { color: colors.primary } : undefined}
+      >
+        {label}
+      </Text>
     </Pressable>
   );
 };
