@@ -148,6 +148,10 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
+    // Download state storage of @kesha-antonov/react-native-background-downloader,
+    // which declares it compileOnly. 1.3.x keeps armeabi-v7a and 16 KB pages.
+    implementation("com.tencent:mmkv-shared:1.3.16")
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {

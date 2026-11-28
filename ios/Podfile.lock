@@ -110,6 +110,13 @@ PODS:
     - ExpoModulesCore
   - ExpoSymbols (58.0.5):
     - ExpoModulesCore
+  - ExpoUI (58.0.30):
+    - ExpoModulesCore
+    - ExpoModulesWorklets
+    - React-RCTFabric
+  - ExpoWidgets (58.0.30):
+    - ExpoModulesCore
+    - ExpoUI
   - fast_float (8.0.0):
     - ReactNativeDependencies
   - FBLazyVector (0.88.1):
@@ -156,6 +163,9 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - MMKV (2.4.3):
+    - MMKVCore (~> 2.4.3)
+  - MMKVCore (2.4.3)
   - Nobodywho (6.0.0):
     - hermes-engine
     - RCTRequired
@@ -1538,6 +1548,31 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - react-native-background-downloader (5.1.0):
+    - hermes-engine
+    - "MMKV (!= 2.4.1, >= 1.2.0)"
+    - "MMKVCore (!= 2.4.1)"
+    - RCTRequired
+    - RCTTypeSafety
+    - React-bridging
+    - React-Core
+    - React-Core-prebuilt
+    - React-cxxstableapi
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - react-native-keyboard-controller (1.22.7):
     - hermes-engine
     - RCTRequired
@@ -2577,6 +2612,8 @@ DEPENDENCIES:
   - ExpoRouter (from `../node_modules/expo-router/ios`)
   - ExpoStatusBar (from `../node_modules/expo-status-bar/ios`)
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
+  - "ExpoUI (from `../node_modules/@expo/ui/ios`)"
+  - ExpoWidgets (from `../node_modules/expo-widgets/ios`)
   - fast_float (from `build/rndeps-facades/fast_float`)
   - FBLazyVector (from `build/rncore-facades/FBLazyVector`)
   - fmt (from `build/rndeps-facades/fmt`)
@@ -2626,6 +2663,7 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
   - React-mutationobservernativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/mutationobserver`)
+  - "react-native-background-downloader (from `../node_modules/@kesha-antonov/react-native-background-downloader`)"
   - react-native-keyboard-controller (from `../node_modules/react-native-keyboard-controller`)
   - "react-native-menu (from `../node_modules/@react-native-menu/menu`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -2686,6 +2724,8 @@ DEPENDENCIES:
 SPEC REPOS:
   trunk:
     - libwebp
+    - MMKV
+    - MMKVCore
     - SDWebImage
     - SDWebImageWebPCoder
     - ZXingObjC
@@ -2745,6 +2785,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-status-bar/ios"
   ExpoSymbols:
     :path: "../node_modules/expo-symbols/ios"
+  ExpoUI:
+    :path: "../node_modules/@expo/ui/ios"
+  ExpoWidgets:
+    :path: "../node_modules/expo-widgets/ios"
   fast_float:
     :path: build/rndeps-facades/fast_float
   FBLazyVector:
@@ -2842,6 +2886,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
   React-mutationobservernativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/mutationobserver"
+  react-native-background-downloader:
+    :path: "../node_modules/@kesha-antonov/react-native-background-downloader"
   react-native-keyboard-controller:
     :path: "../node_modules/react-native-keyboard-controller"
   react-native-menu:
@@ -2983,6 +3029,8 @@ SPEC CHECKSUMS:
   ExpoRouter: 5c647d3dcd79d921709d8e3334de3a01a40ca6a3
   ExpoStatusBar: 38eff05a54229c9a388cb56cef29117b8dc77eb1
   ExpoSymbols: 43a42871f937948a752814aaf3b0f9f0957a71c6
+  ExpoUI: c99698900f1643a9c76967a8165218783667adb6
+  ExpoWidgets: 518f6b53c0e44b674400a883e148bb7bf3e421d3
   fast_float: 7c925d1cebf8328d4018d061f49377e9f887e3b4
   FBLazyVector: 07cb4c5b92110c132f2bb73b908e87f35cbe0a19
   fmt: ba0886e864ebb21d14c98b2e12e164b8002f5b93
@@ -2990,6 +3038,8 @@ SPEC CHECKSUMS:
   hermes-engine: 79484fc4e58f328d01b9339ef899ca633d3702ee
   libwebp: af5937a13536ef73f3784d69cc342b98961acf33
   LiquidGlass: 90d4f92e7a6c8577f38515c30a3fe36d3c157760
+  MMKV: 2d6d4dd9205ea86bf9d5f3cf5fe6796d880d4710
+  MMKVCore: 065b61d4f942d3b6e1c913c378c120934f315ee4
   Nobodywho: 095e43c75719e72bd818ab13a3ff629f7e11ffe7
   op-sqlite: 9e09cc646119816c897e8bd3b9fb891c7b61e57e
   RCT-Folly: 82921e585c0400eda46fac1068297aa9dfb035e4
@@ -3032,6 +3082,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 50c4d7a1ff3f18413cbaf897c8b5ce46baa491b3
   React-microtasksnativemodule: 0207d6133274a7cbfc3d0dae326e3055c8cfcf9e
   React-mutationobservernativemodule: b97a67c29f724d18a92379e7390f24350acb433a
+  react-native-background-downloader: 2b939b3d4e305c356255a54bbccfd19cf847b3f1
   react-native-keyboard-controller: b0f7a2c7e3741625fcb3805ffbfcb3743df4c81e
   react-native-menu: 02ebfbbe11b8bb07b85a008e99664d134d07fca4
   react-native-safe-area-context: 56700b839169ce88ffcec68c40447916fe512462
@@ -3092,6 +3143,6 @@ SPEC CHECKSUMS:
   Yoga: d1c536142c5ff8ec8cd856ab2a7c227a1d875c8e
   ZXingObjC: 8898711ab495761b2dbbdec76d90164a6d7e14c5
 
-PODFILE CHECKSUM: 3d2ea491273a2100c9d92b1f8ddc4fd57079746d
+PODFILE CHECKSUM: 37861999f051434af3ba4d4ba477a3a0c783f4c4
 
 COCOAPODS: 1.16.2

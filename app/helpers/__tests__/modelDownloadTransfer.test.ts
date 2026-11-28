@@ -1,19 +1,20 @@
-// Download/transfer coverage for helpers/modelDownload: resume, stale-partial
-// discard, range fallback, abort and path-traversal safety.
+// Download/transfer coverage for helpers/modelDownload: background tasks,
+// re-attaching after a relaunch, resuming from what a failed transfer kept,
+// error classification, abort and path-traversal safety.
 //
 // Separate from modelDownload.test.ts because this file overrides expo-file-system
-// with a stateful in-memory mock (byte sizes on disk drive resume), while the
-// listVoiceStyles tests there rely on the shared mock from jest/mock. jest.mock is
-// per-file and hoisted, so the two cannot share one file.
+// with a stateful in-memory mock, while the listVoiceStyles tests there rely on
+// the shared mock from jest/mock. jest.mock is per-file and hoisted, so the two
+// cannot share one file.
 
-const MB = 1024 * 1024;
+import { Platform } from 'react-native';
+
 const MODEL_ID = 7;
 // Every model gets its own directory under <documents>/models.
 const MODEL_DIR = `file:///docs/models/${MODEL_ID}`;
 
-// A stateful in-memory expo-file-system mock (overrides the shared jest setup
-// mock for this file). File sizes on disk are the source of truth for resume,
-// so the mock tracks a path -> byte-size map and lets downloadFileAsync grow it.
+// A stateful in-memory expo-file-system mock: a path -> byte-size map (plus
+// text contents for the validator file).
 jest.mock('expo-file-system', () => {
   const join = (segs: any[]): string =>
     segs
@@ -34,63 +35,29 @@ jest.mock('expo-file-system', () => {
     get exists() {
       return sizes.has(this.uri);
     }
-    // Matches iOS: reading .size for a MISSING file yields null (not 0), which
-    // is exactly what poisoned the Range header (`bytes=null-…` -> HTTP 400).
     get size() {
       return sizes.has(this.uri) ? (sizes.get(this.uri) as number) : null;
-    }
-    create() {
-      if (!sizes.has(this.uri)) sizes.set(this.uri, 0);
     }
     delete() {
       sizes.delete(this.uri);
       texts.delete(this.uri);
     }
-    write(content: any, opts?: { append?: boolean }) {
-      const len = content.length as number;
-      const cur = sizes.get(this.uri) ?? 0;
-      sizes.set(this.uri, opts?.append ? cur + len : len);
-      if (typeof content === 'string') texts.set(this.uri, content);
+    write(content: string) {
+      sizes.set(this.uri, content.length);
+      texts.set(this.uri, content);
     }
-    text() {
-      return Promise.resolve(texts.get(this.uri) ?? '');
-    }
-    // Real code hands this straight to write() — only .length is read here.
-    bytesSync() {
-      return { length: sizes.get(this.uri) ?? 0 };
-    }
-    // A minimal file handle: reads advance a cursor over the tracked byte size
-    // and return an object whose only observed field is `.length`; writes grow
-    // the destination. Enough to model the streamed chunk -> partial append.
-    open() {
-      const uri = this.uri;
-      let cursor = 0;
-      return {
-        readBytes(length: number) {
-          const size = sizes.get(uri) ?? 0;
-          const n = Math.max(0, Math.min(length, size - cursor));
-          cursor += n;
-          return Promise.resolve({ length: n });
-        },
-        writeBytes(bytes: { length: number }) {
-          sizes.set(uri, (sizes.get(uri) ?? 0) + bytes.length);
-          return Promise.resolve();
-        },
-        close() {},
-      };
+    textSync() {
+      return texts.get(this.uri) ?? '';
     }
     rename(newName: string) {
       const dir = this.uri.slice(0, this.uri.lastIndexOf('/'));
       const dest = `${dir}/${newName}`;
       sizes.set(dest, sizes.get(this.uri) ?? 0);
-      const t = texts.get(this.uri);
-      if (t !== undefined) texts.set(dest, t);
       sizes.delete(this.uri);
       texts.delete(this.uri);
       this.uri = dest;
     }
   }
-  (File as any).downloadFileAsync = jest.fn();
 
   class Directory {
     uri: string;
@@ -115,15 +82,52 @@ jest.mock('expo-file-system', () => {
 
   const Paths = { document: { uri: 'file:///docs/' } };
 
-  const FileMode = {
-    ReadWrite: 'rw',
-    ReadOnly: 'r',
-    WriteOnly: 'w',
-    Append: 'wa',
-    Truncate: 'wt',
+  return { File, Directory, Paths, __sizes: sizes, __texts: texts };
+});
+
+// The background downloader: tasks record their handlers so a test can play
+// the native events (begin, progress, done, error) to them.
+jest.mock('@kesha-antonov/react-native-background-downloader', () => {
+  const created: any[] = [];
+  let existing: any[] = [];
+
+  const makeTask = (id: string, state = 'PENDING', extra = {}) => {
+    const task: any = {
+      id,
+      state,
+      bytesDownloaded: 0,
+      bytesTotal: 0,
+      handlers: {},
+      ...extra,
+    };
+    for (const name of ['begin', 'progress', 'done', 'error']) {
+      task[name] = jest.fn((handler: unknown) => {
+        task.handlers[name] = handler;
+        return task;
+      });
+    }
+    task.start = jest.fn();
+    task.stop = jest.fn(async () => {});
+    task.resume = jest.fn(async () => {});
+    return task;
   };
 
-  return { File, Directory, Paths, FileMode, __sizes: sizes, __texts: texts };
+  return {
+    createDownloadTask: jest.fn((options: any) => {
+      const task = makeTask(options.id);
+      task.options = options;
+      created.push(task);
+      return task;
+    }),
+    getExistingDownloadTasks: jest.fn(async () => existing),
+    completeHandler: jest.fn(),
+    setConfig: jest.fn(),
+    __created: created,
+    __setExisting: (tasks: any[]) => {
+      existing = tasks;
+    },
+    __makeTask: makeTask,
+  };
 });
 
 import {
@@ -133,6 +137,10 @@ import {
   modelDirectoryPath,
   assertSafeRelativePath,
   locatePart,
+  partTaskId,
+  stopModelTransfers,
+  toDownloadError,
+  DownloadAbortedError,
   NetworkError,
   HttpStatusError,
   isPermanentDownloadFailure,
@@ -141,621 +149,333 @@ import {
 const efs = jest.requireMock('expo-file-system') as any;
 const sizes: Map<string, number> = efs.__sizes;
 const texts: Map<string, string> = efs.__texts;
-const downloadFileAsync = efs.File.downloadFileAsync as jest.Mock;
+const downloader = jest.requireMock(
+  '@kesha-antonov/react-native-background-downloader',
+) as any;
+const created: any[] = downloader.__created;
 
-// Stand up a fake remote: HEAD advertises size/ranges/validator, and
-// downloadFileAsync simulates writing the requested range (or the whole file
-// when ranges aren't honored) into the mock filesystem.
-const setupRemote = ({
-  total,
-  honorsRanges = true,
-  advertisesRanges = honorsRanges,
-  etag = '"v1"',
+const URL = 'https://example.com/model.gguf';
+const FILE = 'model.gguf';
+const finalUri = `${MODEL_DIR}/${FILE}`;
+const downloadUri = `${MODEL_DIR}/${FILE}.download`;
+const etagUri = `${MODEL_DIR}/${FILE}.etag`;
+
+// Starts a part's download and waits until its task is set up.
+const start = async ({
+  signal = new AbortController().signal,
+  onProgress = jest.fn(),
+  fileName = FILE,
 }: {
-  total: number;
-  // Whether the actual GET honors the Range header (writes just the window).
-  honorsRanges?: boolean;
-  // Whether the HEAD advertises `Accept-Ranges: bytes`. Defaults to honorsRanges;
-  // set it apart to model a server that claims ranges but then ignores them.
-  advertisesRanges?: boolean;
-  etag?: string | null;
-}) => {
-  (globalThis as any).fetch = jest.fn(async (_url: string, opts: any) => {
-    if (opts?.method !== 'HEAD') {
-      throw new Error(`unexpected fetch method ${opts?.method}`);
-    }
-    const headers = new Map<string, string>([
-      ['content-length', String(total)],
-      ['accept-ranges', advertisesRanges ? 'bytes' : 'none'],
-    ]);
-    if (etag) headers.set('etag', etag);
-    return {
-      ok: true,
-      status: 200,
-      headers: { get: (k: string) => headers.get(k.toLowerCase()) ?? null },
-    };
-  });
-
-  downloadFileAsync.mockImplementation(
-    async (_url: string, dest: any, options: any) => {
-      // Capture the destination URI now: the caller may `rename()` this same
-      // File object afterwards, which would mutate `.uri` out from under a
-      // later `mock.calls[…].uri` read.
-      destUris.push(dest.uri);
-      if (options?.signal?.aborted) {
-        throw Object.assign(new Error('Aborted'), { name: 'AbortError' });
-      }
-      const range: string | undefined = options?.headers?.Range;
-      let bytes: number;
-      if (range && honorsRanges) {
-        const [start, end] = range.replace('bytes=', '').split('-').map(Number);
-        bytes = end - start + 1;
-      } else {
-        bytes = total; // range absent or ignored -> whole file
-      }
-      sizes.set(dest.uri, bytes);
-      options?.onProgress?.({ bytesWritten: bytes, totalBytes: bytes });
-      return dest;
-    },
+  signal?: AbortSignal;
+  onProgress?: jest.Mock;
+  fileName?: string;
+} = {}) => {
+  const promise = downloadModelPart(
+    MODEL_ID,
+    URL,
+    fileName,
+    signal,
+    onProgress,
+    { title: 'Model' },
   );
+  promise.catch(() => {});
+  // getExistingDownloadTasks is awaited before the task is created.
+  await new Promise<void>(resolve => setImmediate(() => resolve()));
+  return { promise, onProgress };
 };
 
-const rangesRequested = () =>
-  downloadFileAsync.mock.calls
-    .map(call => call[2]?.headers?.Range)
-    .filter(Boolean);
-
-// Destination URIs captured at download time (see setupRemote), before any
-// subsequent rename() mutates the File object's `.uri`.
-const destUris: string[] = [];
-
-const noSignal = () => new AbortController().signal;
+// The native side finished the transfer: the file is at its destination.
+const finish = (task: any, bytes = 100) => {
+  sizes.set(downloadUri, bytes);
+  task.handlers.done({
+    location: downloadUri,
+    bytesDownloaded: bytes,
+    bytesTotal: bytes,
+  });
+};
 
 beforeEach(() => {
+  jest.clearAllMocks();
   sizes.clear();
   texts.clear();
-  destUris.length = 0;
-  downloadFileAsync.mockReset();
+  created.length = 0;
+  downloader.__setExisting([]);
+  jest.replaceProperty(Platform, 'OS', 'ios');
 });
 
-test('downloads a fresh file in chunks and publishes it atomically', async () => {
-  const total = 40 * MB; // 16 + 16 + 8
-  setupRemote({ total });
-  const progress: Array<[number, number]> = [];
-
-  const path = await downloadModelPart(
-    MODEL_ID,
-    'https://x/chat-model.gguf',
-    'chat-model.gguf',
-    noSignal(),
-    (d, t) => progress.push([d, t]),
-  );
-
-  expect(path).toBe(`/docs/models/${MODEL_ID}/chat-model.gguf`);
-  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf`)).toBe(total);
-  // Scaffolding is cleaned up once published.
-  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.partial`)).toBe(false);
-  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.chunk`)).toBe(false);
-  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.etag`)).toBe(false);
-  expect(rangesRequested()).toEqual([
-    `bytes=0-${16 * MB - 1}`,
-    `bytes=${16 * MB}-${32 * MB - 1}`,
-    `bytes=${32 * MB}-${40 * MB - 1}`,
-  ]);
-  // Every Range must be well-formed integers — never `bytes=null-…` (which iOS
-  // produced from a missing file's null .size, and HF rejects with HTTP 400).
-  rangesRequested().forEach(r => expect(r).toMatch(/^bytes=\d+-\d+$/));
-  expect(progress[progress.length - 1]).toEqual([total, total]);
+afterEach(() => {
+  jest.restoreAllMocks();
 });
 
-test('reconstructs nested part paths inside the model directory', async () => {
-  const total = 40 * MB;
-  setupRemote({ total });
+test('downloads a fresh part in a background task and publishes it atomically', async () => {
+  const { promise, onProgress } = await start();
 
-  const path = await downloadModelPart(
-    MODEL_ID,
-    'https://x/resolve/main/onnx/vocoder.onnx',
-    'onnx/vocoder.onnx',
-    noSignal(),
-    () => {},
+  expect(created).toHaveLength(1);
+  const [task] = created;
+  expect(task.options).toEqual(
+    expect.objectContaining({
+      id: partTaskId(MODEL_ID, FILE),
+      url: URL,
+      destination: '/docs/models/7/model.gguf.download',
+      notificationTitle: 'Model',
+      headers: {},
+    }),
   );
+  expect(task.start).toHaveBeenCalled();
 
-  expect(path).toBe(`/docs/models/${MODEL_ID}/onnx/vocoder.onnx`);
-  expect(sizes.get(`${MODEL_DIR}/onnx/vocoder.onnx`)).toBe(total);
-  // Resume scaffolding lives beside the file, inside the nested directory.
-  expect(sizes.has(`${MODEL_DIR}/onnx/vocoder.onnx.partial`)).toBe(false);
-  expect(sizes.has(`${MODEL_DIR}/onnx/vocoder.onnx.chunk`)).toBe(false);
+  task.handlers.progress({ bytesDownloaded: 40, bytesTotal: 100 });
+  expect(onProgress).toHaveBeenCalledWith(40, 100);
+  // Not installed while it transfers.
+  expect(downloadedPartPath(MODEL_ID, FILE)).toBeNull();
+
+  finish(task);
+
+  await expect(promise).resolves.toBe('/docs/models/7/model.gguf');
+  expect(sizes.has(downloadUri)).toBe(false);
+  expect(sizes.get(finalUri)).toBe(100);
+  expect(onProgress).toHaveBeenLastCalledWith(100, 100);
+  expect(downloader.completeHandler).toHaveBeenCalledWith(task.id);
 });
 
-test('rejects part fileNames that could escape the model directory', async () => {
-  setupRemote({ total: MB });
-  const unsafe = [
-    '../evil.gguf',
-    'a/../../evil.gguf',
-    '/abs.gguf',
-    'a//b',
-    'a\\b',
-  ];
-
-  for (const fileName of unsafe) {
-    await expect(
-      downloadModelPart(
-        MODEL_ID,
-        'https://x/f',
-        fileName,
-        noSignal(),
-        () => {},
-      ),
-    ).rejects.toThrow(/unsafe part fileName/);
-  }
-  expect(downloadFileAsync).not.toHaveBeenCalled();
-});
-
-test('resumes from the bytes already on disk', async () => {
-  const total = 40 * MB;
-  setupRemote({ total, etag: '"v1"' });
-  // A previous attempt left 16 MiB + a matching validator.
-  sizes.set(`${MODEL_DIR}/chat-model.gguf.partial`, 16 * MB);
-  sizes.set(`${MODEL_DIR}/chat-model.gguf.etag`, 4);
-  texts.set(`${MODEL_DIR}/chat-model.gguf.etag`, '"v1"');
-
-  await downloadModelPart(
-    MODEL_ID,
-    'https://x/chat-model.gguf',
-    'chat-model.gguf',
-    noSignal(),
-    () => {},
-  );
-
-  // Only the missing tail is fetched — not the whole file.
-  expect(rangesRequested()).toEqual([
-    `bytes=${16 * MB}-${32 * MB - 1}`,
-    `bytes=${32 * MB}-${40 * MB - 1}`,
-  ]);
-  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf`)).toBe(total);
-});
-
-test('discards a stale partial when the remote file changed', async () => {
-  const total = 40 * MB;
-  setupRemote({ total, etag: '"v2"' }); // remote now serves a different version
-  sizes.set(`${MODEL_DIR}/chat-model.gguf.partial`, 16 * MB);
-  sizes.set(`${MODEL_DIR}/chat-model.gguf.etag`, 4);
-  texts.set(`${MODEL_DIR}/chat-model.gguf.etag`, '"v1"');
-
-  await downloadModelPart(
-    MODEL_ID,
-    'https://x/chat-model.gguf',
-    'chat-model.gguf',
-    noSignal(),
-    () => {},
-  );
-
-  // Validator mismatch -> restart from byte 0 rather than append onto old bytes.
-  expect(rangesRequested()).toEqual([
-    `bytes=0-${16 * MB - 1}`,
-    `bytes=${16 * MB}-${32 * MB - 1}`,
-    `bytes=${32 * MB}-${40 * MB - 1}`,
-  ]);
-  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf`)).toBe(total);
-});
-
-test('falls back to a single download when the server has no range support', async () => {
-  const total = 40 * MB;
-  setupRemote({ total, honorsRanges: false });
-
-  const path = await downloadModelPart(
-    MODEL_ID,
-    'https://x/chat-model.gguf',
-    'chat-model.gguf',
-    noSignal(),
-    () => {},
-  );
-
-  expect(path).toBe(`/docs/models/${MODEL_ID}/chat-model.gguf`);
-  expect(downloadFileAsync).toHaveBeenCalledTimes(1);
-  // One shot with no Range header — but written to `.partial` first, then
-  // renamed to the final name, so a failed transfer can never leave a truncated
-  // file that looks complete.
-  expect(destUris[0]).toBe(`${MODEL_DIR}/chat-model.gguf.partial`);
-  expect(downloadFileAsync.mock.calls[0][2].headers).toBeUndefined();
-  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.partial`)).toBe(false);
-  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf`)).toBe(total);
-});
-
-test('recovers when the server advertises ranges but then ignores them', async () => {
-  const total = 40 * MB;
-  // HEAD says `Accept-Ranges: bytes`, but the GET returns the whole body.
-  setupRemote({ total, honorsRanges: false, advertisesRanges: true });
-
-  const path = await downloadModelPart(
-    MODEL_ID,
-    'https://x/chat-model.gguf',
-    'chat-model.gguf',
-    noSignal(),
-    () => {},
-  );
-
-  expect(path).toBe(`/docs/models/${MODEL_ID}/chat-model.gguf`);
-  // The first ranged request came back as the whole file, so instead of looping
-  // forever on the ignored range it restarts as a single whole-file download:
-  // one ranged attempt, then one range-less download into `.partial`.
-  expect(downloadFileAsync).toHaveBeenCalledTimes(2);
-  expect(downloadFileAsync.mock.calls[0][2].headers.Range).toBe(
-    `bytes=0-${16 * MB - 1}`,
-  );
-  expect(downloadFileAsync.mock.calls[1][2].headers).toBeUndefined();
-  expect(destUris[destUris.length - 1]).toBe(
-    `${MODEL_DIR}/chat-model.gguf.partial`,
-  );
-  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf`)).toBe(total);
-  // Scaffolding is cleaned up on the recovery path too.
-  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.partial`)).toBe(false);
-  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.chunk`)).toBe(false);
-});
-
-test('aborts a hung HEAD request after the timeout instead of stalling', async () => {
-  jest.useFakeTimers();
-  // A HEAD that never responds on its own — it only settles when its signal
-  // aborts, so the download can only proceed if the timeout fires.
-  (globalThis as any).fetch = jest.fn(
-    (_url: string, opts: any) =>
-      new Promise((_resolve, reject) => {
-        opts.signal.addEventListener('abort', () =>
-          reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })),
-        );
-      }),
-  );
-
-  const promise = downloadModelPart(
-    MODEL_ID,
-    'https://x/chat-model.gguf',
-    'chat-model.gguf',
-    noSignal(),
-    () => {},
-  );
-
-  // eslint-disable-next-line jest/valid-expect
-  const assertion = expect(promise).rejects.toThrow(NetworkError);
-
-  await jest.advanceTimersByTimeAsync(15_000);
-  await assertion;
-  await expect(promise).rejects.toThrow(/timed out/);
-
-  // No bytes were ever written — it bailed at the HEAD.
-  expect(downloadFileAsync).not.toHaveBeenCalled();
-  jest.useRealTimers();
-});
-
-test('a user stop during the HEAD is not reported as a NetworkError', async () => {
-  (globalThis as any).fetch = jest.fn(
-    (_url: string, opts: any) =>
-      new Promise((_resolve, reject) => {
-        opts.signal.addEventListener('abort', () =>
-          reject(Object.assign(new Error('Aborted'), { name: 'AbortError' })),
-        );
-      }),
-  );
-  const controller = new AbortController();
-
-  const promise = downloadModelPart(
-    MODEL_ID,
-    'https://x/chat-model.gguf',
-    'chat-model.gguf',
-    controller.signal,
-    () => {},
-  );
-  controller.abort();
-
-  const error = await promise.catch((e: unknown) => e);
-  expect(error).toBeInstanceOf(Error);
-  expect(error).not.toBeInstanceOf(NetworkError);
-});
-
-test('an unreachable host is a NetworkError', async () => {
-  (globalThis as any).fetch = jest.fn(async () => {
-    throw new Error(
-      'fetch failed: The Internet connection appears to be offline.',
-    );
-  });
+test('returns a part that is already downloaded without a transfer', async () => {
+  sizes.set(finalUri, 100);
 
   await expect(
     downloadModelPart(
       MODEL_ID,
-      'https://x/chat-model.gguf',
-      'chat-model.gguf',
-      noSignal(),
-      () => {},
+      URL,
+      FILE,
+      new AbortController().signal,
+      jest.fn(),
     ),
-  ).rejects.toThrow(NetworkError);
+  ).resolves.toBe('/docs/models/7/model.gguf');
+  expect(downloader.createDownloadTask).not.toHaveBeenCalled();
 });
 
-describe('a failed chunk download', () => {
-  const failWith = (message: string) => {
-    setupRemote({ total: 40 * MB });
-    downloadFileAsync.mockRejectedValue(new Error(message));
-    return downloadModelPart(
-      MODEL_ID,
-      'https://x/chat-model.gguf',
-      'chat-model.gguf',
-      noSignal(),
-      () => {},
-    );
-  };
-
-  test.each([
-    // Android: okhttp's raw IOException, e.g. the OS dropping a backgrounded
-    // app's sockets.
-    "Call to function 'FileSystem.downloadFileAsync' has been rejected.\n→ Caused by: java.net.SocketException: Software caused connection abort",
-    "Call to function 'FileSystem.downloadFileAsync' has been rejected.\n→ Caused by: java.net.UnknownHostException: Unable to resolve host",
-    "Call to function 'FileSystem.downloadFileAsync' has been rejected.\n→ Caused by: javax.net.ssl.SSLException: Read error",
-    // iOS: URLSession transport errors carry a localized description.
-    'Unable to download a file: The network connection was lost.',
-    'Unable to download a file: La connexion réseau a été perdue.',
-  ])('is a NetworkError when the connection fails: %s', async message => {
-    await expect(failWith(message)).rejects.toBeInstanceOf(NetworkError);
-    // The partial is kept so the download resumes on the next attempt.
-    expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.partial`)).toBe(true);
-  });
-
-  test.each([
-    'Unable to download a file: response has status 404',
-    'Unable to download a file: response has status: 503',
-    'Unable to download a file: no response',
-    'Unable to create a file: No space left on device',
-  ])('stays a reportable error otherwise: %s', async message => {
-    const error = await failWith(message).catch(e => e);
-    expect(error).not.toBeInstanceOf(NetworkError);
-    expect(error.message).toBe(message);
-  });
-
-  test('passes the caller abort through untouched', async () => {
-    setupRemote({ total: 40 * MB });
-    const controller = new AbortController();
-    const dropped = new Error('java.net.SocketException: Socket closed');
-    downloadFileAsync.mockImplementation(async () => {
-      controller.abort();
-      throw dropped;
-    });
-
-    await expect(
-      downloadModelPart(
-        MODEL_ID,
-        'https://x/chat-model.gguf',
-        'chat-model.gguf',
-        controller.signal,
-        () => {},
-      ),
-    ).rejects.toBe(dropped);
-  });
-});
-
-test('returns immediately when the file is already installed', async () => {
-  setupRemote({ total: 40 * MB });
-  sizes.set(`${MODEL_DIR}/chat-model.gguf`, 40 * MB);
-
-  const path = await downloadModelPart(
-    MODEL_ID,
-    'https://x/chat-model.gguf',
-    'chat-model.gguf',
-    noSignal(),
-    () => {},
-  );
-
-  expect(path).toBe(`/docs/models/${MODEL_ID}/chat-model.gguf`);
-  expect(downloadFileAsync).not.toHaveBeenCalled();
-  // No need to even hit the network (no HEAD) for an installed model.
-  expect((globalThis as any).fetch).not.toHaveBeenCalled();
-});
-
-test('an abort stops the loop and keeps the partial for a later resume', async () => {
-  const total = 40 * MB;
-  setupRemote({ total });
-  const controller = new AbortController();
-
-  // Abort right after the first chunk lands.
-  const base = downloadFileAsync.getMockImplementation()!;
-  let calls = 0;
-  downloadFileAsync.mockImplementation(
-    async (url: any, dest: any, options: any) => {
-      const result = await base(url, dest, options);
-      if (++calls === 1) controller.abort();
-      return result;
+test('re-attaches to the transfer the OS kept running after a relaunch', async () => {
+  const running = downloader.__makeTask(
+    partTaskId(MODEL_ID, FILE),
+    'DOWNLOADING',
+    {
+      bytesDownloaded: 30,
+      bytesTotal: 100,
     },
   );
+  downloader.__setExisting([running]);
 
-  await expect(
-    downloadModelPart(
-      MODEL_ID,
-      'https://x/chat-model.gguf',
-      'chat-model.gguf',
-      controller.signal,
-      () => {},
-    ),
-  ).rejects.toThrow();
+  const { promise, onProgress } = await start();
 
-  // Nothing published; the first chunk is retained on disk to resume from.
-  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf`)).toBe(false);
-  expect(sizes.get(`${MODEL_DIR}/chat-model.gguf.partial`)).toBe(16 * MB);
-  // Transient chunk file is cleaned up even on the error path.
-  expect(sizes.has(`${MODEL_DIR}/chat-model.gguf.chunk`)).toBe(false);
+  expect(downloader.createDownloadTask).not.toHaveBeenCalled();
+  expect(onProgress).toHaveBeenCalledWith(30, 100);
+  finish(running);
+  await expect(promise).resolves.toBe('/docs/models/7/model.gguf');
 });
 
-test('downloadedPartPath returns a path only once the file exists', () => {
-  expect(downloadedPartPath(MODEL_ID, 'chat-model.gguf')).toBeNull();
-  sizes.set(`${MODEL_DIR}/chat-model.gguf`, 1);
-  expect(downloadedPartPath(MODEL_ID, 'chat-model.gguf')).toBe(
-    `/docs/models/${MODEL_ID}/chat-model.gguf`,
+test('continues a transfer the OS paused (force-quit, failure with resume data)', async () => {
+  const paused = downloader.__makeTask(partTaskId(MODEL_ID, FILE), 'PAUSED');
+  downloader.__setExisting([paused]);
+
+  const { promise } = await start();
+
+  expect(paused.resume).toHaveBeenCalled();
+  expect(downloader.createDownloadTask).not.toHaveBeenCalled();
+  finish(paused);
+  await expect(promise).resolves.toBe('/docs/models/7/model.gguf');
+});
+
+test('installs a transfer that finished while no JS was listening', async () => {
+  const done = downloader.__makeTask(partTaskId(MODEL_ID, FILE), 'DONE');
+  downloader.__setExisting([done]);
+  sizes.set(downloadUri, 100);
+
+  await expect((await start()).promise).resolves.toBe(
+    '/docs/models/7/model.gguf',
   );
-  // Nested parts resolve too.
-  expect(downloadedPartPath(MODEL_ID, 'onnx/vocoder.onnx')).toBeNull();
-  sizes.set(`${MODEL_DIR}/onnx/vocoder.onnx`, 1);
-  expect(downloadedPartPath(MODEL_ID, 'onnx/vocoder.onnx')).toBe(
-    `/docs/models/${MODEL_ID}/onnx/vocoder.onnx`,
+  expect(downloader.createDownloadTask).not.toHaveBeenCalled();
+});
+
+test('on iOS, a finished file without a task is installed as is', async () => {
+  sizes.set(downloadUri, 100);
+
+  await expect((await start()).promise).resolves.toBe(
+    '/docs/models/7/model.gguf',
   );
+  expect(downloader.createDownloadTask).not.toHaveBeenCalled();
 });
 
-test('modelDirectoryPath is the plain path of the model directory', () => {
-  expect(modelDirectoryPath(MODEL_ID)).toBe(`/docs/models/${MODEL_ID}`);
+test('on Android, continues from the bytes a failed transfer left', async () => {
+  jest.replaceProperty(Platform, 'OS', 'android');
+  sizes.set(downloadUri, 60);
+  texts.set(etagUri, '"abc"');
+  sizes.set(etagUri, 5);
+
+  await start();
+
+  expect(created[0].options.headers).toEqual({
+    'X-Background-Downloader-Resume': '1',
+    'If-Range': '"abc"',
+  });
+  // The bytes are kept for the downloader to append to.
+  expect(sizes.get(downloadUri)).toBe(60);
 });
 
-test('deleteModelDirectory removes the whole model tree', () => {
-  const mine = [
-    'chat-model.gguf',
-    'chat-model.gguf.partial',
-    'chat-model.gguf.etag',
-    'onnx/vocoder.onnx',
-    'onnx/vocoder.onnx.chunk',
-    'voice_styles/F1.json',
-  ];
-  mine.forEach(n => sizes.set(`${MODEL_DIR}/${n}`, 1));
-  // Another model's identically-named file survives.
-  sizes.set('file:///docs/models/1/chat-model.gguf', 1);
+test('remembers a strong ETag for a later resume, never a weak one', async () => {
+  await start();
+  created[0].handlers.begin({ expectedBytes: 100, headers: { ETag: '"v1"' } });
+  expect(texts.get(etagUri)).toBe('"v1"');
 
-  deleteModelDirectory(MODEL_ID);
-
-  mine.forEach(n => expect(sizes.has(`${MODEL_DIR}/${n}`)).toBe(false));
-  expect(sizes.has('file:///docs/models/1/chat-model.gguf')).toBe(true);
+  created[0].handlers.begin({
+    expectedBytes: 100,
+    headers: { etag: 'W/"v2"' },
+  });
+  expect(sizes.has(etagUri)).toBe(false);
 });
 
-describe('assertSafeRelativePath', () => {
-  test('returns the path split into segments for valid relative paths', () => {
-    expect(assertSafeRelativePath('chat-model.gguf')).toEqual([
-      'chat-model.gguf',
-    ]);
-    expect(assertSafeRelativePath('onnx/vocoder.onnx')).toEqual([
-      'onnx',
-      'vocoder.onnx',
-    ]);
-    expect(assertSafeRelativePath('a/b/c.json')).toEqual(['a', 'b', 'c.json']);
-  });
+test('drops the leftovers of the previous chunked downloader', async () => {
+  sizes.set(`${MODEL_DIR}/${FILE}.partial`, 16);
+  sizes.set(`${MODEL_DIR}/${FILE}.chunk`, 4);
 
-  test.each([
-    ['an empty string', ''],
-    ['a leading slash (absolute path)', '/etc/passwd'],
-    ['a trailing slash (empty final segment)', 'onnx/'],
-    ['a doubled slash (empty middle segment)', 'onnx//vocoder.onnx'],
-    ['a single-dot segment', './chat-model.gguf'],
-    ['a parent-directory segment', '../evil.gguf'],
-    ['a nested parent-directory segment', 'a/../../evil.gguf'],
-    ['a trailing parent-directory segment', 'onnx/..'],
-    ['a backslash', 'onnx\\vocoder.onnx'],
-  ])('throws on %s ("%s")', (_description, fileName) => {
-    expect(() => assertSafeRelativePath(fileName)).toThrow(
-      /unsafe part fileName/,
-    );
-  });
+  await start();
+
+  expect(sizes.has(`${MODEL_DIR}/${FILE}.partial`)).toBe(false);
+  expect(sizes.has(`${MODEL_DIR}/${FILE}.chunk`)).toBe(false);
 });
 
-describe('locatePart', () => {
-  test('a top-level fileName resolves directly under the model directory', () => {
-    const { parentDir, baseName } = locatePart(MODEL_ID, 'chat-model.gguf');
+test('turns an error status into an HttpStatusError', async () => {
+  const { promise } = await start();
+  created[0].handlers.error({ error: 'Not Found', errorCode: 404 });
 
-    expect(parentDir.uri).toBe(MODEL_DIR);
-    expect(baseName).toBe('chat-model.gguf');
-  });
-
-  test('a nested fileName resolves its parent directory segment by segment', () => {
-    const { parentDir, baseName } = locatePart(MODEL_ID, 'onnx/vocoder.onnx');
-
-    expect(parentDir.uri).toBe(`${MODEL_DIR}/onnx`);
-    expect(baseName).toBe('vocoder.onnx');
-  });
-
-  test('a deeply nested fileName joins every intermediate segment', () => {
-    const { parentDir, baseName } = locatePart(MODEL_ID, 'a/b/c/d.json');
-
-    expect(parentDir.uri).toBe(`${MODEL_DIR}/a/b/c`);
-    expect(baseName).toBe('d.json');
-  });
-
-  test('propagates the unsafe-path rejection from assertSafeRelativePath', () => {
-    expect(() => locatePart(MODEL_ID, '../evil.gguf')).toThrow(
-      /unsafe part fileName/,
-    );
-  });
-});
-
-// A wrong URL: the HEAD answers 404 with a tiny error page that still claims
-// `Accept-Ranges: bytes` (Hugging Face does). Its headers must not be read as
-// the file's, or those few bytes "download" to 100%.
-const setupMissingRemote = (status: number) => {
-  (globalThis as any).fetch = jest.fn(async () => {
-    const headers = new Map<string, string>([
-      ['content-length', '15'],
-      ['accept-ranges', 'bytes'],
-    ]);
-    return {
-      ok: false,
-      status,
-      headers: { get: (k: string) => headers.get(k.toLowerCase()) ?? null },
-    };
-  });
-};
-
-test('fails a URL the server refuses before writing or reporting any byte', async () => {
-  setupMissingRemote(404);
-  const onProgress = jest.fn();
-
-  const error = await downloadModelPart(
-    MODEL_ID,
-    'https://x/model.gguff',
-    'model.gguf',
-    noSignal(),
-    onProgress,
-  ).catch(e => e);
-
+  const error = await promise.catch(e => e);
   expect(error).toBeInstanceOf(HttpStatusError);
   expect(error.status).toBe(404);
   expect(isPermanentDownloadFailure(error)).toBe(true);
-  expect(onProgress).not.toHaveBeenCalled();
-  expect(downloadFileAsync).not.toHaveBeenCalled();
+  expect(downloader.completeHandler).toHaveBeenCalledWith(created[0].id);
 });
 
-test('falls back to a plain GET when the server does not do HEAD', async () => {
-  setupMissingRemote(405);
-  downloadFileAsync.mockImplementation(async (_url: string, dest: any) => {
-    sizes.set(dest.uri, 3 * MB);
-    return dest;
+test('turns a lost connection into a NetworkError that may pass', async () => {
+  const { promise } = await start();
+  created[0].handlers.error({
+    error: 'The Internet connection appears to be offline.',
+    errorCode: -1009,
   });
 
-  const path = await downloadModelPart(
-    MODEL_ID,
-    'https://x/model.gguf',
-    'model.gguf',
-    noSignal(),
-    () => {},
-  );
-
-  expect(path).toBe('/docs/models/7/model.gguf');
-  expect(downloadFileAsync.mock.calls[0][2]?.headers?.Range).toBeUndefined();
+  const error = await promise.catch(e => e);
+  expect(error).toBeInstanceOf(NetworkError);
+  expect(isPermanentDownloadFailure(error)).toBe(false);
 });
 
-test.each([
-  ['iOS', 'Unable to download a file: response has status 404', 404],
-  ['iOS task', 'Unable to download a file: server returned HTTP 403', 403],
-  ['Android', 'Unable to download a file: response has status: 410', 410],
-  ['Android task', 'Unable to download a file: HTTP 401', 401],
-])(
-  'turns an error status from the %s GET into an HttpStatusError',
-  async (_platform, message, status) => {
-    setupRemote({ total: 3 * MB, advertisesRanges: false });
-    downloadFileAsync.mockRejectedValue(new Error(message));
+test('starts over when the server says the kept bytes do not fit (416)', async () => {
+  jest.replaceProperty(Platform, 'OS', 'android');
+  sizes.set(downloadUri, 120);
 
-    const error = await downloadModelPart(
-      MODEL_ID,
-      'https://x/model.gguf',
-      'model.gguf',
-      noSignal(),
-      () => {},
-    ).catch(e => e);
+  const { promise } = await start();
+  created[0].handlers.error({ error: 'Range not satisfiable', errorCode: 416 });
 
-    expect(error).toBeInstanceOf(HttpStatusError);
-    expect(error.status).toBe(status);
-  },
-);
+  await expect(promise).rejects.toBeInstanceOf(HttpStatusError);
+  expect(sizes.has(downloadUri)).toBe(false);
+});
 
-test.each([408, 429, 500, 503])('keeps a %i retryable', status => {
-  expect(isPermanentDownloadFailure(new HttpStatusError('x', status))).toBe(
+test('an abort stops the transfer and removes what it wrote', async () => {
+  const controller = new AbortController();
+  const { promise } = await start({ signal: controller.signal });
+  sizes.set(downloadUri, 50);
+
+  controller.abort();
+
+  await expect(promise).rejects.toBeInstanceOf(DownloadAbortedError);
+  expect(created[0].stop).toHaveBeenCalled();
+  await new Promise<void>(resolve => setImmediate(() => resolve()));
+  expect(sizes.has(downloadUri)).toBe(false);
+});
+
+test('does not start a part whose download was already stopped', async () => {
+  const controller = new AbortController();
+  controller.abort();
+
+  await expect(
+    downloadModelPart(MODEL_ID, URL, FILE, controller.signal, jest.fn()),
+  ).rejects.toBeInstanceOf(DownloadAbortedError);
+  expect(downloader.createDownloadTask).not.toHaveBeenCalled();
+});
+
+test('stopModelTransfers stops only the transfers of that model', async () => {
+  const mine = downloader.__makeTask(
+    partTaskId(MODEL_ID, 'a.gguf'),
+    'DOWNLOADING',
+  );
+  const other = downloader.__makeTask(partTaskId(70, 'a.gguf'), 'DOWNLOADING');
+  downloader.__setExisting([mine, other]);
+
+  await stopModelTransfers(MODEL_ID);
+
+  expect(mine.stop).toHaveBeenCalled();
+  expect(other.stop).not.toHaveBeenCalled();
+});
+
+test('task ids are stable and free of slashes', () => {
+  expect(partTaskId(7, 'onnx/vocoder.onnx')).toBe('model-7-onnx_vocoder.onnx');
+});
+
+test('toDownloadError keeps statuses and connection failures apart', () => {
+  expect(toDownloadError(URL, 'x', 503)).toBeInstanceOf(HttpStatusError);
+  expect(isPermanentDownloadFailure(toDownloadError(URL, 'x', 503))).toBe(
     false,
   );
+  expect(isPermanentDownloadFailure(toDownloadError(URL, 'x', 429))).toBe(
+    false,
+  );
+  expect(toDownloadError(URL, 'x', -1001)).toBeInstanceOf(NetworkError);
+});
+
+describe('paths', () => {
+  test('reconstructs nested part paths inside the model directory', async () => {
+    const { promise } = await start({ fileName: 'onnx/vocoder.onnx' });
+    expect(created[0].options.destination).toBe(
+      '/docs/models/7/onnx/vocoder.onnx.download',
+    );
+    sizes.set(`${MODEL_DIR}/onnx/vocoder.onnx.download`, 10);
+    created[0].handlers.done({
+      location: '',
+      bytesDownloaded: 10,
+      bytesTotal: 10,
+    });
+    await expect(promise).resolves.toBe('/docs/models/7/onnx/vocoder.onnx');
+  });
+
+  test('refuses a part fileName that could escape the model directory', async () => {
+    for (const fileName of ['../x', 'a/../b', '/abs', 'a\\b', 'a//b', './a']) {
+      expect(() => assertSafeRelativePath(fileName)).toThrow(/unsafe/);
+    }
+    await expect(
+      downloadModelPart(
+        MODEL_ID,
+        URL,
+        '../evil',
+        new AbortController().signal,
+        jest.fn(),
+      ),
+    ).rejects.toThrow(/unsafe/);
+  });
+
+  test('locatePart splits the parent directory from the base name', () => {
+    const { parentDir, baseName } = locatePart(MODEL_ID, 'onnx/en/model.onnx');
+    expect(parentDir.uri).toBe(`${MODEL_DIR}/onnx/en`);
+    expect(baseName).toBe('model.onnx');
+  });
+
+  test('modelDirectoryPath is a plain path', () => {
+    expect(modelDirectoryPath(MODEL_ID)).toBe('/docs/models/7');
+  });
+
+  test('deleteModelDirectory removes the whole model tree', () => {
+    sizes.set(finalUri, 1);
+    sizes.set(`${MODEL_DIR}/onnx/x.onnx.download`, 1);
+    sizes.set('file:///docs/models/8/other.gguf', 1);
+
+    deleteModelDirectory(MODEL_ID);
+
+    expect(sizes.has(finalUri)).toBe(false);
+    expect(sizes.has(`${MODEL_DIR}/onnx/x.onnx.download`)).toBe(false);
+    expect(sizes.has('file:///docs/models/8/other.gguf')).toBe(true);
+  });
 });

@@ -56,7 +56,9 @@ import {
   listModelSubdirectories,
   NetworkError,
   HttpStatusError,
+  DownloadAbortedError,
   isPermanentDownloadFailure,
+  stopModelTransfers,
 } from './modelDownload';
 import { toFileUri, toPlainPath } from './fileUri';
 import {
@@ -156,7 +158,9 @@ export {
   listModelSubdirectories,
   NetworkError,
   HttpStatusError,
+  DownloadAbortedError,
   isPermanentDownloadFailure,
+  stopModelTransfers,
   toFileUri,
   toPlainPath,
   deviceRamGB,

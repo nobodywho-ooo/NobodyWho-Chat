@@ -284,7 +284,7 @@
       "skip": "Passer",
       "downloadingHeader": "Veuillez patienter",
       "downloadingTitle": "Téléchargement de vos modèles",
-      "downloadingSubtitle": "Cela peut prendre quelques minutes. Gardez l’app ouverte jusqu’à la fin.",
+      "downloadingSubtitle": "Cela peut prendre quelques minutes. Le téléchargement continue si vous quittez l’app.",
       "downloadProgress": "{{percent}} %",
       "downloadUnavailable": "Téléchargement impossible pour le moment, réessayez plus tard.",
       "voiceUnavailable": "Les modèles vocaux n’ont pas pu être téléchargés. Vous pourrez reprendre depuis la discussion vocale.",
@@ -300,8 +300,8 @@
       "interruptedTitle_one": "Téléchargement interrompu",
       "interruptedTitle_other": "Téléchargements interrompus",
       "downloadProgress": "{{percent}} %",
-      "downloadingHint_one": "Vous pourrez discuter dès qu’il sera terminé. Gardez l’app ouverte d’ici là.",
-      "downloadingHint_other": "Vous pourrez discuter dès que l’un d’eux sera terminé. Gardez l’app ouverte d’ici là.",
+      "downloadingHint_one": "Vous pourrez discuter dès qu’il sera terminé. Le téléchargement continue si vous quittez l’app.",
+      "downloadingHint_other": "Vous pourrez discuter dès que l’un d’eux sera terminé. Les téléchargements continuent si vous quittez l’app.",
       "interruptedHint_one": "Touchez Reprendre pour continuer là où il s’est arrêté.",
       "interruptedHint_other": "Touchez Reprendre pour continuer là où ils se sont arrêtés.",
       "resume": "Reprendre"
@@ -334,7 +334,7 @@
       "setup": {
         "title": "Configurer la discussion vocale",
         "description": "Quatre modèles doivent être chargés en même temps.",
-        "downloadInProgress": "Téléchargement en cours. Gardez l’app ouverte d’ici là.",
+        "downloadInProgress": "Téléchargement en cours. Il continue si vous quittez l’app.",
         "downloadInterrupted": "Téléchargement interrompu",
         "chat": "Modèle de discussion",
         "stt": "Modèle de reconnaissance vocale",
@@ -486,5 +486,12 @@
       "resetConfirmMessage": "Cela efface définitivement votre historique de discussions et la liste des modèles téléchargés, puis redémarre l’app. Cette action est irréversible.",
       "resetConfirm": "Réinitialiser"
     }
+  },
+  "liveActivity": {
+    "models_one": "{{count}} modèle",
+    "models_other": "{{count}} modèles",
+    "downloading": "Téléchargement",
+    "downloaded": "Prêt à l’emploi",
+    "waiting": "Ouvrez NobodyWho pour continuer"
   }
 }
