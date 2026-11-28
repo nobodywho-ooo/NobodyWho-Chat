@@ -5,3 +5,4 @@ export * from './chatModelArrival';
 export * from './modelSelection';
 export * from './webSearch';
 export * from './modelCatalogue';
+export * from './downloadActivity';

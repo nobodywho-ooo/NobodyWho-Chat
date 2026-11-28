@@ -284,7 +284,7 @@
       "skip": "Skip",
       "downloadingHeader": "Please wait",
       "downloadingTitle": "Downloading your models",
-      "downloadingSubtitle": "This can take a few minutes. Keep the app open until it finishes.",
+      "downloadingSubtitle": "This can take a few minutes. It keeps downloading if you leave the app.",
       "downloadProgress": "{{percent}}%",
       "downloadUnavailable": "Couldn't download at the moment, try again later.",
       "voiceUnavailable": "The voice models couldn't be downloaded. You can resume them later from voice chat.",
@@ -300,8 +300,8 @@
       "interruptedTitle_one": "Download interrupted",
       "interruptedTitle_other": "Downloads interrupted",
       "downloadProgress": "{{percent}}%",
-      "downloadingHint_one": "You can start chatting as soon as it's done. Keep the app open until then.",
-      "downloadingHint_other": "You can start chatting as soon as one is done. Keep the app open until then.",
+      "downloadingHint_one": "You can start chatting as soon as it's done. It keeps downloading if you leave the app.",
+      "downloadingHint_other": "You can start chatting as soon as one is done. They keep downloading if you leave the app.",
       "interruptedHint_one": "Tap Resume to continue where it left off.",
       "interruptedHint_other": "Tap Resume to continue where they left off.",
       "resume": "Resume"
@@ -334,7 +334,7 @@
       "setup": {
         "title": "Set up voice chat",
         "description": "You need four models loaded at once.",
-        "downloadInProgress": "Download in progress. Keep the app open until then.",
+        "downloadInProgress": "Download in progress. It keeps going if you leave the app.",
         "downloadInterrupted": "Download interrupted",
         "chat": "Chat model",
         "stt": "Speech-to-text model",
@@ -486,5 +486,12 @@
       "resetConfirmMessage": "This permanently erases your chat history and the list of downloaded models, then restarts the app. This can't be undone.",
       "resetConfirm": "Reset"
     }
+  },
+  "liveActivity": {
+    "models_one": "{{count}} model",
+    "models_other": "{{count}} models",
+    "downloading": "Downloading",
+    "downloaded": "Ready to use",
+    "waiting": "Open NobodyWho to continue"
   }
 }

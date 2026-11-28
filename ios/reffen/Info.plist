@@ -79,5 +79,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+	<key>ExpoWidgetsAppGroupIdentifier</key>
+	<string>group.ai.nobodywho.mobile</string>
 </dict>
 </plist>

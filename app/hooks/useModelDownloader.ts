@@ -24,22 +24,31 @@ import {
   isPermanentDownloadFailure,
   log,
   modelSizeLabel,
+  stopModelTransfers,
 } from 'helpers';
 import {
   cachedCatalogueModel,
+  endOrphanDownloadActivities,
+  finishDownloadActivity,
   notifyChatModelArrival,
+  reportDownloadActivity,
   selectModelIfSlotFree,
 } from 'services';
 
 const DOWNLOAD_THROTTLE = 0.01; // 1% step
 
-// Live downloads keyed by model id, each with the AbortController that cancels
-// its loop. Module-level (not state) so it survives remounts and so the
-// resume effect and a user-initiated stop share the same map.
+// Waits before each automatic retry of a part that failed while the app is in the foreground.
+export const RETRY_DELAYS_MS = [2_000, 10_000, 30_000];
+
+// Hard cap on the transfers of one part in one run of the loop, whatever the
+// retry policy says: it resets its counts on each return to the app, so a part
+// that keeps failing across trips would otherwise be retried forever. Past it
+// the part fails; the download stays pending and the next return to the app
+// starts a new run.
+export const MAX_PART_ATTEMPTS = 10;
+
 const activeDownloads = new Map<number, AbortController>();
 
-// Ids of the running loops, replaced (never mutated) on each change so it can
-// serve as the useActiveDownloadIds snapshot.
 let activeDownloadIds: ReadonlySet<number> = new Set();
 const activeDownloadsListeners = new Set<() => void>();
 
@@ -63,14 +72,11 @@ const subscribeActiveDownloads = (listener: () => void) => {
   };
 };
 
-// False until the launch resume has restarted the pending downloads: until then
-// a pending download only looks interrupted.
+// False until the launch resume has restarted the pending downloads
 let hasResumedAtLaunch = false;
 
-// Resolves once the model has no stopped loop still winding down. A stopped
-// loop deletes the model directory as it ends, so a restart must not begin
-// writing there until it has.
-const stoppedDownloadSettled = (modelId: number) =>
+// Resolves once the model has no stopped loop still winding down.
+const whenStoppedDownloadEnded = (modelId: number) =>
   new Promise<void>(resolve => {
     const check = () => {
       if (!activeDownloads.get(modelId)?.signal.aborted) {
@@ -82,17 +88,10 @@ const stoppedDownloadSettled = (modelId: number) =>
     check();
   });
 
-// Trips to the background so far, and whether the app is back from the last
-// one. The OS can cut a transfer while the app is away, and that failure lands
-// whenever it likes: in the background, on the way back, or just after the
-// return. A loop that was running across a trip treats its failure as that cut.
-let backgroundTrips = 0;
-let isInForeground = true;
+let isInForeground = AppState.currentState !== 'background';
 
-// Loops waiting for the app to come back, released by the 'active' event.
 const foregroundWaiters = new Set<() => void>();
 
-// Resolves once the app is in the foreground, or the download is stopped.
 const whenInForeground = (signal: AbortSignal) =>
   new Promise<void>(resolve => {
     if (isInForeground || signal.aborted) {
@@ -105,26 +104,101 @@ const whenInForeground = (signal: AbortSignal) =>
       signal.removeEventListener('abort', release);
       resolve();
     };
+
     foregroundWaiters.add(release);
     signal.addEventListener('abort', release);
   });
 
-// Models whose failure the user was already told about. Resume retries pending
-// downloads on every return to the app, so one that keeps failing (offline)
-// would otherwise alert again each time.
+// Resolves after `ms`, or as soon as the download is stopped.
+const wait = (ms: number, signal: AbortSignal) =>
+  new Promise<void>(resolve => {
+    if (signal.aborted) {
+      resolve();
+      return;
+    }
+
+    const done = () => {
+      clearTimeout(timer);
+      signal.removeEventListener('abort', done);
+      resolve();
+    };
+
+    const timer = setTimeout(done, ms);
+    signal.addEventListener('abort', done);
+  });
+
+interface PartRetryCallbacks {
+  onWaiting: () => void;
+  onResumed: () => void;
+}
+
+// Decides, after a part's transfer failed, whether to try it again, and waits
+// as long as needed before saying yes. One policy per part: it counts that
+// part's retries.
+// - stopped: never;
+// - refused (see isPermanentDownloadFailure): once, if it had received bytes —
+//   likely the signed CDN address a resumed transfer kept has expired, and a
+//   fresh request goes through the catalogue URL again;
+// - in the background: once right away (the OS takes the new transfer), then
+//   after the app is back in the foreground, with the counts reset;
+// - in the foreground: after each of RETRY_DELAYS_MS if it had received bytes;
+//   a part that never got a byte (offline, wrong URL) is reported at once.
+export const createPartRetryPolicy = (
+  signal: AbortSignal,
+  { onWaiting, onResumed }: PartRetryCallbacks,
+) => {
+  let retries = 0;
+  let retriedInBackground = false;
+  let retriedAfterRefusal = false;
+
+  return async (error: unknown, received: boolean): Promise<boolean> => {
+    if (signal.aborted) {
+      return false;
+    }
+
+    if (isPermanentDownloadFailure(error)) {
+      if (!received || retriedAfterRefusal) {
+        return false;
+      }
+
+      retriedAfterRefusal = true;
+
+      return true;
+    }
+
+    if (!isInForeground) {
+      if (!retriedInBackground) {
+        retriedInBackground = true;
+        return true;
+      }
+
+      onWaiting();
+      await whenInForeground(signal);
+      onResumed();
+      retries = 0;
+      retriedInBackground = false;
+
+      return !signal.aborted;
+    }
+
+    if (!received || retries >= RETRY_DELAYS_MS.length) {
+      return false;
+    }
+
+    await wait(RETRY_DELAYS_MS[retries++], signal);
+
+    return !signal.aborted;
+  };
+};
+
 const reportedFailures = new Set<number>();
 
-// Whether a download loop is running for the model right now.
 export const isDownloadActive = (modelId: number): boolean =>
   activeDownloads.has(modelId);
 
-// The models whose download loop is running, re-rendering when one starts or
-// stops: a pending download that isn't in it is interrupted (it failed, or the app
-// was closed mid-download).
 export const useActiveDownloadIds = (): ReadonlySet<number> =>
   useSyncExternalStore(subscribeActiveDownloads, () => activeDownloadIds);
 
-// Whether the launch resume has had its chance to restart pending downloads.
 export const useHasResumedAtLaunch = (): boolean =>
   useSyncExternalStore(subscribeActiveDownloads, () => hasResumedAtLaunch);
 
@@ -134,10 +208,12 @@ interface DownloadOptions {
   skipSpaceCheck?: boolean;
 }
 
-// A pending download keeps the parts of the catalogue it started from. A URL
-// fixed in the catalogue since then is taken up, matched by file name, so
-// a resume doesn't keep going back to the old one.
-const withCatalogueUrls = (
+// A pending download stores each part's URL as the catalogue had it when the
+// download started. Before a (re)start, take each part's URL from the catalogue
+// as it is now (cached, matched by file name), so a URL fixed upstream since
+// then is used. A transfer the OS is still running keeps the URL it started
+// with; the new one applies once a part needs a new transfer.
+const withLatestCatalogueUrls = (
   modelId: number,
   partsProgress: readonly ModelDownloadPart[],
 ): ModelDownloadPart[] => {
@@ -152,21 +228,33 @@ const withCatalogueUrls = (
   });
 };
 
-// The download loop shared by a fresh start and a resume.
+const overallProgress = (partsProgress: readonly ModelDownloadPart[]) => {
+  const total = partsProgress.reduce((sum, part) => sum + part.sizeGB, 0);
+  if (total <= 0) {
+    return (
+      partsProgress.reduce((sum, part) => sum + part.progress, 0) /
+      Math.max(partsProgress.length, 1)
+    );
+  }
+
+  return (
+    partsProgress.reduce((sum, part) => sum + part.progress * part.sizeGB, 0) /
+    total
+  );
+};
+
 const useRunDownload = () => {
   const { t } = useTranslation();
 
   return useCallback(
-    async function run(
+    async (
       download: ModelDownload,
       { alertOnFailure = true }: DownloadOptions = {},
-    ): Promise<void> {
+    ): Promise<void> => {
       const { model } = download;
 
-      // Started again right after a stop: wait for the stopped loop to end
-      // rather than mistake it for this download already running.
       if (activeDownloads.get(model.id)?.signal.aborted) {
-        await stoppedDownloadSettled(model.id);
+        await whenStoppedDownloadEnded(model.id);
       }
 
       if (activeDownloads.has(model.id)) {
@@ -176,50 +264,122 @@ const useRunDownload = () => {
       const controller = new AbortController();
       setActiveDownload(model.id, controller);
 
+      // Stops the parts still transferring: the user stopped the download, or
+      // one part failed for good and the download is dropped.
+      const partsController = new AbortController();
+      const stopParts = () => partsController.abort();
+      controller.signal.addEventListener('abort', stopParts);
+
       let modelDownloaded = false;
-      let isTransferring = true;
-      let restartAfterBackgroundCut = false;
-      const tripsAtStart = backgroundTrips;
-      const partsProgress = withCatalogueUrls(model.id, download.partsProgress);
+      const partsProgress = withLatestCatalogueUrls(
+        model.id,
+        download.partsProgress,
+      );
+      const waitingParts = new Set<number>();
+
+      const reportActivity = () =>
+        reportDownloadActivity(model.id, {
+          name: model.name,
+          progress: overallProgress(partsProgress),
+          sizeGB: partsProgress.reduce((sum, part) => sum + part.sizeGB, 0),
+          status:
+            waitingParts.size > 0 &&
+            waitingParts.size ===
+              partsProgress.filter(part => part.progress < 1 || !part.path)
+                .length
+              ? 'waiting'
+              : 'downloading',
+        });
+
+      const saveProgress = () =>
+        updateModelDownloadParts(model.id, partsProgress).catch(error =>
+          log('runDownload updateModelDownloadParts', error),
+        );
+
+      const transferPart = async (i: number): Promise<void> => {
+        const signal = partsController.signal;
+        const shouldRetry = createPartRetryPolicy(signal, {
+          onWaiting: () => {
+            waitingParts.add(i);
+            reportActivity();
+          },
+          onResumed: () => waitingParts.delete(i),
+        });
+        let received = partsProgress[i].progress > 0;
+
+        for (let attempt = 1; attempt <= MAX_PART_ATTEMPTS; attempt++) {
+          try {
+            const path = await downloadModelPart(
+              model.id,
+              partsProgress[i].url,
+              partsProgress[i].fileName,
+              signal,
+              (downloaded, total) => {
+                if (signal.aborted) {
+                  return;
+                }
+
+                if (downloaded > 0) {
+                  received = true;
+                }
+
+                const progress = total > 0 ? downloaded / total : 0;
+
+                if (
+                  Math.abs(progress - partsProgress[i].progress) >=
+                    DOWNLOAD_THROTTLE ||
+                  progress >= 1
+                ) {
+                  partsProgress[i] = { ...partsProgress[i], progress };
+                  saveProgress();
+                }
+
+                reportActivity();
+              },
+              { title: model.name },
+            );
+
+            partsProgress[i] = { ...partsProgress[i], progress: 1, path };
+            await updateModelDownloadParts(model.id, partsProgress);
+            return;
+          } catch (error) {
+            if (!signal.aborted) {
+              log('runDownload part failed', partsProgress[i].fileName, error);
+            }
+
+            if (
+              attempt === MAX_PART_ATTEMPTS ||
+              !(await shouldRetry(error, received))
+            ) {
+              // Refused for good: the download is dropped, so no use letting the others finish.
+              if (isPermanentDownloadFailure(error)) {
+                partsController.abort();
+              }
+              throw error;
+            }
+          }
+        }
+      };
 
       try {
-        for (let i = 0; i < partsProgress.length; i++) {
-          if (partsProgress[i].progress >= 1 && partsProgress[i].path) {
-            continue;
-          }
+        reportActivity();
 
-          const path = await downloadModelPart(
-            model.id,
-            partsProgress[i].url,
-            partsProgress[i].fileName,
-            controller.signal,
-            (downloaded, total) => {
-              const progress = total > 0 ? downloaded / total : 0;
+        const unfinished = partsProgress
+          .map((part, i) => ({ part, i }))
+          .filter(({ part }) => !(part.progress >= 1 && part.path))
+          .map(({ i }) => i);
 
-              if (controller.signal.aborted) {
-                return;
-              }
-
-              if (
-                progress - partsProgress[i].progress >= DOWNLOAD_THROTTLE ||
-                progress >= 1
-              ) {
-                partsProgress[i] = { ...partsProgress[i], progress };
-                updateModelDownloadParts(model.id, partsProgress).catch(
-                  error => {
-                    log('runDownload updateModelDownloadParts', error);
-                  },
-                );
-              }
-            },
-          );
-          partsProgress[i] = { ...partsProgress[i], progress: 1, path };
-          await updateModelDownloadParts(model.id, partsProgress);
-        }
-        isTransferring = false;
+        const results = await Promise.allSettled(unfinished.map(transferPart));
+        const failures = results.flatMap(result =>
+          result.status === 'rejected' ? [result.reason as unknown] : [],
+        );
 
         if (controller.signal.aborted) {
           return;
+        }
+
+        if (failures.length > 0) {
+          throw failures.find(isPermanentDownloadFailure) ?? failures[0];
         }
 
         const downloadedParts: ModelPart[] = partsProgress.map(
@@ -242,15 +402,13 @@ const useRunDownload = () => {
 
         modelDownloaded = true;
         reportedFailures.delete(model.id);
+        finishDownloadActivity(model.id, 'downloaded');
 
-        // Dropped before the slot selection so a failure there can't leave an
-        // installed model looking like a pending download to resume.
         await deleteModelDownload(model.id);
 
         const tookFreeSlot = await selectModelIfSlotFree(model);
 
-        // The user had no chat model in use and now has one: show them the
-        // chat, on a new conversation.
+        // The user had no chat model in use and now has one: show them the chat
         if (
           tookFreeSlot &&
           slotForPipeline(model.pipeline) === ModelSlot.chat
@@ -258,26 +416,15 @@ const useRunDownload = () => {
           notifyChatModelArrival();
         }
       } catch (error) {
-        // The server refused the URL (404...): retrying is useless, so the download is dropped
+        // The server refused the URL (404...), download is dropped.
         const isPermanent =
           !controller.signal.aborted && isPermanentDownloadFailure(error);
-
-        // Cut by a trip to the background: not reported, but restarted by this
-        // loop once the app is back. Only once: the restart reports a failure
-        // of its own.
-        const wasCutInBackground =
-          isTransferring &&
-          !isPermanent &&
-          !controller.signal.aborted &&
-          backgroundTrips !== tripsAtStart;
-        restartAfterBackgroundCut = wasCutInBackground;
         log('ModelsScreen runDownload', error);
 
         if (
           alertOnFailure &&
           !modelDownloaded &&
           !controller.signal.aborted &&
-          !wasCutInBackground &&
           !reportedFailures.has(model.id)
         ) {
           reportedFailures.add(model.id);
@@ -291,29 +438,30 @@ const useRunDownload = () => {
 
         if (isPermanent) {
           reportedFailures.delete(model.id);
+
           await deleteModelDownload(model.id).catch(deleteError =>
             log('runDownload deleteModelDownload', deleteError),
           );
+
           deleteModelDirectory(model.id);
         }
-
-        // Still registered as running while it waits, so the resume on return
-        // leaves it alone and a caller awaiting it gets the real outcome.
-        if (wasCutInBackground) {
-          await whenInForeground(controller.signal);
-        }
       } finally {
+        controller.signal.removeEventListener('abort', stopParts);
+
         if (activeDownloads.get(model.id) === controller) {
           setActiveDownload(model.id, undefined);
+        }
+
+        if (!modelDownloaded) {
+          finishDownloadActivity(
+            model.id,
+            controller.signal.aborted ? 'stopped' : 'failed',
+          );
         }
 
         if (controller.signal.aborted && !modelDownloaded) {
           deleteModelDirectory(model.id);
         }
-      }
-
-      if (restartAfterBackgroundCut && !controller.signal.aborted) {
-        await run({ model, partsProgress }, { alertOnFailure });
       }
     },
     [t],
@@ -331,6 +479,10 @@ const useResumePendingDownloads = () => {
     }: { reportAgain?: boolean; alertOnFailure?: boolean } = {}) => {
       try {
         const pendingDownloads = await getModelDownloads();
+
+        if (pendingDownloads.length === 0 && activeDownloads.size === 0) {
+          endOrphanDownloadActivities();
+        }
 
         for (const download of pendingDownloads) {
           if (activeDownloads.has(download.model.id)) {
@@ -355,7 +507,6 @@ const useResumePendingDownloads = () => {
   );
 };
 
-// Resumes pending downloads at launch and on every return to the app.
 export const useResumeModelDownloads = ({
   alertOnFailure = true,
 }: { alertOnFailure?: boolean } = {}) => {
@@ -373,7 +524,6 @@ export const useResumeModelDownloads = ({
 
     const subscription = AppState.addEventListener('change', state => {
       if (state === 'background') {
-        backgroundTrips++;
         isInForeground = false;
       }
 
@@ -432,7 +582,7 @@ export const useModelDownloader = () => {
       }
 
       if (activeDownloads.get(model.id)?.signal.aborted) {
-        await stoppedDownloadSettled(model.id);
+        await whenStoppedDownloadEnded(model.id);
       }
 
       const created = await createModelDownload(model);
@@ -469,14 +619,20 @@ export const useModelDownloader = () => {
 
     if (controller) {
       controller.abort();
-    } else {
-      deleteModelDirectory(model.id);
+      return rowDeleted;
     }
 
-    return rowDeleted;
+    // No loop is running (the app was relaunched and hasn't resumed yet, or
+    // the download failed and waits for a retry): the OS may still hold its
+    // transfers.
+    const transfersStopped = stopModelTransfers(model.id)
+      .catch(error => log('ModelsScreen stopModelTransfers', error))
+      .finally(() => deleteModelDirectory(model.id));
+    finishDownloadActivity(model.id, 'stopped');
+
+    return Promise.all([rowDeleted, transfersStopped]).then(() => undefined);
   }, []);
 
-  // One confirmation for every download in `models`.
   const promptStopDownloads = useCallback(
     (models: readonly Model[]) => {
       const count = models.length;

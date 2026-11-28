@@ -16,12 +16,20 @@ import {
   log,
 } from 'helpers';
 import { ModelPipeline } from 'types';
-import { cachedCatalogueModel, subscribeChatModelArrival } from 'services';
+import {
+  cachedCatalogueModel,
+  finishDownloadActivity,
+  reportDownloadActivity,
+  subscribeChatModelArrival,
+} from 'services';
 import { HttpStatusError } from '../../helpers/modelDownload';
 import { buildModel } from 'jest/factories/model';
 
 import {
+  createPartRetryPolicy,
   isDownloadActive,
+  MAX_PART_ATTEMPTS,
+  RETRY_DELAYS_MS,
   useActiveDownloadIds,
   useModelDownloader,
   useResumeModelDownloads,
@@ -44,6 +52,9 @@ jest.mock('database', () => ({
 jest.mock('services', () => ({
   ...jest.requireActual('services'),
   cachedCatalogueModel: jest.fn(() => undefined),
+  reportDownloadActivity: jest.fn(),
+  finishDownloadActivity: jest.fn(),
+  endOrphanDownloadActivities: jest.fn(),
 }));
 
 jest.mock('helpers', () => ({
@@ -51,6 +62,7 @@ jest.mock('helpers', () => ({
   isPermanentDownloadFailure: jest.requireActual('../../helpers/modelDownload')
     .isPermanentDownloadFailure,
   deleteModelDirectory: jest.fn(),
+  stopModelTransfers: jest.fn(async () => {}),
   log: jest.fn(),
   // Unit-tested in diskSpace.test.ts; here the default is a device with room,
   // and a test flips it to exercise the refusal.
@@ -74,6 +86,8 @@ const mockCheckDiskSpaceForModel = checkDiskSpaceForModel as jest.Mock;
 const mockSetAppState = setAppState as jest.Mock;
 const mockLog = log as jest.Mock;
 const mockCachedCatalogueModel = cachedCatalogueModel as jest.Mock;
+const mockReportDownloadActivity = reportDownloadActivity as jest.Mock;
+const mockFinishDownloadActivity = finishDownloadActivity as jest.Mock;
 
 // A pending download for a single-part model, keyed by a unique id per test so
 // the module-level `activeDownloads` map can't leak state between tests.
@@ -222,6 +236,7 @@ test('resumes from the URL the catalogue has now, not the one it started from', 
     'model-126.gguf',
     expect.anything(),
     expect.any(Function),
+    { title: download.model.name },
   );
   expect(mockInsertModel.mock.calls[0][0].parts[0].url).toBe(
     'https://y/fixed.gguf',
@@ -282,56 +297,53 @@ const appStateChange = () =>
     .reverse()
     .find(([type]) => type === 'change')?.[1] as (state: string) => void;
 
-test('restarts, without alerting, a download cut while the app was in the background', async () => {
+// A part's transfer that is still running, failed or finished by the test.
+const pendingPart = () => {
+  let fail: (error: Error) => void = () => {};
+  const promise = new Promise<string>((_, reject) => {
+    fail = reject;
+  });
+  return { promise, fail: (error: Error) => fail(error) };
+};
+
+test('retries right away, without alerting, a part that fails while the app is in the background', async () => {
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-  let failPart: (error: Error) => void = () => {};
+  const first = pendingPart();
   mockDownloadModelPart
-    .mockImplementationOnce(
-      () =>
-        new Promise((_, reject) => {
-          failPart = reject;
-        }),
-    )
+    .mockImplementationOnce(() => first.promise)
     .mockResolvedValueOnce('/docs/models/118/model-118.gguf');
   mockGetModelDownloads.mockResolvedValue([pendingDownload(118)]);
 
   await renderHook(() => useResumeModelDownloads());
   await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(1));
 
-  // Back in the app while the task suspended in the background still looks
-  // alive, so the resume skips it; then it fails.
   const onChange = appStateChange();
   await act(async () => onChange('background'));
-  await act(async () => onChange('active'));
-  await act(async () => failPart(new Error('connection lost')));
+  await act(async () => first.fail(new Error('connection lost')));
 
   await waitFor(() => expect(mockInsertModel).toHaveBeenCalled());
   expect(mockDownloadModelPart).toHaveBeenCalledTimes(2);
   expect(alert).not.toHaveBeenCalled();
+  await act(async () => onChange('active'));
   alert.mockRestore();
 });
 
-test('holds a download cut before the app is back, restarting it once on return', async () => {
+test('holds a part whose background retry fails too until the app is back', async () => {
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-  let failPart: (error: Error) => void = () => {};
+  const first = pendingPart();
   mockDownloadModelPart
-    .mockImplementationOnce(
-      () =>
-        new Promise((_, reject) => {
-          failPart = reject;
-        }),
-    )
+    .mockImplementationOnce(() => first.promise)
+    .mockRejectedValueOnce(new Error('still offline'))
     .mockResolvedValueOnce('/docs/models/124/model-124.gguf');
   mockGetModelDownloads.mockResolvedValue([pendingDownload(124)]);
 
   await renderHook(() => useResumeModelDownloads());
   await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(1));
 
-  // The failure lands before the app reports being active again.
   const onChange = appStateChange();
   await act(async () => onChange('background'));
-  await act(async () => failPart(new Error('connection lost')));
-  expect(mockDownloadModelPart).toHaveBeenCalledTimes(1);
+  await act(async () => first.fail(new Error('connection lost')));
+  await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(2));
   // Still running as far as the app is concerned, so the resume skips it.
   expect(isDownloadActive(124)).toBe(true);
 
@@ -339,21 +351,17 @@ test('holds a download cut before the app is back, restarting it once on return'
 
   await waitFor(() => expect(mockInsertModel).toHaveBeenCalled());
   // Restarted by its own loop only, not again by the resume.
-  expect(mockDownloadModelPart).toHaveBeenCalledTimes(2);
+  expect(mockDownloadModelPart).toHaveBeenCalledTimes(3);
   expect(alert).not.toHaveBeenCalled();
   alert.mockRestore();
 });
 
-test('a caller awaiting a download cut in the background gets the outcome of its restart', async () => {
+test('a caller awaiting a download held in the background gets the outcome of its restart', async () => {
   const { model } = pendingDownload(128);
-  let failPart: (error: Error) => void = () => {};
+  const first = pendingPart();
   mockDownloadModelPart
-    .mockImplementationOnce(
-      () =>
-        new Promise((_, reject) => {
-          failPart = reject;
-        }),
-    )
+    .mockImplementationOnce(() => first.promise)
+    .mockRejectedValueOnce(new Error('still offline'))
     .mockResolvedValueOnce('/docs/models/128/model-128.gguf');
 
   const { result } = await renderHook(() => {
@@ -370,7 +378,8 @@ test('a caller awaiting a download cut in the background gets the outcome of its
 
   const onChange = appStateChange();
   await act(async () => onChange('background'));
-  await act(async () => failPart(new Error('connection lost')));
+  await act(async () => first.fail(new Error('connection lost')));
+  await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(2));
   // A batch (onboarding, voice setup) must not read this as a failure.
   expect(settled).toBe(false);
 
@@ -382,15 +391,12 @@ test('a caller awaiting a download cut in the background gets the outcome of its
   );
 });
 
-test('drops a download cut in the background that the user stopped meanwhile', async () => {
+test('drops a download held in the background that the user stopped meanwhile', async () => {
   const { model } = pendingDownload(129);
-  let failPart: (error: Error) => void = () => {};
-  mockDownloadModelPart.mockImplementationOnce(
-    () =>
-      new Promise((_, reject) => {
-        failPart = reject;
-      }),
-  );
+  const first = pendingPart();
+  mockDownloadModelPart
+    .mockImplementationOnce(() => first.promise)
+    .mockRejectedValueOnce(new Error('still offline'));
 
   const { result } = await renderHook(() => {
     useResumeModelDownloads();
@@ -404,49 +410,241 @@ test('drops a download cut in the background that the user stopped meanwhile', a
 
   const onChange = appStateChange();
   await act(async () => onChange('background'));
-  await act(async () => failPart(new Error('connection lost')));
+  await act(async () => first.fail(new Error('connection lost')));
+  await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(2));
   await act(async () => {
     result.current.stopDownload(model);
     await started;
   });
 
-  expect(mockDownloadModelPart).toHaveBeenCalledTimes(1);
+  expect(mockDownloadModelPart).toHaveBeenCalledTimes(2);
   expect(mockDeleteModelDirectory).toHaveBeenCalledWith(129);
   expect(isDownloadActive(129)).toBe(false);
   // Leave the app in the foreground for the next tests.
   await act(async () => onChange('active'));
 });
 
-test('reports the restart of a cut download when it fails too', async () => {
+test('gives up on a part after MAX_PART_ATTEMPTS, however often the app comes back', async () => {
   const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
-  let failPart: (error: Error) => void = () => {};
-  mockDownloadModelPart.mockImplementation(
-    () =>
-      new Promise((_, reject) => {
-        failPart = reject;
-      }),
-  );
-  mockGetModelDownloads.mockResolvedValue([pendingDownload(122)]);
+  const first = pendingPart();
+  mockDownloadModelPart
+    .mockImplementationOnce(() => first.promise)
+    .mockRejectedValue(new Error('still offline'));
+  mockGetModelDownloads.mockResolvedValue([pendingDownload(135)]);
 
   await renderHook(() => useResumeModelDownloads());
   await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(1));
 
   const onChange = appStateChange();
   await act(async () => onChange('background'));
+  await act(async () => first.fail(new Error('connection lost')));
+  // Two transfers so far. Each trip back and away again resets the policy's
+  // own counts and gives two more, until the cap ends the run.
+  for (let trip = 0; trip < (MAX_PART_ATTEMPTS - 2) / 2; trip++) {
+    await act(async () => {
+      onChange('active');
+      onChange('background');
+    });
+  }
+
+  await waitFor(() => expect(isDownloadActive(135)).toBe(false));
+  expect(mockDownloadModelPart).toHaveBeenCalledTimes(MAX_PART_ATTEMPTS);
+  // Kept for the next return to the app, which starts a new run.
+  expect(mockDeleteModelDownload).not.toHaveBeenCalled();
+  mockGetModelDownloads.mockResolvedValue([]);
   await act(async () => onChange('active'));
-  await act(async () => failPart(new Error('connection lost')));
-  await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(2));
-  expect(alert).not.toHaveBeenCalled();
-
-  // No trip to the background since the restart: a real failure.
-  await act(async () => failPart(new Error('server error')));
-
-  expect(mockDownloadModelPart).toHaveBeenCalledTimes(2);
-  expect(alert).toHaveBeenCalledWith(
-    'screens.models.downloadFailedTitle',
-    'screens.models.downloadFailedModelMessage',
-  );
   alert.mockRestore();
+});
+
+describe('a part that fails in the foreground', () => {
+  const delays = [...RETRY_DELAYS_MS];
+  beforeAll(() => RETRY_DELAYS_MS.fill(0));
+  afterAll(() => RETRY_DELAYS_MS.splice(0, delays.length, ...delays));
+
+  // A transfer that received some bytes before the connection gave out.
+  const failAfterSomeBytes = (
+    _id: number,
+    _url: string,
+    _file: string,
+    _signal: AbortSignal,
+    onProgress: (downloaded: number, total: number) => void,
+  ) => {
+    onProgress(40, 100);
+    return Promise.reject(new Error('connection reset'));
+  };
+
+  test('is retried, without alerting, once it had received bytes', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockDownloadModelPart
+      .mockImplementationOnce(failAfterSomeBytes)
+      .mockResolvedValueOnce('/docs/models/130/model-130.gguf');
+    mockGetModelDownloads.mockResolvedValue([pendingDownload(130)]);
+
+    await renderHook(() => useResumeModelDownloads());
+
+    await waitFor(() => expect(mockInsertModel).toHaveBeenCalled());
+    expect(mockDownloadModelPart).toHaveBeenCalledTimes(2);
+    expect(mockDeleteModelDirectory).not.toHaveBeenCalled();
+    expect(alert).not.toHaveBeenCalled();
+    alert.mockRestore();
+  });
+
+  test('is reported, and kept for a later resume, once the retries are used up', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockDownloadModelPart.mockImplementation(failAfterSomeBytes);
+    mockGetModelDownloads.mockResolvedValue([pendingDownload(131)]);
+
+    await renderHook(() => useResumeModelDownloads());
+
+    await waitFor(() =>
+      expect(alert).toHaveBeenCalledWith(
+        'screens.models.downloadFailedTitle',
+        'screens.models.downloadFailedModelMessage',
+      ),
+    );
+    expect(mockDownloadModelPart).toHaveBeenCalledTimes(
+      RETRY_DELAYS_MS.length + 1,
+    );
+    expect(mockDeleteModelDownload).not.toHaveBeenCalled();
+    expect(mockDeleteModelDirectory).not.toHaveBeenCalled();
+    alert.mockRestore();
+  });
+
+  test('refused after it had started is tried once more before the download is dropped', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    const refused = new HttpStatusError('GET returned 403', 403);
+    mockDownloadModelPart
+      .mockImplementationOnce(
+        (...args: Parameters<typeof failAfterSomeBytes>) => {
+          args[4](40, 100);
+          return Promise.reject(refused);
+        },
+      )
+      .mockResolvedValueOnce('/docs/models/132/model-132.gguf');
+    mockGetModelDownloads.mockResolvedValue([pendingDownload(132)]);
+
+    await renderHook(() => useResumeModelDownloads());
+
+    await waitFor(() => expect(mockInsertModel).toHaveBeenCalled());
+    expect(mockDownloadModelPart).toHaveBeenCalledTimes(2);
+    expect(alert).not.toHaveBeenCalled();
+    alert.mockRestore();
+  });
+});
+
+// The background rules need the AppState listener, so they are covered by the
+// hook tests above; these are the decisions made in the foreground.
+describe('createPartRetryPolicy in the foreground', () => {
+  const delays = [...RETRY_DELAYS_MS];
+  beforeAll(() => RETRY_DELAYS_MS.fill(0));
+  afterAll(() => RETRY_DELAYS_MS.splice(0, delays.length, ...delays));
+
+  const callbacks = { onWaiting: jest.fn(), onResumed: jest.fn() };
+  const dropped = new Error('connection reset');
+  const refused = new HttpStatusError('GET returned 403', 403);
+
+  test('retries once per delay a part that had received bytes', async () => {
+    const shouldRetry = createPartRetryPolicy(
+      new AbortController().signal,
+      callbacks,
+    );
+
+    for (let i = 0; i < RETRY_DELAYS_MS.length; i++) {
+      expect(await shouldRetry(dropped, true)).toBe(true);
+    }
+    expect(await shouldRetry(dropped, true)).toBe(false);
+    expect(callbacks.onWaiting).not.toHaveBeenCalled();
+  });
+
+  test('reports at once a part that never got a byte', async () => {
+    const shouldRetry = createPartRetryPolicy(
+      new AbortController().signal,
+      callbacks,
+    );
+
+    expect(await shouldRetry(dropped, false)).toBe(false);
+  });
+
+  test('retries a refusal once, and only after bytes had arrived', async () => {
+    const shouldRetry = createPartRetryPolicy(
+      new AbortController().signal,
+      callbacks,
+    );
+
+    expect(await shouldRetry(refused, false)).toBe(false);
+    expect(await shouldRetry(refused, true)).toBe(true);
+    expect(await shouldRetry(refused, true)).toBe(false);
+  });
+
+  test('never retries a stopped download', async () => {
+    const controller = new AbortController();
+    const shouldRetry = createPartRetryPolicy(controller.signal, callbacks);
+    controller.abort();
+
+    expect(await shouldRetry(dropped, true)).toBe(false);
+    expect(await shouldRetry(refused, true)).toBe(false);
+  });
+});
+
+test('downloads the parts of a model at the same time', async () => {
+  const model = buildModel(133, {
+    parts: [
+      {
+        url: 'https://x/a.gguf',
+        fileName: 'a.gguf',
+        type: 'chat-model',
+        path: '',
+        sizeGB: 1,
+      },
+      {
+        url: 'https://x/b.gguf',
+        fileName: 'b.gguf',
+        type: 'mmproj',
+        path: '',
+        sizeGB: 0.5,
+      },
+    ],
+  });
+  const first = pendingPart();
+  mockDownloadModelPart
+    .mockImplementationOnce(() => first.promise)
+    .mockResolvedValueOnce('/docs/models/133/b.gguf');
+
+  const { result } = await renderHook(() => useModelDownloader());
+  await act(() => {
+    result.current.startDownload(model);
+  });
+
+  // The second part started without waiting for the first.
+  await waitFor(() => expect(mockDownloadModelPart).toHaveBeenCalledTimes(2));
+  await act(async () => result.current.stopDownload(model));
+});
+
+test('follows the download in the Live Activity and ends it with the download', async () => {
+  mockDownloadModelPart.mockImplementation(
+    async (
+      _id: number,
+      _url: string,
+      _file: string,
+      _signal: AbortSignal,
+      onProgress: (downloaded: number, total: number) => void,
+    ) => {
+      onProgress(50, 100);
+      return '/docs/models/134/model-134.gguf';
+    },
+  );
+  const { model } = pendingDownload(134);
+
+  const { result } = await renderHook(() => useModelDownloader());
+  await act(async () => {
+    await result.current.startDownload(model);
+  });
+
+  expect(mockReportDownloadActivity).toHaveBeenCalledWith(
+    134,
+    expect.objectContaining({ name: model.name, progress: 0.5 }),
+  );
+  expect(mockFinishDownloadActivity).toHaveBeenCalledWith(134, 'downloaded');
 });
 
 test('does not start a download its caller gave up on', async () => {

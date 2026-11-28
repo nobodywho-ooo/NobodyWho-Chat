@@ -1,0 +1,88 @@
+diff --git a/node_modules/@kesha-antonov/react-native-background-downloader/android/src/main/java/com/kesha_antonov/ResumableDownloader.kt b/node_modules/@kesha-antonov/react-native-background-downloader/android/src/main/java/com/kesha_antonov/ResumableDownloader.kt
+index 328d5b8..8bbb40d 100644
+--- a/node_modules/@kesha-antonov/react-native-background-downloader/android/src/main/java/com/kesha_antonov/ResumableDownloader.kt
++++ b/node_modules/@kesha-antonov/react-native-background-downloader/android/src/main/java/com/kesha_antonov/ResumableDownloader.kt
+@@ -11,6 +11,9 @@ import java.util.concurrent.ConcurrentHashMap
+ import java.util.concurrent.atomic.AtomicBoolean
+ import java.util.concurrent.atomic.AtomicLong
+ 
++// Patched (reffen): see registerNewDownload
++private const val RESUME_FROM_FILE_HEADER = "X-Background-Downloader-Resume"
++
+ /**
+  * A resumable downloader that supports pause/resume functionality using HTTP Range headers.
+  * This is used as a fallback when the standard DownloadManager doesn't support pause/resume.
+@@ -244,8 +247,15 @@ class ResumableDownloader {
+     // Download directly to destination file
+     val destFile = File(destination)
+ 
++    // Patched (reffen): RESUME_FROM_FILE_HEADER asks to continue from the bytes an
++    // earlier, failed transfer left at the destination instead of deleting them.
++    // It is never sent to the server.
++    val resumeFromFile = headers.keys.any { it.equals(RESUME_FROM_FILE_HEADER, ignoreCase = true) }
++    val requestHeaders = headers.filterKeys { !it.equals(RESUME_FROM_FILE_HEADER, ignoreCase = true) }
++    val effectiveStartByte = if (startByte == 0L && resumeFromFile && destFile.exists()) destFile.length() else startByte
++
+     // Clean up any existing destination file if starting fresh (startByte == 0)
+-    if (startByte == 0L && destFile.exists()) {
++    if (effectiveStartByte == 0L && destFile.exists()) {
+       if (!destFile.delete()) {
+         RNBackgroundDownloaderModuleImpl.logW(TAG, "Failed to delete existing destination file: $destination")
+       } else {
+@@ -257,14 +267,14 @@ class ResumableDownloader {
+       id = id,
+       url = url,
+       destination = destination,
+-      headers = headers,
++      headers = requestHeaders,
+       bytesTotal = totalBytes,
+       isAllowedOverMetered = isAllowedOverMetered
+     )
+ 
+     // Set initial bytes downloaded (only for explicit resume with startByte > 0)
+-    if (startByte > 0) {
+-      state.bytesDownloaded.set(startByte)
++    if (effectiveStartByte > 0) {
++      state.bytesDownloaded.set(effectiveStartByte)
+       state.hasReportedBegin = true // Don't report begin again for resumed downloads
+ 
+       // Ensure parent directories exist
+diff --git a/node_modules/@kesha-antonov/react-native-background-downloader/ios/RNBackgroundDownloader.mm b/node_modules/@kesha-antonov/react-native-background-downloader/ios/RNBackgroundDownloader.mm
+index 6a6828f..a1da202 100644
+--- a/node_modules/@kesha-antonov/react-native-background-downloader/ios/RNBackgroundDownloader.mm
++++ b/node_modules/@kesha-antonov/react-native-background-downloader/ios/RNBackgroundDownloader.mm
+@@ -2106,6 +2106,34 @@ - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didComp
+             }
+         }
+ 
++        // Patched (reffen): a failure that left resume data (the network gave out for
++        // good, the system cancelled the task) keeps it, as a pause does, so the app can
++        // continue the transfer — getExistingDownloadTasks reports it PAUSED — instead of
++        // downloading every byte again. The failure is still reported.
++        if (resumeData != nil) {
++            idToResumeDataMap[taskConfig.id] = resumeData;
++            [self saveResumeData:resumeData forTaskId:taskConfig.id];
++            taskConfig.hasResumeData = YES;
++            taskConfig.errorCode = NSURLErrorCancelled;
++            taskConfig.state = NSURLSessionTaskStateCanceling;
++            [idToNetworkResumeCount removeObjectForKey:taskConfig.id];
++            [mmkv setData:[self serialize:taskToConfigMap] forKey:ID_TO_CONFIG_MAP_KEY];
++#ifdef RCT_NEW_ARCH_ENABLED
++            [self safeEmitEvent:@"onDownloadFailed" value:@{
++                @"id": taskConfig.id,
++                @"error": [error localizedDescription],
++                @"errorCode": @(error.code)
++            }];
++#else
++            [self sendEventWithName:@"downloadFailed" body:@{
++                @"id": taskConfig.id,
++                @"error": [error localizedDescription],
++                @"errorCode": @(error.code)
++            }];
++#endif
++            return;
++        }
++
+         // Handle failure
+ #ifdef RCT_NEW_ARCH_ENABLED
+         [self safeEmitEvent:@"onDownloadFailed" value:@{

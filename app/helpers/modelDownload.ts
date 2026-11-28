@@ -1,10 +1,13 @@
+import { Platform } from 'react-native';
+import { Directory, File, Paths } from 'expo-file-system';
 import {
-  Directory,
-  File,
-  FileMode,
-  Paths,
-  type DownloadOptions,
-} from 'expo-file-system';
+  completeHandler,
+  createDownloadTask,
+  getExistingDownloadTasks,
+  setConfig,
+  type DownloadTask,
+  type Headers,
+} from '@kesha-antonov/react-native-background-downloader';
 
 import { toPlainPath } from './fileUri';
 import { log } from './log';
@@ -17,34 +20,29 @@ import { log } from './log';
 // single recursive directory removal.
 const MODELS_DIR_NAME = 'models';
 
-// A resumable download accumulates bytes into `<fileName>.partial`, pulling each
-// window into `<fileName>.chunk` first, and remembers the remote's validator in
-// `<fileName>.etag`. Only once every byte is present is `.partial` renamed to
-// the final `<fileName>` (an atomic publish) — so `downloadedPartPath` never
-// reports a half-downloaded model as installed.
-const PARTIAL_SUFFIX = '.partial';
-const CHUNK_SUFFIX = '.chunk';
+// A part is transferred by the OS (iOS NSURLSession background session, Android
+// UIDT job / foreground service) into `<fileName>.download`, so it keeps going
+// while the app is in the background or has been terminated. Only once the
+// transfer is done is `.download` renamed to the final `<fileName>` (an atomic
+// publish) — so `downloadedPartPath` never reports a half-downloaded model as
+// installed. `<fileName>.etag` remembers the remote's validator for Android's
+// resume-from-file (see RESUME_FROM_FILE_HEADER).
+const DOWNLOAD_SUFFIX = '.download';
 const VALIDATOR_SUFFIX = '.etag';
 
-// How many bytes each ranged request pulls before it is appended to `.partial`.
-// This is also the resume granularity: an interrupted chunk re-downloads at most
-// this much. Smaller = less waste on flaky networks but more per-request
-// overhead; 16 MiB balances the two, and keeps the transient `.chunk`
-const CHUNK_BYTES = 16 * 1024 * 1024;
+// Scaffolding of the previous, foreground-only downloader (ranged chunks
+// appended to `.partial`). A download left pending by it restarts on the
+// background downloader, so its leftovers are dropped.
+const LEGACY_SUFFIXES = ['.partial', '.chunk'];
 
-// How much of a chunk we move into `.partial` per read/write when appending.
-// `downloadFileAsync` can only write a whole file, so a completed chunk has to
-// be copied onto the end of `.partial`. Doing that as one 16 MiB `bytesSync()` +
-// synchronous `write()` blocks the JS thread and holds the whole chunk in JS
-// memory. Streaming it in bounded slices through file handles keeps peak memory
-// at one slice and lets the loop yield to the event loop between slices, so a
-// multi-GB download doesn't jank the UI.
-const APPEND_SLICE_BYTES = 4 * 1024 * 1024;
+// Read by the patched Android downloader (patches/@kesha-antonov+react-native-
+// background-downloader+*.patch): continue from the bytes already at the
+// destination instead of deleting them. Stripped before the request is sent.
+// iOS needs no such thing: it keeps a failed transfer's resume data instead.
+const RESUME_FROM_FILE_HEADER = 'X-Background-Downloader-Resume';
 
-// A HEAD request should return promptly; if it hangs (dead connection, captive
-// portal) the whole download stalls before the first byte, since the fetch
-// otherwise only ends when the caller aborts. Bound it independently.
-const META_TIMEOUT_MS = 15_000;
+// How often progress events cross the bridge.
+const PROGRESS_INTERVAL_MS = 500;
 
 export class NetworkError extends Error {
   readonly cause: unknown;
@@ -68,9 +66,14 @@ export class HttpStatusError extends Error {
   }
 }
 
-// Whether a failed download can never succeed as it stands: the server refused
-// the URL itself. Timeouts and rate limits (408/429) and server errors (5xx)
-// may pass, so they don't count.
+// The caller's signal stopped the transfer.
+export class DownloadAbortedError extends Error {
+  constructor(fileName: string) {
+    super(`download of ${fileName} was stopped`);
+    this.name = 'DownloadAbortedError';
+  }
+}
+
 export const isPermanentDownloadFailure = (error: unknown): boolean =>
   error instanceof HttpStatusError &&
   error.status >= 400 &&
@@ -78,52 +81,43 @@ export const isPermanentDownloadFailure = (error: unknown): boolean =>
   error.status !== 408 &&
   error.status !== 429;
 
-// How expo-file-system words an HTTP error status, on iOS ("response has
-// status 404", "server returned HTTP 404") and Android ("response has status:
-// 404", "HTTP 404").
-const HTTP_STATUS_FAILURE =
-  /Unable to download a file: (?:response has status:?|server returned HTTP|HTTP) (\d{3})/;
-
-const TRANSPORT_FAILURE =
-  /java\.net\.|javax\.net\.ssl\.|java\.io\.(EOF|InterruptedIO)Exception|okhttp3\.|unexpected end of stream/;
-const IOS_TRANSPORT_FAILURE =
-  /Unable to download a file: (?!response has status|no response)/;
-
-const isTransportFailure = (error: unknown): boolean => {
-  const message = error instanceof Error ? error.message : String(error);
-  return TRANSPORT_FAILURE.test(message) || IOS_TRANSPORT_FAILURE.test(message);
-};
-
-const downloadFile = async (
+// Both platforms report a server's error status as the failure's errorCode
+// (iOS turns a non-2xx response into an error carrying the status, Android's
+// downloader uses it directly). Anything else — NSURLError codes (negative),
+// Android's transport failures — is the connection, which may come back.
+export const toDownloadError = (
   url: string,
-  destination: File,
-  options: DownloadOptions & { signal: AbortSignal },
-): Promise<void> => {
-  try {
-    await File.downloadFileAsync(url, destination, options);
-  } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    const status = HTTP_STATUS_FAILURE.exec(message)?.[1];
+  error: string,
+  errorCode: number,
+): Error =>
+  errorCode >= 400 && errorCode < 600
+    ? new HttpStatusError(
+        `GET ${url} returned ${errorCode}: ${error}`,
+        errorCode,
+      )
+    : new NetworkError(`GET ${url} failed (${errorCode}): ${error}`);
 
-    if (!options.signal.aborted && status !== undefined) {
-      throw new HttpStatusError(message, Number(status));
-    }
+let isConfigured = false;
 
-    if (!options.signal.aborted && isTransportFailure(error)) {
-      throw new NetworkError(
-        `GET ${url} failed: ${error instanceof Error ? error.message : String(error)}`,
-        error,
-      );
-    }
-    throw error;
+// The downloader's global settings, applied before the first task.
+const configureDownloader = () => {
+  if (isConfigured) {
+    return;
   }
+  isConfigured = true;
+  setConfig({
+    progressInterval: PROGRESS_INTERVAL_MS,
+    // Android: show the download's progress in its mandatory notification rather than a blank one.
+    showNotificationsEnabled: true,
+    logCallback: (tag, message, ...args) =>
+      log('backgroundDownloader', `${tag} ${message}`, ...args),
+  });
 };
 
 const modelDirectory = (modelId: number): Directory =>
   new Directory(Paths.document, MODELS_DIR_NAME, String(modelId));
 
-// The plain filesystem path of a model's directory — what folder-based loaders
-// (e.g. Tts.load's `source`) receive.
+// The plain filesystem path of a model's directory, what folder-based loaders (e.g. Tts.load's `source`) receive.
 export const modelDirectoryPath = (modelId: number): string =>
   toPlainPath(modelDirectory(modelId).uri);
 
@@ -198,11 +192,11 @@ export const assertSafeRelativePath = (fileName: string): string[] => {
   return segments;
 };
 
-// Where a part's final file (and its resume scaffolding) lives: the directory
-// holding it, and its name inside that directory. Nested targets are resolved
-// segment by segment — the Directory constructor joins variadic segments, and
-// rename() below only accepts a bare name within the same directory. Exported
-// only for direct unit testing.
+// Where a part's final file (and its download scaffolding) lives: the
+// directory holding it, and its name inside that directory. Nested targets are
+// resolved segment by segment — the Directory constructor joins variadic
+// segments, and rename() below only accepts a bare name within the same
+// directory. Exported only for direct unit testing.
 export const locatePart = (
   modelId: number,
   fileName: string,
@@ -215,33 +209,15 @@ export const locatePart = (
   return { parentDir, baseName: segments[segments.length - 1] };
 };
 
+// The background task's id for a part: stable across launches, so a relaunched
+// app finds the transfer it started. Also a file name on iOS (its resume data),
+// hence no slashes.
+export const partTaskId = (modelId: number, fileName: string): string =>
+  `model-${modelId}-${fileName.replace(/[^A-Za-z0-9._-]/g, '_')}`;
+
 const deleteIfExists = (file: File): void => {
   if (file.exists) {
     file.delete();
-  }
-};
-
-// Appends `length` bytes from `src` onto the end of `dest`, streaming
-// APPEND_SLICE_BYTES at a time so we never buffer the whole (up to CHUNK_BYTES)
-// window in JS memory or block the JS thread on one giant read/write. `length`
-// is the caller's already-validated chunk size, so the loop is bounded — no
-// read-until-EOF. The handle's async reads/writes run off the JS thread, so the
-// UI stays responsive between slices.
-const appendFile = async (
-  src: File,
-  dest: File,
-  length: number,
-): Promise<void> => {
-  const reader = src.open(FileMode.ReadOnly);
-  const writer = dest.open(FileMode.Append);
-  try {
-    for (let copied = 0; copied < length; copied += APPEND_SLICE_BYTES) {
-      // readBytes resolves to the remainder when fewer than a full slice are left.
-      await writer.writeBytes(await reader.readBytes(APPEND_SLICE_BYTES));
-    }
-  } finally {
-    reader.close();
-    writer.close();
   }
 };
 
@@ -253,125 +229,69 @@ export const downloadedPartPath = (
 ): string | null => {
   const { parentDir, baseName } = locatePart(modelId, fileName);
   const file = new File(parentDir, baseName);
+
   return file.exists ? toPlainPath(file.uri) : null;
 };
 
-interface RemoteMeta {
-  // Content-Length, or undefined when the server didn't report a size.
-  total: number | undefined;
-  // Whether the server advertises byte-range support (`Accept-Ranges: bytes`).
-  acceptsRanges: boolean;
-  // ETag / Last-Modified — a value that changes when the remote bytes change,
-  // used to invalidate a stale `.partial` before resuming onto it.
-  validator: string | undefined;
+const existingTasks = async (): Promise<Map<string, DownloadTask>> => {
+  try {
+    const tasks = await getExistingDownloadTasks();
+    return new Map(tasks.map(task => [task.id, task]));
+  } catch (error) {
+    log('modelDownload getExistingDownloadTasks', error);
+    return new Map();
+  }
+};
+
+export const stopModelTransfers = async (modelId: number): Promise<void> => {
+  const prefix = `model-${modelId}-`;
+  const tasks = await existingTasks();
+
+  await Promise.all(
+    [...tasks.values()]
+      .filter(task => task.id.startsWith(prefix))
+      .map(task =>
+        task.stop().catch(error => log('stopModelTransfers', error)),
+      ),
+  );
+};
+
+const headerValue = (headers: Headers, name: string): string | undefined => {
+  const key = Object.keys(headers).find(
+    candidate => candidate.toLowerCase() === name,
+  );
+  const value = key === undefined ? undefined : headers[key];
+  return value ?? undefined;
+};
+
+// `If-Range` only takes a strong ETag: a weak one (W/"…") can't vouch for the
+// exact bytes, so without it the server would always resend everything.
+const strongEtag = (headers: Headers): string | undefined => {
+  const etag = headerValue(headers, 'etag');
+  return etag !== undefined && !etag.startsWith('W/') ? etag : undefined;
+};
+
+export interface DownloadPartOptions {
+  // Shown in the Android download notification.
+  title?: string;
 }
 
-// A HEAD request tells us the total size, range support and validator. Aborts
-// on either the caller's signal (user stopped the download) or META_TIMEOUT_MS
-// (the HEAD hung), whichever fires first. A transport failure that isn't the
-// caller's abort is rethrown as a NetworkError.
-const fetchRemoteMeta = async (
-  url: string,
-  signal: AbortSignal,
-): Promise<RemoteMeta> => {
-  const controller = new AbortController();
-  const onAbort = () => controller.abort();
-  if (signal.aborted) {
-    controller.abort();
-  } else {
-    signal.addEventListener('abort', onAbort);
-  }
-  let timedOut = false;
-  const timeout = setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, META_TIMEOUT_MS);
-
-  try {
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        method: 'HEAD',
-        signal: controller.signal,
-      });
-    } catch (error) {
-      if (signal.aborted) {
-        throw error;
-      }
-      throw new NetworkError(
-        timedOut
-          ? `HEAD ${url} timed out after ${META_TIMEOUT_MS}ms`
-          : `HEAD ${url} failed: ${error instanceof Error ? error.message : String(error)}`,
-        error,
-      );
-    }
-
-    if (res.status === 405 || res.status === 501) {
-      return { total: undefined, acceptsRanges: false, validator: undefined };
-    }
-
-    if (!res.ok) {
-      throw new HttpStatusError(
-        `HEAD ${url} returned ${res.status}`,
-        res.status,
-      );
-    }
-
-    const length = Number(res.headers.get('content-length'));
-    const acceptsRanges = (res.headers.get('accept-ranges') ?? '')
-      .toLowerCase()
-      .includes('bytes');
-    const validator =
-      res.headers.get('etag') ?? res.headers.get('last-modified') ?? undefined;
-    return {
-      total: Number.isFinite(length) && length > 0 ? length : undefined,
-      acceptsRanges,
-      validator,
-    };
-  } finally {
-    clearTimeout(timeout);
-    signal.removeEventListener('abort', onAbort);
-  }
-};
-
-// Used when the server won't do ranges (or won't report a size), so there is
-// nothing to resume. Downloads into `.partial` and only renames it to the final
-// name once the transfer completes — the same atomic publish the chunked path
-// uses. Writing straight to the final file would (on Android, where a failed
-// `downloadFileAsync` leaves a partial file behind) leave a truncated file that
-// the next run's `finalFile.exists` check would mistake for a finished download.
-const downloadWholeFile = async (
-  url: string,
-  baseName: string,
-  finalFile: File,
-  partial: File,
-  validatorFile: File,
-  signal: AbortSignal,
-  onProgress: (downloaded: number, total: number) => void,
-): Promise<string> => {
-  deleteIfExists(partial);
-  deleteIfExists(validatorFile);
-  await downloadFile(url, partial, {
-    idempotent: true,
-    signal,
-    onProgress: ({ bytesWritten, totalBytes }) =>
-      onProgress(bytesWritten, totalBytes),
-  });
-  partial.rename(baseName);
-  return toPlainPath(finalFile.uri);
-};
-
+// Downloads one part of a model in the background and resolves with its final
+// path. Survives the app being suspended or terminated
 export const downloadModelPart = async (
   modelId: number,
   url: string,
   fileName: string,
   signal: AbortSignal,
   onProgress: (downloaded: number, total: number) => void,
+  { title }: DownloadPartOptions = {},
 ): Promise<string> => {
   const { parentDir, baseName } = locatePart(modelId, fileName);
+
   if (!parentDir.exists) {
     parentDir.create({ intermediates: true });
   }
+
   const finalFile = new File(parentDir, baseName);
 
   if (finalFile.exists) {
@@ -379,134 +299,185 @@ export const downloadModelPart = async (
     return toPlainPath(finalFile.uri);
   }
 
-  const partial = new File(parentDir, baseName + PARTIAL_SUFFIX);
-  const chunk = new File(parentDir, baseName + CHUNK_SUFFIX);
+  if (signal.aborted) {
+    throw new DownloadAbortedError(fileName);
+  }
+
+  for (const suffix of LEGACY_SUFFIXES) {
+    deleteIfExists(new File(parentDir, baseName + suffix));
+  }
+
+  configureDownloader();
+
+  const download = new File(parentDir, baseName + DOWNLOAD_SUFFIX);
   const validatorFile = new File(parentDir, baseName + VALIDATOR_SUFFIX);
+  const id = partTaskId(modelId, fileName);
+  const existing = (await existingTasks()).get(id);
 
-  const meta = await fetchRemoteMeta(url, signal);
+  return new Promise<string>((resolve, reject) => {
+    let settled = false;
+    let task: DownloadTask | undefined = existing;
 
-  // No range support (or unknown size) — nothing to resume, download in one go.
-  if (!meta.acceptsRanges || meta.total === undefined) {
-    return downloadWholeFile(
-      url,
-      baseName,
-      finalFile,
-      partial,
-      validatorFile,
-      signal,
-      onProgress,
-    );
-  }
-
-  const total = meta.total;
-
-  // `.size` is only meaningful when the file exists: on iOS reading it for a
-  // missing file yields `null` (the native getter throws), which coerces to 0
-  // in arithmetic but stringifies to "null" in the Range header below —
-  // producing `bytes=null-…`, which the server rejects with HTTP 400. So read
-  // it only when the partial exists, and fall back to 0 for anything non-finite.
-  let offset = partial.exists ? partial.size : 0;
-  if (!Number.isFinite(offset) || offset < 0) {
-    offset = 0;
-  }
-
-  // Discard a stale `.partial` before appending onto it: either the remote bytes
-  // changed since we last wrote (validator mismatch), or the file on disk is
-  // somehow longer than the remote — both would corrupt the assembled file.
-  if (offset > 0) {
-    const storedValidator = validatorFile.exists
-      ? (await validatorFile.text()).trim()
-      : undefined;
-    const remoteChanged =
-      meta.validator !== undefined &&
-      storedValidator !== undefined &&
-      storedValidator !== meta.validator;
-    if (remoteChanged || offset > total) {
-      deleteIfExists(partial);
-      offset = 0;
-    }
-  }
-
-  // Remember the validator so a future run (even after an app kill) can detect a
-  // remote change before resuming.
-  if (meta.validator !== undefined) {
-    validatorFile.write(meta.validator);
-  } else {
-    deleteIfExists(validatorFile);
-  }
-
-  if (!partial.exists) {
-    partial.create();
-  }
-
-  onProgress(offset, total);
-
-  try {
-    while (offset < total) {
-      if (signal.aborted) {
-        throw new Error('downloadModelPart aborted');
+    const settle = (outcome: () => void) => {
+      if (settled) {
+        return;
       }
 
-      const end = Math.min(offset + CHUNK_BYTES, total) - 1;
-      const expected = end - offset + 1;
+      settled = true;
+      signal.removeEventListener('abort', onAbort);
+      outcome();
+    };
 
-      deleteIfExists(chunk);
-      await downloadFile(url, chunk, {
-        idempotent: true,
-        signal,
-        headers: { Range: `bytes=${offset}-${end}` },
-        onProgress: ({ bytesWritten }) =>
-          onProgress(offset + bytesWritten, total),
-      });
+    const release = () => {
+      try {
+        completeHandler(id);
+      } catch (error) {
+        log('modelDownload completeHandler', error);
+      }
+    };
 
-      // The server must honor the range: the chunk should be exactly the window
-      // we asked for. If it isn't, don't append the wrong bytes.
-      if (chunk.size !== expected) {
-        // A server can advertise `Accept-Ranges: bytes` yet ignore the Range
-        // header and return the full body (chunk === whole file). Ranged resume
-        // is impossible against it, and re-requesting the same window would loop
-        // forever, so restart cleanly as a single whole-file download. The
-        // outer `finally` clears the leftover `.chunk` afterwards.
-        if (chunk.size === total) {
-          return await downloadWholeFile(
-            url,
-            baseName,
-            finalFile,
-            partial,
-            validatorFile,
-            signal,
-            onProgress,
-          );
+    const onDone = () => {
+      release();
+      settle(() => {
+        try {
+          if (!download.exists) {
+            throw new Error(
+              `modelDownload: ${fileName} finished but ${download.uri} is missing`,
+            );
+          }
+
+          download.rename(baseName);
+          deleteIfExists(validatorFile);
+          onProgress(finalFile.size, finalFile.size);
+          resolve(toPlainPath(finalFile.uri));
+        } catch (error) {
+          reject(error);
         }
-        // Genuine short read / corrupt chunk — surface it so the loop stops and
-        // the `.partial` is kept for a later resume.
-        throw new Error(
-          `downloadModelPart: ranged chunk for ${fileName} was ${chunk.size} bytes, expected ${expected}`,
-        );
+      });
+    };
+
+    const onError = ({
+      error,
+      errorCode,
+    }: {
+      error: string;
+      errorCode: number;
+    }) => {
+      release();
+      settle(() => {
+        // Asked to continue a file the server says is already whole (or that
+        // no longer matches it): its bytes can't be trusted, start over.
+        if (errorCode === 416) {
+          deleteIfExists(download);
+          deleteIfExists(validatorFile);
+        }
+        reject(toDownloadError(url, error, errorCode));
+      });
+    };
+
+    function onAbort() {
+      settle(() => {
+        task
+          ?.stop()
+          .catch(error => log('modelDownload stop', error))
+          .finally(() => {
+            deleteIfExists(download);
+            deleteIfExists(validatorFile);
+          });
+        reject(new DownloadAbortedError(fileName));
+      });
+    }
+
+    const attach = (target: DownloadTask) =>
+      target
+        .begin(({ headers }) => {
+          const etag = strongEtag(headers);
+          try {
+            if (etag !== undefined) {
+              validatorFile.write(etag);
+            } else {
+              deleteIfExists(validatorFile);
+            }
+          } catch (error) {
+            log('modelDownload validator', error);
+          }
+        })
+        .progress(({ bytesDownloaded, bytesTotal }) => {
+          if (!settled) {
+            onProgress(bytesDownloaded, bytesTotal);
+          }
+        })
+        .done(onDone)
+        .error(onError);
+
+    signal.addEventListener('abort', onAbort);
+
+    try {
+      if (existing) {
+        attach(existing);
+
+        switch (existing.state) {
+          case 'DONE':
+            onDone();
+            return;
+          case 'PAUSED':
+            existing.resume().catch(error => {
+              log('modelDownload resume', error);
+              onError({ error: String(error), errorCode: -1 });
+            });
+            break;
+          default:
+            if (existing.bytesTotal > 0) {
+              onProgress(existing.bytesDownloaded, existing.bytesTotal);
+            }
+        }
+        return;
       }
 
-      await appendFile(chunk, partial, expected);
-      offset += expected;
-      onProgress(offset, total);
+      // iOS writes the destination only by moving the finished file there, so
+      // one without a task finished while no JS was listening (the app was
+      // terminated, or relaunched in the background before re-attaching).
+      if (Platform.OS === 'ios' && download.exists && download.size > 0) {
+        onDone();
+        return;
+      }
+
+      const headers: Headers = {};
+
+      // Android writes the destination as bytes arrive: a file without a task
+      // is what an earlier, failed transfer received. Continue from it; the
+      // If-Range makes the server send the whole file again if it changed.
+      if (Platform.OS === 'android' && download.exists && download.size > 0) {
+        headers[RESUME_FROM_FILE_HEADER] = '1';
+        const etag = validatorFile.exists
+          ? validatorFile.textSync().trim()
+          : undefined;
+        if (etag) {
+          headers['If-Range'] = etag;
+        }
+      } else {
+        deleteIfExists(download);
+      }
+
+      task = createDownloadTask({
+        id,
+        url,
+        destination: toPlainPath(download.uri),
+        headers,
+        metadata: { modelId, fileName },
+        notificationTitle: title,
+      });
+      attach(task);
+      task.start();
+    } catch (error) {
+      settle(() => reject(error));
     }
-  } finally {
-    deleteIfExists(chunk);
-  }
-
-  partial.rename(baseName);
-  deleteIfExists(validatorFile);
-
-  return toPlainPath(finalFile.uri);
+  });
 };
 
-// Removes everything downloaded for a model (best-effort) — finished files,
-// resume scaffolding (`.partial` / `.chunk` / `.etag`) and any subdirectories —
-// by deleting the model's directory tree. Used when a download is stopped
-// before it finishes and when a downloaded model is deleted.
 export const deleteModelDirectory = (modelId: number): void => {
   const dir = modelDirectory(modelId);
   if (dir.exists) {
-    // Directory.delete() removes contents recursively.
     dir.delete();
   }
 };

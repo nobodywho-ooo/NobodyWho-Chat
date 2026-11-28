@@ -1,4 +1,5 @@
 require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), "scripts/autolinking")
+require File.join(File.dirname(`node --print "require.resolve('expo-widgets/package.json')"`), "scripts/autolinking")
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
@@ -42,6 +43,9 @@ target 'reffen' do
   )
 
   post_install do |installer|
+    # ExpoModulesCore, ExpoUI and React are linked into the Live Activity extension too.
+    expo_widgets_post_install(installer)
+
     react_native_post_install(
       installer,
       config[:reactNativePath],
@@ -69,4 +73,31 @@ target 'reffen' do
       phase.run_only_for_deployment_postprocessing = '0'
     end
   end
+end
+
+# The widget extension that draws the model download Live Activity (expo-widgets). It
+# links only expo, expo-widgets and @expo/ui (use_expo_modules_widgets!), plus the React
+# Native core they depend on.
+target 'ExpoWidgetsTarget' do
+  # CocoaPods builds a pod shared by two targets as a module only if both ask for it;
+  # the app asks for it for several React Native pods, so this target must too or they
+  # stop being modules for the app as well.
+  use_modular_headers!
+  use_expo_modules_widgets!
+
+  config = use_expo_native_module!([
+    'node',
+    '--no-warnings',
+    '--eval',
+    'require(require.resolve(\'expo-modules-autolinking\', { paths: [require.resolve(\'expo/package.json\')] }))(process.argv.slice(1))',
+    'react-native-config',
+    '--json',
+    '--platform',
+    'ios'
+  ])
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
 end

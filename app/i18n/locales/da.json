@@ -284,7 +284,7 @@
       "skip": "Spring over",
       "downloadingHeader": "Vent venligst",
       "downloadingTitle": "Downloader dine modeller",
-      "downloadingSubtitle": "Det kan tage et par minutter. Hold appen åben, indtil downloadet er færdigt.",
+      "downloadingSubtitle": "Det kan tage et par minutter. Downloadet fortsætter, selvom du forlader appen.",
       "downloadProgress": "{{percent}}%",
       "downloadUnavailable": "Kunne ikke downloade lige nu. Prøv igen senere.",
       "voiceUnavailable": "Stemmemodellerne kunne ikke downloades. Du kan genoptage dem senere fra stemmechatten.",
@@ -300,8 +300,8 @@
       "interruptedTitle_one": "Download afbrudt",
       "interruptedTitle_other": "Downloads afbrudt",
       "downloadProgress": "{{percent}}%",
-      "downloadingHint_one": "Du kan begynde at chatte, så snart den er færdig. Hold appen åben indtil da.",
-      "downloadingHint_other": "Du kan begynde at chatte, så snart en af dem er færdig. Hold appen åben indtil da.",
+      "downloadingHint_one": "Du kan begynde at chatte, så snart den er færdig. Downloadet fortsætter, selvom du forlader appen.",
+      "downloadingHint_other": "Du kan begynde at chatte, så snart en af dem er færdig. Downloadene fortsætter, selvom du forlader appen.",
       "interruptedHint_one": "Tryk på Genoptag for at fortsætte, hvor den slap.",
       "interruptedHint_other": "Tryk på Genoptag for at fortsætte, hvor de slap.",
       "resume": "Genoptag"
@@ -334,7 +334,7 @@
       "setup": {
         "title": "Konfigurer stemmechat",
         "description": "Der skal indlæses fire modeller på én gang.",
-        "downloadInProgress": "Download i gang. Hold appen åben indtil da.",
+        "downloadInProgress": "Download i gang. Det fortsætter, selvom du forlader appen.",
         "downloadInterrupted": "Download afbrudt",
         "chat": "Chatmodel",
         "stt": "Tale-til-tekst-model",
@@ -486,5 +486,12 @@
       "resetConfirmMessage": "Dette sletter permanent din chathistorik og listen over downloadede modeller og genstarter derefter appen. Dette kan ikke fortrydes.",
       "resetConfirm": "Nulstil"
     }
+  },
+  "liveActivity": {
+    "models_one": "{{count}} model",
+    "models_other": "{{count}} modeller",
+    "downloading": "Downloader",
+    "downloaded": "Klar til brug",
+    "waiting": "Åbn NobodyWho for at fortsætte"
   }
 }

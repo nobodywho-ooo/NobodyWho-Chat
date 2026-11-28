@@ -34,6 +34,27 @@ class AppDelegate: ExpoAppDelegate, ExpoReactNativeFactoryProvider {
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
+  /// iOS relaunches (or wakes) the app when model downloads running in the background
+  /// session finish or fail. @kesha-antonov/react-native-background-downloader holds on to
+  /// `completionHandler` until JS has handled those events, then calls it so iOS can
+  /// snapshot and suspend the app again. Other sessions go to Expo's subscribers.
+  override func application(
+    _ application: UIApplication,
+    handleEventsForBackgroundURLSession identifier: String,
+    completionHandler: @escaping () -> Void
+  ) {
+    let downloaderSession = (Bundle.main.bundleIdentifier ?? "") + ".backgrounddownloadtask"
+    guard identifier == downloaderSession else {
+      super.application(
+        application,
+        handleEventsForBackgroundURLSession: identifier,
+        completionHandler: completionHandler
+      )
+      return
+    }
+    BackgroundDownloader.setCompletionHandler(completionHandler, identifier: identifier)
+  }
+
   /// Info.plist lists landscape so foldables run full screen: iPhone Duo's inner display is
   /// landscape-native (951x669 pt). Other iPhones stay portrait-only, as before.
   ///
@@ -84,6 +105,31 @@ enum ReactScrollEdgeEffects {
     ) {
       method_setImplementation(method, implementation)
     }
+  }
+}
+
+/// Calls `+[RNBackgroundDownloader setCompletionHandlerWithIdentifier:completionHandler:]`
+/// through the Objective-C runtime: its header pulls in the codegen C++ spec, which Swift
+/// can't import without a bridging header.
+enum BackgroundDownloader {
+  static func setCompletionHandler(
+    _ completionHandler: @escaping () -> Void,
+    identifier: String
+  ) {
+    let selector = NSSelectorFromString("setCompletionHandlerWithIdentifier:completionHandler:")
+    guard let downloaderClass = NSClassFromString("RNBackgroundDownloader"),
+          let method = class_getClassMethod(downloaderClass, selector)
+    else {
+      completionHandler()
+      return
+    }
+    typealias SetCompletionHandler = @convention(c) (
+      AnyClass, Selector, NSString, @escaping @convention(block) () -> Void
+    ) -> Void
+    let implementation = unsafeBitCast(
+      method_getImplementation(method), to: SetCompletionHandler.self
+    )
+    implementation(downloaderClass, selector, identifier as NSString, completionHandler)
   }
 }
 

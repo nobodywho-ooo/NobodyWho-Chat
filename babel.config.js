@@ -29,6 +29,10 @@ module.exports = api => {
     presets: ['module:@react-native/babel-preset'],
     plugins: [
       ...(platform ? [inlineExpoOs(platform)] : []),
+      // babel-preset-expo's transform for expo-widgets: a function marked
+      // 'widget' (the download Live Activity's layout) becomes its source text,
+      // which the widget extension evaluates on its own JS runtime.
+      require('babel-preset-expo/build/plugins/widgets-plugin').widgetsPlugin,
       [
         'module-resolver',
         {
